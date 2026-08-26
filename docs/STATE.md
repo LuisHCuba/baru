@@ -1,47 +1,75 @@
-# Estado — 2026-08-26, ciclo 1 (documentação)
+# Estado — 2026-08-26, fim do turno noturno
 
-Branch: `night/2026-08-26` | Último commit: docs base | Build: **verde**
+Branch: `night/2026-08-26`, integrada em `main` | Build: **verde**
+
+Portões, com resultado de execução real:
+
+| Portão | Resultado |
+|---|---|
+| `flutter analyze` | No issues found |
+| `flutter test` | 151 passando, 1 pulado (integração) |
+| `flutter test test/integration` (stack local) | 5/5 |
+| `supabase db reset` em banco limpo | 6 migrations aplicadas |
 
 ## Pronto e funcionando
 
-- MVP das 8 telas em pt/en/es/zh, rodando com Supabase real.
-- Backend verificado no projeto `Baru` (`slqpuppkapiewjqvedtj`, sa-east-1):
-  13 tabelas, 50 políticas RLS, isolamento entre usuários testado por query.
-- `flutter analyze` limpo; `flutter test` 27/27 verdes.
-- Projeto sob git com histórico e remote (antes não havia nenhum).
-- Documentação base criada (este arquivo + README + 7 docs).
+- MVP das 8 telas em pt/en/es/zh com backend Supabase.
+- **Sessão de foco sobrevive a background e a kill** — era o caminho core mais
+  frágil do app. Relógio de parede, sessão persistida, retomada ao abrir.
+- **Bônus de +15 por fechar abaixo da meta** existe de fato; antes a UI
+  prometia e nada creditava.
+- **Aviso de 24h antes do fim do trial** agendado; antes só a copy prometia.
+- i18n consistente nos 4 idiomas, travado por teste de paridade. As 5 chaves
+  que só existiam em pt derrubavam o app em en/es/zh.
+- Calendário derivado da data: a semana zera na virada, `todayIndex` não
+  desanda, `daysAway` é fato de data.
+- Sincronização que não perde intenção: falha por domínio volta para a fila.
+- Schema reproduzível a partir do repositório e validado em banco limpo.
+- Projeto sob git com histórico, remote e documentação viva.
 
 ## Em andamento
 
-Ciclo 1 concluído. **Próximo passo exato:** B-02 — reconciliar migrations com o
-banco real: criar migration de adoção do `public.rls_auto_enable()` (ADR-002) e
-reescrever os blocos legados da migration 5 com `execute format` (ADR-003).
+Nada pela metade. Todos os ciclos do turno fecharam com portões verdes.
+
+**Próximo passo exato:** B-15 — assinatura de release do Android. O lado do
+agente é preparar o `signingConfig` lendo `android/key.properties`; a keystore
+em si é do humano (BL-05).
 
 ## Próximos 5 itens da fila
 
-1. B-02 — reconciliar migrations × banco real.
-2. B-03 — crash de i18n em en/es/zh (5 chaves só existem em pt).
-3. B-04 — bônus de +15 folhas por fechar abaixo da meta (regra de produto).
-4. B-05 — virada de semana e `todayIndex`.
-5. B-06 — máscara de sync perdida em falha remota.
+1. B-15 — assinatura de release do Android (bloqueia publicação).
+2. B-14 — Nunito empacotada: hoje um app offline-first baixa a própria fonte.
+3. B-22 — fuso horário e virada de dia.
+4. B-23 — `textScaler` travado em 1.25× (acessibilidade).
+5. B-19 — chip "Livre" promete escolha e entrega 45 min fixos.
 
 ## Riscos e dívidas conhecidas
 
-- **Sessão de foco não sobrevive a background/kill** (B-07): timer sem relógio
-  de parede, sessão em curso não persistida. É o caminho core do produto.
-- Schema do banco ainda sem ledger de migrations (BL-01).
-- Migrations nunca validadas contra banco limpo (BL-02).
-- Economia de folhas é autoritativa no cliente.
-- `AppState` com mais de 800 linhas concentra domínio, plataforma e
-  persistência.
-- Camada de repositório com metade dos métodos nunca chamados.
+- **Economia autoritativa no cliente.** Sem valor real em jogo hoje; vira
+  problema no dia do IAP (B-26).
+- **Sem ledger de migrations no remoto** (BL-01): `supabase db push` tentaria
+  reaplicar tudo. As migrations agora aguentam, mas o rastro não existe.
+- **`AppState` com mais de 900 linhas** concentra domínio, plataforma e
+  persistência (B-27).
+- **Camada de repositório meio morta**: `pullRemote`, `saveLocal`,
+  `appendLocal`, `saveOwnedLocal` nunca são chamados.
+- **`_legacyId` colidível entre usuários** (B-24) — teórico, análise no backlog.
+- **Nada foi aplicado no Supabase remoto.** As migrations novas existem no
+  repositório e foram validadas localmente; aplicar é do humano.
 
 ## Bloqueios para o humano
 
-BL-01 ledger de migrations · BL-02 validar migrations em banco limpo ·
-BL-03 proteção de senha vazada · BL-04 usuário de teste não confirmado ·
-BL-05 assinatura de release Android · BL-06 entitlement de Screen Time no iOS ·
-BL-07 IAP · BL-08 conta do `gh` para push.
+| # | O quê |
+|---|---|
+| BL-01 | Ledger de migrations ausente no projeto remoto |
+| BL-03 | Proteção contra senha vazada desligada no Dashboard |
+| BL-04 | Um dos dois usuários de teste está sem e-mail confirmado |
+| BL-05 | Keystore de release do Android |
+| BL-06 | Entitlement de Screen Time no iOS |
+| BL-07 | Produtos de IAP nas lojas |
+| BL-08 | Conta do `gh` com permissão de push (contornado no turno) |
+
+BL-02 (validar migrations em banco limpo) foi **resolvido** no turno.
 Detalhes em [BLOCKERS.md](BLOCKERS.md).
 
 ## Comandos para rodar e validar agora
@@ -52,4 +80,14 @@ flutter pub get
 flutter analyze
 flutter test
 flutter run
+```
+
+Integração (precisa de Docker):
+
+```
+supabase start
+supabase db reset
+flutter test test/integration \
+  --dart-define=BARU_TEST_URL=http://127.0.0.1:54321 \
+  --dart-define=BARU_TEST_KEY=<publishable key que o supabase start imprime>
 ```

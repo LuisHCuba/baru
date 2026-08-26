@@ -96,8 +96,23 @@ login por e-mail e senha.
 cd baru_app
 flutter analyze                # análise estática
 flutter test                   # suíte completa
-flutter test test/state_test.dart
+flutter test test/mood_test.dart
 ```
+
+Há também uma suíte de integração que roda contra um Supabase de verdade —
+escreve as 13 tabelas com o token de um usuário comum e reconstrói o snapshot
+pela leitura, exercitando schema, CHECKs, RLS e o codec nas duas direções.
+Precisa de Docker:
+
+```
+cd baru_app
+supabase start
+supabase db reset
+flutter test test/integration   --dart-define=BARU_TEST_URL=http://127.0.0.1:54321   --dart-define=BARU_TEST_KEY=<publishable key que o supabase start imprime>
+```
+
+Sem essas variáveis os casos se pulam sozinhos: a suíte normal não depende de
+Docker.
 
 Todo item só é considerado pronto com analyze limpo e testes verdes — ver a
 definição de pronto em [docs/BACKLOG.md](docs/BACKLOG.md).

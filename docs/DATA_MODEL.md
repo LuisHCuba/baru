@@ -49,7 +49,9 @@ idioma, então trocar de idioma invalida a correspondência com os pesos.
 **`baru_inventory_items`** — PK `(user_id, item_id)`
 `item_id` com check para os 8 itens da loja; `acquired_at` timestamptz.
 Índice `baru_inventory_user_idx (user_id)`.
-Dívida: o codec regrava `acquired_at = now()` a cada push, apagando a data real.
+O push usa `resolution=ignore-duplicates`, então `acquired_at` de item que já
+está no inventário é preservado — antes todo push reescrevia a data real da
+compra e embaralhava a ordem em que o habitat foi montado.
 
 ### Foco e presença
 
@@ -113,9 +115,31 @@ Rodada no banco real (dentro de transação, com `rollback`):
    `SECURITY DEFINER`, liga RLS automaticamente em tabela nova criada em
    `public`) e **não estava em nenhuma migration**. Adotada em migration —
    ver ADR-002.
-2. **Não existe `supabase_migrations.schema_migrations`**: as 5 migrations
-   foram aplicadas à mão pelo SQL Editor, sem ledger. Ver
+2. **Não existe `supabase_migrations.schema_migrations`**: as migrations foram
+   aplicadas à mão pelo SQL Editor, sem ledger. Ver BL-01 em
    [BLOCKERS.md](BLOCKERS.md).
+
+## Validação executada contra banco limpo
+
+`supabase start` + `supabase db reset` aplicam as **6 migrations do zero**. O
+schema resultante é idêntico ao remoto: 13 tabelas, 50 políticas,
+`baru_profiles` com 8 colunas, event trigger `ensure_rls` presente, nenhuma
+tabela sem RLS, `anon` sem `EXECUTE` sobre `rls_auto_enable`.
+
+Reaplicação: migrations 5 e 6 rodam de novo sem erro (`ON_ERROR_STOP=1`). A
+versão antiga da 5, tirada do histórico do git, falha com
+`column "species" does not exist` — a previsão do ADR-003.
+
+`test/integration/supabase_roundtrip_test.dart` escreve as 13 tabelas com o
+token de um usuário comum e reconstrói o snapshot pela leitura, o que exercita
+schema, CHECKs, RLS e o codec nas duas direções.
+
+## Seed
+
+`supabase/seed.sql` popula as tabelas de domínio para uma conta que já exista
+em `auth.users`. Roda sozinho em `supabase db reset` e é idempotente. Não cria
+usuário: criar conta por SQL depende de colunas internas do gotrue, que mudam
+entre versões.
 
 ## Avisos do linter de segurança do Supabase
 

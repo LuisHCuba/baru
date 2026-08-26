@@ -55,6 +55,26 @@ várias tabelas.
 `settings`, `trial`). `_persistNow()` empurra só os marcados. Máscara zerada
 significa "origem desconhecida" e dispara push completo.
 
+Cada domínio sobe isolado: falha de rede num deles não impede os outros, e o
+bit do que falhou **volta para a máscara** — ela funciona como fila de
+pendências, reenviada na próxima gravação ou no retorno do background
+(ADR-007). O aviso ao usuário sai uma vez por episódio de falha, não por
+gravação.
+
+Mudança que não vive no snapshot (folha de compartilhamento, humor forçado do
+debug, flag do timer 60×) usa `_notifyEfemero()`: repinta sem gravar nem
+sincronizar. Sem isso, abrir a folha de compartilhamento disparava um push das
+13 tabelas.
+
+### Sessão de foco
+
+A sessão é medida pelo **relógio de parede**, não por tiques de `Timer`
+(ADR-008). `sessionStartedAt` e `sessionEndsAt` são estado persistido; o timer
+só repinta a tela. Ao voltar do background, `reconcileSession()` recalcula ou
+conclui; ao abrir o app, o construtor retoma uma sessão ainda válida ou conclui
+a que venceu com o app fechado. Sessão em curso é local por natureza — não
+continua em outro aparelho — e por isso fica fora do Supabase.
+
 ## Camadas
 
 ```
@@ -115,5 +135,24 @@ problema no dia em que houver valor real em jogo (ver BACKLOG).
   só `pushRemote()` é. Os 5 compartilham o mesmo `SnapshotStore`.
 - **`AppState` com 800+ linhas** acumula domínio, plataforma e persistência.
 - **Fontes em runtime.** `google_fonts` baixa Nunito na primeira execução: um
-  app offline-first que depende de rede para a tipografia.
-- **Sem servidor autoritativo** para economia e trial.
+  app offline-first que depende de rede para a tipografia (B-14).
+- **Sem servidor autoritativo** para economia e trial (B-26).
+
+## Testes
+
+| Suíte | O que cobre |
+|---|---|
+| `test/l10n_test.dart` | paridade dos 4 catálogos: chaves, forma, placeholders |
+| `test/mood_test.dart` | tabela de humor, precedência, atividade, quiz, formatação |
+| `test/economy_test.dart` | recompensas, bônus da meta, loja, "sem punição" |
+| `test/calendar_test.dart` | virada de semana, `todayIndex`, freeze, dias sem abrir |
+| `test/session_test.dart` | sessão em background, kill, retomada, conclusão |
+| `test/sync_test.dart` | falha por domínio, retry, avisos, efêmeros |
+| `test/trial_test.dart` | 7 dias, contagem, aviso de 24h |
+| `test/app_frame_test.dart` | moldura por plataforma e orientação |
+| `test/auth_lang_test.dart` | idioma da porta de entrada |
+| `test/quality_test.dart` | as 8 telas em 412×892 sem overflow |
+| `test/integration/` | round-trip real contra um Supabase de verdade |
+
+A suíte de integração se pula sozinha sem `BARU_TEST_URL`/`BARU_TEST_KEY`: a
+suíte normal não pode depender de Docker.

@@ -1,0 +1,13 @@
+# Segredos — nunca versionar
+.env
+.env.*
+!.env.example
+*.local.md
+*.keystore
+*.jks
+key.properties
+
+# Ferramentas locais
+.claude/
+.DS_Store
+Thumbs.db

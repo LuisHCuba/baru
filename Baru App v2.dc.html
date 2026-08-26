@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+  body{margin:0;background:#EDE3D2;font-family:Nunito,system-ui,sans-serif;color:#3E2F23}
+  a{color:#5C8A4E}a:hover{color:#486D3D}
+  ::-webkit-scrollbar{width:0;height:0}
+</style>
+</helmet>
+
+<div style="display:flex;align-items:flex-start;gap:36px;padding:36px 40px 64px;min-height:100vh;box-sizing:border-box">
+
+  <aside style="position:sticky;top:36px;width:268px;flex:none;display:flex;flex-direction:column;gap:22px">
+    <div>
+      <div style="font:800 20px/1.2 Nunito;letter-spacing:-.2px">Baru: Focus Capybara</div>
+      <div style="margin-top:6px;font:400 13px/1.5 Nunito;color:rgba(62,47,35,.6)">MVP · 8 telas · iOS + Android · 4 idiomas</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <sc-for list="{{ nav }}" as="s" hint-placeholder-count="8">
+        <div onClick="{{ s.go }}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;cursor:pointer;background:transparent" style-hover="background:rgba(62,47,35,.06)">
+          <span style="font:700 10px/1 ui-monospace,Menlo,monospace;color:rgba(62,47,35,.35);width:16px">{{ s.n }}</span>
+          <span style="font:600 13.5px/1.3 Nunito">{{ s.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="height:1px;background:rgba(62,47,35,.12)"></div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;font:400 12px/1.55 Nunito;color:rgba(62,47,35,.62)">
+      <div><span style="font-weight:700;color:#3E2F23">Idiomas.</span> Português, inglês, espanhol e mandarim. O primeiro passo do onboarding é a escolha do idioma, e ele também vive nos ajustes. Nada de string fixa na tela.</div>
+      <div><span style="font-weight:700;color:#3E2F23">Precedência do humor.</span> missing_you ganha de radiant, que ganha de content, neutral e sleepy. A cena carrega o estado; a legenda diz em palavras.</div>
+      <div><span style="font-weight:700;color:#3E2F23">Quiz do animal interior.</span> Três perguntas no passo 3 escolhem entre capivara, lontra, tartaruga e coruja. Cada um é um estudo de formas no lugar da arte em Rive.</div>
+      <div><span style="font-weight:700;color:#3E2F23">Loja v1.</span> 8 itens, 40 a 400 folhas, posições fixas. Comprar é a única coisa que muda a cena.</div>
+    </div>
+  </aside>
+
+  <div style="display:flex;flex-direction:column;gap:20px;flex:none">
+    <div style="display:flex;gap:6px;align-items:center">
+      <sc-for list="{{ platforms }}" as="p" hint-placeholder-count="2">
+        <sc-if value="{{ p.on }}" hint-placeholder-val="{{ true }}"><div onClick="{{ p.pick }}" style="padding:8px 15px;border-radius:11px;background:#3E2F23;color:#FAF1E3;font:700 12.5px Nunito;cursor:pointer">{{ p.label }}</div></sc-if>
+        <sc-if value="{{ p.off }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.pick }}" style="padding:8px 15px;border-radius:11px;background:rgba(62,47,35,.07);font:600 12.5px Nunito;cursor:pointer" style-hover="background:rgba(62,47,35,.13)">{{ p.label }}</div></sc-if>
+      </sc-for>
+      <div style="width:14px"></div>
+      <sc-for list="{{ langChips }}" as="l" hint-placeholder-count="4">
+        <sc-if value="{{ l.on }}" hint-placeholder-val="{{ false }}"><div onClick="{{ l.pick }}" style="padding:8px 13px;border-radius:11px;background:#5C8A4E;color:#FAF1E3;font:700 12.5px Nunito;cursor:pointer">{{ l.label }}</div></sc-if>
+        <sc-if value="{{ l.off }}" hint-placeholder-val="{{ true }}"><div onClick="{{ l.pick }}" style="padding:8px 13px;border-radius:11px;background:rgba(92,138,78,.13);font:600 12.5px Nunito;cursor:pointer" style-hover="background:rgba(92,138,78,.22)">{{ l.label }}</div></sc-if>
+      </sc-for>
+    </div>
+
+    <x-import component-from-global-scope="{{ frameName }}" from="./ios-frame.jsx ./android-frame.jsx" hint-size="412px,892px">
+      <div style="height:100%;box-sizing:border-box;background:#FAF1E3;font-family:Nunito,system-ui;color:#3E2F23;display:flex;flex-direction:column;position:relative;overflow:hidden">
+        <sc-if value="{{ isIos }}" hint-placeholder-val="{{ true }}"><div style="height:52px;flex:none"></div></sc-if>
+
+        <sc-if value="{{ isOnb }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:12px 26px 34px;min-height:0">
+            <div style="display:flex;gap:6px;padding:12px 0 0;flex:none">
+              <sc-for list="{{ onbDots }}" as="d" hint-placeholder-count="6">
+                <sc-if value="{{ d.on }}" hint-placeholder-val="{{ true }}"><div style="height:4px;flex:1;border-radius:99px;background:#5C8A4E"></div></sc-if>
+                <sc-if value="{{ d.off }}" hint-placeholder-val="{{ false }}"><div style="height:4px;flex:1;border-radius:99px;background:rgba(62,47,35,.13)"></div></sc-if>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ onb0 }}" hint-placeholder-val="{{ true }}">
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px;min-height:0">
+                <div>
+                  <div style="font:800 30px/1.15 Nunito;letter-spacing:-.6px;text-wrap:balance">{{ t.langTitle }}</div>
+                  <div style="margin-top:12px;font:400 15px/1.5 Nunito;color:rgba(62,47,35,.68)">{{ t.langSub }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <sc-for list="{{ langRows }}" as="l" hint-placeholder-count="4">
+                    <sc-if value="{{ l.on }}" hint-placeholder-val="{{ true }}">
+                      <div onClick="{{ l.pick }}" style="height:60px;border-radius:18px;background:rgba(92,138,78,.14);border:2.5px solid #5C8A4E;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:0 22px;cursor:pointer">
+                        <span style="font:700 18px Nunito">{{ l.label }}</span>
+                        <span style="font:700 13px Nunito;color:#5C8A4E">{{ l.tag }}</span>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ l.off }}" hint-placeholder-val="{{ false }}">
+                      <div onClick="{{ l.pick }}" style="height:60px;border-radius:18px;background:rgba(62,47,35,.05);display:flex;align-items:center;justify-content:space-between;padding:0 22px;cursor:pointer" style-hover="background:rgba(62,47,35,.09)">
+                        <span style="font:600 18px Nunito">{{ l.label }}</span>
+                        <span style="font:600 13px Nunito;color:rgba(62,47,35,.4)">{{ l.tag }}</span>
+                      </div>
+                    </sc-if>
+                  </sc-for>
+                </div>
+              </div>
+              <div onClick="{{ next }}" style="height:56px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer;flex:none" style-hover="background:#4E7842">{{ t.cont }}</div>
+            </sc-if>
+
+            <sc-if value="{{ onb1 }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:26px;min-height:0">
+                <div style="transform:scale(1.15)">
+                  <dc-import name="Pet" species="{{ species }}" mood="content" activity="idle" hint-size="200px,150px"></dc-import>
+                </div>
+                <div style="text-align:center">
+                  <div style="font:800 29px/1.15 Nunito;letter-spacing:-.6px;text-wrap:balance">{{ t.promiseT }}</div>
+                  <div style="margin-top:14px;font:400 15.5px/1.5 Nunito;color:rgba(62,47,35,.7);text-wrap:pretty">{{ t.promiseB }}</div>
+                </div>
+              </div>
+              <div onClick="{{ next }}" style="height:56px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer;flex:none" style-hover="background:#4E7842">{{ t.start }}</div>
+            </sc-if>
+
+            <sc-if value="{{ onb2 }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1;display:flex;flex-direction:column;gap:20px;padding-top:26px;overflow:auto;min-height:0">
+                <div>
+                  <div style="font:800 25px/1.2 Nunito;letter-spacing:-.4px;text-wrap:balance">{{ t.quizT }}</div>
+                  <div style="margin-top:10px;font:400 14.5px/1.5 Nunito;color:rgba(62,47,35,.65);text-wrap:pretty">{{ t.quizB }}</div>
+                </div>
+                <sc-for list="{{ quiz }}" as="q" hint-placeholder-count="3">
+                  <div style="display:flex;flex-direction:column;gap:9px">
+                    <div style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:rgba(62,47,35,.42)">{{ q.label }}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px">
+                      <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
+                        <sc-if value="{{ o.on }}" hint-placeholder-val="{{ false }}"><div onClick="{{ o.pick }}" style="padding:12px 16px;border-radius:14px;background:#3E2F23;color:#FAF1E3;font:700 14px Nunito;cursor:pointer">{{ o.label }}</div></sc-if>
+                        <sc-if value="{{ o.off }}" hint-placeholder-val="{{ true }}"><div onClick="{{ o.pick }}" style="padding:12px 16px;border-radius:14px;background:rgba(62,47,35,.06);font:600 14px Nunito;cursor:pointer" style-hover="background:rgba(62,47,35,.11)">{{ o.label }}</div></sc-if>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ quizDone }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ next }}" style="height:56px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer;margin-top:14px;flex:none" style-hover="background:#4E7842">{{ t.quizCta }}</div>
+              </sc-if>
+              <sc-if value="{{ quizOpen }}" hint-placeholder-val="{{ true }}">
+                <div style="height:56px;border-radius:20px;background:rgba(62,47,35,.07);color:rgba(62,47,35,.4);display:flex;align-items:center;justify-content:center;font:700 17px Nunito;margin-top:14px;flex:none">{{ t.quizWait }}</div>
+              </sc-if>
+            </sc-if>
+
+            <sc-if value="{{ onb3 }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1;display:flex;flex-direction:column;gap:22px;padding-top:24px;align-items:center;overflow:auto;min-height:0">
+                <div style="text-align:center">
+                  <div style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:#5C8A4E">{{ t.revealKicker }}</div>
+                  <div style="margin-top:10px;font:800 27px/1.15 Nunito;letter-spacing:-.5px">{{ speciesTitle }}</div>
+                  <div style="margin-top:9px;font:400 14.5px/1.5 Nunito;color:rgba(62,47,35,.65);text-wrap:pretty">{{ speciesDesc }}</div>
+                </div>
+                <dc-import name="Pet" species="{{ species }}" mood="radiant" activity="idle" hint-size="200px,150px"></dc-import>
+                <input value="{{ petNameField }}" onChange="{{ setName }}" style="width:100%;box-sizing:border-box;height:56px;border:none;border-radius:18px;background:rgba(62,47,35,.06);padding:0 20px;font:700 20px Nunito;color:#3E2F23;outline:none;text-align:center">
+                <div style="display:flex;flex-direction:column;gap:12px;align-items:center;width:100%">
+                  <div style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:rgba(62,47,35,.45)">{{ t.coat }}</div>
+                  <div style="display:flex;gap:14px">
+                    <div onClick="{{ setColor0 }}" style="width:46px;height:46px;border-radius:50%;background:#C98A5B;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                      <sc-if value="{{ col0 }}" hint-placeholder-val="{{ true }}"><div style="width:56px;height:56px;border-radius:50%;border:2.5px solid #3E2F23"></div></sc-if>
+                    </div>
+                    <div onClick="{{ setColor1 }}" style="width:46px;height:46px;border-radius:50%;background:#A9733F;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                      <sc-if value="{{ col1 }}" hint-placeholder-val="{{ false }}"><div style="width:56px;height:56px;border-radius:50%;border:2.5px solid #3E2F23"></div></sc-if>
+                    </div>
+                    <div onClick="{{ setColor2 }}" style="width:46px;height:46px;border-radius:50%;background:#DBA478;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                      <sc-if value="{{ col2 }}" hint-placeholder-val="{{ false }}"><div style="width:56px;height:56px;border-radius:50%;border:2.5px solid #3E2F23"></div></sc-if>
+                    </div>
+                    <div onClick="{{ setColor3 }}" style="width:46px;height:46px;border-radius:50%;background:#8A6247;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                      <sc-if value="{{ col3 }}" hint-placeholder-val="{{ false }}"><div style="width:56px;height:56px;border-radius:50%;border:2.5px solid #3E2F23"></div></sc-if>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div onClick="{{ next }}" style="height:56px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer;flex:none" style-hover="background:#4E7842">{{ t.revealCta }}</div>
+            </sc-if>
+
+            <sc-if value="{{ onb4 }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1;display:flex;flex-direction:column;gap:24px;padding-top:40px;min-height:0">
+                <div>
+                  <div style="font:800 25px/1.2 Nunito;letter-spacing:-.4px;text-wrap:balance">{{ t.goalT }}</div>
+                  <div style="margin-top:10px;font:400 14.5px/1.5 Nunito;color:rgba(62,47,35,.65)">{{ t.goalB }}</div>
+                </div>
+                <div style="display:flex;gap:9px">
+                  <sc-for list="{{ avgOpts }}" as="a" hint-placeholder-count="4">
+                    <sc-if value="{{ a.on }}" hint-placeholder-val="{{ false }}"><div onClick="{{ a.pick }}" style="flex:1;height:54px;border-radius:16px;background:#3E2F23;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 15px Nunito;cursor:pointer">{{ a.label }}</div></sc-if>
+                    <sc-if value="{{ a.off }}" hint-placeholder-val="{{ true }}"><div onClick="{{ a.pick }}" style="flex:1;height:54px;border-radius:16px;background:rgba(62,47,35,.06);display:flex;align-items:center;justify-content:center;font:600 15px Nunito;cursor:pointer" style-hover="background:rgba(62,47,35,.11)">{{ a.label }}</div></sc-if>
+                  </sc-for>
+                </div>
+                <div style="border-radius:22px;background:rgba(92,138,78,.1);padding:24px;display:flex;flex-direction:column;gap:6px">
+                  <div style="font:600 12px/1 Nunito;letter-spacing:.7px;text-transform:uppercase;color:#5C8A4E">{{ t.goalSug }}</div>
+                  <div style="font:800 38px/1.1 Nunito;letter-spacing:-1px">{{ goalLabel }}</div>
+                  <div style="font:400 13.5px/1.5 Nunito;color:rgba(62,47,35,.65)">{{ t.goalNote }}</div>
+                </div>
+              </div>
+              <div onClick="{{ next }}" style="height:56px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer;flex:none" style-hover="background:#4E7842">{{ t.goalCta }}</div>
+            </sc-if>
+
+            <sc-if value="{{ onb5 }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1;display:flex;flex-direction:column;gap:22px;padding-top:34px;overflow:auto;min-height:0">
+                <div>
+                  <div style="font:800 25px/1.2 Nunito;letter-spacing:-.4px;text-wrap:balance">{{ t.permT }}</div>
+                  <div style="margin-top:10px;font:400 14.5px/1.5 Nunito;color:rgba(62,47,35,.65)">{{ t.permB }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:14px">
+                  <div style="display:flex;gap:13px;align-items:flex-start">
+                    <div style="width:9px;height:9px;border-radius:50%;background:#5C8A4E;margin-top:6px;flex:none"></div>
+                    <div style="font:400 14.5px/1.45 Nunito">{{ t.perm1 }}</div>
+                  </div>
+                  <div style="display:flex;gap:13px;align-items:flex-start">
+                    <div style="width:9px;height:9px;border-radius:50%;background:#5C8A4E;margin-top:6px;flex:none"></div>
+                    <div style="font:400 14.5px/1.45 Nunito">{{ t.perm2 }}</div>
+                  </div>
+                  <div style="display:flex;gap:13px;align-items:flex-start">
+                    <div style="width:9px;height:9px;border-radius:50%;background:#5C8A4E;margin-top:6px;flex:none"></div>
+                    <div style="font:400 14.5px/1.45 Nunito">{{ t.perm3 }}</div>
+                  </div>
+                </div>
+                <div style="border-radius:18px;background:rgba(62,47,35,.05);padding:16px 18px;font:400 12.5px/1.5 ui-monospace,Menlo,monospace;color:rgba(62,47,35,.6)">{{ t.permTech }}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+                <div onClick="{{ next }}" style="height:56px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer" style-hover="background:#4E7842">{{ t.permAllow }}</div>
+                <div onClick="{{ next }}" style="height:48px;display:flex;align-items:center;justify-content:center;font:600 15px Nunito;color:rgba(62,47,35,.55);cursor:pointer">{{ t.permLater }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isPaywall }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:22px 26px 34px;gap:18px;min-height:0">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:0">
+              <dc-import name="Pet" species="{{ species }}" mood="radiant" activity="nap" hint-size="200px,150px"></dc-import>
+              <div style="text-align:center">
+                <div style="font:800 28px/1.15 Nunito;letter-spacing:-.5px;text-wrap:balance">{{ payTitle }}</div>
+                <div style="margin-top:10px;font:400 15px/1.5 Nunito;color:rgba(62,47,35,.68);text-wrap:pretty">{{ t.payB }}</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:11px;flex:none">
+              <div onClick="{{ pickAnnual }}" style="position:relative;border-radius:22px;background:rgba(92,138,78,.12);border:2.5px solid #5C8A4E;padding:20px 22px;cursor:pointer">
+                <div style="position:absolute;top:-11px;right:20px;background:#EF8354;color:#FFF;border-radius:99px;padding:4px 11px;font:700 10.5px/1.4 Nunito;letter-spacing:.5px;text-transform:uppercase">{{ t.payBest }}</div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline">
+                  <div style="font:800 18px Nunito">{{ t.payAnnual }}</div>
+                  <div style="font:800 20px Nunito">{{ t.priceA }}</div>
+                </div>
+                <div style="margin-top:5px;font:400 13.5px Nunito;color:rgba(62,47,35,.65)">{{ t.payAnnualNote }}</div>
+              </div>
+              <div onClick="{{ pickMonthly }}" style="border-radius:22px;background:rgba(62,47,35,.05);padding:20px 22px;cursor:pointer" style-hover="background:rgba(62,47,35,.09)">
+                <div style="display:flex;justify-content:space-between;align-items:baseline">
+                  <div style="font:800 18px Nunito">{{ t.payMonthly }}</div>
+                  <div style="font:800 20px Nunito">{{ t.priceM }}</div>
+                </div>
+                <div style="margin-top:5px;font:400 13.5px Nunito;color:rgba(62,47,35,.65)">{{ t.payMonthlyNote }}</div>
+              </div>
+            </div>
+            <div onClick="{{ startTrial }}" style="height:58px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer;flex:none" style-hover="background:#4E7842">{{ payCta }}</div>
+            <div style="text-align:center;font:600 12.5px/1.5 Nunito;color:rgba(62,47,35,.6);flex:none">{{ t.payRemind }}</div>
+            <div style="display:flex;justify-content:center;gap:18px;font:400 12px Nunito;color:rgba(62,47,35,.42);flex:none">
+              <span onClick="{{ goHome }}" style="cursor:pointer">{{ t.payRestore }}</span>
+              <span style="cursor:pointer">{{ t.payTerms }}</span>
+              <span style="cursor:pointer">{{ t.payPrivacy }}</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:14px 20px 0;overflow:auto;min-height:0">
+
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 2px 14px;flex:none">
+              <div style="display:flex;align-items:center;gap:8px;background:#FFFBF2;border:1px solid rgba(62,47,35,.085);box-shadow:0 2px 12px rgba(62,47,35,.055);border-radius:22px;border-radius:99px;padding:8px 14px 8px 11px">
+                <div style="width:15px;height:15px;border-radius:8px 2px 8px 2px;background:#5C8A4E"></div>
+                <span style="font:800 15px Nunito">{{ leaves }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;background:rgba(239,131,84,.14);border-radius:99px;padding:9px 14px;flex:none">
+                <div style="width:9px;height:9px;border-radius:50%;background:#EF8354"></div>
+                <span style="font:700 13px Nunito;color:#B8502A;white-space:nowrap">{{ streakLabel }}</span>
+              </div>
+              <div style="flex:1"></div>
+              <div style="font:700 11.5px Nunito;color:rgba(62,47,35,.55);background:rgba(62,47,35,.06);border-radius:99px;padding:9px 13px;white-space:nowrap;flex:none">{{ levelLabel }}</div>
+            </div>
+
+            <div style="position:relative;height:296px;border-radius:28px;background:#F4E6CB;overflow:hidden;flex:none;box-shadow:0 6px 22px rgba(62,47,35,.1)">
+              <div style="position:absolute;right:26px;top:20px;width:56px;height:56px;border-radius:50%;background:rgba(239,131,84,.2)"></div>
+              <div style="position:absolute;left:-34px;top:104px;width:224px;height:130px;border-radius:112px 112px 0 0;background:rgba(92,138,78,.14)"></div>
+              <div style="position:absolute;right:-44px;top:92px;width:206px;height:140px;border-radius:104px 104px 0 0;background:rgba(92,138,78,.1)"></div>
+              <div style="position:absolute;left:0;right:0;top:150px;height:34px;background:rgba(201,138,91,.17)"></div>
+              <div style="position:absolute;left:0;right:0;bottom:0;height:120px;background:rgba(92,138,78,.17)"></div>
+              <div style="position:absolute;left:0;right:0;bottom:112px;height:2px;background:rgba(92,138,78,.26)"></div>
+              <div style="position:absolute;left:38px;bottom:76px;width:62px;height:4px;border-radius:99px;background:rgba(255,255,255,.4)"></div>
+              <div style="position:absolute;right:56px;bottom:44px;width:46px;height:4px;border-radius:99px;background:rgba(255,255,255,.3)"></div>
+              {{ habitatItems }}
+              <div style="position:absolute;left:50%;bottom:50px;transform:translateX(-50%);width:152px;height:16px;border-radius:50%;background:rgba(62,47,35,.11)"></div>
+              <div style="position:absolute;left:50%;bottom:56px;transform:translateX(-50%) scale(1.05)">
+                <dc-import name="Pet" species="{{ species }}" mood="{{ mood }}" activity="{{ activity }}" hint-size="200px,150px"></dc-import>
+              </div>
+              <div style="position:absolute;inset:0;box-shadow:inset 0 0 46px rgba(62,47,35,.09);pointer-events:none"></div>
+            </div>
+
+            <div style="padding:20px 4px 0;flex:none">
+              <div style="font:800 26px/1.2 Nunito;letter-spacing:-.4px;text-wrap:balance">{{ moodCaption }}</div>
+              <div style="margin-top:8px;font:400 15px/1.5 Nunito;color:rgba(62,47,35,.66);text-wrap:pretty">{{ moodSub }}</div>
+            </div>
+
+            <div onClick="{{ goReport }}" style="display:flex;align-items:center;gap:10px;margin-top:16px;background:rgba(92,138,78,.12);border-radius:16px;padding:13px 16px;cursor:pointer;flex:none" style-hover="background:rgba(92,138,78,.19)">
+              <div style="width:8px;height:8px;border-radius:50%;background:#5C8A4E"></div>
+              <span style="flex:1;font:700 13.5px Nunito;color:#3E6B32">{{ t.reportReady }}</span>
+              <span style="font:700 15px Nunito;color:rgba(62,47,35,.3)">›</span>
+            </div>
+
+            <div style="margin-top:12px;background:#FFFBF2;border:1px solid rgba(62,47,35,.085);box-shadow:0 2px 12px rgba(62,47,35,.055);border-radius:22px;padding:17px 19px;flex:none">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <span style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:rgba(62,47,35,.42)">{{ t.weekT }}</span>
+                <span style="font:700 12.5px Nunito;color:#5C8A4E">{{ streakLabel }}</span>
+              </div>
+              <div style="display:flex;gap:5px;margin-top:14px">
+                <sc-for list="{{ week }}" as="w" hint-placeholder-count="7">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+                    <sc-if value="{{ w.present }}" hint-placeholder-val="{{ true }}"><div style="width:13px;height:13px;border-radius:50%;background:#5C8A4E"></div></sc-if>
+                    <sc-if value="{{ w.frozen }}" hint-placeholder-val="{{ false }}"><div style="width:13px;height:13px;border-radius:50%;border:2px solid #EF8354;box-sizing:border-box"></div></sc-if>
+                    <sc-if value="{{ w.today }}" hint-placeholder-val="{{ false }}"><div style="width:13px;height:13px;border-radius:50%;border:2px solid #5C8A4E;box-sizing:border-box;background:rgba(92,138,78,.25)"></div></sc-if>
+                    <sc-if value="{{ w.empty }}" hint-placeholder-val="{{ false }}"><div style="width:13px;height:13px;border-radius:50%;background:rgba(62,47,35,.13)"></div></sc-if>
+                    <span style="font:600 10.5px Nunito;color:rgba(62,47,35,.42)">{{ w.d }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;background:#FFFBF2;border:1px solid rgba(62,47,35,.085);box-shadow:0 2px 12px rgba(62,47,35,.055);border-radius:22px;padding:17px 19px;flex:none">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <span style="font:700 14px Nunito">{{ usageOfGoal }}</span>
+                <span style="font:600 13px Nunito;color:rgba(62,47,35,.5)">{{ usageShort }}</span>
+              </div>
+              <div style="position:relative;height:10px;border-radius:99px;background:rgba(62,47,35,.09);overflow:hidden;margin-top:12px">{{ usageFill }}</div>
+            </div>
+
+            <div style="margin-top:12px;background:#FFFBF2;border:1px solid rgba(62,47,35,.085);box-shadow:0 2px 12px rgba(62,47,35,.055);border-radius:22px;padding:17px 19px 12px;flex:none">
+              <span style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:rgba(62,47,35,.42)">{{ t.questsT }}</span>
+              <div style="display:flex;flex-direction:column;margin-top:6px">
+                <sc-for list="{{ quests }}" as="q" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:12px;padding:11px 0">
+                    <sc-if value="{{ q.done }}" hint-placeholder-val="{{ true }}">
+                      <div style="width:21px;height:21px;border-radius:50%;background:#5C8A4E;flex:none;display:flex;align-items:center;justify-content:center">
+                        <div style="width:8px;height:8px;border-radius:50%;background:#FFFBF2"></div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ q.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="width:21px;height:21px;border-radius:50%;border:2px solid rgba(62,47,35,.16);box-sizing:border-box;flex:none"></div>
+                    </sc-if>
+                    <span style="flex:1;font:600 14px/1.35 Nunito">{{ q.label }}</span>
+                    <span style="font:800 13px Nunito;color:#EF8354">{{ q.reward }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div onClick="{{ goShop }}" style="margin-top:12px;background:#FFFBF2;border:1px solid rgba(62,47,35,.085);box-shadow:0 2px 12px rgba(62,47,35,.055);border-radius:22px;padding:15px 17px;display:flex;align-items:center;gap:13px;cursor:pointer;flex:none">
+              <div style="width:46px;height:46px;border-radius:15px;background:rgba(92,138,78,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none">{{ nextSwatch }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font:700 13.5px/1.35 Nunito">{{ unlockLabel }}</div>
+                <div style="position:relative;height:8px;border-radius:99px;background:rgba(62,47,35,.08);overflow:hidden;margin-top:9px">{{ unlockFill }}</div>
+              </div>
+              <span style="font:700 15px Nunito;color:rgba(62,47,35,.3)">›</span>
+            </div>
+
+            <div style="flex:1;min-height:18px"></div>
+
+            <div style="display:flex;gap:8px;padding:20px 0 12px;flex:none">
+              <sc-for list="{{ durations }}" as="d" hint-placeholder-count="4">
+                <sc-if value="{{ d.on }}" hint-placeholder-val="{{ false }}"><div onClick="{{ d.pick }}" style="flex:1;height:46px;border-radius:14px;background:#3E2F23;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 14px Nunito;cursor:pointer">{{ d.label }}</div></sc-if>
+                <sc-if value="{{ d.off }}" hint-placeholder-val="{{ true }}"><div onClick="{{ d.pick }}" style="flex:1;height:46px;border-radius:14px;background:rgba(62,47,35,.06);display:flex;align-items:center;justify-content:center;font:600 14px Nunito;cursor:pointer" style-hover="background:rgba(62,47,35,.11)">{{ d.label }}</div></sc-if>
+              </sc-for>
+            </div>
+            <div onClick="{{ startSession }}" style="height:64px;border-radius:22px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:800 18px Nunito;cursor:pointer;margin-bottom:16px;box-shadow:0 10px 24px rgba(92,138,78,.32);flex:none" style-hover="background:#4E7842">{{ t.start }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSession }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:20px 26px 34px;background:#F5E9D3;min-height:0">
+            <div style="display:flex;justify-content:center;padding:8px 0 0;flex:none">
+              <div style="font:600 12px/1 Nunito;letter-spacing:1.2px;text-transform:uppercase;color:rgba(62,47,35,.45)">{{ sessionLabel }}</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;min-height:0">
+              <div style="transform:scale(1.2)">
+                <dc-import name="Pet" species="{{ species }}" mood="content" activity="swim" hint-size="200px,150px"></dc-import>
+              </div>
+              <div style="text-align:center">
+                <div style="font:800 66px/1 Nunito;letter-spacing:-2px;font-variant-numeric:tabular-nums">{{ timeLabel }}</div>
+                <div style="margin-top:14px;font:400 15.5px Nunito;color:rgba(62,47,35,.65)">{{ activityLine }}</div>
+              </div>
+              <div style="width:100%;height:8px;border-radius:99px;background:rgba(62,47,35,.09);overflow:hidden">{{ progressFill }}</div>
+            </div>
+            <div onClick="{{ askQuit }}" style="height:50px;display:flex;align-items:center;justify-content:center;font:600 15px Nunito;color:rgba(62,47,35,.5);cursor:pointer;flex:none">{{ t.give }}</div>
+          </div>
+
+          <sc-if value="{{ confirming }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;background:rgba(62,47,35,.42);display:flex;align-items:flex-end;z-index:80">
+              <div style="width:100%;background:#FAF1E3;border-radius:30px 30px 0 0;padding:32px 26px 40px;display:flex;flex-direction:column;gap:16px">
+                <div style="align-self:center">
+                  <dc-import name="Pet" species="{{ species }}" mood="content" activity="swim" hint-size="200px,150px"></dc-import>
+                </div>
+                <div style="font:800 23px/1.25 Nunito;letter-spacing:-.3px;text-align:center;text-wrap:balance">{{ quitTitle }}</div>
+                <div style="font:400 14.5px/1.5 Nunito;color:rgba(62,47,35,.65);text-align:center;text-wrap:pretty">{{ t.quitSub }}</div>
+                <div onClick="{{ resume }}" style="height:56px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer;margin-top:6px" style-hover="background:#4E7842">{{ t.stay }}</div>
+                <div onClick="{{ abandon }}" style="height:48px;display:flex;align-items:center;justify-content:center;font:600 15px Nunito;color:rgba(62,47,35,.5);cursor:pointer">{{ t.leave }}</div>
+              </div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:20px 26px 34px;min-height:0">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;min-height:0">
+              <sc-if value="{{ won }}" hint-placeholder-val="{{ true }}">
+                <div style="transform:scale(1.15)">
+                  <dc-import name="Pet" species="{{ species }}" mood="radiant" activity="idle" hint-size="200px,150px"></dc-import>
+                </div>
+                <div style="display:flex;align-items:center;gap:11px;background:rgba(239,131,84,.16);border-radius:99px;padding:12px 22px 12px 18px">
+                  <div style="width:19px;height:19px;border-radius:10px 3px 10px 3px;background:#EF8354"></div>
+                  <span style="font:800 21px Nunito;color:#C25A26">{{ rewardLabel }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ lost }}" hint-placeholder-val="{{ false }}">
+                <div style="transform:scale(1.15)">
+                  <dc-import name="Pet" species="{{ species }}" mood="missing_you" activity="idle" hint-size="200px,150px"></dc-import>
+                </div>
+              </sc-if>
+              <div style="text-align:center">
+                <div style="font:800 26px/1.2 Nunito;letter-spacing:-.4px;text-wrap:balance">{{ resultTitle }}</div>
+                <div style="margin-top:10px;font:400 15px/1.5 Nunito;color:rgba(62,47,35,.68);text-wrap:pretty">{{ resultSub }}</div>
+              </div>
+              <div style="display:flex;gap:12px;width:100%">
+                <div style="flex:1;border-radius:20px;background:rgba(62,47,35,.05);padding:18px 20px">
+                  <div style="font:600 11px/1.3 Nunito;letter-spacing:.7px;text-transform:uppercase;color:rgba(62,47,35,.45)">{{ t.leavesLbl }}</div>
+                  <div style="margin-top:8px;font:800 24px Nunito">{{ leaves }}</div>
+                </div>
+                <div style="flex:1;border-radius:20px;background:rgba(62,47,35,.05);padding:18px 20px">
+                  <div style="font:600 11px/1.3 Nunito;letter-spacing:.7px;text-transform:uppercase;color:rgba(62,47,35,.45)">{{ t.presentLbl }}</div>
+                  <div style="margin-top:8px;font:800 24px Nunito">{{ streakShort }}</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+              <div onClick="{{ openShare }}" style="height:54px;border-radius:20px;background:rgba(62,47,35,.06);display:flex;align-items:center;justify-content:center;font:700 16px Nunito;cursor:pointer" style-hover="background:rgba(62,47,35,.1)">{{ t.shareBtn }}</div>
+              <div onClick="{{ goHome }}" style="height:56px;border-radius:20px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 17px Nunito;cursor:pointer" style-hover="background:#4E7842">{{ t.back }}</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isReport }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:16px 24px 0;overflow:auto;min-height:0">
+            <div style="padding:10px 2px 22px">
+              <div style="font:800 27px/1.2 Nunito;letter-spacing:-.5px">{{ reportTitle }}</div>
+              <div style="margin-top:6px;font:400 14px Nunito;color:rgba(62,47,35,.55)">{{ t.repDate }}</div>
+            </div>
+
+            <div style="border-radius:24px;background:rgba(62,47,35,.045);padding:22px;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+                <div><div style="font:800 25px Nunito">{{ usageLabel }}</div><div style="margin-top:4px;font:400 13px Nunito;color:rgba(62,47,35,.55)">{{ t.repUsed }}</div></div>
+                <div style="text-align:right"><div style="font:700 16px Nunito;color:rgba(62,47,35,.6)">{{ goalLabel }}</div><div style="margin-top:4px;font:400 13px Nunito;color:rgba(62,47,35,.45)">{{ t.repGoal }}</div></div>
+              </div>
+              <div style="position:relative;height:14px;border-radius:99px;background:rgba(62,47,35,.09);overflow:hidden">{{ usageFill }}</div>
+              <div style="font:600 13.5px/1.45 Nunito;color:#5C8A4E">{{ usageVerdict }}</div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:14px;border-radius:24px;background:rgba(92,138,78,.1);padding:18px 22px;margin-top:14px">
+              <div style="transform:scale(.46);width:92px;height:69px;flex:none;transform-origin:left center">
+                <dc-import name="Pet" species="{{ species }}" mood="{{ mood }}" activity="{{ activity }}" hint-size="200px,150px"></dc-import>
+              </div>
+              <div>
+                <div style="font:800 16.5px/1.3 Nunito">{{ moodCaption }}</div>
+                <div style="margin-top:4px;font:400 13px/1.4 Nunito;color:rgba(62,47,35,.6)">{{ moodLabel }}</div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:2px;margin-top:20px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 4px;gap:12px">
+                <span style="font:600 15px Nunito">{{ t.repSessions }}</span>
+                <span style="font:800 15px Nunito">{{ completedToday }}</span>
+              </div>
+              <div style="height:1px;background:rgba(62,47,35,.08)"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 4px;gap:12px">
+                <span style="font:600 15px Nunito">{{ t.repBonus }}</span>
+                <span style="font:800 15px Nunito;color:#EF8354">{{ bonusLabel }}</span>
+              </div>
+              <div style="height:1px;background:rgba(62,47,35,.08)"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 4px;gap:12px">
+                <span style="font:600 15px Nunito">{{ t.repPresent }}</span>
+                <span style="font:800 15px Nunito">{{ streakLabel }}</span>
+              </div>
+            </div>
+            <div style="font:400 12.5px/1.5 Nunito;color:rgba(62,47,35,.5);padding:4px 4px 22px">{{ t.repFreeze }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:16px 24px 0;overflow:auto;min-height:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px 20px">
+              <div style="font:800 27px/1.2 Nunito;letter-spacing:-.5px">{{ t.shopT }}</div>
+              <div style="display:flex;align-items:center;gap:8px;background:rgba(92,138,78,.13);border-radius:99px;padding:8px 15px 8px 12px">
+                <div style="width:15px;height:15px;border-radius:8px 2px 8px 2px;background:#5C8A4E"></div>
+                <span style="font:800 15px Nunito">{{ leaves }}</span>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:20px">
+              <sc-for list="{{ shop }}" as="it" hint-placeholder-count="8">
+                <div style="border-radius:22px;background:rgba(62,47,35,.045);padding:16px;display:flex;flex-direction:column;gap:10px">
+                  <div style="height:62px;display:flex;align-items:center;justify-content:center;overflow:hidden">{{ it.swatch }}</div>
+                  <div style="font:700 14px/1.3 Nunito">{{ it.name }}</div>
+                  <sc-if value="{{ it.owned }}" hint-placeholder-val="{{ false }}">
+                    <div style="height:38px;border-radius:13px;background:rgba(92,138,78,.16);display:flex;align-items:center;justify-content:center;font:700 13px Nunito;color:#4E7842">{{ t.shopOwned }}</div>
+                  </sc-if>
+                  <sc-if value="{{ it.canBuy }}" hint-placeholder-val="{{ true }}">
+                    <div onClick="{{ it.buy }}" style="height:38px;border-radius:13px;background:#5C8A4E;color:#FAF1E3;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;font:700 13px Nunito" style-hover="background:#4E7842">
+                      <div style="width:11px;height:11px;border-radius:6px 2px 6px 2px;background:#FAF1E3"></div>{{ it.price }}
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ it.locked }}" hint-placeholder-val="{{ false }}">
+                    <div style="height:38px;border-radius:13px;background:rgba(62,47,35,.06);display:flex;align-items:center;justify-content:center;gap:7px;font:700 13px Nunito;color:rgba(62,47,35,.42)">
+                      <div style="width:11px;height:11px;border-radius:6px 2px 6px 2px;background:rgba(62,47,35,.25)"></div>{{ it.price }}
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font:400 12.5px/1.5 Nunito;color:rgba(62,47,35,.5);padding:0 2px 24px">{{ t.shopNote }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:16px 24px 0;overflow:auto;min-height:0">
+            <div style="padding:10px 2px 20px;font:800 27px/1.2 Nunito;letter-spacing:-.5px">{{ t.setT }}</div>
+
+            <div style="border-radius:24px;background:rgba(92,138,78,.1);padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+              <div>
+                <div style="font:800 16px Nunito">{{ planTitle }}</div>
+                <div style="margin-top:4px;font:400 13px/1.4 Nunito;color:rgba(62,47,35,.6)">{{ planSub }}</div>
+              </div>
+              <div onClick="{{ goPaywall }}" style="font:700 13.5px Nunito;color:#5C8A4E;cursor:pointer;flex:none">{{ t.setManage }}</div>
+            </div>
+
+            <div style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:rgba(62,47,35,.42);padding:26px 4px 10px">{{ t.setLang }}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ langRows }}" as="l" hint-placeholder-count="4">
+                <sc-if value="{{ l.on }}" hint-placeholder-val="{{ true }}"><div onClick="{{ l.pick }}" style="padding:13px 16px;border-radius:14px;background:#3E2F23;color:#FAF1E3;font:700 14px Nunito;cursor:pointer">{{ l.label }}</div></sc-if>
+                <sc-if value="{{ l.off }}" hint-placeholder-val="{{ false }}"><div onClick="{{ l.pick }}" style="padding:13px 16px;border-radius:14px;background:rgba(62,47,35,.06);font:600 14px Nunito;cursor:pointer" style-hover="background:rgba(62,47,35,.11)">{{ l.label }}</div></sc-if>
+              </sc-for>
+            </div>
+
+            <div style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:rgba(62,47,35,.42);padding:26px 4px 10px">{{ t.setGoal }}</div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ goalOpts }}" as="g" hint-placeholder-count="4">
+                <sc-if value="{{ g.on }}" hint-placeholder-val="{{ false }}"><div onClick="{{ g.pick }}" style="flex:1;height:48px;border-radius:14px;background:#3E2F23;color:#FAF1E3;display:flex;align-items:center;justify-content:center;font:700 13.5px Nunito;cursor:pointer">{{ g.label }}</div></sc-if>
+                <sc-if value="{{ g.off }}" hint-placeholder-val="{{ true }}"><div onClick="{{ g.pick }}" style="flex:1;height:48px;border-radius:14px;background:rgba(62,47,35,.06);display:flex;align-items:center;justify-content:center;font:600 13.5px Nunito;cursor:pointer" style-hover="background:rgba(62,47,35,.11)">{{ g.label }}</div></sc-if>
+              </sc-for>
+            </div>
+
+            <div style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:rgba(62,47,35,.42);padding:26px 4px 10px">{{ t.setNotif }}</div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 4px;gap:14px">
+                <div><div style="font:600 15px Nunito">{{ t.setEvening }}</div><div style="margin-top:3px;font:400 12.5px/1.4 Nunito;color:rgba(62,47,35,.5)">{{ t.setEveningSub }}</div></div>
+                {{ toggleEvening }}
+              </div>
+              <div style="height:1px;background:rgba(62,47,35,.08)"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 4px;gap:14px">
+                <div><div style="font:600 15px Nunito">{{ t.setMissed }}</div><div style="margin-top:3px;font:400 12.5px/1.4 Nunito;color:rgba(62,47,35,.5)">{{ t.setMissedSub }}</div></div>
+                {{ toggleMissed }}
+              </div>
+            </div>
+
+            <div style="font:600 11.5px/1 Nunito;letter-spacing:.8px;text-transform:uppercase;color:rgba(62,47,35,.42);padding:26px 4px 10px">{{ t.setAbout }}</div>
+            <div style="display:flex;flex-direction:column;gap:2px;padding-bottom:26px">
+              <div style="display:flex;justify-content:space-between;padding:15px 4px;font:600 15px Nunito;cursor:pointer">{{ t.setRestore }}<span style="color:rgba(62,47,35,.3)">›</span></div>
+              <div style="height:1px;background:rgba(62,47,35,.08)"></div>
+              <div style="display:flex;justify-content:space-between;padding:15px 4px;font:600 15px Nunito;cursor:pointer">{{ t.setPrivacy }}<span style="color:rgba(62,47,35,.3)">›</span></div>
+              <div style="height:1px;background:rgba(62,47,35,.08)"></div>
+              <div style="display:flex;justify-content:space-between;padding:15px 4px;font:600 15px Nunito;cursor:pointer">{{ t.setTerms }}<span style="color:rgba(62,47,35,.3)">›</span></div>
+              <div style="height:1px;background:rgba(62,47,35,.08)"></div>
+              <div onClick="{{ restart }}" style="display:flex;justify-content:space-between;padding:15px 4px;font:600 15px Nunito;color:rgba(62,47,35,.5);cursor:pointer">{{ t.setReplay }}<span style="color:rgba(62,47,35,.3)">›</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showTabs }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:none;padding:10px 12px 12px;background:rgba(250,241,227,.92);border-top:1px solid rgba(62,47,35,.08)">
+            <div style="display:flex">
+              <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="4">
+                <div onClick="{{ tb.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:6px 0">
+                  <sc-if value="{{ tb.on }}" hint-placeholder-val="{{ false }}">
+                    <div style="width:19px;height:19px;border-radius:7px;background:#5C8A4E"></div>
+                    <span style="font:700 10.5px Nunito;color:#5C8A4E">{{ tb.label }}</span>
+                  </sc-if>
+                  <sc-if value="{{ tb.off }}" hint-placeholder-val="{{ true }}">
+                    <div style="width:19px;height:19px;border-radius:7px;background:rgba(62,47,35,.2)"></div>
+                    <span style="font:700 10.5px Nunito;color:rgba(62,47,35,.4)">{{ tb.label }}</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ isIos }}" hint-placeholder-val="{{ true }}"><div style="height:18px"></div></sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ sharing }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeShare }}" style="position:absolute;inset:0;background:rgba(62,47,35,.42);display:flex;align-items:flex-end;z-index:90">
+            <div style="width:100%;background:#F2EFEA;border-radius:26px 26px 0 0;padding:22px 18px 34px;display:flex;flex-direction:column;gap:16px">
+              <div style="align-self:center;width:44px;height:5px;border-radius:99px;background:rgba(62,47,35,.18)"></div>
+              <div style="display:flex;gap:14px;align-items:center;background:#FFF;border-radius:18px;padding:14px">
+                <div style="width:74px;height:56px;border-radius:12px;background:#F1E0C2;flex:none"></div>
+                <div><div style="font:700 14.5px Nunito">habitat.png</div><div style="margin-top:3px;font:400 12.5px Nunito;color:rgba(62,47,35,.5)">{{ t.shareMeta }}</div></div>
+              </div>
+              <div style="font:400 12.5px/1.5 Nunito;color:rgba(62,47,35,.5);text-align:center">{{ t.shareNote }}</div>
+              <div onClick="{{ closeShare }}" style="height:52px;border-radius:16px;background:#FFF;display:flex;align-items:center;justify-content:center;font:700 16px Nunito;color:#5C8A4E;cursor:pointer">{{ t.shareDone }}</div>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+    </x-import>
+
+    <sc-if value="{{ showDebug }}" hint-placeholder-val="{{ true }}">
+    <div style="width:412px;box-sizing:border-box;border-radius:22px;background:rgba(62,47,35,.055);padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+      <div style="font:700 10.5px/1 ui-monospace,Menlo,monospace;letter-spacing:1px;text-transform:uppercase;color:rgba(62,47,35,.45)">Debug panel · debug builds only</div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="font:600 12px Nunito;color:rgba(62,47,35,.6)">Force mood</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <sc-for list="{{ moodBtns }}" as="m" hint-placeholder-count="6">
+            <sc-if value="{{ m.on }}" hint-placeholder-val="{{ false }}"><div onClick="{{ m.pick }}" style="padding:7px 11px;border-radius:9px;background:#3E2F23;color:#FAF1E3;font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer">{{ m.label }}</div></sc-if>
+            <sc-if value="{{ m.off }}" hint-placeholder-val="{{ true }}"><div onClick="{{ m.pick }}" style="padding:7px 11px;border-radius:9px;background:rgba(62,47,35,.08);font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer" style-hover="background:rgba(62,47,35,.14)">{{ m.label }}</div></sc-if>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="font:600 12px Nunito;color:rgba(62,47,35,.6)">Habitat / species</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <sc-for list="{{ habBtns }}" as="h" hint-placeholder-count="3">
+            <sc-if value="{{ h.on }}" hint-placeholder-val="{{ false }}"><div onClick="{{ h.pick }}" style="padding:7px 11px;border-radius:9px;background:#3E2F23;color:#FAF1E3;font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer">{{ h.label }}</div></sc-if>
+            <sc-if value="{{ h.off }}" hint-placeholder-val="{{ true }}"><div onClick="{{ h.pick }}" style="padding:7px 11px;border-radius:9px;background:rgba(62,47,35,.08);font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer" style-hover="background:rgba(62,47,35,.14)">{{ h.label }}</div></sc-if>
+          </sc-for>
+          <sc-for list="{{ spBtns }}" as="sp" hint-placeholder-count="4">
+            <sc-if value="{{ sp.on }}" hint-placeholder-val="{{ false }}"><div onClick="{{ sp.pick }}" style="padding:7px 11px;border-radius:9px;background:#5C8A4E;color:#FAF1E3;font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer">{{ sp.label }}</div></sc-if>
+            <sc-if value="{{ sp.off }}" hint-placeholder-val="{{ true }}"><div onClick="{{ sp.pick }}" style="padding:7px 11px;border-radius:9px;background:rgba(92,138,78,.14);font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer" style-hover="background:rgba(92,138,78,.24)">{{ sp.label }}</div></sc-if>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        <div style="font:600 12px Nunito;color:rgba(62,47,35,.6);margin-right:4px">Usage {{ usageLabel }}</div>
+        <div onClick="{{ usageDown }}" style="padding:7px 11px;border-radius:9px;background:rgba(62,47,35,.08);font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer" style-hover="background:rgba(62,47,35,.14)">−30m</div>
+        <div onClick="{{ usageUp }}" style="padding:7px 11px;border-radius:9px;background:rgba(62,47,35,.08);font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer" style-hover="background:rgba(62,47,35,.14)">+30m</div>
+        <div onClick="{{ nextDay }}" style="padding:7px 11px;border-radius:9px;background:rgba(62,47,35,.08);font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer" style-hover="background:rgba(62,47,35,.14)">advance day</div>
+        <div onClick="{{ grantLeaves }}" style="padding:7px 11px;border-radius:9px;background:rgba(62,47,35,.08);font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer" style-hover="background:rgba(62,47,35,.14)">+200 leaves</div>
+        <div onClick="{{ resetAll }}" style="padding:7px 11px;border-radius:9px;background:rgba(62,47,35,.08);font:600 11.5px ui-monospace,Menlo,monospace;cursor:pointer" style-hover="background:rgba(62,47,35,.14)">reset</div>
+      </div>
+      <div style="font:400 11.5px/1.5 Nunito;color:rgba(62,47,35,.45)">O timer roda a 60×: uma sessão de 25 minutos termina em ~25 segundos.</div>
+    </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showDebugPanel&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const ITEMS = [
+  { id: 'lily',    price: 40,  parts: [{x:8,y:252,w:42,h:15,r:8,c:'#5C8A4E'},{x:54,y:266,w:28,h:11,r:6,c:'#6E9C5E'}] },
+  { id: 'bamboo',  price: 70,  parts: [{x:302,y:98,w:8,h:82,r:4,c:'#5C8A4E'},{x:316,y:116,w:8,h:64,r:4,c:'#6E9C5E'},{x:290,y:130,w:7,h:50,r:4,c:'#4E7842'}] },
+  { id: 'rock',    price: 110, parts: [{x:252,y:254,w:66,h:30,r:15,c:'#A79A8C'},{x:268,y:244,w:34,h:16,r:9,c:'#B6AA9D'}] },
+  { id: 'dock',    price: 150, parts: [{x:2,y:192,w:68,h:11,r:6,c:'#A0764C'},{x:12,y:203,w:8,h:20,r:4,c:'#8A6440'},{x:54,y:203,w:8,h:20,r:4,c:'#8A6440'}] },
+  { id: 'lantern', price: 190, parts: [{x:52,y:30,w:28,h:36,r:13,c:'#EF8354'},{x:64,y:8,w:3,h:24,r:2,c:'rgba(62,47,35,.25)'}] },
+  { id: 'tree',    price: 240, parts: [{x:36,y:120,w:11,h:66,r:5,c:'#8A6440'},{x:6,y:70,w:58,h:54,r:27,c:'#5C8A4E'},{x:34,y:92,w:10,h:10,r:5,c:'#EF8354'}] },
+  { id: 'boat',    price: 300, parts: [{x:288,y:208,w:62,h:18,r:9,c:'#B3764A'},{x:317,y:180,w:4,h:30,r:2,c:'#8A6440'},{x:321,y:182,w:20,h:18,r:3,c:'#FAF1E3'}] },
+  { id: 'bridge',  price: 400, parts: [{x:100,y:250,w:138,h:13,r:7,c:'#A79A8C'},{x:108,y:260,w:10,h:24,r:5,c:'#948877'},{x:220,y:260,w:10,h:24,r:5,c:'#948877'}] },
+];
+const DUR = [25, 50, 90, 45];
+const HABITATS = { empty: [], half: ['lily', 'dock', 'rock'], full: ITEMS.map((i) => i.id) };
+const LANGS = [
+  { id: 'pt', label: 'Português', tag: 'pt-BR' },
+  { id: 'en', label: 'English', tag: 'en' },
+  { id: 'es', label: 'Español', tag: 'es' },
+  { id: 'zh', label: '中文', tag: 'zh-Hans' },
+];
+const PET_NAMES = { capybara: 'Baru', otter: 'Rio', tortoise: 'Toco', owl: 'Nina' };
+
+const STR = {
+  pt: {
+    langTitle: 'Em que idioma você quer falar com ele?', langSub: 'Pode trocar depois nos ajustes.', cont: 'Continuar', start: 'Começar foco',
+    promiseT: 'Deixe o celular de lado. Alguém aqui fica feliz com isso.',
+    promiseB: 'Você escolhe um animal, define uma meta de tempo de tela e faz sessões de foco. Ele nunca morre, nunca perde nada e nunca te culpa.',
+    quizT: 'Qual animal você é por dentro?', quizB: 'Três perguntas. Suas respostas escolhem o animal que você vai cuidar. Dá para trocar depois.',
+    quizQ: ['O elemento do seu signo', 'Quando sua cabeça fica mais clara', 'O que realmente te acalma'],
+    quizO: [['Água', 'Fogo', 'Terra', 'Ar'], ['De manhã cedo', 'À tarde', 'De madrugada', 'Depende do dia'], ['Água quente', 'Boa companhia', 'Um quarto silencioso', 'Uma rotina']],
+    quizCta: 'Ver seu animal', quizWait: 'Responda as três',
+    revealKicker: 'Seu animal interior', coat: 'Pelagem', revealCta: 'Prazer em conhecer',
+    species: { capybara: ['Você é uma capivara.', 'Água morna, companhia fácil. Você desacelera rápido quando se permite.'], otter: ['Você é uma lontra.', 'Inquieta e brincalhona. Você foca melhor em blocos curtos e intensos.'], tortoise: ['Você é uma tartaruga.', 'Constância vence velocidade. Um pouco todo dia é o seu truque.'], owl: ['Você é uma coruja.', 'Mais lúcida depois que escurece. Você precisa de silêncio, não de pressa.'] },
+    goalT: 'Quanto tempo de tela num dia comum?', goalB: 'Um chute serve. Só precisamos de um ponto de partida.',
+    goalSug: 'Meta diária sugerida', goalNote: '25% abaixo da sua média. Dá para mudar quando quiser nos ajustes.', goalCta: 'Usar esta meta',
+    permT: 'O humor dele acompanha seu tempo de tela.', permB: 'Para isso, ele precisa ler o total do dia no seu telefone.',
+    perm1: 'Só o total do dia. Nunca quais apps, nunca conteúdo.', perm2: 'Lido algumas vezes por dia. Nada sai do aparelho.', perm3: 'Se preferir pular, ele lê seu humor só pelas sessões de foco.',
+    permTech: 'Android: tela de Acesso ao Uso. iOS: pedido de Tempo de Uso atrás de feature flag até o entitlement sair.',
+    permAllow: 'Permitir acesso ao uso', permLater: 'Talvez depois',
+    payT: 'Fique perto de {n}.', payB: 'Sessões de foco ilimitadas, a loja completa do habitat e o relatório diário.',
+    payAnnual: 'Anual', payMonthly: 'Mensal', payAnnualNote: '7 dias grátis, depois R$ 179,90 por ano', payMonthlyNote: 'R$ 34,90 por mês, cancele quando quiser',
+    payBest: 'Melhor valor', payCta: 'Começar 7 dias grátis', payCtaActive: 'Teste ativo — continuar',
+    priceA: 'R$ 179,90', priceM: 'R$ 34,90',
+    questsT: 'Hoje', quest1: 'Uma sessão de foco', quest2: 'Fechar o dia abaixo da meta',
+    weekT: 'Esta semana', level: 'Habitat nível {n}',
+    unlock: 'faltam {x} folhas para {i}', unlockDone: 'Habitat completo',
+    reportReady: 'O relatório de hoje está pronto', days: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
+    payRemind: 'Avisamos 24h antes do teste terminar.', payRestore: 'Restaurar', payTerms: 'Termos', payPrivacy: 'Privacidade',
+    custom: 'Livre', streak: '{n} dias presente', usageOf: '{u} de {g}', usageLeft: 'faltam {x}', usageOver: '{x} acima',
+    moodCap: { radiant: '{n} está radiante.', content: '{n} está contente.', neutral: '{n} cochila na parte rasa.', sleepy: '{n} está com sono.', missing_you: '{n} sentiu sua falta.' },
+    moodSub: { radiant: 'Abaixo da meta e uma sessão na água. O melhor tipo de dia.', content: 'Um dia decente. Uma sessão a mais e ele estaria radiante.', neutral: 'Em cima da meta. Nada para corrigir.', sleepy: 'Dia longo de tela. Amanhã ele topa nadar.', missing_you: 'Ele te esperou. Nada foi perdido enquanto você esteve fora.' },
+    moodLbl: { radiant: 'radiante', content: 'contente', neutral: 'neutro', sleepy: 'sonolento', missing_you: 'com saudade' },
+    sesLabel: 'banho de {m} min', activityLine: '{n} está nadando.', give: 'Desistir',
+    quitTitle: '{n} está no meio de um banho.', quitSub: 'Sair agora encerra a sessão sem folhas. Nada mais muda.',
+    stay: 'Ficar com ele', leave: 'Sair mesmo assim',
+    resWon: '{m} minutos concluídos.', resWonSub: '{n} nadou bastante e saiu para secar. Bem-vindo de volta.',
+    resLost: '{n} sentiu sua falta.', resLostSub: 'Sem folhas desta vez, e nada foi perdido. Ele continua aqui.',
+    reward: '+{k} folhas', leavesLbl: 'Folhas', presentLbl: 'Presente', shareBtn: 'Compartilhar o habitat', back: 'Voltar ao habitat',
+    repTitle: 'O dia de {n}', repDate: 'Terça, 26 de agosto', repUsed: 'tempo de tela hoje', repGoal: 'sua meta',
+    repUnder: '{x} abaixo da sua meta.', repOver: '{x} acima da sua meta. Amanhã é outro dia.',
+    repSessions: 'Sessões completas', repBonus: 'Bônus por ficar abaixo', repPresent: 'Dias presente',
+    repFreeze: 'Resta 1 congelamento nesta semana. Se você faltar um dia, ele te espera.',
+    shopT: 'Habitat', shopOwned: 'No habitat', shopNote: 'Os itens ocupam um lugar fixo no habitat. Reorganizar vem depois.',
+    items: ['Vitórias-régias', 'Bambuzal', 'Pedra da fonte', 'Deque de madeira', 'Lanterna de papel', 'Laranjeira', 'Barquinho', 'Ponte de pedra'],
+    setT: 'Ajustes', planNone: 'Sem assinatura', planNoneSub: 'Comece 7 dias grátis quando quiser', planTrial: 'Teste · faltam 6 dias', planTrialSub: 'O plano anual começa em 2 de setembro',
+    setManage: 'Gerenciar', setLang: 'Idioma', setGoal: 'Meta diária', setNotif: 'Notificações',
+    setEvening: 'Relatório da noite', setEveningSub: 'Todo dia às 21h', setMissed: '"Senti sua falta"', setMissedSub: 'No máximo uma vez por dia, depois de dois dias longe',
+    setAbout: 'Sobre', setRestore: 'Restaurar compras', setPrivacy: 'Política de privacidade', setTerms: 'Termos de uso', setReplay: 'Refazer o onboarding',
+    shareMeta: 'Imagem · 402 × 296', shareNote: 'Folha de compartilhamento nativa. A fase 1 compartilha um screenshot do habitat.', shareDone: 'Pronto',
+    tabs: ['Habitat', 'Loja', 'Relatório', 'Ajustes'],
+  },
+  en: {
+    langTitle: 'Which language should we speak?', langSub: 'You can change it later in settings.', cont: 'Continue', start: 'Start focus',
+    promiseT: 'Put the phone down. Someone here is glad about it.',
+    promiseB: 'You pick an animal, set a screen-time goal, and run focus sessions. It never dies, never loses anything, and never blames you.',
+    quizT: 'Which animal are you on the inside?', quizB: 'Three questions. Your answers pick the animal you will look after. You can change it later.',
+    quizQ: ["Your sign's element", 'When is your head clearest', 'What actually calms you down'],
+    quizO: [['Water', 'Fire', 'Earth', 'Air'], ['Early morning', 'Afternoon', 'Late night', 'Depends on the day'], ['Warm water', 'Good company', 'A quiet room', 'A routine']],
+    quizCta: 'See your animal', quizWait: 'Answer all three',
+    revealKicker: 'Your inner animal', coat: 'Coat', revealCta: 'Nice to meet you',
+    species: { capybara: ["You're a capybara.", 'Warm water, easy company. You settle fast once you let yourself stop.'], otter: ["You're an otter.", 'Restless and playful. You focus best in short, bright bursts.'], tortoise: ["You're a tortoise.", 'Steady beats fast. A small distance every day is your whole trick.'], owl: ["You're an owl.", 'Clearest after dark. You need quiet more than you need speed.'] },
+    goalT: 'How much screen time on an average day?', goalB: 'A rough guess is fine. We only need a starting point.',
+    goalSug: 'Suggested daily goal', goalNote: '25% below your average. You can move it any time in settings.', goalCta: 'Use this goal',
+    permT: 'Its mood follows your screen time.', permB: 'To do that, it needs to read the daily total from your phone.',
+    perm1: 'Only the daily total. Never which apps, never content.', perm2: 'Read a few times a day. Nothing leaves your device.', perm3: 'Skip it and it reads your mood from focus sessions alone.',
+    permTech: 'Android: Usage Access settings sheet. iOS: Screen Time request behind a feature flag until the entitlement lands.',
+    permAllow: 'Allow usage access', permLater: 'Maybe later',
+    payT: 'Keep {n} company.', payB: 'Unlimited focus sessions, the full habitat shop, and daily reports.',
+    payAnnual: 'Annual', payMonthly: 'Monthly', payAnnualNote: '7 days free, then $34.99 a year', payMonthlyNote: 'Billed every month',
+    payBest: 'Best value', payCta: 'Start 7-day free trial', payCtaActive: 'Trial active — continue',
+    priceA: '$34.99', priceM: '$6.99',
+    questsT: 'Today', quest1: 'One focus session', quest2: 'Finish the day under your goal',
+    weekT: 'This week', level: 'Habitat level {n}',
+    unlock: '{x} leaves to {i}', unlockDone: 'Habitat complete',
+    reportReady: "Today's report is ready", days: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+    payRemind: "We'll remind you 24h before your trial ends.", payRestore: 'Restore', payTerms: 'Terms', payPrivacy: 'Privacy',
+    custom: 'Custom', streak: '{n} days present', usageOf: '{u} of {g}', usageLeft: '{x} left', usageOver: '{x} over',
+    moodCap: { radiant: '{n} is radiant.', content: '{n} is content.', neutral: '{n} is dozing in the shallows.', sleepy: '{n} is sleepy.', missing_you: '{n} missed you.' },
+    moodSub: { radiant: 'Under your goal and a session in the water. Best kind of day.', content: 'A decent day. One more session and it would be beaming.', neutral: 'Right around your goal. Nothing to fix.', sleepy: 'A long screen day. It will be up for a swim tomorrow.', missing_you: 'It waited for you. Nothing was lost while you were gone.' },
+    moodLbl: { radiant: 'radiant', content: 'content', neutral: 'neutral', sleepy: 'sleepy', missing_you: 'missing you' },
+    sesLabel: '{m} minute swim', activityLine: '{n} is swimming.', give: 'Give up',
+    quitTitle: '{n} is in the middle of a swim.', quitSub: 'Leaving now ends the session with no leaves. Nothing else changes.',
+    stay: 'Stay with it', leave: 'Leave anyway',
+    resWon: '{m} minutes done.', resWonSub: '{n} had a long swim and came out to dry off. Welcome back.',
+    resLost: '{n} missed you.', resLostSub: "No leaves this time, and nothing taken away. It's still here.",
+    reward: '+{k} leaves', leavesLbl: 'Leaves', presentLbl: 'Present', shareBtn: 'Share the habitat', back: 'Back to habitat',
+    repTitle: "{n}'s day", repDate: 'Tuesday, 26 August', repUsed: 'screen time today', repGoal: 'your goal',
+    repUnder: '{x} under your goal.', repOver: '{x} over your goal. Tomorrow is a new day.',
+    repSessions: 'Sessions completed', repBonus: 'Under-goal bonus', repPresent: 'Days present',
+    repFreeze: 'One freeze left this week. If you miss a day, it waits for you.',
+    shopT: 'Habitat', shopOwned: 'In habitat', shopNote: 'Items land in a fixed spot in the habitat. Rearranging comes later.',
+    items: ['Lily Pads', 'Bamboo Cluster', 'Hot Spring Rock', 'Wooden Dock', 'Paper Lantern', 'Orange Tree', 'Little Boat', 'Stone Bridge'],
+    setT: 'Settings', planNone: 'No subscription', planNoneSub: 'Start a 7-day free trial any time', planTrial: 'Trial · 6 days left', planTrialSub: 'Annual plan starts 2 September',
+    setManage: 'Manage', setLang: 'Language', setGoal: 'Daily goal', setNotif: 'Notifications',
+    setEvening: 'Evening report', setEveningSub: 'Every day at 9:00 PM', setMissed: '"Missed you"', setMissedSub: 'At most once a day, after two days away',
+    setAbout: 'About', setRestore: 'Restore purchases', setPrivacy: 'Privacy policy', setTerms: 'Terms of service', setReplay: 'Replay onboarding',
+    shareMeta: 'Image · 402 × 296', shareNote: 'Native share sheet. Phase 1 shares a screenshot of the habitat.', shareDone: 'Done',
+    tabs: ['Habitat', 'Shop', 'Report', 'Settings'],
+  },
+  es: {
+    langTitle: '¿En qué idioma quieres hablarle?', langSub: 'Puedes cambiarlo después en ajustes.', cont: 'Continuar', start: 'Empezar enfoque',
+    promiseT: 'Deja el móvil. Aquí alguien se alegra.',
+    promiseB: 'Eliges un animal, defines una meta de tiempo de pantalla y haces sesiones de enfoque. Nunca muere, nunca pierde nada y nunca te culpa.',
+    quizT: '¿Qué animal eres por dentro?', quizB: 'Tres preguntas. Tus respuestas eligen el animal que vas a cuidar. Puedes cambiarlo después.',
+    quizQ: ['El elemento de tu signo', 'Cuándo tienes la cabeza más clara', 'Qué te calma de verdad'],
+    quizO: [['Agua', 'Fuego', 'Tierra', 'Aire'], ['Temprano', 'Por la tarde', 'De madrugada', 'Depende del día'], ['Agua caliente', 'Buena compañía', 'Un cuarto en silencio', 'Una rutina']],
+    quizCta: 'Ver tu animal', quizWait: 'Responde las tres',
+    revealKicker: 'Tu animal interior', coat: 'Pelaje', revealCta: 'Un placer',
+    species: { capybara: ['Eres un carpincho.', 'Agua tibia, buena compañía. Te calmas rápido cuando te lo permites.'], otter: ['Eres una nutria.', 'Inquieta y juguetona. Te concentras mejor en ráfagas cortas.'], tortoise: ['Eres una tortuga.', 'La constancia gana a la velocidad. Un poco cada día es tu truco.'], owl: ['Eres un búho.', 'Más lúcido de noche. Necesitas silencio, no prisa.'] },
+    goalT: '¿Cuánto tiempo de pantalla en un día normal?', goalB: 'Una estimación basta. Solo necesitamos un punto de partida.',
+    goalSug: 'Meta diaria sugerida', goalNote: '25% por debajo de tu promedio. Puedes cambiarlo cuando quieras.', goalCta: 'Usar esta meta',
+    permT: 'Su ánimo sigue tu tiempo de pantalla.', permB: 'Para eso necesita leer el total diario de tu teléfono.',
+    perm1: 'Solo el total del día. Nunca qué apps ni el contenido.', perm2: 'Se lee unas veces al día. Nada sale del dispositivo.', perm3: 'Si prefieres, usa solo tus sesiones de enfoque.',
+    permTech: 'Android: pantalla de Acceso al Uso. iOS: permiso de Tiempo de Uso tras un feature flag hasta que llegue el entitlement.',
+    permAllow: 'Permitir acceso al uso', permLater: 'Quizá después',
+    payT: 'Acompaña a {n}.', payB: 'Sesiones ilimitadas, la tienda completa del hábitat y el informe diario.',
+    payAnnual: 'Anual', payMonthly: 'Mensual', payAnnualNote: '7 días gratis, luego US$ 34,99 al año', payMonthlyNote: 'Cobro mensual',
+    payBest: 'Mejor valor', payCta: 'Empezar 7 días gratis', payCtaActive: 'Prueba activa — continuar',
+    priceA: '$34.99', priceM: '$6.99',
+    questsT: 'Hoy', quest1: 'Una sesión de enfoque', quest2: 'Terminar el día debajo de la meta',
+    weekT: 'Esta semana', level: 'Hábitat nivel {n}',
+    unlock: 'faltan {x} hojas para {i}', unlockDone: 'Hábitat completo',
+    reportReady: 'El informe de hoy está listo', days: ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
+    payRemind: 'Te avisamos 24 h antes de que termine la prueba.', payRestore: 'Restaurar', payTerms: 'Términos', payPrivacy: 'Privacidad',
+    custom: 'Libre', streak: '{n} días presente', usageOf: '{u} de {g}', usageLeft: 'faltan {x}', usageOver: '{x} de más',
+    moodCap: { radiant: '{n} está radiante.', content: '{n} está contento.', neutral: '{n} dormita en la orilla.', sleepy: '{n} tiene sueño.', missing_you: '{n} te echó de menos.' },
+    moodSub: { radiant: 'Por debajo de la meta y una sesión en el agua. El mejor tipo de día.', content: 'Un día decente. Una sesión más y estaría radiante.', neutral: 'Justo en la meta. Nada que corregir.', sleepy: 'Día largo de pantalla. Mañana se anima a nadar.', missing_you: 'Te esperó. Nada se perdió mientras estuviste fuera.' },
+    moodLbl: { radiant: 'radiante', content: 'contento', neutral: 'neutral', sleepy: 'somnoliento', missing_you: 'te echa de menos' },
+    sesLabel: 'baño de {m} min', activityLine: '{n} está nadando.', give: 'Rendirse',
+    quitTitle: '{n} está en medio de un baño.', quitSub: 'Salir ahora termina la sesión sin hojas. Nada más cambia.',
+    stay: 'Quedarme', leave: 'Salir igual',
+    resWon: '{m} minutos completados.', resWonSub: '{n} nadó a gusto y salió a secarse. Bienvenido de vuelta.',
+    resLost: '{n} te echó de menos.', resLostSub: 'Sin hojas esta vez, y nada se perdió. Sigue aquí.',
+    reward: '+{k} hojas', leavesLbl: 'Hojas', presentLbl: 'Presente', shareBtn: 'Compartir el hábitat', back: 'Volver al hábitat',
+    repTitle: 'El día de {n}', repDate: 'Martes, 26 de agosto', repUsed: 'tiempo de pantalla hoy', repGoal: 'tu meta',
+    repUnder: '{x} por debajo de tu meta.', repOver: '{x} por encima de tu meta. Mañana es otro día.',
+    repSessions: 'Sesiones completas', repBonus: 'Bono por estar debajo', repPresent: 'Días presente',
+    repFreeze: 'Queda 1 congelamiento esta semana. Si faltas un día, te espera.',
+    shopT: 'Hábitat', shopOwned: 'En el hábitat', shopNote: 'Los objetos van a un lugar fijo del hábitat. Reordenar vendrá después.',
+    items: ['Nenúfares', 'Cañas de bambú', 'Piedra termal', 'Muelle de madera', 'Farol de papel', 'Naranjo', 'Barquita', 'Puente de piedra'],
+    setT: 'Ajustes', planNone: 'Sin suscripción', planNoneSub: 'Empieza 7 días gratis cuando quieras', planTrial: 'Prueba · quedan 6 días', planTrialSub: 'El plan anual empieza el 2 de septiembre',
+    setManage: 'Gestionar', setLang: 'Idioma', setGoal: 'Meta diaria', setNotif: 'Notificaciones',
+    setEvening: 'Informe de la noche', setEveningSub: 'Todos los días a las 21:00', setMissed: '"Te echo de menos"', setMissedSub: 'Como máximo una vez al día, tras dos días sin abrir',
+    setAbout: 'Acerca de', setRestore: 'Restaurar compras', setPrivacy: 'Política de privacidad', setTerms: 'Términos del servicio', setReplay: 'Repetir la introducción',
+    shareMeta: 'Imagen · 402 × 296', shareNote: 'Hoja de compartir nativa. La fase 1 comparte una captura del hábitat.', shareDone: 'Listo',
+    tabs: ['Hábitat', 'Tienda', 'Informe', 'Ajustes'],
+  },
+  zh: {
+    langTitle: '你想用哪种语言？', langSub: '之后可以在设置里更改。', cont: '继续', start: '开始专注',
+    promiseT: '放下手机。这里有人会因此开心。',
+    promiseB: '选一只动物，设定每日屏幕时间目标，开始专注时段。它不会死，不会丢东西，也不会责怪你。',
+    quizT: '你内心是哪种动物？', quizB: '三个问题。答案决定你要照顾的动物，之后可以更改。',
+    quizQ: ['你星座的元素', '什么时候头脑最清醒', '什么真的能让你平静'],
+    quizO: [['水', '火', '土', '风'], ['清晨', '下午', '深夜', '看当天'], ['温水', '有人陪', '安静的房间', '固定的节奏']],
+    quizCta: '看看你的动物', quizWait: '请回答三个问题',
+    revealKicker: '你的内在动物', coat: '毛色', revealCta: '很高兴认识你',
+    species: { capybara: ['你是水豚。', '温水，轻松的陪伴。一旦允许自己停下，你会很快安定。'], otter: ['你是水獭。', '好动又爱玩。你在短而密集的时段里最专注。'], tortoise: ['你是乌龟。', '稳比快好。每天走一点点，就是你的全部诀窍。'], owl: ['你是猫头鹰。', '入夜后最清醒。你需要安静，而不是速度。'] },
+    goalT: '平常一天用多久手机？', goalB: '大概就行，我们只需要一个起点。',
+    goalSug: '建议的每日目标', goalNote: '比你的平均少 25%。随时可在设置中调整。', goalCta: '使用这个目标',
+    permT: '它的心情跟着你的屏幕时间。', permB: '为此，它需要读取手机上的每日总时长。',
+    perm1: '只读每日总时长，不看具体应用，也不看内容。', perm2: '每天读取几次。数据不离开你的设备。', perm3: '跳过也可以，它就只根据专注时段判断。',
+    permTech: 'Android：使用情况访问设置页。iOS：屏幕使用时间权限在功能开关之后，等待 Apple 授权。',
+    permAllow: '允许读取使用情况', permLater: '以后再说',
+    payT: '陪着 {n}。', payB: '无限专注时段、完整的栖息地商店和每日报告。',
+    payAnnual: '年付', payMonthly: '月付', payAnnualNote: '7 天免费，之后每年 34.99 美元', payMonthlyNote: '按月收费',
+    payBest: '最划算', payCta: '开始 7 天免费试用', payCtaActive: '试用中 — 继续',
+    priceA: '$34.99', priceM: '$6.99',
+    questsT: '今天', quest1: '完成一次专注', quest2: '今天低于目标',
+    weekT: '本周', level: '栖息地 {n} 级',
+    unlock: '再 {x} 片叶子解锁{i}', unlockDone: '栖息地已完成',
+    reportReady: '今天的报告已生成', days: ['一', '二', '三', '四', '五', '六', '日'],
+    payRemind: '试用结束前 24 小时我们会提醒你。', payRestore: '恢复购买', payTerms: '条款', payPrivacy: '隐私',
+    custom: '自定义', streak: '已陪伴 {n} 天', usageOf: '{u} / {g}', usageLeft: '还剩 {x}', usageOver: '超出 {x}',
+    moodCap: { radiant: '{n} 神采飞扬。', content: '{n} 很满足。', neutral: '{n} 在浅水里打瞌睡。', sleepy: '{n} 困了。', missing_you: '{n} 有点想你。' },
+    moodSub: { radiant: '低于目标，还完成了一次专注。这是最好的一天。', content: '还不错的一天。再来一次专注，它就会神采飞扬。', neutral: '刚好在目标附近。没什么要改的。', sleepy: '屏幕时间很长的一天。明天它还愿意去游泳。', missing_you: '它一直在等你。你离开的时候，什么都没有丢。' },
+    moodLbl: { radiant: '神采飞扬', content: '满足', neutral: '平静', sleepy: '困了', missing_you: '有点想你' },
+    sesLabel: '{m} 分钟', activityLine: '{n} 正在游泳。', give: '放弃',
+    quitTitle: '{n} 正游到一半。', quitSub: '现在离开会结束这次专注，没有叶子。其他什么都不会变。',
+    stay: '再陪一会儿', leave: '仍然离开',
+    resWon: '完成 {m} 分钟。', resWonSub: '{n} 游了很久，上岸晒干了。欢迎回来。',
+    resLost: '{n} 有点想你。', resLostSub: '这次没有叶子，但也没有任何损失。它还在。',
+    reward: '+{k} 片叶子', leavesLbl: '叶子', presentLbl: '陪伴', shareBtn: '分享栖息地', back: '回到栖息地',
+    repTitle: '{n} 的一天', repDate: '8月26日 星期二', repUsed: '今日屏幕时间', repGoal: '你的目标',
+    repUnder: '比目标少 {x}。', repOver: '超出目标 {x}。明天又是新的一天。',
+    repSessions: '完成的专注', repBonus: '达标奖励', repPresent: '陪伴天数',
+    repFreeze: '本周还有 1 次冻结。如果你缺一天，它会等你。',
+    shopT: '栖息地', shopOwned: '已放置', shopNote: '物品会放在固定位置。自由摆放稍后支持。',
+    items: ['睡莲', '竹丛', '温泉石', '木栈桥', '纸灯笼', '橘子树', '小船', '石桥'],
+    setT: '设置', planNone: '未订阅', planNoneSub: '随时可开始 7 天免费试用', planTrial: '试用 · 还剩 6 天', planTrialSub: '年付计划将于 9 月 2 日开始',
+    setManage: '管理', setLang: '语言', setGoal: '每日目标', setNotif: '通知',
+    setEvening: '晚间报告', setEveningSub: '每天 21:00', setMissed: '“有点想你”', setMissedSub: '最多每天一次，且离开两天后',
+    setAbout: '关于', setRestore: '恢复购买', setPrivacy: '隐私政策', setTerms: '服务条款', setReplay: '重看引导',
+    shareMeta: '图片 · 402 × 296', shareNote: '系统分享面板。第一阶段分享栖息地截图。', shareDone: '完成',
+    tabs: ['栖息地', '商店', '报告', '设置'],
+  },
+};
+
+const QUIZ_W = [
+  [{ capybara: 2 }, { otter: 2 }, { tortoise: 2 }, { owl: 2 }],
+  [{ tortoise: 1 }, { otter: 1 }, { owl: 2 }, { capybara: 1 }],
+  [{ capybara: 2 }, { otter: 1 }, { owl: 1 }, { tortoise: 2 }],
+];
+
+const fill = (tpl, vals) => String(tpl).replace(/\{(\w+)\}/g, (_, k) => vals[k]);
+
+const fmt = (min, lang) => {
+  const h = Math.floor(min / 60), m = min % 60;
+  if (lang === 'zh') return h ? (m ? h + '小时' + m + '分' : h + '小时') : m + '分';
+  const u = lang === 'en' ? 'm' : 'min';
+  return h ? (m ? h + 'h ' + m + u : h + 'h') : m + u;
+};
+
+class Component extends DCLogic {
+  state = {
+    screen: 'onb', onb: 0, tab: 'home', platform: 'ios', lang: 'pt',
+    species: 'capybara', q0: null, q1: null, q2: null,
+    leaves: 165, streak: 4, usage: 96, goal: 150, avg: 240,
+    petName: '', color: 0, owned: ['lily', 'dock'],
+    dur: 25, remaining: 0, running: false, confirming: false,
+    completedToday: 1, abandonedToday: false, daysAway: 0,
+    reward: 0, aborted: false, override: null,
+    trial: false, evening: true, missed: true, sharing: false,
+  };
+
+  componentWillUnmount() { clearInterval(this.t); }
+
+  resolveSpecies() {
+    const s = this.state, L = STR[s.lang], score = { capybara: 0, otter: 0, tortoise: 0, owl: 0 };
+    [0, 1, 2].forEach((i) => {
+      const idx = L.quizO[i].indexOf(s['q' + i]);
+      if (idx >= 0) { const w = QUIZ_W[i][idx]; Object.keys(w).forEach((k) => { score[k] += w[k]; }); }
+    });
+    return Object.keys(score).reduce((a, b) => (score[b] > score[a] ? b : a), 'capybara');
+  }
+
+  mood() {
+    const s = this.state;
+    if (s.override) return s.override;
+    if (s.abandonedToday || s.daysAway >= 2) return 'missing_you';
+    if (s.usage < s.goal && s.completedToday >= 1) return 'radiant';
+    if (s.usage < s.goal || s.completedToday >= 1) return 'content';
+    if (s.usage <= s.goal * 1.2) return 'neutral';
+    return 'sleepy';
+  }
+
+  activityFor(m) {
+    if (m === 'sleepy' || m === 'neutral') return 'nap';
+    if (m === 'radiant') return 'swim';
+    if (m === 'content') return 'graze';
+    return 'idle';
+  }
+
+  go(screen, tab) { this.setState({ screen, tab: tab || this.state.tab, confirming: false }); }
+
+  tick() {
+    const r = this.state.remaining - 60;
+    if (r <= 0) {
+      clearInterval(this.t);
+      const d = this.state.dur;
+      const reward = d === 25 ? 10 : d === 50 ? 25 : d === 90 ? 50 : Math.floor(d * 0.5);
+      this.setState((s) => ({
+        remaining: 0, running: false, screen: 'result', aborted: false, reward,
+        leaves: s.leaves + reward, completedToday: s.completedToday + 1,
+        streak: s.streak + (s.completedToday === 0 ? 1 : 0), override: null,
+      }));
+    } else this.setState({ remaining: r });
+  }
+
+  renderVals() {
+    const st = this.state;
+    const L = STR[st.lang] || STR.pt;
+    const lang = st.lang;
+    const sp = st.species || 'capybara';
+    const name = st.petName || PET_NAMES[sp];
+    const m = this.mood();
+    const act = this.activityFor(m);
+    const bonus = st.usage < st.goal;
+    const rem = st.remaining;
+    const total = st.dur * 60;
+    const pct = total ? Math.min(100, ((total - rem) / total) * 100) : 0;
+    const usagePct = Math.min(100, (st.usage / (st.goal * 1.35)) * 100);
+    const F = (min) => fmt(min, lang);
+
+    const swatchOf = (i, maxW, maxH) => {
+      const x0 = Math.min.apply(null, i.parts.map((p) => p.x));
+      const y0 = Math.min.apply(null, i.parts.map((p) => p.y));
+      const bw = Math.max.apply(null, i.parts.map((p) => p.x + p.w)) - x0;
+      const bh = Math.max.apply(null, i.parts.map((p) => p.y + p.h)) - y0;
+      const k = Math.min(maxW / bw, maxH / bh, 1);
+      return React.createElement('div', { style: { position: 'relative', width: bw, height: bh, transform: 'scale(' + k + ')', transformOrigin: 'center' } },
+        i.parts.map((p, n) => React.createElement('div', {
+          key: n,
+          style: { position: 'absolute', left: p.x - x0, top: p.y - y0, width: p.w, height: p.h, borderRadius: p.r, background: p.c },
+        })));
+    };
+    const nextItem = ITEMS.filter((i) => !st.owned.includes(i.id)).sort((a, b) => a.price - b.price)[0];
+    const unlockPct = nextItem ? Math.min(100, (st.leaves / nextItem.price) * 100) : 100;
+    const weekPattern = ['p', 'p', 'f', 'p', 'p', 't', 'e'];
+
+    const habitatItems = ITEMS.filter((i) => st.owned.includes(i.id)).flatMap((i) =>
+      i.parts.map((p, k) => React.createElement('div', {
+        key: i.id + k,
+        style: { position: 'absolute', left: p.x, top: p.y, width: p.w, height: p.h, borderRadius: p.r, background: p.c },
+      }))
+    );
+
+    const toggle = (on, fn) => React.createElement('div', {
+      onClick: fn,
+      style: {
+        width: 51, height: 31, borderRadius: 99, flex: 'none', cursor: 'pointer',
+        background: on ? '#5C8A4E' : 'rgba(62,47,35,.18)', padding: 2, boxSizing: 'border-box',
+        display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start', transition: 'background .18s',
+      },
+    }, React.createElement('div', { style: { width: 27, height: 27, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)' } }));
+
+    return {
+      t: L,
+      showDebug: this.props.showDebugPanel ?? true,
+      isIos: st.platform === 'ios',
+      frameName: st.platform === 'android' ? 'AndroidDevice' : 'IOSDevice',
+      platforms: [{ id: 'ios', label: 'iOS' }, { id: 'android', label: 'Android' }].map((p) => ({
+        label: p.label, on: st.platform === p.id, off: st.platform !== p.id, pick: () => this.setState({ platform: p.id }),
+      })),
+      langRows: LANGS.map((l) => ({
+        label: l.label, tag: l.tag, on: st.lang === l.id, off: st.lang !== l.id,
+        pick: () => this.setState({ lang: l.id, q0: null, q1: null, q2: null }),
+      })),
+      langChips: LANGS.map((l) => ({
+        label: l.tag, on: st.lang === l.id, off: st.lang !== l.id,
+        pick: () => this.setState({ lang: l.id, q0: null, q1: null, q2: null }),
+      })),
+
+      isOnb: st.screen === 'onb', isPaywall: st.screen === 'paywall', isHome: st.screen === 'home',
+      isSession: st.screen === 'session', isResult: st.screen === 'result',
+      isReport: st.screen === 'report', isShop: st.screen === 'shop', isProfile: st.screen === 'profile',
+      showTabs: ['home', 'report', 'shop', 'profile'].includes(st.screen),
+      onb0: st.onb === 0, onb1: st.onb === 1, onb2: st.onb === 2, onb3: st.onb === 3, onb4: st.onb === 4, onb5: st.onb === 5,
+      onbDots: [0, 1, 2, 3, 4, 5].map((i) => ({ on: i <= st.onb, off: i > st.onb })),
+
+      quiz: [0, 1, 2].map((i) => ({
+        label: L.quizQ[i],
+        opts: L.quizO[i].map((lbl) => ({
+          label: lbl, on: st['q' + i] === lbl, off: st['q' + i] !== lbl,
+          pick: () => this.setState({ ['q' + i]: lbl }),
+        })),
+      })),
+      quizDone: !!(st.q0 && st.q1 && st.q2),
+      quizOpen: !(st.q0 && st.q1 && st.q2),
+
+      species: sp, speciesTitle: L.species[sp][0], speciesDesc: L.species[sp][1],
+      petNameField: st.petName || PET_NAMES[sp], petName: name,
+      mood: m, activity: act,
+      moodCaption: fill(L.moodCap[m], { n: name }), moodSub: L.moodSub[m], moodLabel: L.moodLbl[m],
+      leaves: st.leaves, streak: st.streak, streakShort: st.streak,
+      streakLabel: fill(L.streak, { n: st.streak }),
+      goalLabel: F(st.goal), usageLabel: F(st.usage),
+      usageOfGoal: fill(L.usageOf, { u: F(st.usage), g: F(st.goal) }),
+      usageShort: bonus ? fill(L.usageLeft, { x: F(st.goal - st.usage) }) : fill(L.usageOver, { x: F(st.usage - st.goal) }),
+      usageVerdict: bonus ? fill(L.repUnder, { x: F(st.goal - st.usage) }) : fill(L.repOver, { x: F(st.usage - st.goal) }),
+      bonusLabel: bonus ? '+15' : '—',
+      completedToday: st.completedToday,
+      reportTitle: fill(L.repTitle, { n: name }),
+      habitatItems,
+      usageFill: React.createElement('div', { style: { width: usagePct + '%', height: '100%', borderRadius: 99, background: bonus ? '#5C8A4E' : '#EF8354', transition: 'width .4s' } }),
+      progressFill: React.createElement('div', { style: { width: pct + '%', height: '100%', borderRadius: 99, background: '#5C8A4E', transition: 'width .9s linear' } }),
+      toggleEvening: toggle(st.evening, () => this.setState({ evening: !st.evening })),
+      toggleMissed: toggle(st.missed, () => this.setState({ missed: !st.missed })),
+
+      timeLabel: String(Math.floor(rem / 60)).padStart(2, '0') + ':' + String(rem % 60).padStart(2, '0'),
+      sessionLabel: fill(L.sesLabel, { m: st.dur }),
+      activityLine: fill(L.activityLine, { n: name }),
+      confirming: st.confirming,
+      quitTitle: fill(L.quitTitle, { n: name }),
+
+      won: !st.aborted, lost: st.aborted,
+      rewardLabel: fill(L.reward, { k: st.reward }),
+      resultTitle: st.aborted ? fill(L.resLost, { n: name }) : fill(L.resWon, { m: st.dur }),
+      resultSub: st.aborted ? L.resLostSub : fill(L.resWonSub, { n: name }),
+
+      payTitle: fill(L.payT, { n: name }),
+      payCta: st.trial ? L.payCtaActive : L.payCta,
+      planTitle: st.trial ? L.planTrial : L.planNone,
+      planSub: st.trial ? L.planTrialSub : L.planNoneSub,
+
+      durations: DUR.map((d, i) => ({
+        label: i === 3 ? L.custom : (lang === 'zh' ? d + '分' : d + (lang === 'en' ? 'm' : 'min')),
+        on: st.dur === d, off: st.dur !== d, pick: () => this.setState({ dur: d }),
+      })),
+      avgOpts: [180, 240, 300, 360].map((a) => ({
+        label: F(a), on: st.avg === a, off: st.avg !== a,
+        pick: () => this.setState({ avg: a, goal: Math.round((a * 0.75) / 15) * 15 }),
+      })),
+      goalOpts: [90, 120, 150, 180].map((g) => ({ label: F(g), on: st.goal === g, off: st.goal !== g, pick: () => this.setState({ goal: g }) })),
+      moodBtns: ['radiant', 'content', 'neutral', 'sleepy', 'missing_you'].map((k) => ({
+        label: k, on: st.override === k, off: st.override !== k, pick: () => this.setState({ override: st.override === k ? null : k }),
+      })).concat([{ label: 'auto', on: !st.override, off: !!st.override, pick: () => this.setState({ override: null }) }]),
+      habBtns: ['empty', 'half', 'full'].map((k) => ({
+        label: 'habitat ' + k, on: st.owned.length === HABITATS[k].length, off: st.owned.length !== HABITATS[k].length,
+        pick: () => this.setState({ owned: HABITATS[k].slice() }),
+      })),
+      spBtns: ['capybara', 'otter', 'tortoise', 'owl'].map((k) => ({
+        label: k, on: sp === k, off: sp !== k, pick: () => this.setState({ species: k, petName: '' }),
+      })),
+
+      levelLabel: fill(L.level, { n: 1 + Math.floor(st.owned.length / 3) }),
+      week: weekPattern.map((k, i) => ({
+        d: L.days[i], present: k === 'p', frozen: k === 'f', today: k === 't', empty: k === 'e',
+      })),
+      quests: [
+        { label: L.quest1, reward: '+10', done: st.completedToday >= 1, open: st.completedToday < 1 },
+        { label: L.quest2, reward: '+15', done: bonus, open: !bonus },
+      ],
+      unlockLabel: nextItem ? fill(L.unlock, { x: Math.max(0, nextItem.price - st.leaves), i: L.items[ITEMS.indexOf(nextItem)] }) : L.unlockDone,
+      unlockFill: React.createElement('div', { style: { width: unlockPct + '%', height: '100%', borderRadius: 99, background: '#5C8A4E', transition: 'width .4s' } }),
+      nextSwatch: nextItem ? swatchOf(nextItem, 38, 34) : null,
+      goReport: () => this.go('report'), goShop: () => this.go('shop'),
+
+      shop: ITEMS.map((i, idx) => ({
+        name: L.items[idx], price: i.price,
+        owned: st.owned.includes(i.id),
+        canBuy: !st.owned.includes(i.id) && st.leaves >= i.price,
+        locked: !st.owned.includes(i.id) && st.leaves < i.price,
+        buy: () => this.setState((s2) => ({ leaves: s2.leaves - i.price, owned: s2.owned.concat(i.id) })),
+        swatch: swatchOf(i, 96, 58),
+      })),
+
+      tabs: L.tabs.map((label, i) => {
+        const id = ['home', 'shop', 'report', 'profile'][i];
+        return { label, on: st.screen === id, off: st.screen !== id, go: () => this.go(id) };
+      }),
+
+      nav: [
+        { n: '01', label: 'Onboarding', id: 'onb' }, { n: '02', label: 'Home / Habitat', id: 'home' },
+        { n: '03', label: 'Sessão de foco', id: 'session' }, { n: '04', label: 'Resultado da sessão', id: 'result' },
+        { n: '05', label: 'Relatório do dia', id: 'report' }, { n: '06', label: 'Loja / Inventário', id: 'shop' },
+        { n: '07', label: 'Ajustes', id: 'profile' }, { n: '08', label: 'Paywall', id: 'paywall' },
+      ].map((x) => ({
+        n: x.n, label: x.label,
+        go: () => { clearInterval(this.t); this.setState({ screen: x.id, onb: 0, running: false, confirming: false, remaining: x.id === 'session' ? st.dur * 60 : 0 }); },
+      })),
+
+      next: () => {
+        if (st.onb >= 5) return this.go('paywall');
+        if (st.onb === 2) return this.setState({ onb: 3, species: this.resolveSpecies(), petName: '' });
+        this.setState({ onb: st.onb + 1 });
+      },
+      setName: (e) => this.setState({ petName: e.target.value }),
+      setColor0: () => this.setState({ color: 0 }), setColor1: () => this.setState({ color: 1 }),
+      setColor2: () => this.setState({ color: 2 }), setColor3: () => this.setState({ color: 3 }),
+      col0: st.color === 0, col1: st.color === 1, col2: st.color === 2, col3: st.color === 3,
+
+      startTrial: () => { this.setState({ trial: true }); this.go('home'); },
+      pickAnnual: () => {}, pickMonthly: () => {},
+      goHome: () => this.go('home'), goPaywall: () => this.go('paywall'),
+      restart: () => this.setState({ screen: 'onb', onb: 0, q0: null, q1: null, q2: null }),
+      openShare: () => this.setState({ sharing: true }), closeShare: () => this.setState({ sharing: false }),
+      sharing: st.sharing,
+
+      startSession: () => {
+        clearInterval(this.t);
+        this.setState({ screen: 'session', remaining: st.dur * 60, running: true, confirming: false, override: null });
+        this.t = setInterval(() => this.tick(), 1000);
+      },
+      askQuit: () => this.setState({ confirming: true }),
+      resume: () => this.setState({ confirming: false }),
+      abandon: () => {
+        clearInterval(this.t);
+        this.setState({ screen: 'result', aborted: true, reward: 0, abandonedToday: true, running: false, confirming: false, override: null });
+      },
+
+      usageUp: () => this.setState({ usage: st.usage + 30, override: null }),
+      usageDown: () => this.setState({ usage: Math.max(0, st.usage - 30), override: null }),
+      nextDay: () => this.setState({ usage: 40, completedToday: 0, abandonedToday: false, daysAway: 0, streak: st.streak + 1, override: null }),
+      grantLeaves: () => this.setState({ leaves: st.leaves + 200 }),
+      resetAll: () => this.setState({ leaves: 165, owned: ['lily', 'dock'], usage: 96, streak: 4, completedToday: 1, abandonedToday: false, override: null, trial: false }),
+    };
+  }
+}
+</script>
+</body>
+</html>

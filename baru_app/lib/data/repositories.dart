@@ -6,14 +6,27 @@ import 'supabase_gateway.dart';
 
 /// Repositórios: local sempre; remoto por domínio se Supabase ready.
 class BaruRepositories {
-  BaruRepositories(this.store);
+  /// Os repositórios são injetáveis para que o teste possa simular falha de
+  /// rede por domínio — o caminho em que a sincronização mais erra.
+  BaruRepositories(
+    this.store, {
+    PetRepository? pet,
+    SessionRepository? sessions,
+    ShopRepository? shop,
+    SettingsRepository? settings,
+    TrialRepository? trial,
+  })  : pet = pet ?? LocalPetRepository(store),
+        sessions = sessions ?? LocalSessionRepository(store),
+        shop = shop ?? LocalShopRepository(store),
+        settings = settings ?? LocalSettingsRepository(store),
+        trial = trial ?? LocalTrialRepository(store);
 
   final SnapshotStore store;
-  late final PetRepository pet = LocalPetRepository(store);
-  late final SessionRepository sessions = LocalSessionRepository(store);
-  late final ShopRepository shop = LocalShopRepository(store);
-  late final SettingsRepository settings = LocalSettingsRepository(store);
-  late final TrialRepository trial = LocalTrialRepository(store);
+  final PetRepository pet;
+  final SessionRepository sessions;
+  final ShopRepository shop;
+  final SettingsRepository settings;
+  final TrialRepository trial;
 
   static BaruRepositories local() => BaruRepositories(PrefsSnapshotStore());
   static BaruRepositories memory() => BaruRepositories(MemorySnapshotStore());

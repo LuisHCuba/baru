@@ -35,15 +35,31 @@ class AuthGateState extends State<AuthGate> {
 
   bool get _needsAuth => BaruEnv.supabaseEnabled;
 
-  T get _t => T('pt');
+  /// Idioma da porta de entrada: o que já estiver salvo, senão o do aparelho.
+  /// O passo 1 do onboarding é escolher o idioma — mas o login vem antes dele.
+  String _lang = 'pt';
+
+  T get _t => T(_lang);
 
   @override
   void initState() {
     super.initState();
+    _lang = langFromLocale(
+      WidgetsBinding.instance.platformDispatcher.locale,
+    );
     _init();
   }
 
+  /// Prefere o idioma já escolhido pelo usuário neste aparelho.
+  Future<void> _adotaIdiomaSalvo() async {
+    final salvo = await widget.repos.loadSnapshot();
+    final lang = salvo?.lang;
+    if (lang == null || lang == _lang || !mounted) return;
+    setState(() => _lang = lang);
+  }
+
   Future<void> _init() async {
+    await _adotaIdiomaSalvo();
     if (!_needsAuth) {
       final snap = await _loadOfflineSnapshot();
       if (mounted) {
@@ -156,7 +172,7 @@ class AuthGateState extends State<AuthGate> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.data,
-        locale: localeFor('pt'),
+        locale: localeFor(_lang),
         home: AppFrame(
           child: Scaffold(
             backgroundColor: AppColors.cream,
@@ -182,7 +198,7 @@ class AuthGateState extends State<AuthGate> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.data,
-        locale: localeFor('pt'),
+        locale: localeFor(_lang),
         home: AppFrame(
           child: Scaffold(
             backgroundColor: AppColors.cream,
@@ -233,11 +249,11 @@ class AuthGateState extends State<AuthGate> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.data,
-        locale: localeFor('pt'),
+        locale: localeFor(_lang),
         scrollBehavior: const BaruScrollBehavior(),
         home: AppFrame(
           child: AuthScreen(
-            lang: 'pt',
+            lang: _lang,
             onAuthenticated: _onAuthenticated,
           ),
         ),

@@ -20,7 +20,7 @@ O agente **não aplica** schema remoto. Você aplica.
 
 2. **Auth Email** — Dashboard → Authentication → Providers → **Email** ON (desative “Confirm email” em dev, se quiser).
 
-3. **Conta de teste** — rode `.\supabase\seed_test_user.ps1` (signup + seed SQL) **ou** crie conta no app e aplique o SQL manualmente.
+3. **Conta de teste** — crie a conta pelo app (ou pelo Dashboard) e rode `supabase/seed.sql`.
 
 4. **Flutter** — copie `.env.example` → `.env`, preencha `SUPABASE_ANON_KEY`, depois:
 
@@ -86,45 +86,27 @@ supabase db push
 
 
 
-### Script automático
+### Seed
 
+O arquivo é `supabase/seed.sql`. Ele **não cria usuário**: crie a conta pelo app
+(ou pelo Dashboard → Authentication → Add user) e rode o seed depois.
 
-
-```powershell
-
-cd c:\LHCX\Baru\baru_app
-
-.\supabase\seed_test_user.ps1
+Local, junto com as migrations:
 
 ```
+supabase db reset
+```
 
+Remoto ou avulso: cole `supabase/seed.sql` no SQL Editor. Ele popula a conta
+mais antiga de `auth.users`; para escolher outra, defina o e-mail antes:
 
+```sql
+set local baru.seed_email = 'voce@exemplo.com';
+```
 
-O script:
-
-1. Lê `SUPABASE_URL` e `SUPABASE_ANON_KEY` do `.env` (você preenche; o agente não abre o arquivo).
-
-2. Cria o usuário via Auth signup API se ainda não existir.
-
-3. Grava senha temporária em `SEED_TEST_USER.local.md`.
-
-4. Executa `seed_test_user.sql` via Supabase CLI (`supabase db query`).
-
-
-
-Se o usuário **já existir** mas o seed SQL falhar com “Auth user not found”, o signup não rodou neste projeto — use o script ou crie a conta pelo app.
-
-
-
-### Manual
-
-
-
-1. Dashboard → Authentication → Add user **ou** signup no app Flutter.
-
-2. SQL Editor → colar e executar `supabase/seed_test_user.sql`.
-
-
+É idempotente — reexecutar só atualiza as mesmas linhas. Não rode contra
+produção com uma conta real: sobrescreve carteira, inventário, streak e
+assinatura.
 
 ### Dados incluídos no seed
 

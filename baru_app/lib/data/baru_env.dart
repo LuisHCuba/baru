@@ -46,9 +46,14 @@ class BaruEnv {
     return false;
   }
 
-  /// Credenciais reais ligam o banco. `SUPABASE_ENABLED=false` via dart-define desliga.
+  /// Credenciais reais ligam o banco; `SUPABASE_ENABLED=false` desliga.
+  ///
+  /// Lido do `--dart-define` **e** do `.env`, nessa ordem. Antes só o define
+  /// era consultado, então a linha no `.env` — que o próprio `.env.example`
+  /// sugere — não fazia nada.
   static bool get supabaseEnabled {
-    if (_defineEnabled == 'false') return false;
+    if (_defineEnabled.isNotEmpty) return _defineEnabled != 'false';
+    if (_dotenv('SUPABASE_ENABLED').toLowerCase() == 'false') return false;
     return !isPlaceholder;
   }
 }

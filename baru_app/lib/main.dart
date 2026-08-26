@@ -13,6 +13,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb) {
     tz.initializeTimeZones();
+    // O layout é desenhado para 412x892 em retrato; sem travar, girar o
+    // aparelho passava do breakpoint de largura e o app desenhava a moldura
+    // de desktop em volta de si mesmo.
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
   }
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

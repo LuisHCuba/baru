@@ -6,6 +6,9 @@ Espelho no Notion: [Baru — Go-Live / qualidade](https://app.notion.com/p/3c8c3
 
 Fonte de verdade de UI: `../Baru App v2.dc.html`. Conceito: **habitat, não timer**.
 
+> Este arquivo é o gate da **fase 1**. O retrato do agora, com os portões
+> executados e a fila do próximo turno, está em [`../docs/STATE.md`](../docs/STATE.md).
+
 ## Fidelidade ao design
 
 - [x] 8 telas (onboarding, habitat, sessão, resultado, relatório, loja, ajustes, paywall)
@@ -23,7 +26,9 @@ Fonte de verdade de UI: `../Baru App v2.dc.html`. Conceito: **habitat, não time
 ## Qualidade
 
 - [x] `flutter analyze` limpo (26/08/2026)
-- [x] `flutter test` 26/26 (26/08/2026 — inclui auth_gate + auth_errors)
+- [x] `flutter test` 151 passando + 1 pulado (26/08/2026, turno noturno)
+- [x] Suíte de integração contra Supabase real, 5/5 (`test/integration`)
+- [x] Migrations aplicam do zero em banco limpo (`supabase db reset`)
 - [x] Auditoria 8 telas (412×892, overflow, semantics; agente ea248b9e)
 - [x] Testes de estado + telas (`test/state_test.dart`, `test/quality_test.dart`)
 - [x] Semantics em botões, tabs e toggles
@@ -84,10 +89,10 @@ Nunca `service_role` no Flutter. Detalhes das 13 tabelas: `supabase/README.md`.
 - [ ] Confirmar `.env` aponta para o projeto `slqpuppkapiewjqvedtj` (ref canônico no repo)
 - [ ] Aplicar as 5 migrations no projeto Supabase (se ainda não aplicadas)
 - [ ] Habilitar provider **Email** no Dashboard
-- [ ] Criar conta de teste + seed (`.\supabase\seed_test_user.ps1` ou signup no app + `seed_test_user.sql`)
+- [ ] Criar conta de teste no app e rodar `supabase/seed.sql` (SQL Editor)
 
 ## Fora desta fase
 
-- [ ] Permissão nativa de uso (Android Usage Access / iOS Screen Time)
+- [x] Permissão nativa de uso implementada no Android (`usage_stats` + `PACKAGE_USAGE_STATS`); **não verificada em aparelho** neste turno. iOS depende de entitlement (BL-06)
 - [ ] Store IAP
 - [ ] Arte Rive original

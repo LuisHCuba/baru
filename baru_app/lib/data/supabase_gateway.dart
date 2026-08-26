@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models.dart';
 import 'app_snapshot.dart';
 import 'baru_env.dart';
 import 'remote_result.dart';
@@ -19,6 +22,7 @@ class BaruSupabase {
 
   bool _attached = false;
   bool _ready = false;
+  StreamSubscription<AuthState>? _authSub;
   String _deviceId = '';
   String? attachError;
 
@@ -62,6 +66,12 @@ class BaruSupabase {
       _attached = true;
       _deviceId = await _ensureDeviceId();
       await _refreshReady();
+      // Sessão expirada ou logout em outra aba não pode deixar `_ready` preso
+      // em true: o push seguiria tentando escrever sem credencial válida.
+      _authSub?.cancel();
+      _authSub = Supabase.instance.client.auth.onAuthStateChange.listen(
+        (_) => _refreshReady(),
+      );
     } catch (e, st) {
       attachError = e.toString();
       debugPrint('Baru: supabase indisponível ($e)\n$st');
@@ -114,6 +124,12 @@ class BaruSupabase {
   Future<void> signOut() async {
     await _client?.auth.signOut();
     _ready = false;
+  }
+
+  @visibleForTesting
+  Future<void> dispose() async {
+    await _authSub?.cancel();
+    _authSub = null;
   }
 
   Future<String> _ensureDeviceId() async {
@@ -176,24 +192,30 @@ class BaruSupabase {
     await client.from('baru_wallets').upsert(
           _codec.walletRow(userId: uid, s: snapshot),
         );
-    final owned = snapshot.owned.toSet();
-    final existing = await client
-        .from('baru_inventory_items')
-        .select('item_id')
-        .eq('user_id', uid);
-    for (final row in (existing as List).whereType<Map>()) {
-      final itemId = '${row['item_id']}';
-      if (!owned.contains(itemId)) {
-        await client
-            .from('baru_inventory_items')
-            .delete()
-            .eq('user_id', uid)
-            .eq('item_id', itemId);
-      }
+    // Só ids conhecidos da loja: o banco tem CHECK, mas um snapshot
+    // corrompido não deveria chegar a montar filtro com lixo dentro.
+    final conhecidos = shopItems.map((i) => i.id).toSet();
+    final owned = snapshot.owned.where(conhecidos.contains).toSet().toList();
+
+    // Some com o que saiu do inventário numa chamada só, em vez de ler tudo e
+    // apagar item a item.
+    final apaga =
+        client.from('baru_inventory_items').delete().eq('user_id', uid);
+    if (owned.isEmpty) {
+      await apaga;
+    } else {
+      final lista = owned.map((id) => '"$id"').join(',');
+      await apaga.not('item_id', 'in', '($lista)');
     }
+
     final rows = _codec.inventoryRows(userId: uid, s: snapshot);
     if (rows.isNotEmpty) {
-      await client.from('baru_inventory_items').upsert(rows);
+      // `ignoreDuplicates` preserva o `acquired_at` de quem já estava lá: sem
+      // isso, todo push reescrevia a data de compra com "agora" e embaralhava
+      // a ordem em que o habitat foi montado.
+      await client
+          .from('baru_inventory_items')
+          .upsert(rows, ignoreDuplicates: true);
     }
   }
 
@@ -240,11 +262,11 @@ class BaruSupabase {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    for (final session in sessions) {
-      await client.from('baru_sessions').upsert(
-            _codec.sessionRow(userId: uid, s: session),
-          );
-    }
+    if (sessions.isEmpty) return;
+    // Uma chamada, não uma por sessão: o snapshot guarda até 80.
+    await client.from('baru_sessions').upsert(
+          sessions.map((s) => _codec.sessionRow(userId: uid, s: s)).toList(),
+        );
   }
 
   Future<RemotePullResult> pullSnapshotResult() async {
@@ -271,34 +293,41 @@ class BaruSupabase {
         return RemotePullResult(snapshot: legacy);
       }
 
-      final pet = await _maybeSingle('baru_pets', uid);
-      final onboarding = await _maybeSingle('baru_onboarding_answers', uid);
-      final wallet = await _maybeSingle('baru_wallets', uid);
-      final settings = await _maybeSingle('baru_settings', uid);
-      final screenTime = await _maybeSingle('baru_screen_time', uid);
-      final streak = await _maybeSingle('baru_streaks', uid);
-      final daily = await _maybeSingle('baru_daily_progress', uid);
-      final subscription = await _maybeSingle('baru_subscriptions', uid);
+      // Onze consultas independentes: em série, o login esperava a soma de
+      // todas as latências. Nenhuma depende do resultado da outra.
+      final linhas = await Future.wait([
+        _maybeSingle('baru_pets', uid),
+        _maybeSingle('baru_onboarding_answers', uid),
+        _maybeSingle('baru_wallets', uid),
+        _maybeSingle('baru_settings', uid),
+        _maybeSingle('baru_screen_time', uid),
+        _maybeSingle('baru_streaks', uid),
+        _maybeSingle('baru_daily_progress', uid),
+        _maybeSingle('baru_subscriptions', uid),
+      ]);
+      final pet = linhas[0];
+      final onboarding = linhas[1];
+      final wallet = linhas[2];
+      final settings = linhas[3];
+      final screenTime = linhas[4];
+      final streak = linhas[5];
+      final daily = linhas[6];
+      final subscription = linhas[7];
 
-      final inventoryRaw = await client
-          .from('baru_inventory_items')
-          .select('item_id')
-          .eq('user_id', uid)
-          .order('acquired_at');
-      final inventory = (inventoryRaw as List)
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      final weekRaw = await client
-          .from('baru_week_calendar')
-          .select('day_index, kind')
-          .eq('user_id', uid)
-          .order('day_index');
-      final week = (weekRaw as List)
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      final listas = await Future.wait([
+        client
+            .from('baru_inventory_items')
+            .select('item_id')
+            .eq('user_id', uid)
+            .order('acquired_at'),
+        client
+            .from('baru_week_calendar')
+            .select('day_index, kind')
+            .eq('user_id', uid)
+            .order('day_index'),
+      ]);
+      final inventory = _mapas(listas[0]);
+      final week = _mapas(listas[1]);
 
       final sessions = await _pullSessions(uid);
 
@@ -344,6 +373,14 @@ class BaruSupabase {
         .map((e) => _codec.sessionFromRow(Map<String, dynamic>.from(e)))
         .toList();
     return _codec.fromLegacyProfile(profile, sessions);
+  }
+
+  List<Map<String, dynamic>> _mapas(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   Future<Map<String, dynamic>?> _maybeSingle(String table, String uid) async {

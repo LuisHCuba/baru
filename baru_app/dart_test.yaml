@@ -1,0 +1,5 @@
+tags:
+  integracao:
+    # Precisa de um Supabase acessível. Sem BARU_TEST_URL/BARU_TEST_KEY os
+    # casos se pulam sozinhos, então a suíte normal não depende de Docker.
+    skip: false

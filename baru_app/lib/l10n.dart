@@ -176,6 +176,8 @@ class T {
   String get notifEveningBody => s('notifEveningBody');
   String get notifMissedTitle => s('notifMissedTitle');
   String get notifMissedBody => s('notifMissedBody');
+  String get notifTrialTitle => s('notifTrialTitle');
+  String get notifTrialBody => s('notifTrialBody');
   String get setPet => s('setPet');
   String get setSpecies => s('setSpecies');
   String get authLoginTitle => s('authLoginTitle');
@@ -199,6 +201,7 @@ class T {
   String get authBootstrapLoading => s('authBootstrapLoading');
   String get syncFail => s('syncFail');
   String get bootstrapOffline => s('bootstrapOffline');
+  String get bonusUnderGoal => s('bonusUnderGoal');
 
 
   static const _weekdayLong = {
@@ -257,6 +260,7 @@ const _pt = <String, Object>{
   'authBootstrapLoading': 'Carregando seu habitat…',
   'syncFail': 'Não foi possível sincronizar. Seus dados ficam salvos neste aparelho.',
   'bootstrapOffline': 'Conta nova ou sem dados remotos — começando habitat vazio.',
+  'bonusUnderGoal': 'Ontem você fechou abaixo da meta. +{k} folhas para o habitat.',
   'langTitle': 'Em que idioma você quer falar com ele?',
   'langSub': 'Pode trocar depois nos ajustes.',
   'cont': 'Continuar',
@@ -447,6 +451,8 @@ const _pt = <String, Object>{
   'notifEveningBody': '{n} preparou o resumo do seu dia.',
   'notifMissedTitle': 'Senti sua falta',
   'notifMissedBody': '{n} sentiu sua falta hoje. Uma sessão curta já ajuda.',
+  'notifTrialTitle': 'Seu teste termina amanhã',
+  'notifTrialBody': 'Mais 24h de teste. {n} continua aqui de qualquer forma.',
   'setUsageHint': 'Pode mudar quando quiser. Nada sai do aparelho.',
   'animalNames': {
     'capybara': 'Capivara',
@@ -486,6 +492,12 @@ const _en = <String, Object>{
   'authPasswordShort': 'Password must be at least 6 characters.',
   'authPasswordMismatch': 'Passwords do not match.',
   'authSignOut': 'Sign out',
+  'authConfirmEmail': 'Account created. Confirm your email with the link we sent, then sign in.',
+  'authAttachFail': 'Could not reach the server. Check your connection or try again later.',
+  'authBootstrapLoading': 'Loading your habitat…',
+  'syncFail': 'Could not sync. Your data stays saved on this device.',
+  'bootstrapOffline': 'New account or no remote data — starting with an empty habitat.',
+  'bonusUnderGoal': 'You finished yesterday under your goal. +{k} leaves for the habitat.',
   'langTitle': 'Which language should we speak?',
   'langSub': 'You can change it later in settings.',
   'cont': 'Continue',
@@ -673,6 +685,8 @@ const _en = <String, Object>{
   'notifEveningBody': '{n} has your daily summary ready.',
   'notifMissedTitle': 'Missed you',
   'notifMissedBody': '{n} missed you today. A short focus session helps.',
+  'notifTrialTitle': 'Your trial ends tomorrow',
+  'notifTrialBody': '24h of trial left. {n} stays here either way.',
   'setUsageHint': 'Change any time. Nothing leaves your device.',
   'animalNames': {
     'capybara': 'Capybara',
@@ -712,6 +726,12 @@ const _es = <String, Object>{
   'authPasswordShort': 'La contraseña debe tener al menos 6 caracteres.',
   'authPasswordMismatch': 'Las contraseñas no coinciden.',
   'authSignOut': 'Cerrar sesión',
+  'authConfirmEmail': 'Cuenta creada. Confirma tu correo con el enlace que enviamos y luego entra.',
+  'authAttachFail': 'No se pudo conectar al servidor. Revisa tu conexión o inténtalo más tarde.',
+  'authBootstrapLoading': 'Cargando tu hábitat…',
+  'syncFail': 'No se pudo sincronizar. Tus datos quedan guardados en este dispositivo.',
+  'bootstrapOffline': 'Cuenta nueva o sin datos remotos: empezamos con un hábitat vacío.',
+  'bonusUnderGoal': 'Ayer cerraste por debajo de tu meta. +{k} hojas para el hábitat.',
   'langTitle': '¿En qué idioma quieres hablarle?',
   'langSub': 'Puedes cambiarlo después en ajustes.',
   'cont': 'Continuar',
@@ -901,6 +921,8 @@ const _es = <String, Object>{
   'notifEveningBody': '{n} tiene listo el resumen del día.',
   'notifMissedTitle': 'Te echo de menos',
   'notifMissedBody': '{n} te echó de menos hoy. Una sesión corta ayuda.',
+  'notifTrialTitle': 'Tu prueba termina mañana',
+  'notifTrialBody': 'Quedan 24 h de prueba. {n} sigue aquí de todos modos.',
   'setUsageHint': 'Puedes cambiarlo cuando quieras. Nada sale del dispositivo.',
   'animalNames': {
     'capybara': 'Carpincho',
@@ -940,6 +962,12 @@ const _zh = <String, Object>{
   'authPasswordShort': '密码至少需要 6 个字符。',
   'authPasswordMismatch': '两次密码不一致。',
   'authSignOut': '退出登录',
+  'authConfirmEmail': '账号已创建。请点击我们发送的链接确认邮箱，然后登录。',
+  'authAttachFail': '无法连接服务器。请检查网络或稍后重试。',
+  'authBootstrapLoading': '正在加载你的栖息地…',
+  'syncFail': '同步失败。你的数据已保存在本机。',
+  'bootstrapOffline': '新账号或没有云端数据 — 从空的栖息地开始。',
+  'bonusUnderGoal': '昨天你的用时低于目标。栖息地 +{k} 片叶子。',
   'langTitle': '你想用哪种语言？',
   'langSub': '之后可以在设置里更改。',
   'cont': '继续',
@@ -1094,6 +1122,8 @@ const _zh = <String, Object>{
   'notifEveningBody': '{n} 准备好了今天的总结。',
   'notifMissedTitle': '有点想你',
   'notifMissedBody': '{n} 今天有点想你。来一次短专注吧。',
+  'notifTrialTitle': '你的试用明天结束',
+  'notifTrialBody': '试用还剩 24 小时。无论如何，{n} 都在这里。',
   'setUsageHint': '随时可改。数据不离开你的设备。',
   'animalNames': {
     'capybara': '水豚',

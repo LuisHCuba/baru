@@ -53,7 +53,7 @@ class ResultScreen extends StatelessWidget {
                 const SizedBox(height: 22),
                 Text(
                   won
-                      ? t.fill(t.resWon, {'m': app.dur})
+                      ? t.fill(t.resWon, {'m': app.sessionMinutes})
                       : t.fill(t.resLost, {'n': app.displayName}),
                   textAlign: TextAlign.center,
                   maxLines: 3,

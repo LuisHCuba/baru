@@ -36,6 +36,9 @@ class AppSnapshot {
     required this.trialStartedAt,
     required this.lastOpenDate,
     required this.sessions,
+    this.sessionStartedAt,
+    this.sessionEndsAt,
+    this.sessionDur = 0,
   });
 
   final AppScreen screen;
@@ -70,6 +73,12 @@ class AppSnapshot {
   final DateTime lastOpenDate;
   final List<SessionRecord> sessions;
 
+  /// Sessão de foco em curso, em relógio de parede. Local por natureza: uma
+  /// sessão não continua em outro aparelho, então não vai para o Supabase.
+  final DateTime? sessionStartedAt;
+  final DateTime? sessionEndsAt;
+  final int sessionDur;
+
   Map<String, dynamic> toJson() => {
         'v': 1,
         'screen': screen.name,
@@ -103,6 +112,9 @@ class AppSnapshot {
         'trialStartedAt': trialStartedAt?.toIso8601String(),
         'lastOpenDate': dayString(lastOpenDate),
         'sessions': sessions.map((e) => e.toJson()).toList(),
+        'sessionStartedAt': sessionStartedAt?.toIso8601String(),
+        'sessionEndsAt': sessionEndsAt?.toIso8601String(),
+        'sessionDur': sessionDur,
       };
 
   factory AppSnapshot.fromJson(Map<String, dynamic> j) {
@@ -142,6 +154,10 @@ class AppSnapshot {
               .map((e) => SessionRecord.fromJson(Map<String, dynamic>.from(e)))
               .toList() ??
           const [],
+      sessionStartedAt:
+          DateTime.tryParse(j['sessionStartedAt'] as String? ?? ''),
+      sessionEndsAt: DateTime.tryParse(j['sessionEndsAt'] as String? ?? ''),
+      sessionDur: (j['sessionDur'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -204,8 +220,12 @@ class AppSnapshot {
     DateTime? trialStartedAt,
     DateTime? lastOpenDate,
     List<SessionRecord>? sessions,
+    DateTime? sessionStartedAt,
+    DateTime? sessionEndsAt,
+    int? sessionDur,
     bool clearQuiz = false,
     bool clearTrialStart = false,
+    bool clearSession = false,
   }) {
     return AppSnapshot(
       screen: screen ?? this.screen,
@@ -239,6 +259,11 @@ class AppSnapshot {
       trialStartedAt: clearTrialStart ? trialStartedAt : (trialStartedAt ?? this.trialStartedAt),
       lastOpenDate: lastOpenDate ?? this.lastOpenDate,
       sessions: sessions ?? this.sessions,
+      sessionStartedAt:
+          clearSession ? null : (sessionStartedAt ?? this.sessionStartedAt),
+      sessionEndsAt:
+          clearSession ? null : (sessionEndsAt ?? this.sessionEndsAt),
+      sessionDur: clearSession ? 0 : (sessionDur ?? this.sessionDur),
     );
   }
 

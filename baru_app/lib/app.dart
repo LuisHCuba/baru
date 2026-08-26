@@ -86,6 +86,8 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     if (s == AppLifecycleState.resumed) {
       state.applyCalendar(DateTime.now());
       state.syncPermissionsFromOs();
+      // Voltar do background é o momento em que a rede costuma ter voltado.
+      state.retryPendingSync();
     }
   }
 

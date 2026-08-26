@@ -85,6 +85,8 @@ class AppState extends ChangeNotifier {
   Timer? _timer;
   Timer? _saveTimer;
   int _syncMask = 0;
+  bool _persisting = false;
+  bool _syncFailNotified = false;
 
   static const _syncPet = 1;
   static const _syncShop = 2;
@@ -924,21 +926,65 @@ class AppState extends ChangeNotifier {
     _saveTimer = Timer(const Duration(milliseconds: 280), _persistNow);
   }
 
+  /// Reenvia o que ficou pendente de uma falha anterior.
+  ///
+  /// Chamado quando o app volta do background — é o momento em que a rede
+  /// costuma ter voltado.
+  void retryPendingSync() {
+    if (_syncMask == 0) return;
+    _schedulePersist();
+  }
+
   Future<void> _persistNow() async {
     final r = repos;
     if (r == null) return;
-    final snap = toSnapshot();
-    await r.saveSnapshot(snap);
-    final mask = _syncMask == 0 ? _syncAll : _syncMask;
-    _syncMask = 0;
+    if (_persisting) {
+      // Um envio anterior ainda está em voo. Correr junto duplicaria escrita
+      // e embaralharia a máscara; reagenda.
+      _schedulePersist();
+      return;
+    }
+    _persisting = true;
     try {
-      if (mask & _syncPet != 0) await r.pet.pushRemote();
-      if (mask & _syncShop != 0) await r.shop.pushRemote();
-      if (mask & _syncSettings != 0) await r.settings.pushRemote();
-      if (mask & _syncSession != 0) await r.sessions.pushRemote();
-      if (mask & _syncTrial != 0) await r.trial.pushRemote();
-    } catch (_) {
-      onSyncError?.call(t.syncFail);
+      await r.saveSnapshot(toSnapshot());
+
+      // Máscara vazia = origem desconhecida; empurra tudo por segurança.
+      final mask = _syncMask == 0 ? _syncAll : _syncMask;
+      _syncMask = 0;
+
+      var falhou = 0;
+      Future<void> envia(int bit, Future<void> Function() push) async {
+        if (mask & bit == 0) return;
+        try {
+          await push();
+        } catch (_) {
+          // Devolve a intenção à máscara: o domínio tenta de novo na próxima
+          // gravação, em vez de a mudança sumir sem ninguém saber.
+          falhou |= bit;
+        }
+      }
+
+      // Cada domínio é isolado: uma falha de rede no pet não pode impedir a
+      // loja, os ajustes, as sessões e o trial de subirem.
+      await envia(_syncPet, r.pet.pushRemote);
+      await envia(_syncShop, r.shop.pushRemote);
+      await envia(_syncSettings, r.settings.pushRemote);
+      await envia(_syncSession, r.sessions.pushRemote);
+      await envia(_syncTrial, r.trial.pushRemote);
+
+      if (falhou != 0) {
+        _syncMask |= falhou;
+        // Um aviso por episódio de falha, não um por gravação: offline, o
+        // debounce dispara a cada toque e viraria enxurrada de SnackBar.
+        if (!_syncFailNotified) {
+          _syncFailNotified = true;
+          onSyncError?.call(t.syncFail);
+        }
+      } else {
+        _syncFailNotified = false;
+      }
+    } finally {
+      _persisting = false;
     }
   }
 

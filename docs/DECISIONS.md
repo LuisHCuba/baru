@@ -157,3 +157,38 @@ definição.
 o debug mais fiel. Um teste antigo passava por coincidência (fixava
 `todayIndex = 2` e rodava numa quarta-feira); foi ancorado numa data fixa.
 Reverter: o commit é isolado.
+
+---
+
+## ADR-007 — Falha de sincronização devolve a intenção, não a descarta (2026-08-26)
+
+**Contexto.** `AppState._persistNow()` zerava `_syncMask` **antes** dos pushes e
+envolvia os cinco domínios num único `try` com `await` sequencial. Duas
+consequências: uma falha no primeiro domínio abortava os quatro seguintes, e a
+intenção de sincronizar era apagada — sem retry, sem fila, sem rastro. O dado
+sobrevivia no aparelho, mas o remoto ficava permanentemente atrasado até que
+aquele mesmo domínio mudasse de novo por acaso.
+
+**Decisão.** Cada domínio ganha `try/catch` próprio. O bit do domínio que
+falhou volta para `_syncMask`, então a próxima gravação tenta de novo.
+`retryPendingSync()` é chamado quando o app volta do background — o momento em
+que a rede costuma ter voltado. O aviso ao usuário sai **uma vez por episódio**
+de falha, não por gravação. Um flag `_persisting` impede que o debounce dispare
+um segundo envio com um anterior ainda em voo.
+
+**Alternativas descartadas.** (a) Fila persistida de operações pendentes: é a
+solução completa, mas exige modelar operação, ordem e deduplicação — grande
+demais para o ganho, dado que a máscara já expressa "este domínio está sujo".
+(b) Retry com backoff em timer próprio: mais código e mais bateria para cobrir
+um caso que a próxima interação do usuário já cobre. (c) `Future.wait` nos cinco
+domínios: paralelizaria, mas o gateway compartilha um único cliente e a ordem
+importa para o pet (que empurra loja junto).
+
+**Consequências.** Nenhuma mudança de esquema, nenhuma mudança de UI. A máscara
+vira a fila de pendências, o que é suficiente enquanto o app for
+offline-first-com-um-dispositivo. Se um dia houver multi-dispositivo com
+resolução de conflito, isto precisa virar fila de verdade. Reverter: o commit é
+isolado.
+
+Efeito colateral bem-vindo: `BaruRepositories` passou a aceitar repositórios
+injetados, o que finalmente permite testar falha de rede por domínio.

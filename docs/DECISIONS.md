@@ -117,3 +117,43 @@ chamada em `_advanceDay`.
 
 Nota relacionada: o "+10" da quest de sessão **não** é um crédito separado — é a
 recompensa da própria sessão de 25 min. Pagar de novo seria duplicar.
+
+---
+
+## ADR-006 — Calendário derivado da data, não de contadores (2026-08-26)
+
+**Contexto.** Dois bugs medidos na auditoria, ambos com a mesma raiz — o estado
+do calendário era mantido por incremento em vez de ser derivado da data:
+
+1. `_advanceDay` fazia `todayIndex = (todayIndex + 1) % 7` e sobrescrevia só o
+   dia corrente. Ao passar de domingo para segunda, os índices 1..6 mantinham as
+   marcas da semana anterior. Medido: depois de 7 dias com sessão, a faixa ficava
+   `[today, present, present, present, present, present, present]` — dias que
+   ainda não aconteceram apareciam como presentes.
+2. `applyCalendar` reconstrói no máximo 21 dias. Numa ausência de 30 dias o
+   índice avançava 21 (≡ 0 mod 7) enquanto a data avançava 30, e o ponto de
+   "hoje" passava a apontar o dia errado. Medido: dia real quarta (2),
+   `todayIndex` = 0.
+
+**Decisão.** Os índices da faixa passam a sair da data: `_advanceDay(de:, para:)`
+usa `weekdayIndex()` das duas pontas. Segunda-feira zera a faixa e recarrega o
+congelamento. Ausência acima do teto realinha a faixa com a data real em vez de
+reconstruir. `_alinhaHoje()` corrige um snapshot que chegue com índice defasado
+— de outro aparelho, outro fuso ou versão antiga.
+
+`daysAway` também deixa de ser contador e passa a ser fato de data:
+`hoje - lastOpenDate - 1`. Isso alinha o app ao contrato §3, que define
+`missing_you` como "≥2 dias sem abrir": antes o congelamento zerava `daysAway`,
+então `missing_you` só aparecia no terceiro dia.
+
+**Alternativas descartadas.** (a) Guardar a data de início da semana e comparar:
+mais estado para sincronizar sem ganho — o dia da semana já é derivável.
+(b) Zerar a faixa por ISO week em vez de "índice do próximo dia é 0": equivalente
+para semanas que começam na segunda, e a semana do Baru começa na segunda por
+definição.
+
+**Consequências.** `_advanceDay` passa a exigir as duas datas, então o
+`nextDay()` do painel de debug avança `lastOpenDate` junto — o que também torna
+o debug mais fiel. Um teste antigo passava por coincidência (fixava
+`todayIndex = 2` e rodava numa quarta-feira); foi ancorado numa data fixa.
+Reverter: o commit é isolado.

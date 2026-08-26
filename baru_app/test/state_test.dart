@@ -132,14 +132,19 @@ void main() {
   });
 
   test('dia sem sessão gasta freeze e mantém streak', () {
+    // Data fixa: a faixa é indexada pelo dia da semana, então um teste
+    // ancorado em "hoje" passaria ou falharia conforme o dia em que roda.
+    final quarta = DateTime(2026, 8, 26);
     final s = AppState();
     s.usageAccess = true;
     s.completedToday = 0;
     s.streak = 3;
     s.freezesLeft = 1;
-    s.todayIndex = 2;
+    s.lastOpenDate = quarta;
+    s.todayIndex = weekdayIndex(quarta);
+    s.week = freshWeek(quarta);
     s.nextDay();
-    expect(s.week[2], WeekDayKind.frozen);
+    expect(s.week[weekdayIndex(quarta)], WeekDayKind.frozen);
     expect(s.freezesLeft, 0);
     expect(s.streak, 4);
   });

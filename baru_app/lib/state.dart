@@ -661,40 +661,63 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Debug: simula amanhã chegando com o usuário ausente.
   void nextDay() {
-    _advanceDay(debugUsage: true);
+    final de = dateOnly(lastOpenDate);
+    final para = de.add(const Duration(days: 1));
+    _advanceDay(de: de, para: para, debugUsage: true);
+    lastOpenDate = para;
+    if (completedToday == 0) daysAway += 1;
     _markSync(_syncSession);
     notifyListeners();
   }
 
-  /// Fecha o dia corrente e abre o seguinte.
+  /// Fecha o dia [de] e abre o dia [para].
+  ///
+  /// Os índices da semana saem da **data**, não de um contador incrementado:
+  /// um contador desanda em relação ao calendário na primeira ausência longa,
+  /// e o ponto de "hoje" passa a apontar o dia errado.
   ///
   /// [creditBonus] só vale para o dia que tem medição real de tempo de tela —
   /// o primeiro de um avanço. Nos dias seguintes de uma ausência longa o
   /// `usage` é sintético (zero), e pagar bônus por eles seria inventar dado.
-  void _advanceDay({required bool debugUsage, bool creditBonus = true}) {
+  void _advanceDay({
+    required DateTime de,
+    required DateTime para,
+    required bool debugUsage,
+    bool creditBonus = true,
+  }) {
     if (creditBonus && _closedUnderGoal) {
       leaves += underGoalBonus;
       pendingUnderGoalBonus += 1;
       _markSync(_syncShop);
     }
+
+    final iDe = weekdayIndex(de);
+    final iPara = weekdayIndex(para);
+
     week = List<WeekDayKind>.from(week);
     if (completedToday >= 1) {
-      week[todayIndex] = WeekDayKind.present;
-      daysAway = 0;
+      week[iDe] = WeekDayKind.present;
     } else if (freezesLeft > 0) {
-      week[todayIndex] = WeekDayKind.frozen;
+      // O congelamento absorve a falta: a presença continua contando.
+      week[iDe] = WeekDayKind.frozen;
       freezesLeft -= 1;
-      daysAway = 0;
       streak += 1;
     } else {
-      week[todayIndex] = WeekDayKind.empty;
-      daysAway += 1;
+      week[iDe] = WeekDayKind.empty;
       streak = 0;
     }
-    todayIndex = (todayIndex + 1) % 7;
-    if (todayIndex == 0) freezesLeft = 1;
-    week[todayIndex] = WeekDayKind.today;
+
+    // Segunda-feira abre uma semana nova: a faixa mostra "esta semana", então
+    // as marcas da semana anterior não podem sobreviver à virada.
+    if (iPara == 0) {
+      week = List<WeekDayKind>.filled(7, WeekDayKind.empty);
+      freezesLeft = 1;
+    }
+
+    todayIndex = iPara;
+    week[iPara] = WeekDayKind.today;
     usage = debugUsage && usageAccess ? 40 : 0;
     completedToday = 0;
     abandonedToday = false;
@@ -709,21 +732,67 @@ class AppState extends ChangeNotifier {
   bool get _closedUnderGoal =>
       companionshipStarted && usageAccess && usage < goal;
 
+  /// Teto de dias reconstruídos um a um num único avanço. Acima disso não há
+  /// o que reconstruir com fidelidade — o calendário é realinhado à data real.
+  static const maxDiasReconstruidos = 21;
+
   void applyCalendar(DateTime now, {bool persist = true}) {
     final today = dateOnly(now);
-    var cursor = dateOnly(lastOpenDate);
+    final desde = dateOnly(lastOpenDate);
+    var cursor = desde;
     var steps = 0;
-    while (cursor.isBefore(today) && steps < 21) {
-      _advanceDay(debugUsage: false, creditBonus: steps == 0);
-      cursor = cursor.add(const Duration(days: 1));
+    while (cursor.isBefore(today) && steps < maxDiasReconstruidos) {
+      final proximo = cursor.add(const Duration(days: 1));
+      _advanceDay(
+        de: cursor,
+        para: proximo,
+        debugUsage: false,
+        creditBonus: steps == 0,
+      );
+      cursor = proximo;
       steps += 1;
     }
+
+    if (cursor.isBefore(today)) {
+      // Ausência maior que o teto: reconstruir dia a dia não agrega nada.
+      // Realinha a faixa com a data real em vez de deixar o índice à deriva.
+      week = List<WeekDayKind>.filled(7, WeekDayKind.empty);
+      freezesLeft = 1;
+      streak = 0;
+      todayIndex = weekdayIndex(today);
+      week[todayIndex] = WeekDayKind.today;
+      steps += 1;
+    } else {
+      _alinhaHoje(today);
+    }
+
+    // "Dias sem abrir" é um fato da data, não um contador que se acumula.
+    daysAway = today.difference(desde).inDays - 1;
+    if (daysAway < 0) daysAway = 0;
+
     lastOpenDate = today;
     if (persist && steps > 0) {
       _markSync(_syncSession);
       flushPendingNotices();
       notifyListeners();
     }
+  }
+
+  /// Garante que o ponto de "hoje" caia no dia da semana real.
+  ///
+  /// Um snapshot pode chegar com o índice defasado — vindo de outro aparelho,
+  /// de outro fuso, ou de uma versão antiga que incrementava o contador em vez
+  /// de derivá-lo da data. Sem isto, a faixa da semana marca o dia errado e o
+  /// erro só cresce.
+  void _alinhaHoje(DateTime today) {
+    final idx = weekdayIndex(today);
+    if (todayIndex == idx && week[idx] == WeekDayKind.today) return;
+    week = List<WeekDayKind>.from(week);
+    if (week[todayIndex] == WeekDayKind.today) {
+      week[todayIndex] = WeekDayKind.empty;
+    }
+    todayIndex = idx;
+    week[idx] = WeekDayKind.today;
   }
 
   /// Mostra os avisos que ficaram pendentes de um avanço de calendário.

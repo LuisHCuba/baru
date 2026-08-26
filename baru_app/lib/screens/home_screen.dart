@@ -188,7 +188,7 @@ class HomeScreen extends StatelessWidget {
               SectionLabel(t.questsT),
               const SizedBox(height: 6),
               _quest(t.quest1, '+10', app.completedToday >= 1),
-              _quest(t.quest2, '+15', app.underGoalQuestDone),
+              _quest(t.quest2, '+${AppState.underGoalBonus}', app.underGoalQuestDone),
             ],
           ),
         ),

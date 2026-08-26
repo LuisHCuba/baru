@@ -90,3 +90,30 @@ indexável; limpar exigiria reescrever histórico, proibido pelo §4.
 **Consequências.** O README público perde a informação de qual conta usar; quem
 tem o repo clonado localmente continua com o arquivo local. Reverter: não deve
 ser revertido.
+
+---
+
+## ADR-005 — Bônus de meta é pago na virada do dia, não durante o dia (2026-08-26)
+
+**Contexto.** O contrato de produto §5 prevê "+15 por fechar o dia abaixo da
+meta". A quest na home e a linha "Bônus por ficar abaixo" no relatório já
+exibiam +15, mas nenhum código creditava folhas: a promessa era decorativa.
+
+**Decisão.** Creditar em `_advanceDay`, no fechamento do dia, quando
+`companionshipStarted && usageAccess && usage < goal`. O aviso ao usuário sai no
+primeiro frame seguinte, via `flushPendingNotices()`.
+
+**Alternativas descartadas.** (a) Creditar assim que a condição fosse verdadeira
+durante o dia: o tempo de tela começa em zero, então o bônus cairia todo dia de
+manhã e não significaria nada. (b) Creditar durante o dia e estornar se o uso
+passasse da meta: proibido pelo §1 do contrato — o usuário nunca perde nada.
+
+**Consequências.** O bônus chega no dia seguinte, o que dá ao relatório da noite
+um motivo para existir. Dias de ausência longa não pagam: só o primeiro
+`_advanceDay` de um avanço recebe `creditBonus`, porque os seguintes têm `usage`
+sintético em zero e pagar por eles seria inventar medição. Sem permissão de uso
+não há bônus — não há o que medir, e o app não finge. Reverter: remover a
+chamada em `_advanceDay`.
+
+Nota relacionada: o "+10" da quest de sessão **não** é um crédito separado — é a
+recompensa da própria sessão de 25 min. Pagar de novo seria duplicar.

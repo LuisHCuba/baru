@@ -199,6 +199,7 @@ class T {
   String get authBootstrapLoading => s('authBootstrapLoading');
   String get syncFail => s('syncFail');
   String get bootstrapOffline => s('bootstrapOffline');
+  String get bonusUnderGoal => s('bonusUnderGoal');
 
 
   static const _weekdayLong = {
@@ -257,6 +258,7 @@ const _pt = <String, Object>{
   'authBootstrapLoading': 'Carregando seu habitat…',
   'syncFail': 'Não foi possível sincronizar. Seus dados ficam salvos neste aparelho.',
   'bootstrapOffline': 'Conta nova ou sem dados remotos — começando habitat vazio.',
+  'bonusUnderGoal': 'Ontem você fechou abaixo da meta. +{k} folhas para o habitat.',
   'langTitle': 'Em que idioma você quer falar com ele?',
   'langSub': 'Pode trocar depois nos ajustes.',
   'cont': 'Continuar',
@@ -491,6 +493,7 @@ const _en = <String, Object>{
   'authBootstrapLoading': 'Loading your habitat…',
   'syncFail': 'Could not sync. Your data stays saved on this device.',
   'bootstrapOffline': 'New account or no remote data — starting with an empty habitat.',
+  'bonusUnderGoal': 'You finished yesterday under your goal. +{k} leaves for the habitat.',
   'langTitle': 'Which language should we speak?',
   'langSub': 'You can change it later in settings.',
   'cont': 'Continue',
@@ -722,6 +725,7 @@ const _es = <String, Object>{
   'authBootstrapLoading': 'Cargando tu hábitat…',
   'syncFail': 'No se pudo sincronizar. Tus datos quedan guardados en este dispositivo.',
   'bootstrapOffline': 'Cuenta nueva o sin datos remotos: empezamos con un hábitat vacío.',
+  'bonusUnderGoal': 'Ayer cerraste por debajo de tu meta. +{k} hojas para el hábitat.',
   'langTitle': '¿En qué idioma quieres hablarle?',
   'langSub': 'Puedes cambiarlo después en ajustes.',
   'cont': 'Continuar',
@@ -955,6 +959,7 @@ const _zh = <String, Object>{
   'authBootstrapLoading': '正在加载你的栖息地…',
   'syncFail': '同步失败。你的数据已保存在本机。',
   'bootstrapOffline': '新账号或没有云端数据 — 从空的栖息地开始。',
+  'bonusUnderGoal': '昨天你的用时低于目标。栖息地 +{k} 片叶子。',
   'langTitle': '你想用哪种语言？',
   'langSub': '之后可以在设置里更改。',
   'cont': '继续',

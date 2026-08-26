@@ -122,7 +122,11 @@ class ReportScreen extends StatelessWidget {
         const SizedBox(height: 20),
         _row(t.repSessions, '${app.completedToday}'),
         Divider(height: 1, color: AppColors.inkA(0.08)),
-        _row(t.repBonus, app.underGoalQuestDone ? '+15' : '—', color: AppColors.orange),
+        _row(
+          t.repBonus,
+          app.underGoalQuestDone ? '+${AppState.underGoalBonus}' : '—',
+          color: AppColors.orange,
+        ),
         Divider(height: 1, color: AppColors.inkA(0.08)),
         _row(t.repPresent, app.streakText),
         Padding(

@@ -35,6 +35,13 @@ class AppState extends ChangeNotifier {
   bool _pendingOnbUsageAdvance = false;
   bool _usageTogglePending = false;
 
+  /// Bônus de +15 folhas por fechar o dia abaixo da meta (contrato de produto §5).
+  static const underGoalBonus = 15;
+
+  /// Bônus já creditados que ainda não viraram aviso na tela. Não vai para o
+  /// snapshot: as folhas já estão em [leaves], isto é só o recado pendente.
+  int pendingUnderGoalBonus = 0;
+
   AppScreen screen = AppScreen.onb;
   int onb = 0;
   String lang = 'pt';
@@ -660,7 +667,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _advanceDay({required bool debugUsage}) {
+  /// Fecha o dia corrente e abre o seguinte.
+  ///
+  /// [creditBonus] só vale para o dia que tem medição real de tempo de tela —
+  /// o primeiro de um avanço. Nos dias seguintes de uma ausência longa o
+  /// `usage` é sintético (zero), e pagar bônus por eles seria inventar dado.
+  void _advanceDay({required bool debugUsage, bool creditBonus = true}) {
+    if (creditBonus && _closedUnderGoal) {
+      leaves += underGoalBonus;
+      pendingUnderGoalBonus += 1;
+      _markSync(_syncShop);
+    }
     week = List<WeekDayKind>.from(week);
     if (completedToday >= 1) {
       week[todayIndex] = WeekDayKind.present;
@@ -684,20 +701,40 @@ class AppState extends ChangeNotifier {
     overrideMood = null;
   }
 
+  /// O dia que está fechando terminou abaixo da meta?
+  ///
+  /// Exige permissão de uso: sem ela não há tempo de tela para comparar, e o
+  /// app não inventa um bônus. Exige também companheirismo começado, para o
+  /// bônus não cair antes do onboarding terminar.
+  bool get _closedUnderGoal =>
+      companionshipStarted && usageAccess && usage < goal;
+
   void applyCalendar(DateTime now, {bool persist = true}) {
     final today = dateOnly(now);
     var cursor = dateOnly(lastOpenDate);
     var steps = 0;
     while (cursor.isBefore(today) && steps < 21) {
-      _advanceDay(debugUsage: false);
+      _advanceDay(debugUsage: false, creditBonus: steps == 0);
       cursor = cursor.add(const Duration(days: 1));
       steps += 1;
     }
     lastOpenDate = today;
     if (persist && steps > 0) {
       _markSync(_syncSession);
+      flushPendingNotices();
       notifyListeners();
     }
+  }
+
+  /// Mostra os avisos que ficaram pendentes de um avanço de calendário.
+  ///
+  /// Existe porque o primeiro avanço acontece no construtor, antes de haver
+  /// árvore de widgets para receber um SnackBar; `BaruApp` chama isto no
+  /// primeiro frame.
+  void flushPendingNotices() {
+    if (pendingUnderGoalBonus <= 0) return;
+    pendingUnderGoalBonus = 0;
+    onUserMessage?.call(t.fill(t.bonusUnderGoal, {'k': underGoalBonus}));
   }
 
   void grantLeaves() {

@@ -47,16 +47,19 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     state.initPlatformServices();
-    if (widget.bootstrapNotice != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.bootstrapNotice != null) {
         _scaffoldKey.currentState?.showSnackBar(
           SnackBar(
             content: Text(widget.bootstrapNotice!),
             behavior: SnackBarBehavior.floating,
           ),
         );
-      });
-    }
+      }
+      // O primeiro avanço de calendário acontece no construtor do AppState,
+      // antes de existir árvore para receber um SnackBar.
+      state.flushPendingNotices();
+    });
   }
 
   void _onSyncError(String message) {

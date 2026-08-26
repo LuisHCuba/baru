@@ -293,34 +293,41 @@ class BaruSupabase {
         return RemotePullResult(snapshot: legacy);
       }
 
-      final pet = await _maybeSingle('baru_pets', uid);
-      final onboarding = await _maybeSingle('baru_onboarding_answers', uid);
-      final wallet = await _maybeSingle('baru_wallets', uid);
-      final settings = await _maybeSingle('baru_settings', uid);
-      final screenTime = await _maybeSingle('baru_screen_time', uid);
-      final streak = await _maybeSingle('baru_streaks', uid);
-      final daily = await _maybeSingle('baru_daily_progress', uid);
-      final subscription = await _maybeSingle('baru_subscriptions', uid);
+      // Onze consultas independentes: em série, o login esperava a soma de
+      // todas as latências. Nenhuma depende do resultado da outra.
+      final linhas = await Future.wait([
+        _maybeSingle('baru_pets', uid),
+        _maybeSingle('baru_onboarding_answers', uid),
+        _maybeSingle('baru_wallets', uid),
+        _maybeSingle('baru_settings', uid),
+        _maybeSingle('baru_screen_time', uid),
+        _maybeSingle('baru_streaks', uid),
+        _maybeSingle('baru_daily_progress', uid),
+        _maybeSingle('baru_subscriptions', uid),
+      ]);
+      final pet = linhas[0];
+      final onboarding = linhas[1];
+      final wallet = linhas[2];
+      final settings = linhas[3];
+      final screenTime = linhas[4];
+      final streak = linhas[5];
+      final daily = linhas[6];
+      final subscription = linhas[7];
 
-      final inventoryRaw = await client
-          .from('baru_inventory_items')
-          .select('item_id')
-          .eq('user_id', uid)
-          .order('acquired_at');
-      final inventory = (inventoryRaw as List)
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      final weekRaw = await client
-          .from('baru_week_calendar')
-          .select('day_index, kind')
-          .eq('user_id', uid)
-          .order('day_index');
-      final week = (weekRaw as List)
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      final listas = await Future.wait([
+        client
+            .from('baru_inventory_items')
+            .select('item_id')
+            .eq('user_id', uid)
+            .order('acquired_at'),
+        client
+            .from('baru_week_calendar')
+            .select('day_index, kind')
+            .eq('user_id', uid)
+            .order('day_index'),
+      ]);
+      final inventory = _mapas(listas[0]);
+      final week = _mapas(listas[1]);
 
       final sessions = await _pullSessions(uid);
 
@@ -366,6 +373,14 @@ class BaruSupabase {
         .map((e) => _codec.sessionFromRow(Map<String, dynamic>.from(e)))
         .toList();
     return _codec.fromLegacyProfile(profile, sessions);
+  }
+
+  List<Map<String, dynamic>> _mapas(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   Future<Map<String, dynamic>?> _maybeSingle(String table, String uid) async {

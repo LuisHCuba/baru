@@ -33,7 +33,8 @@ Legenda de esforço: **P** ≤30 min · **M** 30–90 min · **G** > 90 min (que
 | B-14 | Nunito empacotada no app | Médio — offline-first dependendo de rede para a fonte | M | Baixo | Fonte no pubspec; `GoogleFonts` só como fallback |
 | B-15 | Assinatura de release do Android | Bloqueia publicação | M | Alto | Keystore fora do repo, `key.properties`, build release assinado (ver BL-05) |
 | B-16 | Debug panel não pode sincronizar | Médio — `resetAll`/`setHabitat` empurram estado falso para a conta | P | Baixo | Ações de debug não disparam push remoto |
-| B-17 | Relatório usa o histórico de sessões | Médio — 80 sessões guardadas e nunca lidas | M | Baixo | Relatório mostra série real, não só `completedToday` |
+| ~~B-17~~ | ~~Relatório usa o histórico de sessões~~ — **descartado**: a tela de relatório do design tem exatamente as chaves já implementadas (`repUsed`, `repGoal`, `repSessions`, `repBonus`, `repPresent`, `repFreeze`), sem histórico nem gráfico. Construir seria feature fora do MVP, que o §3 proíbe enquanto o core não fechou. O histórico continua existindo para o registro remoto e para quando o produto pedir a tela. | — | — | — | — |
+| B-24 | `SessionRecord._legacyId` pode colidir entre usuários | Médio — descoberto pelo teste de integração | P | Baixo | Id de sessão legado deixa de ser derivado só de (data, duração, recompensa, concluída) |
 | B-18 | `_ready` do gateway reage à expiração de sessão | Médio — push tentado com sessão morta | P | Baixo | `onAuthStateChange` atualiza `_ready` |
 | B-19 | Chip "Livre" abre duração customizada | Baixo — hoje é 45 min fixo com rótulo enganoso | M | Baixo | Seletor real ou rótulo honesto |
 | B-20 | Scripts de seed citados e inexistentes | Baixo — README promete arquivos que não estão no repo | P | Baixo | Scripts existem ou as menções somem |

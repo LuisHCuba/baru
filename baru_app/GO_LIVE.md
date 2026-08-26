@@ -84,7 +84,7 @@ Nunca `service_role` no Flutter. Detalhes das 13 tabelas: `supabase/README.md`.
 - [ ] Confirmar `.env` aponta para o projeto `slqpuppkapiewjqvedtj` (ref canônico no repo)
 - [ ] Aplicar as 5 migrations no projeto Supabase (se ainda não aplicadas)
 - [ ] Habilitar provider **Email** no Dashboard
-- [ ] Criar conta de teste + seed (`.\supabase\seed_test_user.ps1` ou signup no app + `seed_test_user.sql`)
+- [ ] Criar conta de teste no app e rodar `supabase/seed.sql` (SQL Editor)
 
 ## Fora desta fase
 

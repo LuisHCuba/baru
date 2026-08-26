@@ -25,7 +25,11 @@ class AppState extends ChangeNotifier {
     if (snapshot != null) {
       _applySnapshot(snapshot);
     }
-    applyCalendar(DateTime.now(), persist: false);
+    final agora = DateTime.now();
+    // Antes do calendário: uma sessão que terminou ontem tem de contar como
+    // presença de ontem, e é o avanço de calendário que fecha aquele dia.
+    _restauraSessao(agora);
+    applyCalendar(agora, persist: false);
   }
 
   final BaruRepositories? repos;
@@ -79,6 +83,21 @@ class AppState extends ChangeNotifier {
   int todayIndex = weekdayIndex();
   int freezesLeft = 1;
   DateTime? trialStartedAt;
+
+  /// Início e fim da sessão em curso, em relógio de parede. `null` = sem
+  /// sessão. Persistidos: são o que permite retomar depois de o app ser morto.
+  ///
+  /// Guardar as duas pontas — em vez de só o fim — deixa a duração real da
+  /// sessão explícita no dado. Sem isso, o restante exibido teria de ser
+  /// deduzido a partir da flag de debug 60×, e uma sessão gravada com a flag
+  /// num estado e lida com ela noutro sairia com o contador errado.
+  DateTime? sessionStartedAt;
+  DateTime? sessionEndsAt;
+
+  /// Duração escolhida quando a sessão começou. Guardada à parte de [dur]
+  /// para que mudar o chip de duração não altere uma sessão já em andamento.
+  int sessionDur = 0;
+
   DateTime lastOpenDate = dateOnly(DateTime.now());
   List<SessionRecord> sessions = [];
 
@@ -414,6 +433,9 @@ class AppState extends ChangeNotifier {
     overrideMood = null;
     sharing = false;
     sessions = [];
+    sessionStartedAt = null;
+    sessionEndsAt = null;
+    sessionDur = 0;
     lastOpenDate = dateOnly(DateTime.now());
     _markSync(_syncShop | _syncSession);
   }
@@ -555,41 +577,138 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Duração da sessão que está na tela: a que ela começou, não a que está
+  /// selecionada no chip agora.
+  int get sessionMinutes => sessionDur > 0 ? sessionDur : dur;
+
+  /// Quantos segundos de relógio a sessão realmente ocupa.
+  ///
+  /// Em produção é a duração escolhida. No modo debug de 60×, uma sessão de
+  /// 25 minutos ocupa 25 segundos de relógio — a compressão vive aqui, e não
+  /// no passo do timer, para que o resto do código lide sempre com o relógio
+  /// de parede.
+  int _segundosDeRelogio(int minutos) => debugFast ? minutos : minutos * 60;
+
   void startSession() {
     _timer?.cancel();
+    sessionDur = dur;
+    sessionStartedAt = DateTime.now();
+    sessionEndsAt = sessionStartedAt!.add(
+      Duration(seconds: _segundosDeRelogio(dur)),
+    );
     remaining = dur * 60;
     running = true;
     confirming = false;
     overrideMood = null;
     screen = AppScreen.session;
+    _markSync(_syncSession);
+    // Grava a sessão em curso: se o app for morto agora, ela é retomada.
     notifyListeners();
-    const interval = Duration(seconds: 1);
-    final step = debugFast ? 60 : 1;
-    _timer = Timer.periodic(interval, (_) => _tick(step));
+    _iniciaTicker();
   }
 
-  void _tick(int step) {
-    if (confirming) return;
-    final next = remaining - step;
-    if (next <= 0) {
-      _timer?.cancel();
-      final gained = sessionReward(dur);
-      remaining = 0;
-      running = false;
-      screen = AppScreen.result;
-      aborted = false;
-      reward = gained;
-      leaves += gained;
-      if (completedToday == 0) streak += 1;
-      completedToday += 1;
-      overrideMood = null;
-      _logSession(completed: true, gained: gained);
-      _markSync(_syncSession | _syncShop);
-      notifyListeners();
-    } else {
-      remaining = next;
-      notifyListeners();
+  void _iniciaTicker() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  /// O timer só pinta a tela. Quem conta o tempo é o relógio, via
+  /// [sessionEndsAt] — timer de app suspenso atrasa ou para, e uma sessão de
+  /// foco existe justamente para o usuário largar o telefone.
+  void _tick() {
+    _recalculaRestante();
+    if (remaining > 0) {
+      // Não passa pelo notifyListeners padrão: gravar a cada segundo só para
+      // repintar o contador seria escrita à toa.
+      super.notifyListeners();
+      return;
     }
+    _concluiSessao(em: sessionEndsAt ?? DateTime.now(), navega: true);
+  }
+
+  void _recalculaRestante() {
+    final fim = sessionEndsAt;
+    final ini = sessionStartedAt;
+    if (fim == null || ini == null) return;
+    final totalMs = fim.difference(ini).inMilliseconds;
+    final faltaMs = fim.difference(DateTime.now()).inMilliseconds;
+    if (totalMs <= 0 || faltaMs <= 0) {
+      remaining = 0;
+      return;
+    }
+    // A tela mostra a duração escolhida; o relógio pode estar comprimido no
+    // modo debug. O que se exibe é a fração restante aplicada à duração.
+    remaining = (faltaMs / totalMs * sessionDur * 60).ceil();
+  }
+
+  void _concluiSessao({required DateTime em, required bool navega}) {
+    _timer?.cancel();
+    final minutos = sessionDur > 0 ? sessionDur : dur;
+    final gained = sessionReward(minutos);
+    remaining = 0;
+    running = false;
+    confirming = false;
+    aborted = false;
+    reward = gained;
+    leaves += gained;
+    if (completedToday == 0) streak += 1;
+    completedToday += 1;
+    overrideMood = null;
+    _logSession(
+      completed: true,
+      gained: gained,
+      em: sessionStartedAt ?? em,
+      minutos: minutos,
+    );
+    // `sessionEndsAt` nulo já marca "sem sessão"; `sessionDur` fica como
+    // registro da última sessão, que é o que a tela de resultado mostra.
+    sessionStartedAt = null;
+    sessionEndsAt = null;
+    if (navega) screen = AppScreen.result;
+    _markSync(_syncSession | _syncShop);
+    notifyListeners();
+  }
+
+  /// Reconcilia a sessão com o relógio ao voltar do background.
+  ///
+  /// Um `Timer` de app suspenso atrasa ou simplesmente para. Sem isto, quem
+  /// larga o telefone — que é o comportamento que o app pede — voltaria e
+  /// veria o contador congelado no segundo em que saiu.
+  void reconcileSession() {
+    final fim = sessionEndsAt;
+    if (fim == null) return;
+    _recalculaRestante();
+    if (remaining <= 0) {
+      _concluiSessao(em: fim, navega: true);
+      return;
+    }
+    _iniciaTicker();
+    super.notifyListeners();
+  }
+
+  /// Retoma (ou conclui) uma sessão que atravessou o fechamento do app.
+  void _restauraSessao(DateTime now) {
+    final fim = sessionEndsAt;
+    if (fim == null) return;
+    if (sessionDur <= 0 || sessionStartedAt == null) {
+      // Snapshot inconsistente: descarta a sessão em vez de premiar lixo.
+      sessionStartedAt = null;
+      sessionEndsAt = null;
+      sessionDur = 0;
+      return;
+    }
+    if (now.isBefore(fim)) {
+      running = true;
+      confirming = false;
+      screen = AppScreen.session;
+      _recalculaRestante();
+      _iniciaTicker();
+      return;
+    }
+    // O tempo acabou com o app fechado — que é exatamente o que se pede ao
+    // usuário. A sessão conta. Só não abre a tela de resultado se ela terminou
+    // num dia anterior: aí o resultado seria sobre um dia que já passou.
+    _concluiSessao(em: fim, navega: dateOnly(fim) == dateOnly(now));
   }
 
   void askQuit() {
@@ -604,6 +723,7 @@ class AppState extends ChangeNotifier {
 
   void abandon() {
     _timer?.cancel();
+    final minutos = sessionDur > 0 ? sessionDur : dur;
     screen = AppScreen.result;
     aborted = true;
     reward = 0;
@@ -611,18 +731,26 @@ class AppState extends ChangeNotifier {
     running = false;
     confirming = false;
     overrideMood = null;
-    _logSession(completed: false, gained: 0);
+    sessionStartedAt = null;
+    sessionEndsAt = null;
+    sessionDur = minutos;
+    _logSession(completed: false, gained: 0, minutos: minutos);
     _markSync(_syncSession);
     notifyListeners();
   }
 
-  void _logSession({required bool completed, required int gained}) {
+  void _logSession({
+    required bool completed,
+    required int gained,
+    DateTime? em,
+    int? minutos,
+  }) {
     sessions = [
       ...sessions,
       SessionRecord(
         id: const Uuid().v4(),
-        at: DateTime.now(),
-        dur: dur,
+        at: em ?? DateTime.now(),
+        dur: minutos ?? dur,
         completed: completed,
         aborted: !completed,
         reward: gained,
@@ -882,6 +1010,9 @@ class AppState extends ChangeNotifier {
       trialStartedAt: trialStartedAt,
       lastOpenDate: lastOpenDate,
       sessions: List<SessionRecord>.from(sessions),
+      sessionStartedAt: sessionStartedAt,
+      sessionEndsAt: sessionEndsAt,
+      sessionDur: sessionDur,
     );
   }
 
@@ -917,11 +1048,15 @@ class AppState extends ChangeNotifier {
     trialStartedAt = s.trialStartedAt;
     lastOpenDate = s.lastOpenDate;
     sessions = List<SessionRecord>.from(s.sessions);
+    sessionStartedAt = s.sessionStartedAt;
+    sessionEndsAt = s.sessionEndsAt;
+    sessionDur = s.sessionDur;
   }
 
   void _schedulePersist() {
     if (repos == null) return;
-    if (screen == AppScreen.session && running) return;
+    // A sessão em curso precisa ser gravada — é o que permite retomá-la. O
+    // tique de cada segundo não passa por aqui: usa super.notifyListeners().
     _saveTimer?.cancel();
     _saveTimer = Timer(const Duration(milliseconds: 280), _persistNow);
   }

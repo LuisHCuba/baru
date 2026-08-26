@@ -192,3 +192,48 @@ isolado.
 
 Efeito colateral bem-vindo: `BaruRepositories` passou a aceitar repositórios
 injetados, o que finalmente permite testar falha de rede por domínio.
+
+---
+
+## ADR-008 — A sessão de foco é medida pelo relógio de parede (2026-08-26)
+
+**Contexto.** A sessão era contada por `Timer.periodic`, decrementando um campo
+a cada tique. Três consequências, todas no caminho core do produto:
+
+1. Um `Timer` de app suspenso atrasa ou para. O app pede que o usuário largue o
+   telefone — ou seja, a sessão bem-sucedida é justamente a que roda em
+   background.
+2. `didChangeAppLifecycleState(resumed)` não reconciliava `remaining`: voltar
+   ao app mostrava o contador congelado no segundo da saída.
+3. `_schedulePersist` pulava a gravação enquanto `running`, e `toSnapshot()`
+   mapeia `session → home`. App morto no meio da sessão = sessão perdida sem
+   recompensa e sem rastro.
+
+**Decisão.** `sessionStartedAt` e `sessionEndsAt` passam a ser estado
+persistido. O `Timer` só repinta a tela; quem decide o fim é o relógio.
+`reconcileSession()` roda ao voltar do background e o construtor retoma (ou
+conclui) uma sessão que atravessou o fechamento do app.
+
+Sessão cujo prazo venceu com o app fechado **conta**: o usuário cumpriu o tempo
+longe do telefone, que é exatamente o pedido. Se terminou num dia anterior, ela
+é creditada antes do avanço de calendário, então fecha aquele dia como presente
+— mas não abre a tela de resultado, que seria sobre um dia já passado.
+
+**Alternativas descartadas.** (a) Notificação agendada para o fim e conclusão só
+ao abrir: o app já precisa reconciliar ao abrir de qualquer jeito; a notificação
+é complemento, não mecanismo. (b) Serviço em primeiro plano no Android: peso
+grande, uma permissão a mais e nada resolve no iOS. (c) Guardar só o fim e
+deduzir a duração pela flag de debug 60×: quebra se a flag mudar entre gravar e
+ler — encontrado por teste durante a implementação, e o motivo de guardar as
+duas pontas.
+
+**Consequências.** A folha de desistência ("está no meio de um banho") deixa de
+pausar o relógio: o tempo corre enquanto ela está aberta. É mais honesto — olhar
+a folha já é mexer no telefone — e evita usar a folha como pausa infinita.
+Sessão em curso é local por natureza (não continua em outro aparelho), então
+os dois campos ficam fora do Supabase: **nenhuma migração de schema**.
+
+Ponto em aberto, registrado no backlog: como não há valor real em jogo (sem
+IAP), creditar uma sessão longa que venceu com o app fechado é generoso de
+propósito. No dia em que houver receita, isto vira validação de servidor.
+Reverter: o commit é isolado.

@@ -13,7 +13,7 @@ class SessionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final t = app.t;
-    final total = app.dur * 60;
+    final total = app.sessionMinutes * 60;
     final pct = total == 0 ? 0.0 : ((total - app.remaining) / total).clamp(0.0, 1.0);
     final mm = (app.remaining ~/ 60).toString().padLeft(2, '0');
     final ss = (app.remaining % 60).toString().padLeft(2, '0');
@@ -28,7 +28,7 @@ class SessionScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    t.fill(t.sesLabel, {'m': app.dur}).toUpperCase(),
+                    t.fill(t.sesLabel, {'m': app.sessionMinutes}).toUpperCase(),
                     style: nunito(size: 12, weight: FontWeight.w600, letterSpacing: 1.2, color: AppColors.inkA(0.45)),
                   ),
                 ),

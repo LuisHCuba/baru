@@ -84,6 +84,9 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState s) {
     if (s == AppLifecycleState.resumed) {
+      // Antes do calendário: uma sessão que terminou ontem tem de contar como
+      // presença de ontem, e é o avanço de calendário que fecha aquele dia.
+      state.reconcileSession();
       state.applyCalendar(DateTime.now());
       state.syncPermissionsFromOs();
       // Voltar do background é o momento em que a rede costuma ter voltado.

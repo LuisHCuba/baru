@@ -83,7 +83,7 @@ void main() {
     try {
       for (final movel in [TargetPlatform.android, TargetPlatform.iOS]) {
         debugDefaultTargetPlatformOverride = movel;
-        expect(AppFrame.molduraFazSentido(), isFalse, reason: '${movel.name}');
+        expect(AppFrame.molduraFazSentido(), isFalse, reason: movel.name);
       }
       for (final mesa in [
         TargetPlatform.macOS,
@@ -91,7 +91,7 @@ void main() {
         TargetPlatform.linux,
       ]) {
         debugDefaultTargetPlatformOverride = mesa;
-        expect(AppFrame.molduraFazSentido(), isTrue, reason: '${mesa.name}');
+        expect(AppFrame.molduraFazSentido(), isTrue, reason: mesa.name);
       }
     } finally {
       debugDefaultTargetPlatformOverride = null;

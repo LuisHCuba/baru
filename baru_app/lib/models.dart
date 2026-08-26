@@ -60,6 +60,18 @@ List<WeekDayKind> freshWeek([DateTime? now]) {
   );
 }
 
+/// Melhor idioma do Baru para um locale de sistema.
+///
+/// Usado antes do onboarding, quando o usuário ainda não escolheu: a tela de
+/// login não deveria falar português com quem tem o aparelho em chinês.
+String langFromLocale(Locale locale) {
+  final code = locale.languageCode.toLowerCase();
+  for (final l in langs) {
+    if (l.id == code) return l.id;
+  }
+  return 'pt';
+}
+
 Locale localeFor(String lang) {
   switch (lang) {
     case 'en':

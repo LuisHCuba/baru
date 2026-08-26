@@ -1,16 +1,20 @@
 # baru_app
 
-A new Flutter project.
+O app Flutter do Baru. A documentação do projeto vive um nível acima:
 
-## Getting Started
+- [README do projeto](../README.md) — setup do zero, variáveis de ambiente, como rodar
+- [docs/STATE.md](../docs/STATE.md) — retrato do agora
+- [docs/PRODUCT.md](../docs/PRODUCT.md) — regras de produto
+- [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) — camadas e fluxo de dados
+- [docs/DATA_MODEL.md](../docs/DATA_MODEL.md) — schema e RLS
+- [GO_LIVE.md](GO_LIVE.md) — checklist de qualidade da fase 1
+- [supabase/README.md](supabase/README.md) — setup do banco
 
-This project is a starting point for a Flutter application.
+Atalhos:
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```
+flutter pub get
+flutter analyze
+flutter test
+flutter run
+```

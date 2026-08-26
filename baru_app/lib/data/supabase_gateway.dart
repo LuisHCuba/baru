@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models.dart';
 import 'app_snapshot.dart';
 import 'baru_env.dart';
 import 'remote_result.dart';
@@ -176,24 +177,30 @@ class BaruSupabase {
     await client.from('baru_wallets').upsert(
           _codec.walletRow(userId: uid, s: snapshot),
         );
-    final owned = snapshot.owned.toSet();
-    final existing = await client
-        .from('baru_inventory_items')
-        .select('item_id')
-        .eq('user_id', uid);
-    for (final row in (existing as List).whereType<Map>()) {
-      final itemId = '${row['item_id']}';
-      if (!owned.contains(itemId)) {
-        await client
-            .from('baru_inventory_items')
-            .delete()
-            .eq('user_id', uid)
-            .eq('item_id', itemId);
-      }
+    // Só ids conhecidos da loja: o banco tem CHECK, mas um snapshot
+    // corrompido não deveria chegar a montar filtro com lixo dentro.
+    final conhecidos = shopItems.map((i) => i.id).toSet();
+    final owned = snapshot.owned.where(conhecidos.contains).toSet().toList();
+
+    // Some com o que saiu do inventário numa chamada só, em vez de ler tudo e
+    // apagar item a item.
+    final apaga =
+        client.from('baru_inventory_items').delete().eq('user_id', uid);
+    if (owned.isEmpty) {
+      await apaga;
+    } else {
+      final lista = owned.map((id) => '"$id"').join(',');
+      await apaga.not('item_id', 'in', '($lista)');
     }
+
     final rows = _codec.inventoryRows(userId: uid, s: snapshot);
     if (rows.isNotEmpty) {
-      await client.from('baru_inventory_items').upsert(rows);
+      // `ignoreDuplicates` preserva o `acquired_at` de quem já estava lá: sem
+      // isso, todo push reescrevia a data de compra com "agora" e embaralhava
+      // a ordem em que o habitat foi montado.
+      await client
+          .from('baru_inventory_items')
+          .upsert(rows, ignoreDuplicates: true);
     }
   }
 
@@ -240,11 +247,11 @@ class BaruSupabase {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    for (final session in sessions) {
-      await client.from('baru_sessions').upsert(
-            _codec.sessionRow(userId: uid, s: session),
-          );
-    }
+    if (sessions.isEmpty) return;
+    // Uma chamada, não uma por sessão: o snapshot guarda até 80.
+    await client.from('baru_sessions').upsert(
+          sessions.map((s) => _codec.sessionRow(userId: uid, s: s)).toList(),
+        );
   }
 
   Future<RemotePullResult> pullSnapshotResult() async {

@@ -29,13 +29,23 @@ O `db push` final deve aplicar apenas a migration nova de adoção do
 
 ---
 
-## BL-02 — Migrations não validadas contra banco limpo
+## BL-02 — RESOLVIDO em 2026-08-26
 
-**Situação.** O §10 exige "migrações aplicam do zero em banco limpo". O daemon
-do Docker não estava em execução no início do turno; `supabase start` baixa
-vários GB de imagens na primeira execução.
+**Era:** migrations nunca validadas contra banco limpo.
 
-**Ação pedida**, com o Docker rodando:
+**Feito no turno.** Docker subido, `supabase start` (só Postgres, auth e REST) e
+`supabase db reset`: as 6 migrations aplicaram do zero. O schema resultante é
+idêntico ao remoto — 13 tabelas, 50 políticas, `baru_profiles` com 8 colunas,
+event trigger `ensure_rls` presente, nenhuma tabela sem RLS, `anon` sem EXECUTE
+sobre `rls_auto_enable`. Isolamento entre usuários conferido com dois usuários
+reais: A vê só a própria carteira, `anon` vê zero.
+
+Reaplicação também conferida: migrations 5 e 6 rodam de novo sem erro
+(`ON_ERROR_STOP=1`, exit 0). A versão antiga da 5, tirada do histórico do git,
+falha com `ERROR: column "species" does not exist` — que é exatamente o que o
+ADR-003 previu.
+
+Para repetir:
 
 ```
 cd baru_app
@@ -43,7 +53,9 @@ supabase start
 supabase db reset
 ```
 
-E confirmar que o app sobe contra o banco local.
+**Pendente ainda:** subir o app Flutter apontando para o banco local
+(`SUPABASE_URL=http://127.0.0.1:54321` via `--dart-define`) e percorrer o fluxo
+à mão. Isso exige um dispositivo/emulador, que o agente não tem.
 
 ---
 

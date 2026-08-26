@@ -61,6 +61,8 @@ class BaruRowCodec {
     };
   }
 
+  /// `acquired_at` só vale para linha nova — o push usa `ignoreDuplicates`,
+  /// então a data original de quem já está no inventário é preservada.
   List<Map<String, dynamic>> inventoryRows({
     required String userId,
     required AppSnapshot s,

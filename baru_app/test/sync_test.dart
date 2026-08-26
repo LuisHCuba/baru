@@ -229,4 +229,63 @@ void main() {
       reason: 'falha remota nunca pode apagar o que já está local',
     );
   });
+
+  test('abrir a folha de compartilhamento não sincroniza nada', () async {
+    final c = _Cenario();
+    final s = c.novoEstado();
+    await _esperaPersist();
+    c.limpa();
+
+    s.openShare();
+    s.closeShare();
+    await _esperaPersist();
+
+    expect(
+      [
+        ...c.pet.chamadas,
+        ...c.shop.chamadas,
+        ...c.settings.chamadas,
+        ...c.sessions.chamadas,
+        ...c.trial.chamadas,
+      ],
+      isEmpty,
+      reason: 'sharing não vive no snapshot; empurrar 13 tabelas para abrir '
+          'uma folha é puro desperdício',
+    );
+  });
+
+  test('forçar humor no debug não sincroniza nada', () async {
+    final c = _Cenario();
+    final s = c.novoEstado();
+    await _esperaPersist();
+    c.limpa();
+
+    s.forceMood(Mood.sleepy);
+    s.toggleDebugFast();
+    await _esperaPersist();
+
+    expect(
+      [...c.pet.chamadas, ...c.shop.chamadas, ...c.settings.chamadas],
+      isEmpty,
+      reason: 'estado de debug não pode vazar para a conta do usuário',
+    );
+  });
+
+  test('mudanças de debug que alteram o snapshot sincronizam o domínio certo',
+      () async {
+    final c = _Cenario();
+    final s = c.novoEstado();
+    await _esperaPersist();
+    c.limpa();
+
+    s.setHabitat('half');
+    await _esperaPersist();
+
+    expect(c.shop.chamadas, isNotEmpty, reason: 'o inventário mudou');
+    expect(
+      c.trial.chamadas,
+      isEmpty,
+      reason: 'e só ele — não é para cair no "empurre tudo"',
+    );
+  });
 }

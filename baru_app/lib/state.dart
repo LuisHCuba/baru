@@ -117,6 +117,15 @@ class AppState extends ChangeNotifier {
 
   void _markSync(int mask) => _syncMask |= mask;
 
+  /// Repinta a tela sem gravar nem sincronizar.
+  ///
+  /// Para o que não vive no snapshot: humor forçado do painel de debug, folha
+  /// de compartilhamento, flag do timer 60x. Passar essas mudanças pelo
+  /// `notifyListeners` normal disparava uma gravação e — como a máscara ficava
+  /// vazia e máscara vazia significa "empurre tudo" — um push das 13 tabelas
+  /// só para abrir a folha de compartilhamento.
+  void _notifyEfemero() => super.notifyListeners();
+
   T get t => T(lang);
 
   bool get canSignOut =>
@@ -530,12 +539,12 @@ class AppState extends ChangeNotifier {
 
   void openShare() {
     sharing = true;
-    notifyListeners();
+    _notifyEfemero();
   }
 
   void closeShare() {
     sharing = false;
-    notifyListeners();
+    _notifyEfemero();
   }
 
   Future<void> toggleEvening() async {
@@ -770,17 +779,19 @@ class AppState extends ChangeNotifier {
 
   void forceMood(Mood? m) {
     overrideMood = overrideMood == m ? null : m;
-    notifyListeners();
+    _notifyEfemero();
   }
 
   void setHabitat(String key) {
     owned = List<String>.from(habitats[key]!);
+    _markSync(_syncShop);
     notifyListeners();
   }
 
   void setSpecies(Species s) {
     species = s;
     petName = '';
+    _markSync(_syncPet);
     notifyListeners();
   }
 
@@ -967,6 +978,10 @@ class AppState extends ChangeNotifier {
     week = List<WeekDayKind>.from(weekPattern);
     todayIndex = 5;
     freezesLeft = 1;
+    // Explícito em vez de cair no "máscara vazia = empurre tudo": o reset
+    // muda mesmo todos os domínios, e deixar local e remoto divergirem seria
+    // pior do que sincronizar um estado de debug.
+    _markSync(_syncAll);
     notifyListeners();
   }
 
@@ -980,7 +995,7 @@ class AppState extends ChangeNotifier {
 
   void toggleDebugFast() {
     debugFast = !debugFast;
-    notifyListeners();
+    _notifyEfemero();
   }
 
   AppSnapshot toSnapshot() {

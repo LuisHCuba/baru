@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,6 +22,7 @@ class BaruSupabase {
 
   bool _attached = false;
   bool _ready = false;
+  StreamSubscription<AuthState>? _authSub;
   String _deviceId = '';
   String? attachError;
 
@@ -63,6 +66,12 @@ class BaruSupabase {
       _attached = true;
       _deviceId = await _ensureDeviceId();
       await _refreshReady();
+      // Sessão expirada ou logout em outra aba não pode deixar `_ready` preso
+      // em true: o push seguiria tentando escrever sem credencial válida.
+      _authSub?.cancel();
+      _authSub = Supabase.instance.client.auth.onAuthStateChange.listen(
+        (_) => _refreshReady(),
+      );
     } catch (e, st) {
       attachError = e.toString();
       debugPrint('Baru: supabase indisponível ($e)\n$st');
@@ -115,6 +124,12 @@ class BaruSupabase {
   Future<void> signOut() async {
     await _client?.auth.signOut();
     _ready = false;
+  }
+
+  @visibleForTesting
+  Future<void> dispose() async {
+    await _authSub?.cancel();
+    _authSub = null;
   }
 
   Future<String> _ensureDeviceId() async {

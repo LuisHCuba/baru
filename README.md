@@ -61,7 +61,7 @@ Variáveis reconhecidas:
 |---|---|---|
 | `SUPABASE_URL` | `.env` ou `--dart-define` | URL do projeto |
 | `SUPABASE_ANON_KEY` | `.env` ou `--dart-define` | chave publishable |
-| `SUPABASE_ENABLED=false` | **só** `--dart-define` | desliga o backend mesmo com credenciais |
+| `SUPABASE_ENABLED=false` | `.env` ou `--dart-define` | desliga o backend mesmo com credenciais; o dart-define tem precedência |
 
 ### 2. Banco
 
@@ -108,7 +108,12 @@ Precisa de Docker:
 cd baru_app
 supabase start
 supabase db reset
-flutter test test/integration   --dart-define=BARU_TEST_URL=http://127.0.0.1:54321   --dart-define=BARU_TEST_KEY=<publishable key que o supabase start imprime>
+flutter test test/integration ^
+  --dart-define=BARU_TEST_URL=http://127.0.0.1:54321 ^
+  --dart-define=BARU_TEST_KEY=<publishable key que o supabase start imprime>
+
+# numa linha só, se preferir:
+flutter test test/integration --dart-define=BARU_TEST_URL=http://127.0.0.1:54321 --dart-define=BARU_TEST_KEY=<chave>
 ```
 
 Sem essas variáveis os casos se pulam sozinhos: a suíte normal não depende de

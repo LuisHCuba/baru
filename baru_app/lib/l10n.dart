@@ -176,6 +176,8 @@ class T {
   String get notifEveningBody => s('notifEveningBody');
   String get notifMissedTitle => s('notifMissedTitle');
   String get notifMissedBody => s('notifMissedBody');
+  String get notifTrialTitle => s('notifTrialTitle');
+  String get notifTrialBody => s('notifTrialBody');
   String get setPet => s('setPet');
   String get setSpecies => s('setSpecies');
   String get authLoginTitle => s('authLoginTitle');
@@ -449,6 +451,8 @@ const _pt = <String, Object>{
   'notifEveningBody': '{n} preparou o resumo do seu dia.',
   'notifMissedTitle': 'Senti sua falta',
   'notifMissedBody': '{n} sentiu sua falta hoje. Uma sessão curta já ajuda.',
+  'notifTrialTitle': 'Seu teste termina amanhã',
+  'notifTrialBody': 'Mais 24h de teste. {n} continua aqui de qualquer forma.',
   'setUsageHint': 'Pode mudar quando quiser. Nada sai do aparelho.',
   'animalNames': {
     'capybara': 'Capivara',
@@ -681,6 +685,8 @@ const _en = <String, Object>{
   'notifEveningBody': '{n} has your daily summary ready.',
   'notifMissedTitle': 'Missed you',
   'notifMissedBody': '{n} missed you today. A short focus session helps.',
+  'notifTrialTitle': 'Your trial ends tomorrow',
+  'notifTrialBody': '24h of trial left. {n} stays here either way.',
   'setUsageHint': 'Change any time. Nothing leaves your device.',
   'animalNames': {
     'capybara': 'Capybara',
@@ -915,6 +921,8 @@ const _es = <String, Object>{
   'notifEveningBody': '{n} tiene listo el resumen del día.',
   'notifMissedTitle': 'Te echo de menos',
   'notifMissedBody': '{n} te echó de menos hoy. Una sesión corta ayuda.',
+  'notifTrialTitle': 'Tu prueba termina mañana',
+  'notifTrialBody': 'Quedan 24 h de prueba. {n} sigue aquí de todos modos.',
   'setUsageHint': 'Puedes cambiarlo cuando quieras. Nada sale del dispositivo.',
   'animalNames': {
     'capybara': 'Carpincho',
@@ -1114,6 +1122,8 @@ const _zh = <String, Object>{
   'notifEveningBody': '{n} 准备好了今天的总结。',
   'notifMissedTitle': '有点想你',
   'notifMissedBody': '{n} 今天有点想你。来一次短专注吧。',
+  'notifTrialTitle': '你的试用明天结束',
+  'notifTrialBody': '试用还剩 24 小时。无论如何，{n} 都在这里。',
   'setUsageHint': '随时可改。数据不离开你的设备。',
   'animalNames': {
     'capybara': '水豚',

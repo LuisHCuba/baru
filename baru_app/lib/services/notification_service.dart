@@ -14,6 +14,7 @@ class BaruNotifications {
 
   static const _eveningId = 1001;
   static const _missedId = 1002;
+  static const _trialId = 1003;
   static const _lastMissedKey = 'baru_last_missed_notify';
 
   final FlutterLocalNotificationsPlugin _plugin =
@@ -88,8 +89,19 @@ class BaruNotifications {
     required String missedTitle,
     required String missedBody,
     required int daysAway,
+    required bool trialActive,
+    required DateTime? trialEndsAt,
+    required String trialTitle,
+    required String trialBody,
   }) async {
     if (kIsWeb || !_ready) return;
+
+    await _syncTrialReminder(
+      ativo: trialActive,
+      fim: trialEndsAt,
+      title: trialTitle,
+      body: trialBody,
+    );
 
     if (evening && await hasPermission()) {
       await _scheduleEvening(eveningTitle, eveningBody);
@@ -105,6 +117,46 @@ class BaruNotifications {
     if (daysAway >= 2) {
       await _maybeShowMissed(missedTitle, missedBody);
     }
+  }
+
+  /// Aviso 24h antes do fim do teste — o contrato de produto §9 e a copy do
+  /// paywall prometem esse recado.
+  Future<void> _syncTrialReminder({
+    required bool ativo,
+    required DateTime? fim,
+    required String title,
+    required String body,
+  }) async {
+    if (!ativo || fim == null || !await hasPermission()) {
+      await _plugin.cancel(id: _trialId);
+      return;
+    }
+
+    final quando = tz.TZDateTime.from(
+      fim.subtract(const Duration(hours: 24)),
+      tz.local,
+    );
+    if (!quando.isAfter(tz.TZDateTime.now(tz.local))) {
+      // As 24h já passaram: avisar agora seria avisar tarde.
+      await _plugin.cancel(id: _trialId);
+      return;
+    }
+
+    await _plugin.zonedSchedule(
+      id: _trialId,
+      title: title,
+      body: body,
+      scheduledDate: quando,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'baru_reminders',
+          'Lembretes Baru',
+          channelDescription: 'Fim do teste',
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
   }
 
   Future<void> _scheduleEvening(String title, String body) async {

@@ -374,6 +374,10 @@ class AppState extends ChangeNotifier {
       missedTitle: t.notifMissedTitle,
       missedBody: t.fill(t.notifMissedBody, {'n': displayName}),
       daysAway: daysAway,
+      trialActive: trial,
+      trialEndsAt: trial ? paidPlanStart : null,
+      trialTitle: t.notifTrialTitle,
+      trialBody: t.fill(t.notifTrialBody, {'n': displayName}),
     );
   }
 
@@ -503,6 +507,9 @@ class AppState extends ChangeNotifier {
     trial = true;
     trialStartedAt ??= DateTime.now();
     _markSync(_syncTrial | _syncSettings);
+    // O aviso de 24h antes do fim só pode ser agendado depois de existir uma
+    // data de início.
+    unawaited(_syncNotificationSchedules());
     go(AppScreen.home);
   }
 
@@ -967,6 +974,7 @@ class AppState extends ChangeNotifier {
     trial = true;
     trialStartedAt ??= DateTime.now();
     _markSync(_syncTrial);
+    unawaited(_syncNotificationSchedules());
     go(AppScreen.home);
   }
 

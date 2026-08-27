@@ -44,6 +44,7 @@ dependencies:
   flutter_local_notifications: ^20.1.0
   timezone: ^0.10.1
   flutter_timezone: ^5.1.0
+  audioplayers: ^6.7.1
 
 dependency_overrides:
   permission_handler_android: 13.0.1
@@ -73,6 +74,8 @@ flutter:
   assets:
     - .env.example
     - .env
+    # Sons curtos, gerados como WAV mono 44.1 kHz. Nenhum passa de 0,6 s.
+    - assets/sons/
 
   # Nunito empacotada. Um app offline-first nao pode depender de rede para a
   # propria letra — e baixar fonte em runtime manda um request ao Google no

@@ -112,6 +112,12 @@ class SettingsScreen extends StatelessWidget {
                 aoTocar: () => _abreHorario(context, app),
               ),
             _Chave(
+              rotulo: t.setSom,
+              detalhe: t.setSomSub,
+              ligado: app.som,
+              aoTocar: app.toggleSom,
+            ),
+            _Chave(
               rotulo: t.setMissed,
               detalhe: t.setMissedSub,
               ligado: app.missed,

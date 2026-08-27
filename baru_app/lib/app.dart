@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'data/app_snapshot.dart';
 import 'data/repositories.dart';
 import 'services/notification_service.dart';
+import 'services/som_service.dart';
 import 'models.dart';
 import 'navegacao.dart';
 import 'screens/home_screen.dart';
@@ -56,6 +59,11 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // O som só pode existir depois que há binding: é aqui, e em nenhum lugar
+    // antes, que o player pode ser construído.
+    SomService.instance
+      ..arma()
+      ..ligado = state.som;
     state.initPlatformServices();
     // "Desistir" na notificação da sessão age no app, não só some da barra.
     BaruNotifications.instance.aoDesistirPelaBarra = () {
@@ -111,6 +119,7 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(SomService.instance.dispose());
     _rotas.dispose();
     state.dispose();
     super.dispose();

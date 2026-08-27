@@ -251,6 +251,8 @@ class T {
   String get setCompanheiro => s('setCompanheiro');
   String get setSecoes => s('setSecoes');
   String get setDuracao => s('setDuracao');
+  String get setSom => s('setSom');
+  String get setSomSub => s('setSomSub');
   String get seqT => s('seqT');
   String get seqSub => s('seqSub');
   String get seqAtual => s('seqAtual');
@@ -433,6 +435,8 @@ const _pt = <String, Object>{
   'setCompanheiro': 'Companheiro',
   'setSecoes': 'Ajustes',
   'setDuracao': 'Duração da sessão',
+  'setSom': 'Som',
+  'setSomSub': 'Sons curtos nas conquistas e no toque',
   'pronome': {'naoDito': 'ele', 'macho': 'ele', 'femea': 'ela'},
   'possessivo': {'naoDito': 'dele', 'macho': 'dele', 'femea': 'dela'},
   'folhasT': 'Suas folhas',
@@ -783,6 +787,8 @@ const _en = <String, Object>{
   'setCompanheiro': 'Companion',
   'setSecoes': 'Settings',
   'setDuracao': 'Session length',
+  'setSom': 'Sound',
+  'setSomSub': 'Short sounds on wins and taps',
   'pronome': {'naoDito': 'they', 'macho': 'he', 'femea': 'she'},
   'possessivo': {'naoDito': 'their', 'macho': 'his', 'femea': 'her'},
   'folhasT': 'Your leaves',
@@ -1130,6 +1136,8 @@ const _es = <String, Object>{
   'setCompanheiro': 'Compañero',
   'setSecoes': 'Ajustes',
   'setDuracao': 'Duración de la sesión',
+  'setSom': 'Sonido',
+  'setSomSub': 'Sonidos cortos en logros y toques',
   'pronome': {'naoDito': 'él', 'macho': 'él', 'femea': 'ella'},
   'possessivo': {'naoDito': 'de él', 'macho': 'de él', 'femea': 'de ella'},
   'folhasT': 'Tus hojas',
@@ -1479,6 +1487,8 @@ const _zh = <String, Object>{
   'setCompanheiro': '伙伴',
   'setSecoes': '设置',
   'setDuracao': '专注时长',
+  'setSom': '声音',
+  'setSomSub': '成就与轻触时的短音效',
   'pronome': {'naoDito': '它', 'macho': '它', 'femea': '它'},
   'possessivo': {'naoDito': '它的', 'macho': '它的', 'femea': '它的'},
   'folhasT': '你的叶子',

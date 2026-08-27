@@ -60,9 +60,19 @@ Removido. Datas em AAAA-MM-DD.
 - `flutter test`: **337 passando, 1 pulado** (eram 324)
 - Evidência visual: `tela-folhas.png`, `tela-sequencia.png`, `tela-ajustes.png`
 
-### Não feito neste turno
+### Som
 
-- **Som.** Os bichos continuam mudos. Ver o relatório do turno.
+- Cinco sons curtos, todos abaixo de 0,6 s: conquista, resgate de missão, fim
+  de sessão, toque no bicho e afago completo. Chave própria em Ajustes.
+- **Eu não os ouvi.** Foram sintetizados (senoides em escala pentatônica com
+  envelope), não gravados, e áudio não se captura em teste de widget. O que
+  está provado é o formato (WAV mono 44,1 kHz/16 bits), a duração, a ausência
+  de clique no início e no fim, a ausência de clipping — e toda a lógica:
+  desligado não toca, dois sons colados viram um, falha de áudio não sobe, e
+  áudio que **nunca responde** não deixa future pendente (timeout de 2 s).
+- `AudioPlayer` abre um `EventChannel` no construtor e exige o binding do
+  Flutter: num teste de unidade puro isso estoura fora do `try`, noutra zona.
+  O player só nasce depois que o app arma o serviço.
 
 ## 2026-08-27 — navegação, carinho e o elenco refeito
 

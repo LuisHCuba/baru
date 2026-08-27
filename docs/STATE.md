@@ -5,9 +5,9 @@ Branch: `night/2026-08-27`, integrada em `main` | Build: **verde**
 | Portão | Resultado (execução real) |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | **324 passando, 1 pulado** (era 151 no início do dia) |
+| `flutter test` | **349 passando, 1 pulado** (era 151 no início do dia) |
 | `flutter test test/integration` | 7/7 contra Supabase local |
-| `supabase db reset` em banco limpo | **8 migrations · 15 tabelas · 58 políticas · nenhuma sem RLS** |
+| `supabase db reset` em banco limpo | **8 migrations · 15 tabelas · 58 políticas · nenhuma sem RLS** (a migration 9 ainda não foi rodada em banco limpo) |
 | Evidência visual | 40 PNGs em `docs/evidence/2026-08-27/` |
 
 ## Abra o app e você vê
@@ -100,7 +100,7 @@ com acesso ao projeto; o comando está no arquivo de bloqueios.
 | BL-06 | Entitlement de Screen Time no iOS |
 | BL-07 | Produtos de IAP nas lojas |
 | BL-09 | **Verificar a notificação da sessão num aparelho** (roteiro no arquivo) |
-| BL-10 | **Aplicar as migrations 7 e 8 no Supabase remoto** — é a causa do "erro ao sincronizar" |
+| BL-10 | **Aplicar as migrations 7, 8 e 9 no Supabase remoto** — é a causa do "erro ao sincronizar" |
 
 ## Comandos para rodar e validar agora
 

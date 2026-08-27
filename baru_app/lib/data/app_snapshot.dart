@@ -29,6 +29,7 @@ class AppSnapshot {
     this.eveningHour = 21,
     this.eveningMinute = 0,
     this.sexo = Sexo.naoDito,
+    this.som = true,
     required this.missed,
     required this.payPlan,
     required this.usageAccess,
@@ -86,6 +87,9 @@ class AppSnapshot {
   final int eveningMinute;
 
   final Sexo sexo;
+
+  /// Som ligado.
+  final bool som;
   final bool missed;
   final PayPlan payPlan;
   final bool usageAccess;
@@ -155,6 +159,7 @@ class AppSnapshot {
         'eveningHour': eveningHour,
         'eveningMinute': eveningMinute,
         'sexo': sexo.name,
+        'som': som,
         'missed': missed,
         'payPlan': payPlan.name,
         'usageAccess': usageAccess,
@@ -211,6 +216,7 @@ class AppSnapshot {
       eveningHour: (j['eveningHour'] as num?)?.toInt() ?? 21,
       eveningMinute: (j['eveningMinute'] as num?)?.toInt() ?? 0,
       sexo: parseSexo(j['sexo'] as String?),
+      som: j['som'] != false,
       missed: j['missed'] != false,
       payPlan: (j['payPlan'] as String?) == 'monthly' ? PayPlan.monthly : PayPlan.annual,
       usageAccess: j['usageAccess'] == true,
@@ -313,6 +319,7 @@ class AppSnapshot {
     int? eveningHour,
     int? eveningMinute,
     Sexo? sexo,
+    bool? som,
     bool? missed,
     PayPlan? payPlan,
     bool? usageAccess,
@@ -370,6 +377,7 @@ class AppSnapshot {
       eveningHour: eveningHour ?? this.eveningHour,
       eveningMinute: eveningMinute ?? this.eveningMinute,
       sexo: sexo ?? this.sexo,
+      som: som ?? this.som,
       missed: missed ?? this.missed,
       payPlan: payPlan ?? this.payPlan,
       usageAccess: usageAccess ?? this.usageAccess,

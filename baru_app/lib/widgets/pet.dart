@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models.dart';
+import '../services/som_service.dart';
 import '../theme.dart';
 
 /// Um gesto de ocioso: o que o bicho faz quando ninguém está pedindo nada.
@@ -289,6 +290,7 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
     } else {
       HapticFeedback.lightImpact();
     }
+    unawaited(SomService.instance.toca(SomDoBaru.toque));
 
     // Olha para o dedo.
     final tamanho = Size(widget.width, widget.height);

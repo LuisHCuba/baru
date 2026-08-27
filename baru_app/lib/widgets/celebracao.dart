@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../services/som_service.dart';
 
 import '../theme.dart';
 
@@ -56,6 +60,8 @@ class _CelebracaoState extends State<Celebracao>
   void initState() {
     super.initState();
     HapticFeedback.heavyImpact();
+    // O som acompanha o háptico: os dois marcam o mesmo instante.
+    unawaited(SomService.instance.toca(SomDoBaru.conquista));
     _c.forward();
     // Fecha sozinha: conquista não pode virar bloqueio.
     _c.addStatusListener((s) {

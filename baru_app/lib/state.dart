@@ -15,6 +15,7 @@ import 'l10n.dart';
 import 'models.dart';
 import 'navegacao.dart';
 import 'services/notification_service.dart';
+import 'services/som_service.dart';
 import 'services/usage_service.dart';
 
 DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -91,6 +92,12 @@ class AppState extends ChangeNotifier {
   /// Existe alguma conquista esperando celebração?
   bool get temCelebracaoPendente => subiuDeNivel || marcosACelebrar.isNotEmpty;
 
+  /// A celebração entrou em cena. O som acompanha a animação, não o clique de
+  /// fechar — quem fecha já viu a conquista.
+  void anunciaCelebracao() {
+    unawaited(SomService.instance.toca(SomDoBaru.conquista));
+  }
+
   /// O nível vem antes do marco: subir de nível é a conquista maior, e as duas
   /// costumam cair juntas.
   void celebrou() {
@@ -129,6 +136,7 @@ class AppState extends ChangeNotifier {
   /// existe.
   int recebeCarinho() {
     afeto += 1;
+    unawaited(SomService.instance.toca(SomDoBaru.carinho));
     var ganho = 0;
     if (carinhosHoje < Balanco.carinhosPorDia) {
       carinhosHoje += 1;
@@ -217,6 +225,7 @@ class AppState extends ChangeNotifier {
     leaves += m.folhas;
     missoesACelebrar = [...missoesACelebrar, m.id];
     ganhaXp(m.xp);
+    unawaited(SomService.instance.toca(SomDoBaru.resgate));
     _markSync(_syncShop | _syncSession);
     notifyListeners();
   }
@@ -288,6 +297,9 @@ class AppState extends ChangeNotifier {
 
   /// O sexo do companheiro. Muda o pronome, não o desenho.
   Sexo sexo = Sexo.naoDito;
+
+  /// Som ligado. Um app de foco que apita sem permissão é distração.
+  bool som = true;
   bool missed = true;
   bool sharing = false;
   PayPlan payPlan = PayPlan.annual;
@@ -897,6 +909,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleSom() {
+    som = !som;
+    SomService.instance.ligado = som;
+    _markSync(_syncSettings);
+    notifyListeners();
+  }
+
   void setSexo(Sexo novo) {
     if (sexo == novo) return;
     sexo = novo;
@@ -1091,6 +1110,7 @@ class AppState extends ChangeNotifier {
     aborted = false;
     reward = gained;
     leaves += gained;
+    unawaited(SomService.instance.toca(SomDoBaru.fim));
     if (completedToday == 0) {
       streak += 1;
       if (streak > melhorSequencia) melhorSequencia = streak;
@@ -1484,6 +1504,7 @@ class AppState extends ChangeNotifier {
       eveningHour: eveningHour,
       eveningMinute: eveningMinute,
       sexo: sexo,
+      som: som,
       missed: missed,
       payPlan: payPlan,
       usageAccess: usageAccess,
@@ -1543,6 +1564,8 @@ class AppState extends ChangeNotifier {
     eveningHour = s.eveningHour;
     eveningMinute = s.eveningMinute;
     sexo = s.sexo;
+    som = s.som;
+    SomService.instance.ligado = som;
     missed = s.missed;
     payPlan = s.payPlan;
     usageAccess = s.usageAccess;

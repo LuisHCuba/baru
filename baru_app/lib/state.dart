@@ -281,6 +281,13 @@ class AppState extends ChangeNotifier {
   Mood? overrideMood;
   bool trial = false;
   bool evening = true;
+
+  /// A que horas o relatório da noite chega. Era fixo em 21h no código.
+  int eveningHour = 21;
+  int eveningMinute = 0;
+
+  /// O sexo do companheiro. Muda o pronome, não o desenho.
+  Sexo sexo = Sexo.naoDito;
   bool missed = true;
   bool sharing = false;
   PayPlan payPlan = PayPlan.annual;
@@ -429,6 +436,12 @@ class AppState extends ChangeNotifier {
     final start = dateOnly(trialStartedAt ?? DateTime.now());
     return start.add(const Duration(days: 7));
   }
+
+  /// Texto do catálogo já com o pronome do companheiro resolvido.
+  ///
+  /// `{p}` vira ele/ela, `{P}` a versão com maiúscula, `{d}` dele/dela.
+  String frase(String bruto, [Map<String, Object> vars = const {}]) =>
+      t.comPronome(bruto, sexo, vars);
 
   String get streakText => t.streakLabel(streak);
 
@@ -726,6 +739,8 @@ class AppState extends ChangeNotifier {
   Future<void> _syncNotificationSchedules() async {
     await BaruNotifications.instance.syncSchedules(
       evening: evening,
+      eveningHour: eveningHour,
+      eveningMinute: eveningMinute,
       missed: missed,
       eveningTitle: t.notifEveningTitle,
       eveningBody: t.fill(t.notifEveningBody, {'n': displayName}),
@@ -864,8 +879,28 @@ class AppState extends ChangeNotifier {
   }
 
   void pickGoal(int value) {
-    goal = value;
+    goal = value.clamp(metaMinima, metaMaxima);
     _markSync(_syncSettings);
+    notifyListeners();
+  }
+
+  /// Ajusta a meta em passos. O botão desabilitado no limite é papel da tela;
+  /// aqui o valor só não sai da faixa.
+  void ajustaMeta(int passos) =>
+      pickGoal(goal + passos * metaPasso);
+
+  void setEveningTime(int hora, int minuto) {
+    eveningHour = hora.clamp(0, 23);
+    eveningMinute = minuto.clamp(0, 59);
+    _markSync(_syncSettings);
+    unawaited(_syncNotificationSchedules());
+    notifyListeners();
+  }
+
+  void setSexo(Sexo novo) {
+    if (sexo == novo) return;
+    sexo = novo;
+    _markSync(_syncPet);
     notifyListeners();
   }
 
@@ -1446,6 +1481,9 @@ class AppState extends ChangeNotifier {
       daysAway: daysAway,
       trial: trial,
       evening: evening,
+      eveningHour: eveningHour,
+      eveningMinute: eveningMinute,
+      sexo: sexo,
       missed: missed,
       payPlan: payPlan,
       usageAccess: usageAccess,
@@ -1502,6 +1540,9 @@ class AppState extends ChangeNotifier {
     daysAway = s.daysAway;
     trial = s.trial;
     evening = s.evening;
+    eveningHour = s.eveningHour;
+    eveningMinute = s.eveningMinute;
+    sexo = s.sexo;
     missed = s.missed;
     payPlan = s.payPlan;
     usageAccess = s.usageAccess;

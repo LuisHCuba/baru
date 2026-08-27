@@ -376,3 +376,123 @@ class _EsqueletoState extends State<Esqueleto>
     );
   }
 }
+
+/// O topo de uma tela de detalhe: voltar e título.
+///
+/// Estava privado na tela de tempo. Com três telas de detalhe, copiar era
+/// garantir que uma delas ficasse com o alvo de toque ou o espaçamento
+/// diferente das outras.
+class CabecalhoDeDetalhe extends StatelessWidget {
+  const CabecalhoDeDetalhe({
+    super.key,
+    required this.titulo,
+    required this.aoVoltar,
+    this.subtitulo,
+  });
+
+  final String titulo;
+  final String? subtitulo;
+  final VoidCallback aoVoltar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.margemTela,
+        Espaco.md,
+        Espaco.margemTela,
+        Espaco.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Semantics(
+                button: true,
+                label: 'voltar',
+                child: GestureDetector(
+                  onTap: aoVoltar,
+                  behavior: HitTestBehavior.opaque,
+                  child: const SizedBox(
+                    width: Toque.minimo,
+                    height: Toque.minimo,
+                    child: Icon(Icons.arrow_back_rounded, size: 22),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  titulo,
+                  style: estilo(Tipo.display),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          if (subtitulo != null)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: Toque.minimo,
+                top: Espaco.xxs,
+              ),
+              child: Text(
+                subtitulo!,
+                style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Uma linha de "rótulo à esquerda, valor à direita".
+class LinhaDeValor extends StatelessWidget {
+  const LinhaDeValor({
+    super.key,
+    required this.rotulo,
+    required this.valor,
+    this.icone,
+    this.cor,
+    this.detalhe,
+  });
+
+  final String rotulo;
+  final String valor;
+  final IconData? icone;
+  final Color? cor;
+  final String? detalhe;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = cor ?? Cores.tinta;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Espaco.xs),
+      child: Row(
+        children: [
+          if (icone != null) ...[
+            Icon(icone, size: 17, color: c),
+            const SizedBox(width: Espaco.sm),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(rotulo, style: estilo(Tipo.corpo)),
+                if (detalhe != null)
+                  Text(
+                    detalhe!,
+                    style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.55)),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Espaco.sm),
+          Text(valor, style: estilo(Tipo.subtitulo, color: c, tabular: true)),
+        ],
+      ),
+    );
+  }
+}

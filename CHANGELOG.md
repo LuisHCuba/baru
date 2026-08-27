@@ -3,6 +3,67 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — telas novas, cores por espécie, ajustes e transição sem fantasma
+
+### O QUE MUDOU NA TELA
+
+- **As folhas e a sequência agora levam a algum lugar.** Eram os dois únicos
+  números do app que mudavam sozinhos e não podiam ser tocados. "Suas folhas"
+  mostra de onde cada folha veio (sessões, marcos, missões), onde foi gasta, e
+  as últimas que você ganhou com data. "Sua sequência" mostra a atual, a
+  melhor, os congelamentos e o próximo marco.
+- **A transição entre telas parou de ser fantasma.** As páginas não tinham
+  fundo próprio — o `Scaffold` da casca fica atrás do `Navigator` — então dava
+  para ver uma tela através da outra durante o cross-fade. Agora cada página é
+  opaca e a saída acontece **antes** da entrada, à moda do eixo compartilhado
+  do Material.
+- **Cada espécie tem a própria paleta.** Havia uma lista de marrons para as
+  quatro: a tartaruga era marrom. Agora ela é oliva e musgo, a lontra é
+  chocolate escuro, a capivara é castanho-avermelhado e a coruja é ruivo e
+  cinza-pardo.
+- **A capivara virou capivara.** Cabeça quase retangular, focinho rombudo
+  ocupando o terço de baixo da cara, focinheira escura, orelhas pequenas e
+  afastadas, olhos altos. Antes era um urso.
+- **A tartaruga virou tartaruga.** Casco oliva-amarronzado com duas fileiras de
+  escudos de verdade, plastrão, e a listra laranja atrás do olho —
+  tartaruga-de-orelha-vermelha. Sem bochecha rosada: réptil não cora.
+- **A meta é editável.** Eram quatro chips (90/120/150/180). Agora é passo de
+  15 min entre 30 min e 8 h, com os valores comuns como atalho.
+- **O relatório da noite tem horário.** Estava escrito `21` no código.
+- **O companheiro tem sexo**, e isso muda o pronome: em português e espanhol
+  "ele te esperou" e "ela te esperou" são frases diferentes.
+- **Ajustes encurtou.** Cada assunto virou uma linha com o valor atual à
+  direita; idioma, meta, horário, espécie, pelagem e sexo abrem em folha.
+
+### Corrigido
+
+- O subtítulo do relatório dizia "Todo dia às 21h" fixo — mentira assim que o
+  horário virou preferência. Agora acompanha o valor.
+- A linha de duração da sessão mostrava `banho de {m} min`: um template do
+  catálogo usado como rótulo, com o placeholder cru na tela.
+
+### Adicionado
+
+- `lib/data/carteira.dart`: o extrato de folhas, e **honesto sobre o que o app
+  não guardou** — compras e marcos não têm data, e o histórico para nas
+  últimas 80 sessões.
+- Rotas `/folhas` e `/sequencia`.
+- `CabecalhoDeDetalhe` e `LinhaDeValor` em `componentes.dart`: o cabeçalho
+  estava privado numa tela só, e com três telas de detalhe copiar era garantir
+  que uma ficasse diferente.
+- Migration 9 `baru_evening_time_and_sex` — aditiva e idempotente.
+- `test/ajustes_test.dart` (12).
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: **337 passando, 1 pulado** (eram 324)
+- Evidência visual: `tela-folhas.png`, `tela-sequencia.png`, `tela-ajustes.png`
+
+### Não feito neste turno
+
+- **Som.** Os bichos continuam mudos. Ver o relatório do turno.
+
 ## 2026-08-27 — navegação, carinho e o elenco refeito
 
 ### O QUE MUDOU NA TELA

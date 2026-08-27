@@ -20,34 +20,65 @@ class HomeScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
       children: [
+        // Os dois números do topo levam a algum lugar. Eram os únicos do app
+        // que mudavam sozinhos e não podiam ser tocados: o usuário via o
+        // saldo subir e não tinha como saber de onde veio.
         Row(
           children: [
-            LeafBadge(leaves: app.leaves),
+            Semantics(
+              button: true,
+              child: GestureDetector(
+                onTap: () => app.go(AppScreen.folhas),
+                behavior: HitTestBehavior.opaque,
+                child: LeafBadge(leaves: app.leaves),
+              ),
+            ),
             const SizedBox(width: 8),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                decoration: BoxDecoration(
-                  color: AppColors.orangeA(0.14),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const AppIcon(
-                      Icons.local_fire_department_rounded,
-                      size: 14,
-                      color: AppColors.orange,
+              child: Semantics(
+                button: true,
+                child: GestureDetector(
+                  onTap: () => app.go(AppScreen.sequencia),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    key: const Key('home-sequencia'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
                     ),
-                    const SizedBox(width: 7),
-                    Flexible(
-                      child: Text(
-                        app.streakText,
-                        overflow: TextOverflow.ellipsis,
-                        style: nunito(size: 13, weight: FontWeight.w700, color: AppColors.orangeText),
-                      ),
+                    decoration: BoxDecoration(
+                      color: AppColors.orangeA(0.14),
+                      borderRadius: BorderRadius.circular(99),
                     ),
-                  ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const AppIcon(
+                          Icons.local_fire_department_rounded,
+                          size: 14,
+                          color: AppColors.orange,
+                        ),
+                        const SizedBox(width: 7),
+                        Flexible(
+                          child: Text(
+                            app.streakText,
+                            overflow: TextOverflow.ellipsis,
+                            style: nunito(
+                              size: 13,
+                              weight: FontWeight.w700,
+                              color: AppColors.orangeText,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const AppIcon(
+                          Icons.chevron_right_rounded,
+                          size: 15,
+                          color: AppColors.orangeText,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -64,7 +95,7 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          t.moodSub(app.moodKey),
+          app.frase(t.moodSub(app.moodKey)),
           style: nunito(size: 15, height: 1.5, color: AppColors.inkA(0.66)),
         ),
         const SizedBox(height: 16),

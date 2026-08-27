@@ -253,6 +253,7 @@ class OnboardingScreen extends StatelessWidget {
           selected: app.color,
           onPick: app.setColor,
           label: app.t.coat,
+          especie: app.species,
         ),
       ],
     );
@@ -321,16 +322,20 @@ class OnboardingScreen extends StatelessWidget {
       padding: const EdgeInsets.only(top: 34),
       children: [
         Text(
-          app.t.permT,
+          app.frase(app.t.permT),
           style: nunito(size: 25, weight: FontWeight.w800, height: 1.2, letterSpacing: -0.4),
         ),
         const SizedBox(height: 10),
         Text(
-          app.t.permB,
+          app.frase(app.t.permB),
           style: nunito(size: 14.5, height: 1.5, color: AppColors.inkA(0.65)),
         ),
         const SizedBox(height: 22),
-        for (final line in [app.t.perm1, app.t.perm2, app.t.perm3])
+        for (final line in [
+          app.t.perm1,
+          app.t.perm2,
+          app.frase(app.t.perm3),
+        ])
           Padding(
             padding: const EdgeInsets.only(bottom: 14),
             child: Row(

@@ -57,12 +57,58 @@ class Cores {
   static const pedraEscura = Color(0xFF948877);
 
   /// Pelagens do companheiro.
-  static const pelagem = [
+  // --- pelagens, uma paleta por espécie -----------------------------------
+  //
+  // Havia **uma** lista de marrons para as quatro espécies. Tartaruga marrom
+  // não existe: a carapaça de uma tartaruga-de-orelha-vermelha é oliva a
+  // verde-musgo. Cada espécie agora tem os seus tons plausíveis.
+  //
+  // Todas com seis entradas: o índice é persistido e o banco tem
+  // `check (coat between 0 and 8)`, então o tamanho não pode encolher abaixo
+  // do que já foi gravado nem passar de nove.
+
+  /// Capivara: castanho-avermelhado a areia.
+  static const pelagemCapivara = [
+    Color(0xFFB07A4E),
+    Color(0xFF8F5F3A),
     Color(0xFFC98A5B),
-    Color(0xFFA9733F),
-    Color(0xFFDBA478),
-    Color(0xFF8A6247),
+    Color(0xFF9C6B47),
+    Color(0xFFD9A87C),
+    Color(0xFF7A5133),
   ];
+
+  /// Lontra: marrom escuro e molhado, do chocolate ao pardo.
+  static const pelagemLontra = [
+    Color(0xFF6E4B33),
+    Color(0xFF56382A),
+    Color(0xFF8A6247),
+    Color(0xFF473026),
+    Color(0xFF7D5C45),
+    Color(0xFF9C7A5E),
+  ];
+
+  /// Tartaruga: oliva, musgo e verde-acinzentado.
+  static const pelagemTartaruga = [
+    Color(0xFF6F7D4A),
+    Color(0xFF556B3F),
+    Color(0xFF8A9A5B),
+    Color(0xFF47603C),
+    Color(0xFF7E8C5C),
+    Color(0xFF9AA870),
+  ];
+
+  /// Coruja: castanho, ruivo, cinza-pardo e creme.
+  static const pelagemCoruja = [
+    Color(0xFF9C7A5E),
+    Color(0xFF7A5E45),
+    Color(0xFFB89773),
+    Color(0xFF6B5747),
+    Color(0xFF8C7B6B),
+    Color(0xFFC2A585),
+  ];
+
+  /// Compatibilidade: o valor antigo, usado só onde a espécie não é sabida.
+  static const pelagem = pelagemCapivara;
 
   // --- categorias de tempo de tela ---------------------------------------
   // Cores próprias: o usuário precisa reconhecer a categoria pela cor em

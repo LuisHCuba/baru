@@ -425,8 +425,7 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
               species: widget.species,
               mood: widget.mood,
               activity: widget.activity,
-              coat: AppColors
-                  .coat[widget.coat.clamp(0, AppColors.coat.length - 1)],
+              coat: AppColors.pelagemDe(widget.species, widget.coat),
               pose: _Pose(
                 respiro: Curvas.organica.transform(_respiro.value) * 2 - 1,
                 boia: Curvas.organica.transform(_flutua.value) * 2 - 1,
@@ -898,38 +897,71 @@ class _PetPainter extends CustomPainter {
     _orelhaRedonda(canvas, const Offset(40, -19), 16, 14, 0.34);
 
     // Cabeça larga e de topo baixo: a capivara é quadradona, não redonda.
+    // Cabeça quase retangular. É a marca da capivara: um bloco com cantos
+    // arredondados, não uma bola. Com `_bolha` ela virava um urso.
     canvas.drawPath(
-      _bolha(
-        Rect.fromCenter(center: Offset.zero, width: 96, height: 78),
-        topo: 0.86,
-        base: 1.04,
-      ),
+      Path()..addRRect(
+          RRect.fromRectAndCorners(
+            Rect.fromCenter(
+              center: const Offset(0, 2),
+              width: 94,
+              height: 74,
+            ),
+            topLeft: const Radius.circular(34),
+            topRight: const Radius.circular(34),
+            bottomLeft: const Radius.circular(26),
+            bottomRight: const Radius.circular(26),
+          ),
+        ),
       _p(pelo),
     );
 
-    // Focinho rombudo, largo e baixo — mas com testa sobrando acima dele.
-    // Ocupando a cara toda, o contorno da cabeça sumia e os olhos ficavam
-    // espremidos na borda de cima.
+    // Focinho: uma faixa larga e **baixa**, encostada no queixo, com o topo
+    // suave. Como oval isolado no meio da cara, lia como máscara colada.
+    canvas.save();
+    canvas.clipPath(
+      Path()..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: const Offset(0, 2),
+              width: 94,
+              height: 74,
+            ),
+            const Radius.circular(30),
+          ),
+        ),
+    );
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 19), width: 62, height: 34),
-        topo: 0.82,
-        base: 1.04,
+        Rect.fromCenter(center: const Offset(0, 27), width: 74, height: 44),
+        topo: 0.74,
       ),
       _p(claro),
     );
+    canvas.restore();
 
-    _narina(canvas, const Offset(-12, 11));
-    _narina(canvas, const Offset(12, 11));
-    _boca(canvas, const Offset(0, 26), 24);
+    // Focinheira: o bloco escuro em cima do focinho, entre as narinas.
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 12), width: 26, height: 15),
+        base: 1.12,
+      ),
+      _p(sombraForte),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(-5, 9), width: 7, height: 4),
+      _p(luz.withValues(alpha: 0.4)),
+    );
+
+    _boca(canvas, const Offset(0, 27), 26);
     if (feliz) {
-      _bochecha(canvas, const Offset(-35, 16), const Offset(35, 16));
+      _bochecha(canvas, const Offset(-34, 18), const Offset(34, 18));
     }
 
-    // Olhos altos e afastados: na capivara eles ficam bem acima do focinho,
-    // para o bicho poder olhar em volta com o corpo na água.
-    _olho(canvas, const Offset(-26, -10), 8);
-    _olho(canvas, const Offset(26, -10), 8);
+    // Olhos altos e afastados: na capivara eles ficam quase na linha das
+    // orelhas, para o bicho olhar em volta com o corpo na água.
+    _olho(canvas, const Offset(-26, -13), 7.5);
+    _olho(canvas, const Offset(26, -13), 7.5);
 
     canvas.restore();
   }
@@ -1065,37 +1097,44 @@ class _PetPainter extends CustomPainter {
       topo: 0.94,
       base: 0.94,
     );
-    canvas.drawPath(casco, _p(sombra));
+    // O casco é queratina, não pele: puxa para o oliva-amarronzado, senão
+    // fica um verde chapado igual ao da cabeça.
+    final corDoCasco = Color.lerp(sombra, const Color(0xFF6B5334), 0.32)!;
+    canvas.drawPath(casco, _p(corDoCasco));
 
     canvas.save();
     canvas.clipPath(casco);
-    final linha = _traco(sombraForte.withValues(alpha: 0.55), 2.4);
-    // Escudos: um anel e os raios que saem dele.
-    // Escudos: uma fileira central e uma marginal, com divisórias curtas
-    // entre elas. Raios convergindo para um ponto liam como guarda-chuva.
+    // Escudos: precisam de contraste de verdade. Verde sobre verde some, e o
+    // casco vira uma bolha lisa.
+    final linha = _traco(Cores.tintaA(0.32), 2.6);
+
+    // Fileira central mais clara: é ela que dá a cúpula.
     canvas.drawPath(
-      Path()
-        ..moveTo(-47, 26)
-        ..cubicTo(-30, 0, 30, 0, 47, 26),
-      linha,
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 32), width: 62, height: 60),
+        topo: 0.92,
+      ),
+      _p(Color.lerp(corDoCasco, Cores.superficie, 0.16)!),
     );
     canvas.drawPath(
       Path()
-        ..moveTo(-50, 50)
-        ..cubicTo(-30, 34, 30, 34, 50, 50),
+        ..moveTo(-31, 62)
+        ..cubicTo(-31, 4, 31, 4, 31, 62),
       linha,
     );
-    for (final x in [-33.0, -11.0, 11.0, 33.0]) {
-      // Divisórias só entre as duas fileiras: curtas e quase verticais.
-      canvas.drawLine(Offset(x, 12), Offset(x * 1.06, 40), linha);
+    // Fileira marginal: o anel de baixo.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-52, 48)
+        ..cubicTo(-30, 32, 30, 32, 52, 48),
+      linha,
+    );
+    for (final x in [-17.0, 0.0, 17.0]) {
+      canvas.drawLine(Offset(x, 4), Offset(x * 1.1, 34), linha);
     }
-    // Brilho do casco: fraco e no ombro, não no alto. No alto ele caía bem
-    // onde a cabeça encosta e virava uma mancha solta.
-    _oval(
-      canvas,
-      Rect.fromCenter(center: const Offset(-22, 16), width: 34, height: 13),
-      luz.withValues(alpha: 0.16),
-    );
+    for (final x in [-42.0, -22.0, 22.0, 42.0]) {
+      canvas.drawLine(Offset(x, 34), Offset(x * 1.08, 64), linha);
+    }
     // Plastrão: a faixa clara da barriga, na frente do casco.
     canvas.drawPath(
       _bolha(
@@ -1131,28 +1170,28 @@ class _PetPainter extends CustomPainter {
       _p(pelo),
     );
 
-    // Faixa clara atrás do olho: a marca da tartaruga-de-orelha-vermelha.
-    // Baixa e curta de propósito — alta e comprida ela virava orelha.
+    // A listra vermelha atrás do olho — é dela que vem o nome
+    // "tartaruga-de-orelha-vermelha", e é o que tira a cabeça de "bola
+    // verde". Antes era um oval lavado que ninguém via.
     for (final lado in [-1.0, 1.0]) {
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(lado * 26, 0),
-          width: 12,
-          height: 8,
-        ),
-        _p(Color.lerp(claro, Cores.acento, 0.34)!),
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 22, -10)
+          ..cubicTo(lado * 29, -10, lado * 32, -6, lado * 32, 0)
+          ..cubicTo(lado * 29, 4, lado * 24, 3, lado * 22, -1)
+          ..close(),
+        _p(Color.lerp(Cores.acento, Cores.acentoForte, 0.35)!),
       );
     }
 
     _narina(canvas, const Offset(-6, 6));
     _narina(canvas, const Offset(6, 6));
     _boca(canvas, const Offset(0, 16), 24);
-    if (feliz) {
-      _bochecha(canvas, const Offset(-21, 12), const Offset(21, 12));
-    }
+    // Sem bochecha rosada: réptil não cora, e sobre o verde a mancha rosa
+    // ficava um adesivo colado.
 
-    _olho(canvas, const Offset(-16, -9), 7);
-    _olho(canvas, const Offset(16, -9), 7);
+    _olho(canvas, const Offset(-14, -9), 7);
+    _olho(canvas, const Offset(14, -9), 7);
 
     canvas.restore();
   }

@@ -48,6 +48,7 @@ class BaruRowCodec {
       'species': s.species.name,
       'pet_name': s.petName,
       'coat': s.color,
+      'sexo': s.sexo.name,
       'updated_at': _nowIso(),
     };
   }
@@ -101,6 +102,8 @@ class BaruRowCodec {
     return {
       'user_id': userId,
       'evening_notif': s.evening,
+      'evening_hour': s.eveningHour,
+      'evening_minute': s.eveningMinute,
       'missed_notif': s.missed,
       'usage_access': s.usageAccess,
       'default_duration_min': s.dur,
@@ -264,6 +267,9 @@ class BaruRowCodec {
       avg: (screenTime?['avg_min'] as num?)?.toInt() ?? 240,
       petName: pet?['pet_name'] as String? ?? '',
       color: (pet?['coat'] as num?)?.toInt() ?? 0,
+      sexo: AppSnapshot.parseSexo(pet?['sexo'] as String?),
+      eveningHour: (settings?['evening_hour'] as num?)?.toInt() ?? 21,
+      eveningMinute: (settings?['evening_minute'] as num?)?.toInt() ?? 0,
       owned: inventory.map((e) => '${e['item_id']}').toList(),
       dur: (settings?['default_duration_min'] as num?)?.toInt() ?? 25,
       completedToday: (daily?['completed_sessions'] as num?)?.toInt() ?? 0,

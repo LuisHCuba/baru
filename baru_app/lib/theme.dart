@@ -9,6 +9,7 @@ library;
 import 'package:flutter/material.dart';
 
 import 'design/tokens.dart';
+import 'models.dart';
 
 export 'design/motion.dart';
 export 'design/tokens.dart';
@@ -80,6 +81,20 @@ class AppColors {
   static const rockLight = Cores.pedraClara;
   static const rockDark = Cores.pedraEscura;
   static const coat = Cores.pelagem;
+
+  /// A paleta da espécie. Ver [Cores.pelagemCapivara] e irmãs.
+  static List<Color> coatDe(Species especie) => switch (especie) {
+        Species.capybara => Cores.pelagemCapivara,
+        Species.otter => Cores.pelagemLontra,
+        Species.tortoise => Cores.pelagemTartaruga,
+        Species.owl => Cores.pelagemCoruja,
+      };
+
+  /// O tom escolhido, com o índice preso ao tamanho da paleta da espécie.
+  static Color pelagemDe(Species especie, int indice) {
+    final p = coatDe(especie);
+    return p[indice.clamp(0, p.length - 1)];
+  }
 
   static Color inkA(double a) => Cores.tintaA(a);
   static Color greenA(double a) => Cores.primariaA(a);

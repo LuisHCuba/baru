@@ -66,11 +66,15 @@ class CoatPicker extends StatelessWidget {
     required this.selected,
     required this.onPick,
     required this.label,
+    required this.especie,
   });
 
   final int selected;
   final ValueChanged<int> onPick;
   final String label;
+
+  /// A paleta é da espécie: a tartaruga não escolhe entre marrons.
+  final Species especie;
 
   @override
   Widget build(BuildContext context) {
@@ -78,9 +82,9 @@ class CoatPicker extends StatelessWidget {
       children: [
         SectionLabel(label),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(4, (i) {
+        Wrap(
+          alignment: WrapAlignment.center,
+          children: List.generate(AppColors.coatDe(especie).length, (i) {
             final on = selected == i;
             return Semantics(
               button: true,
@@ -98,7 +102,7 @@ class CoatPicker extends StatelessWidget {
                         width: 46,
                         height: 46,
                         decoration: BoxDecoration(
-                          color: AppColors.coat[i],
+                          color: AppColors.coatDe(especie)[i],
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -161,8 +165,16 @@ class SpeciesPicker extends StatelessWidget {
   }
 }
 
+/// O cartão do companheiro no topo dos ajustes.
+///
+/// [completo] abre pelagem e espécie ali mesmo — é o que o onboarding
+/// precisa. Nos ajustes ele fica fechado: essas duas listas eram o grosso da
+/// tela comprida, e agora abrem em folha, a partir de uma linha com o valor
+/// atual.
 class CompanionCard extends StatelessWidget {
-  const CompanionCard({super.key});
+  const CompanionCard({super.key, this.completo = true});
+
+  final bool completo;
 
   @override
   Widget build(BuildContext context) {
@@ -208,19 +220,22 @@ class CompanionCard extends StatelessWidget {
             initial: app.displayName,
             onChanged: app.setName,
           ),
-          const SizedBox(height: 18),
-          CoatPicker(
-            selected: app.color,
-            onPick: app.setColor,
-            label: t.coat,
-          ),
-          const SizedBox(height: 22),
-          SpeciesPicker(
-            selected: app.species,
-            onPick: app.pickSpecies,
-            label: t.revealKicker,
-            speciesLabel: (s) => t.animalName(s.name),
-          ),
+          if (completo) ...[
+            const SizedBox(height: 18),
+            CoatPicker(
+              selected: app.color,
+              onPick: app.setColor,
+              label: t.coat,
+              especie: app.species,
+            ),
+            const SizedBox(height: 22),
+            SpeciesPicker(
+              selected: app.species,
+              onPick: app.pickSpecies,
+              label: t.revealKicker,
+              speciesLabel: (s) => t.animalName(s.name),
+            ),
+          ],
         ],
       ),
     );

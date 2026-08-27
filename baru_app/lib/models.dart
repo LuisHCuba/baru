@@ -14,6 +14,8 @@ enum AppScreen {
   tempo,
   trilha,
   missoes,
+  folhas,
+  sequencia,
 }
 
 enum Species { capybara, otter, tortoise, owl }
@@ -64,6 +66,22 @@ const petNames = {
 const durations = [25, 50, 90, 45];
 const avgOptions = [180, 240, 300, 360];
 const goalOptions = [90, 120, 150, 180];
+
+/// Limites da meta quando ela é ajustada à mão.
+///
+/// Meta de 10 minutos não é meta, é frustração programada; acima de 8 horas
+/// ela para de significar alguma coisa.
+const metaMinima = 30;
+const metaMaxima = 480;
+const metaPasso = 15;
+
+/// O sexo do companheiro.
+///
+/// Não muda o desenho — muda como o app fala dele. Em português e espanhol
+/// isso é gramática, não enfeite: "ele te esperou" e "ela te esperou" são
+/// frases diferentes, e chamar a bicha de "ele" o tempo todo é o app errando
+/// o nome dela.
+enum Sexo { naoDito, macho, femea }
 
 const weekPattern = [
   WeekDayKind.present,

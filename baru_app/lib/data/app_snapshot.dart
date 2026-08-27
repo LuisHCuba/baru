@@ -26,6 +26,9 @@ class AppSnapshot {
     required this.daysAway,
     required this.trial,
     required this.evening,
+    this.eveningHour = 21,
+    this.eveningMinute = 0,
+    this.sexo = Sexo.naoDito,
     required this.missed,
     required this.payPlan,
     required this.usageAccess,
@@ -77,6 +80,12 @@ class AppSnapshot {
   final int daysAway;
   final bool trial;
   final bool evening;
+
+  /// Hora e minuto do relatório da noite.
+  final int eveningHour;
+  final int eveningMinute;
+
+  final Sexo sexo;
   final bool missed;
   final PayPlan payPlan;
   final bool usageAccess;
@@ -143,6 +152,9 @@ class AppSnapshot {
         'daysAway': daysAway,
         'trial': trial,
         'evening': evening,
+        'eveningHour': eveningHour,
+        'eveningMinute': eveningMinute,
+        'sexo': sexo.name,
         'missed': missed,
         'payPlan': payPlan.name,
         'usageAccess': usageAccess,
@@ -196,6 +208,9 @@ class AppSnapshot {
       daysAway: (j['daysAway'] as num?)?.toInt() ?? 0,
       trial: j['trial'] == true,
       evening: j['evening'] != false,
+      eveningHour: (j['eveningHour'] as num?)?.toInt() ?? 21,
+      eveningMinute: (j['eveningMinute'] as num?)?.toInt() ?? 0,
+      sexo: parseSexo(j['sexo'] as String?),
       missed: j['missed'] != false,
       payPlan: (j['payPlan'] as String?) == 'monthly' ? PayPlan.monthly : PayPlan.annual,
       usageAccess: j['usageAccess'] == true,
@@ -249,6 +264,13 @@ class AppSnapshot {
     return DateTime(n.year, n.month, n.day);
   }
 
+  static Sexo parseSexo(String? n) {
+    for (final s in Sexo.values) {
+      if (s.name == n) return s;
+    }
+    return Sexo.naoDito;
+  }
+
   static AppScreen parseScreen(String? n) {
     for (final s in AppScreen.values) {
       if (s.name == n) {
@@ -288,6 +310,9 @@ class AppSnapshot {
     int? daysAway,
     bool? trial,
     bool? evening,
+    int? eveningHour,
+    int? eveningMinute,
+    Sexo? sexo,
     bool? missed,
     PayPlan? payPlan,
     bool? usageAccess,
@@ -342,6 +367,9 @@ class AppSnapshot {
       daysAway: daysAway ?? this.daysAway,
       trial: trial ?? this.trial,
       evening: evening ?? this.evening,
+      eveningHour: eveningHour ?? this.eveningHour,
+      eveningMinute: eveningMinute ?? this.eveningMinute,
+      sexo: sexo ?? this.sexo,
       missed: missed ?? this.missed,
       payPlan: payPlan ?? this.payPlan,
       usageAccess: usageAccess ?? this.usageAccess,

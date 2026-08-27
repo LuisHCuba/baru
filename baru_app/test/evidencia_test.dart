@@ -5,10 +5,14 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:baru_app/data/tempo_de_tela.dart';
+import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/screens/home_screen.dart';
 import 'package:baru_app/screens/missoes_screen.dart';
+import 'package:baru_app/screens/folhas_screen.dart';
+import 'package:baru_app/screens/sequencia_screen.dart';
+import 'package:baru_app/screens/settings_screen.dart';
 import 'package:baru_app/screens/tempo_screen.dart';
 import 'package:baru_app/screens/trilha_screen.dart';
 import 'package:baru_app/theme.dart';
@@ -341,6 +345,60 @@ void main() {
       await tester.pump(Duration(milliseconds: g.value.$2));
       await _salva(tester, PetView.cenaKey, g.value.$1);
       await tester.pump(const Duration(seconds: 3));
+    }
+  });
+
+  testWidgets('folhas, sequencia e ajustes', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(412, 892);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final comHistorico = _estado()
+      ..leaves = 96
+      ..streak = 5
+      ..melhorSequencia = 9
+      ..sessoesConcluidas = 14
+      ..diasAbaixoDaMeta = 6
+      ..owned = ['lily', 'bamboo']
+      ..sessions = [
+        for (var i = 0; i < 5; i++)
+          SessionRecord(
+            id: 's$i',
+            at: DateTime(2026, 8, 27 - i, 9 + i),
+            dur: i.isEven ? 25 : 50,
+            completed: true,
+            aborted: false,
+            reward: i.isEven ? 10 : 25,
+          ),
+      ];
+
+    final casos = <String, (Widget, AppState)>{
+      'folhas': (const FolhasScreen(), comHistorico),
+      'sequencia': (const SequenciaScreen(), comHistorico),
+      'ajustes': (const SettingsScreen(), comHistorico),
+    };
+
+    for (final e in casos.entries) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            backgroundColor: Cores.superficie,
+            body: RepaintBoundary(
+              key: const Key('captura-tela'),
+              child: AppScope(state: e.value.$2, child: e.value.$1),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
+      await _salva(tester, const Key('captura-tela'), 'tela-${e.key}');
     }
   });
 

@@ -23,7 +23,7 @@ class TempoScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Cabecalho(titulo: t.telaT, aoVoltar: app.voltar),
+        CabecalhoDeDetalhe(titulo: t.telaT, aoVoltar: app.voltar),
         Expanded(
           child: !app.usageAccess
               ? EstadoVazio(
@@ -47,49 +47,6 @@ class TempoScreen extends StatelessWidget {
   }
 }
 
-class _Cabecalho extends StatelessWidget {
-  const _Cabecalho({required this.titulo, required this.aoVoltar});
-
-  final String titulo;
-  final VoidCallback aoVoltar;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Espaco.margemTela,
-        Espaco.md,
-        Espaco.margemTela,
-        Espaco.xs,
-      ),
-      child: Row(
-        children: [
-          Semantics(
-            button: true,
-            label: 'voltar',
-            child: GestureDetector(
-              onTap: aoVoltar,
-              behavior: HitTestBehavior.opaque,
-              child: const SizedBox(
-                width: Toque.minimo,
-                height: Toque.minimo,
-                child: Icon(Icons.arrow_back_rounded, size: 22),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              titulo,
-              style: estilo(Tipo.display),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _Detalhamento extends StatelessWidget {
   const _Detalhamento({required this.app, required this.resumo});

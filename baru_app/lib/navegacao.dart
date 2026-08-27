@@ -21,6 +21,7 @@ library;
 import 'package:flutter/material.dart';
 
 import 'design/motion.dart';
+import 'design/tokens.dart';
 import 'models.dart';
 import 'state.dart';
 
@@ -50,6 +51,8 @@ extension RotaDaTela on AppScreen {
         AppScreen.report ||
         AppScreen.shop ||
         AppScreen.tempo ||
+        AppScreen.folhas ||
+        AppScreen.sequencia ||
         AppScreen.result =>
           TipoDeRota.detalhe,
         AppScreen.paywall => TipoDeRota.modal,
@@ -66,6 +69,8 @@ extension RotaDaTela on AppScreen {
         AppScreen.report => '/relatorio',
         AppScreen.shop => '/loja',
         AppScreen.tempo => '/tempo',
+        AppScreen.folhas => '/folhas',
+        AppScreen.sequencia => '/sequencia',
         AppScreen.result => '/resultado',
         AppScreen.paywall => '/assinatura',
         AppScreen.session => '/sessao',
@@ -103,12 +108,28 @@ class PaginaBaru extends Page<void> {
       transitionDuration: Movimento.duracao(context, Tempo.tela),
       reverseTransitionDuration: Movimento.duracao(context, Tempo.componente),
       opaque: true,
-      pageBuilder: (_, __, ___) => filho,
+      // Fundo opaco na própria página.
+      //
+      // O `Scaffold` da casca fica **atrás** do `Navigator`, então a página
+      // em si não tinha fundo: durante a transição dava para ver uma tela
+      // através da outra — o efeito fantasma. `opaque: true` na rota diz ao
+      // Navigator que ele pode parar de desenhar o que está embaixo; não
+      // pinta nada.
+      pageBuilder: (_, __, ___) => ColoredBox(
+        color: tela == AppScreen.session ? Cores.foco : Cores.superficie,
+        child: filho,
+      ),
       transitionsBuilder: (context, entra, sai, child) =>
           _transicao(context, tela.tipo, entra, sai, child),
     );
   }
 
+  /// Eixo compartilhado, no espírito do Material: a tela que sai some
+  /// **antes** de a que entra aparecer, em vez de as duas dividirem a tela
+  /// meio transparentes.
+  ///
+  /// Um cross-fade de dois conteúdos opacos é o que produz o fantasma. A
+  /// saída ocupa os primeiros 35% do tempo; a entrada, os últimos 65%.
   static Widget _transicao(
     BuildContext context,
     TipoDeRota tipo,
@@ -116,30 +137,61 @@ class PaginaBaru extends Page<void> {
     Animation<double> sai,
     Widget child,
   ) {
-    final suave = CurvedAnimation(parent: entra, curve: Curvas.padrao);
+    final aparece = CurvedAnimation(
+      parent: entra,
+      curve: const Interval(0.35, 1, curve: Curvas.padrao),
+    );
+    final move = CurvedAnimation(parent: entra, curve: Curvas.padrao);
+    // Quando esta página é a de baixo, `sai` anda: ela recua e some.
+    final recua = CurvedAnimation(parent: sai, curve: Curvas.padrao);
+
+    Widget comSaida(Widget dentro) => FadeTransition(
+          opacity: Tween(begin: 1.0, end: 0.0).animate(
+            CurvedAnimation(
+              parent: sai,
+              curve: const Interval(0, 0.35, curve: Curvas.saida),
+            ),
+          ),
+          child: dentro,
+        );
+
     switch (tipo) {
       case TipoDeRota.destino:
-        // Irmãos: um empurrãozinho lateral e fade. Sem direção "certa" —
-        // a barra pode pular de qualquer aba para qualquer outra.
+        // Irmãos: deslizam de lado. Sem direção "certa" — a barra pode pular
+        // de qualquer aba para qualquer outra.
         final d = Movimento.amplitude(context, Desloca.irmao);
-        return FadeTransition(
-          opacity: suave,
-          child: SlideTransition(
-            position: Tween(
-              begin: Offset(d, 0),
-              end: Offset.zero,
-            ).animate(suave),
-            child: child,
+        return comSaida(
+          FadeTransition(
+            opacity: aparece,
+            child: SlideTransition(
+              position: Tween(
+                begin: Offset(d, 0),
+                end: Offset.zero,
+              ).animate(move),
+              child: SlideTransition(
+                position: Tween(
+                  begin: Offset.zero,
+                  end: Offset(-d, 0),
+                ).animate(recua),
+                child: child,
+              ),
+            ),
           ),
         );
       case TipoDeRota.detalhe:
-        // Filho: entra em profundidade — vem de trás e cresce.
+        // Filho: entra em profundidade — vem de trás e cresce, enquanto o pai
+        // afunda um pouco.
         final z = Movimento.amplitude(context, Desloca.profundidade);
-        return FadeTransition(
-          opacity: suave,
-          child: ScaleTransition(
-            scale: Tween(begin: 1 - z * 2, end: 1.0).animate(suave),
-            child: child,
+        return comSaida(
+          FadeTransition(
+            opacity: aparece,
+            child: ScaleTransition(
+              scale: Tween(begin: 1 - z * 2.5, end: 1.0).animate(move),
+              child: ScaleTransition(
+                scale: Tween(begin: 1.0, end: 1 - z).animate(recua),
+                child: child,
+              ),
+            ),
           ),
         );
       case TipoDeRota.modal:
@@ -151,7 +203,7 @@ class PaginaBaru extends Page<void> {
           child: child,
         );
       case TipoDeRota.fluxo:
-        return FadeTransition(opacity: suave, child: child);
+        return comSaida(FadeTransition(opacity: aparece, child: child));
     }
   }
 }

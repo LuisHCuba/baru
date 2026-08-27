@@ -248,6 +248,8 @@ class BaruNotifications {
 
   Future<void> syncSchedules({
     required bool evening,
+    int eveningHour = 21,
+    int eveningMinute = 0,
     required bool missed,
     required String eveningTitle,
     required String eveningBody,
@@ -269,7 +271,7 @@ class BaruNotifications {
     );
 
     if (evening && await hasPermission()) {
-      await _scheduleEvening(eveningTitle, eveningBody);
+      await _scheduleEvening(eveningTitle, eveningBody, eveningHour, eveningMinute);
     } else {
       await _plugin.cancel(id: _eveningId);
     }
@@ -324,14 +326,20 @@ class BaruNotifications {
     );
   }
 
-  Future<void> _scheduleEvening(String title, String body) async {
+  Future<void> _scheduleEvening(
+    String title,
+    String body,
+    int hora,
+    int minuto,
+  ) async {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
       tz.local,
       now.year,
       now.month,
       now.day,
-      21,
+      hora,
+      minuto,
     );
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));

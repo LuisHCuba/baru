@@ -62,7 +62,9 @@ class ResultScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  won ? t.fill(t.resWonSub, {'n': app.displayName}) : t.resLostSub,
+                  won
+                      ? t.fill(t.resWonSub, {'n': app.displayName})
+                      : app.frase(t.resLostSub),
                   textAlign: TextAlign.center,
                   style: nunito(size: 15, height: 1.5, color: AppColors.inkA(0.68)),
                 ),

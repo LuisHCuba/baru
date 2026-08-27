@@ -13,6 +13,8 @@ import 'screens/result_screen.dart';
 import 'screens/session_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/shop_screen.dart';
+import 'screens/folhas_screen.dart';
+import 'screens/sequencia_screen.dart';
 import 'screens/tempo_screen.dart';
 import 'screens/missoes_screen.dart';
 import 'screens/trilha_screen.dart';
@@ -134,6 +136,10 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
         return const SettingsScreen();
       case AppScreen.tempo:
         return const TempoScreen();
+      case AppScreen.folhas:
+        return const FolhasScreen();
+      case AppScreen.sequencia:
+        return const SequenciaScreen();
       case AppScreen.trilha:
         return const TrilhaScreen();
       case AppScreen.missoes:

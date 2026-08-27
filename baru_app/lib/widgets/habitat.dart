@@ -210,7 +210,7 @@ class _HabitatSceneState extends State<HabitatScene>
   void _premia(AppState app) {
     final xp = app.recebeCarinho();
     setState(() {
-      _textoDoPremio = xp > 0 ? '+$xp ${app.t.xpRotulo}' : app.t.vinculoTeto;
+      _textoDoPremio = xp > 0 ? '+$xp ${app.t.xpRotulo}' : app.frase(app.t.vinculoTeto);
     });
     _premio.forward(from: 0);
   }

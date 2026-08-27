@@ -87,10 +87,34 @@ void main() {
   testWidgets('ajustes mostra perfil e permissão de uso', (tester) async {
     await pumpAt412(tester, AppScreen.profile);
     expect(find.text('Você é uma capivara.'), findsOneWidget);
-    expect(find.text('Capivara'), findsOneWidget);
-    expect(find.text('Lontra'), findsOneWidget);
-    expect(find.text('PELAGEM'), findsOneWidget);
     expect(find.text('1 dia presente'), findsWidgets);
+
+    // A espécie agora é uma linha com o valor atual, não quatro botões
+    // sempre abertos: era esse empilhamento que fazia a tela ser uma
+    // rolagem sem fim.
+    expect(find.text('Capivara'), findsOneWidget);
+    expect(
+      find.text('Lontra'),
+      findsNothing,
+      reason: 'as outras espécies moram na folha, não na tela',
+    );
+
+    await tester.tap(find.text('Seu animal interior'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.text('Lontra'),
+      findsOneWidget,
+      reason: 'a folha tem de abrir com as opções',
+    );
+    await tester.tap(find.text('Lontra'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.text('Lontra'),
+      findsOneWidget,
+      reason: 'escolhida, ela vira o valor da linha',
+    );
     await tester.scrollUntilVisible(
       find.text('Permitir acesso ao uso'),
       120,
@@ -113,9 +137,13 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -90));
-    await tester.pumpAndSettle();
+    // Pumps limitados, não `pumpAndSettle`: o companheiro respira em laço
+    // infinito, então a árvore nunca fica quieta enquanto ele estiver em
+    // cena. Com a tela de ajustes mais curta ele deixou de sair do viewport.
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text('Política de privacidade'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     expect(
       find.textContaining('só o total de tempo de tela'),
       findsOneWidget,

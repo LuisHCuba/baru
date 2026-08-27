@@ -1,3 +1,5 @@
+import 'models.dart';
+
 class T {
   T(this.lang) : _m = catalog[lang] ?? catalog['pt']!;
 
@@ -201,6 +203,67 @@ class T {
   String get authBootstrapLoading => s('authBootstrapLoading');
   String get syncFail => s('syncFail');
   String get syncSchemaFail => s('syncSchemaFail');
+
+  /// O pronome do companheiro, em minúscula e com inicial maiúscula.
+  ///
+  /// Em português e espanhol isto é gramática: "ele te esperou" e "ela te
+  /// esperou" são frases diferentes. Em inglês o neutro serve para os três;
+  /// em chinês o pronome não aparece nessas frases.
+  String pronome(Sexo sexo) {
+    final m = _m['pronome'] as Map;
+    return m[sexo.name] as String;
+  }
+
+  /// Preenche `{p}` e `{P}` com o pronome do companheiro, junto do resto.
+  String comPronome(
+    String texto,
+    Sexo sexo, [
+    Map<String, Object> vars = const {},
+  ]) {
+    final p = pronome(sexo);
+    final capital =
+        p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}';
+    final d = (_m['possessivo'] as Map)[sexo.name] as String;
+    return fill(texto, {...vars, 'p': p, 'P': capital, 'd': d});
+  }
+  String get folhasT => s('folhasT');
+  String get folhasSub => s('folhasSub');
+  String get folhasDeOnde => s('folhasDeOnde');
+  String get folhasSessoes => s('folhasSessoes');
+  String get folhasMarcos => s('folhasMarcos');
+  String get folhasMissoes => s('folhasMissoes');
+  String get folhasGasto => s('folhasGasto');
+  String get folhasNota => s('folhasNota');
+  String get folhasUltimas => s('folhasUltimas');
+  String get folhasVaziaT => s('folhasVaziaT');
+  String get folhasVaziaB => s('folhasVaziaB');
+  String get folhasProximo => s('folhasProximo');
+  String get folhasVerLoja => s('folhasVerLoja');
+  String get folhasPodeComprar => s('folhasPodeComprar');
+  String get setSexo => s('setSexo');
+  String get setSexoNao => s('setSexoNao');
+  String get setSexoM => s('setSexoM');
+  String get setSexoF => s('setSexoF');
+  String get setHorario => s('setHorario');
+  String get setHorarioSub => s('setHorarioSub');
+  String get setMetaLivre => s('setMetaLivre');
+  String get setMetaAjuda => s('setMetaAjuda');
+  String get setCompanheiro => s('setCompanheiro');
+  String get setSecoes => s('setSecoes');
+  String get setDuracao => s('setDuracao');
+  String get seqT => s('seqT');
+  String get seqSub => s('seqSub');
+  String get seqAtual => s('seqAtual');
+  String get seqMelhor => s('seqMelhor');
+  String get seqCongelamentos => s('seqCongelamentos');
+  String get seqCongelamentoAjuda => s('seqCongelamentoAjuda');
+  String get seqSemana => s('seqSemana');
+  String get seqSessoes => s('seqSessoes');
+  String get seqDiasAbaixo => s('seqDiasAbaixo');
+  String get seqProximo => s('seqProximo');
+  String get seqVaziaT => s('seqVaziaT');
+  String get seqVaziaB => s('seqVaziaB');
+  String get folhasSessaoLinha => s('folhasSessaoLinha');
   String get bootstrapOffline => s('bootstrapOffline');
   String get bonusUnderGoal => s('bonusUnderGoal');
   String get telaT => s('telaT');
@@ -359,9 +422,49 @@ const _pt = <String, Object>{
   'trilhaAgora': 'Agora',
   'trilhaBloqueado': 'A caminho',
   'nivelRotulo': 'Nível {n}',
+  'setSexo': 'Sexo',
+  'setSexoNao': 'Não dizer',
+  'setSexoM': 'Macho',
+  'setSexoF': 'Fêmea',
+  'setHorario': 'Horário do relatório',
+  'setHorarioSub': 'A que horas o resumo do dia chega',
+  'setMetaLivre': 'Meta de tempo de tela',
+  'setMetaAjuda': 'Ajuste de {p} em {p} minutos, entre {a} e {b}.',
+  'setCompanheiro': 'Companheiro',
+  'setSecoes': 'Ajustes',
+  'setDuracao': 'Duração da sessão',
+  'pronome': {'naoDito': 'ele', 'macho': 'ele', 'femea': 'ela'},
+  'possessivo': {'naoDito': 'dele', 'macho': 'dele', 'femea': 'dela'},
+  'folhasT': 'Suas folhas',
+  'folhasSub': 'De onde elas vêm e para onde vão.',
+  'folhasDeOnde': 'DE ONDE VIERAM',
+  'folhasSessoes': 'Sessões de foco',
+  'folhasMarcos': 'Marcos da trilha',
+  'folhasMissoes': 'Missões resgatadas',
+  'folhasGasto': 'NO HABITAT',
+  'folhasNota': 'O histórico guarda as últimas 80 sessões, então a soma pode ficar abaixo do saldo.',
+  'folhasUltimas': 'ÚLTIMAS QUE VOCÊ GANHOU',
+  'folhasVaziaT': 'Nenhuma folha ainda',
+  'folhasVaziaB': 'Termine uma sessão de foco e as primeiras folhas caem aqui.',
+  'folhasProximo': 'Faltam {x} para {i}',
+  'folhasVerLoja': 'Ver a loja',
+  'folhasPodeComprar': 'Dá para comprar {i} agora',
+  'folhasSessaoLinha': 'Sessão de {m} min',
+  'seqT': 'Sua sequência',
+  'seqSub': 'Um dia presente é um dia em que você apareceu.',
+  'seqAtual': 'SEQUÊNCIA ATUAL',
+  'seqMelhor': 'Melhor sequência',
+  'seqCongelamentos': 'Congelamentos',
+  'seqCongelamentoAjuda': 'Um congelamento salva a sequência num dia em que você faltar. Volta a cada segunda.',
+  'seqSemana': 'ESTA SEMANA',
+  'seqSessoes': 'Sessões concluídas',
+  'seqDiasAbaixo': 'Dias abaixo da meta',
+  'seqProximo': 'Faltam {x} dias para {m}',
+  'seqVaziaT': 'Sua sequência começa hoje',
+  'seqVaziaB': 'Apareça amanhã e ela vira dois.',
   'vinculoRotulo': 'Vínculo',
   'vinculoSub': '{n} afagos',
-  'vinculoTeto': 'Ele já recebeu carinho de sobra hoje',
+  'vinculoTeto': '{P} já recebeu carinho de sobra hoje',
   'nivelFalta': '{x} XP para o nível {n}',
   'nivelMax': 'Nível máximo',
   'marcoSessao1': 'Sua primeira sessão de foco',
@@ -456,11 +559,11 @@ const _pt = <String, Object>{
   'goalNote':
       '25% abaixo da sua média. Dá para mudar quando quiser nos ajustes.',
   'goalCta': 'Usar esta meta',
-  'permT': 'O humor dele acompanha seu tempo de tela.',
-  'permB': 'Para isso, ele precisa ler o total do dia no seu telefone.',
+  'permT': 'O humor do seu companheiro acompanha seu tempo de tela.',
+  'permB': 'Para isso, o Baru precisa ler o total do dia no seu telefone.',
   'perm1': 'Só o total do dia. Nunca quais apps, nunca conteúdo.',
   'perm2': 'Lido algumas vezes por dia. Nada sai do aparelho.',
-  'perm3': 'Se preferir pular, ele lê seu humor só pelas sessões de foco.',
+  'perm3': 'Se preferir pular, o Baru lê seu humor só pelas sessões de foco.',
   'permTech':
       'Android: Acesso ao Uso (PACKAGE_USAGE_STATS). iOS: Screen Time exige entitlement Apple — o app não finge permissão.',
   'permAllow': 'Permitir acesso ao uso',
@@ -505,11 +608,11 @@ const _pt = <String, Object>{
   },
   'moodSub': {
     'radiant': 'Abaixo da meta e uma sessão na água. O melhor tipo de dia.',
-    'content': 'Um dia decente. Uma sessão a mais e ele estaria radiante.',
+    'content': 'Um dia decente. Uma sessão a mais e {p} estaria radiante.',
     'neutral': 'Em cima da meta. Nada para corrigir.',
-    'sleepy': 'Dia longo de tela. Amanhã ele topa nadar.',
+    'sleepy': 'Dia longo de tela. Amanhã {p} topa nadar.',
     'missing_you':
-        'Ele te esperou. Nada foi perdido enquanto você esteve fora.',
+        '{P} te esperou. Nada foi perdido enquanto você esteve fora.',
   },
   'moodLbl': {
     'radiant': 'radiante',
@@ -530,7 +633,7 @@ const _pt = <String, Object>{
       '{n} nadou bastante e saiu para secar. Bem-vindo de volta.',
   'resLost': '{n} sentiu sua falta.',
   'resLostSub':
-      'Sem folhas desta vez, e nada foi perdido. Ele continua aqui.',
+      'Sem folhas desta vez, e nada foi perdido. {P} continua aqui.',
   'reward': '+{k} folhas',
   'leavesLbl': 'Folhas',
   'presentLbl': 'Presente',
@@ -574,7 +677,7 @@ const _pt = <String, Object>{
   'setGoal': 'Meta diária',
   'setNotif': 'Notificações',
   'setEvening': 'Relatório da noite',
-  'setEveningSub': 'Todo dia às 21h',
+  'setEveningSub': 'Todo dia às {h}',
   'setMissed': '"Senti sua falta"',
   'setMissedSub':
       'No máximo uma vez por dia, depois de dois dias longe',
@@ -669,9 +772,49 @@ const _en = <String, Object>{
   'trilhaAgora': 'Now',
   'trilhaBloqueado': 'Ahead',
   'nivelRotulo': 'Level {n}',
+  'setSexo': 'Sex',
+  'setSexoNao': 'Prefer not to say',
+  'setSexoM': 'Male',
+  'setSexoF': 'Female',
+  'setHorario': 'Report time',
+  'setHorarioSub': 'When the day summary arrives',
+  'setMetaLivre': 'Screen time goal',
+  'setMetaAjuda': 'Adjust in {p}-minute steps, between {a} and {b}.',
+  'setCompanheiro': 'Companion',
+  'setSecoes': 'Settings',
+  'setDuracao': 'Session length',
+  'pronome': {'naoDito': 'they', 'macho': 'he', 'femea': 'she'},
+  'possessivo': {'naoDito': 'their', 'macho': 'his', 'femea': 'her'},
+  'folhasT': 'Your leaves',
+  'folhasSub': 'Where they come from and where they go.',
+  'folhasDeOnde': 'WHERE THEY CAME FROM',
+  'folhasSessoes': 'Focus sessions',
+  'folhasMarcos': 'Trail milestones',
+  'folhasMissoes': 'Quests claimed',
+  'folhasGasto': 'IN THE HABITAT',
+  'folhasNota': 'History keeps the last 80 sessions, so the total can fall short of your balance.',
+  'folhasUltimas': 'MOST RECENT EARNINGS',
+  'folhasVaziaT': 'No leaves yet',
+  'folhasVaziaB': 'Finish a focus session and your first leaves land here.',
+  'folhasProximo': '{x} to go for {i}',
+  'folhasVerLoja': 'Open the shop',
+  'folhasPodeComprar': 'You can buy {i} right now',
+  'folhasSessaoLinha': '{m} min session',
+  'seqT': 'Your streak',
+  'seqSub': 'A day present is a day you showed up.',
+  'seqAtual': 'CURRENT STREAK',
+  'seqMelhor': 'Best streak',
+  'seqCongelamentos': 'Freezes',
+  'seqCongelamentoAjuda': 'A freeze saves your streak on a day you miss. It comes back every Monday.',
+  'seqSemana': 'THIS WEEK',
+  'seqSessoes': 'Sessions completed',
+  'seqDiasAbaixo': 'Days under goal',
+  'seqProximo': '{x} days to go for {m}',
+  'seqVaziaT': 'Your streak starts today',
+  'seqVaziaB': 'Show up tomorrow and it becomes two.',
   'vinculoRotulo': 'Bond',
   'vinculoSub': '{n} cuddles',
-  'vinculoTeto': 'They have had plenty of love today',
+  'vinculoTeto': '{P} have had plenty of love today',
   'nivelFalta': '{x} XP to level {n}',
   'nivelMax': 'Max level',
   'marcoSessao1': 'Your first focus session',
@@ -813,10 +956,10 @@ const _en = <String, Object>{
   },
   'moodSub': {
     'radiant': 'Under your goal and a session in the water. Best kind of day.',
-    'content': 'A decent day. One more session and it would be beaming.',
+    'content': 'A decent day. One more session and {p} would be beaming.',
     'neutral': 'Right around your goal. Nothing to fix.',
-    'sleepy': 'A long screen day. It will be up for a swim tomorrow.',
-    'missing_you': 'It waited for you. Nothing was lost while you were gone.',
+    'sleepy': 'A long screen day. Tomorrow {p} is up for a swim.',
+    'missing_you': '{P} waited for you. Nothing was lost while you were gone.',
   },
   'moodLbl': {
     'radiant': 'radiant',
@@ -838,7 +981,7 @@ const _en = <String, Object>{
       '{n} had a long swim and came out to dry off. Welcome back.',
   'resLost': '{n} missed you.',
   'resLostSub':
-      "No leaves this time, and nothing taken away. It's still here.",
+      'No leaves this time, and nothing taken away. {P} is still here.',
   'reward': '+{k} leaves',
   'leavesLbl': 'Leaves',
   'presentLbl': 'Present',
@@ -882,7 +1025,7 @@ const _en = <String, Object>{
   'setGoal': 'Daily goal',
   'setNotif': 'Notifications',
   'setEvening': 'Evening report',
-  'setEveningSub': 'Every day at 9:00 PM',
+  'setEveningSub': 'Every day at {h}',
   'setMissed': '"Missed you"',
   'setMissedSub': 'At most once a day, after two days away',
   'setAbout': 'About',
@@ -976,9 +1119,49 @@ const _es = <String, Object>{
   'trilhaAgora': 'Ahora',
   'trilhaBloqueado': 'Por venir',
   'nivelRotulo': 'Nivel {n}',
+  'setSexo': 'Sexo',
+  'setSexoNao': 'Prefiero no decir',
+  'setSexoM': 'Macho',
+  'setSexoF': 'Hembra',
+  'setHorario': 'Hora del informe',
+  'setHorarioSub': 'Cuándo llega el resumen del día',
+  'setMetaLivre': 'Meta de tiempo de pantalla',
+  'setMetaAjuda': 'Ajuste de {p} en {p} minutos, entre {a} y {b}.',
+  'setCompanheiro': 'Compañero',
+  'setSecoes': 'Ajustes',
+  'setDuracao': 'Duración de la sesión',
+  'pronome': {'naoDito': 'él', 'macho': 'él', 'femea': 'ella'},
+  'possessivo': {'naoDito': 'de él', 'macho': 'de él', 'femea': 'de ella'},
+  'folhasT': 'Tus hojas',
+  'folhasSub': 'De dónde vienen y adónde van.',
+  'folhasDeOnde': 'DE DÓNDE VINIERON',
+  'folhasSessoes': 'Sesiones de enfoque',
+  'folhasMarcos': 'Hitos del camino',
+  'folhasMissoes': 'Misiones reclamadas',
+  'folhasGasto': 'EN EL HÁBITAT',
+  'folhasNota': 'El historial guarda las últimas 80 sesiones, así que la suma puede quedar por debajo del saldo.',
+  'folhasUltimas': 'LO ÚLTIMO QUE GANASTE',
+  'folhasVaziaT': 'Todavía no hay hojas',
+  'folhasVaziaB': 'Termina una sesión de enfoque y las primeras hojas caen aquí.',
+  'folhasProximo': 'Faltan {x} para {i}',
+  'folhasVerLoja': 'Ver la tienda',
+  'folhasPodeComprar': 'Ya puedes comprar {i}',
+  'folhasSessaoLinha': 'Sesión de {m} min',
+  'seqT': 'Tu racha',
+  'seqSub': 'Un día presente es un día en que apareciste.',
+  'seqAtual': 'RACHA ACTUAL',
+  'seqMelhor': 'Mejor racha',
+  'seqCongelamentos': 'Congelaciones',
+  'seqCongelamentoAjuda': 'Una congelación salva la racha un día que faltes. Vuelve cada lunes.',
+  'seqSemana': 'ESTA SEMANA',
+  'seqSessoes': 'Sesiones completadas',
+  'seqDiasAbaixo': 'Días bajo la meta',
+  'seqProximo': 'Faltan {x} días para {m}',
+  'seqVaziaT': 'Tu racha empieza hoy',
+  'seqVaziaB': 'Aparece mañana y serán dos.',
   'vinculoRotulo': 'Vínculo',
   'vinculoSub': '{n} mimos',
-  'vinculoTeto': 'Ya recibió cariño de sobra hoy',
+  'vinculoTeto': '{P} ya recibió cariño de sobra hoy',
   'nivelFalta': '{x} XP para el nivel {n}',
   'nivelMax': 'Nivel máximo',
   'marcoSessao1': 'Tu primera sesión de enfoque',
@@ -1123,11 +1306,11 @@ const _es = <String, Object>{
   'moodSub': {
     'radiant':
         'Por debajo de la meta y una sesión en el agua. El mejor tipo de día.',
-    'content': 'Un día decente. Una sesión más y estaría radiante.',
+    'content': 'Un día decente. Una sesión más y {p} estaría radiante.',
     'neutral': 'Justo en la meta. Nada que corregir.',
-    'sleepy': 'Día largo de pantalla. Mañana se anima a nadar.',
+    'sleepy': 'Día largo de pantalla. Mañana {p} se anima a nadar.',
     'missing_you':
-        'Te esperó. Nada se perdió mientras estuviste fuera.',
+        '{P} te esperó. Nada se perdió mientras estuviste fuera.',
   },
   'moodLbl': {
     'radiant': 'radiante',
@@ -1146,7 +1329,7 @@ const _es = <String, Object>{
   'resWon': '{m} minutos completados.',
   'resWonSub': '{n} nadó a gusto y salió a secarse. Bienvenido de vuelta.',
   'resLost': '{n} te echó de menos.',
-  'resLostSub': 'Sin hojas esta vez, y nada se perdió. Sigue aquí.',
+  'resLostSub': 'Sin hojas esta vez, y nada se perdió. {P} sigue aquí.',
   'reward': '+{k} hojas',
   'leavesLbl': 'Hojas',
   'presentLbl': 'Presente',
@@ -1190,7 +1373,7 @@ const _es = <String, Object>{
   'setGoal': 'Meta diaria',
   'setNotif': 'Notificaciones',
   'setEvening': 'Informe de la noche',
-  'setEveningSub': 'Todos los días a las 21:00',
+  'setEveningSub': 'Todos los días a las {h}',
   'setMissed': '"Te echo de menos"',
   'setMissedSub':
       'Como máximo una vez al día, tras dos días sin abrir',
@@ -1285,9 +1468,49 @@ const _zh = <String, Object>{
   'trilhaAgora': '现在',
   'trilhaBloqueado': '即将到来',
   'nivelRotulo': '等级 {n}',
+  'setSexo': '性别',
+  'setSexoNao': '不想说',
+  'setSexoM': '雄性',
+  'setSexoF': '雌性',
+  'setHorario': '报告时间',
+  'setHorarioSub': '每日总结的送达时间',
+  'setMetaLivre': '屏幕时间目标',
+  'setMetaAjuda': '以 {p} 分钟为一档，范围 {a} 到 {b}。',
+  'setCompanheiro': '伙伴',
+  'setSecoes': '设置',
+  'setDuracao': '专注时长',
+  'pronome': {'naoDito': '它', 'macho': '它', 'femea': '它'},
+  'possessivo': {'naoDito': '它的', 'macho': '它的', 'femea': '它的'},
+  'folhasT': '你的叶子',
+  'folhasSub': '它们从哪来，又去了哪。',
+  'folhasDeOnde': '来源',
+  'folhasSessoes': '专注时段',
+  'folhasMarcos': '旅程里程碑',
+  'folhasMissoes': '已领取的任务',
+  'folhasGasto': '花在栖息地',
+  'folhasNota': '历史只保留最近 80 次专注，所以合计可能低于余额。',
+  'folhasUltimas': '最近的收入',
+  'folhasVaziaT': '还没有叶子',
+  'folhasVaziaB': '完成一次专注，第一批叶子就会落在这里。',
+  'folhasProximo': '距离{i}还差 {x}',
+  'folhasVerLoja': '去商店',
+  'folhasPodeComprar': '现在就能买{i}',
+  'folhasSessaoLinha': '{m} 分钟专注',
+  'seqT': '你的连续天数',
+  'seqSub': '出现的每一天，都算一天。',
+  'seqAtual': '当前连续',
+  'seqMelhor': '最佳连续',
+  'seqCongelamentos': '冻结次数',
+  'seqCongelamentoAjuda': '冻结可以在你缺席的那天保住连续。每周一恢复。',
+  'seqSemana': '本周',
+  'seqSessoes': '已完成专注',
+  'seqDiasAbaixo': '低于目标的天数',
+  'seqProximo': '距离{m}还差 {x} 天',
+  'seqVaziaT': '你的连续从今天开始',
+  'seqVaziaB': '明天再来，就是两天。',
   'vinculoRotulo': '羁绊',
   'vinculoSub': '{n} 次抚摸',
-  'vinculoTeto': '今天它已经收获了满满的爱',
+  'vinculoTeto': '今天{P}已经收获了满满的爱',
   'nivelFalta': '还差 {x} XP 到等级 {n}',
   'nivelMax': '已满级',
   'marcoSessao1': '你的第一次专注',
@@ -1411,10 +1634,10 @@ const _zh = <String, Object>{
   },
   'moodSub': {
     'radiant': '低于目标，还完成了一次专注。这是最好的一天。',
-    'content': '还不错的一天。再来一次专注，它就会神采飞扬。',
+    'content': '还不错的一天。再来一次专注，{p}就会神采飞扬。',
     'neutral': '刚好在目标附近。没什么要改的。',
-    'sleepy': '屏幕时间很长的一天。明天它还愿意去游泳。',
-    'missing_you': '它一直在等你。你离开的时候，什么都没有丢。',
+    'sleepy': '屏幕时间很长的一天。明天{p}还愿意去游泳。',
+    'missing_you': '{P}一直在等你。你离开的时候，什么都没有丢。',
   },
   'moodLbl': {
     'radiant': '神采飞扬',
@@ -1433,7 +1656,7 @@ const _zh = <String, Object>{
   'resWon': '完成 {m} 分钟。',
   'resWonSub': '{n} 游了很久，上岸晒干了。欢迎回来。',
   'resLost': '{n} 有点想你。',
-  'resLostSub': '这次没有叶子，但也没有任何损失。它还在。',
+  'resLostSub': '这次没有叶子，但也没有任何损失。{P}还在。',
   'reward': '+{k} 片叶子',
   'leavesLbl': '叶子',
   'presentLbl': '陪伴',
@@ -1465,7 +1688,7 @@ const _zh = <String, Object>{
   'setGoal': '每日目标',
   'setNotif': '通知',
   'setEvening': '晚间报告',
-  'setEveningSub': '每天 21:00',
+  'setEveningSub': '每天 {h}',
   'setMissed': '“有点想你”',
   'setMissedSub': '最多每天一次，且离开两天后',
   'setAbout': '关于',

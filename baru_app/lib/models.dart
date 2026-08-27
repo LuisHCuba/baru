@@ -365,4 +365,13 @@ int sessionReward(int dur) {
   return (dur * 0.5).floor();
 }
 
-int suggestedGoal(int avg) => ((avg * 0.75) / 15).round() * 15;
+int suggestedGoal(int avg) => metaSugerida(avg, 0.75);
+
+/// A meta sugerida a partir da média, com o aperto que a intenção pede.
+///
+/// O 0,75 fixo tratava quem quer largar a tela igual a quem veio pela
+/// companhia. Ver `fatorDaMeta` em `data/quiz.dart`.
+int metaSugerida(int avg, double fator) {
+  final bruto = ((avg * fator) / 15).round() * 15;
+  return bruto.clamp(metaMinima, metaMaxima);
+}

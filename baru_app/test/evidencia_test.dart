@@ -14,6 +14,7 @@ import 'package:baru_app/screens/conta_screen.dart';
 import 'package:baru_app/screens/folhas_screen.dart';
 import 'package:baru_app/screens/sequencia_screen.dart';
 import 'package:baru_app/screens/settings_screen.dart';
+import 'package:baru_app/screens/onboarding_screen.dart';
 import 'package:baru_app/screens/shop_screen.dart';
 import 'package:baru_app/screens/sobreposicao_screen.dart';
 import 'package:baru_app/screens/tempo_screen.dart';
@@ -496,6 +497,38 @@ void main() {
     );
     await tester.pump();
     await _salva(tester, const Key('captura-roupas'), 'folha-roupas');
+  });
+
+  testWidgets('o quiz do onboarding', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(412, 1500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final app = AppState()..onb = 2;
+    addTearDown(app.dispose);
+    app.pickQuiz('elemento', 'fogo');
+    app.pickQuiz('clareza', 'madrugada');
+    app.pickQuiz('rouba_foco', 'videos');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: Cores.superficie,
+          body: RepaintBoundary(
+            key: const Key('captura-quiz'),
+            child: AppScope(state: app, child: const OnboardingScreen()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await _salva(tester, const Key('captura-quiz'), 'onboarding-quiz');
   });
 
   testWidgets('as quatro espécies', (tester) async {

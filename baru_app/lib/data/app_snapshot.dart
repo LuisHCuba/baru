@@ -31,6 +31,7 @@ class AppSnapshot {
     this.sexo = Sexo.naoDito,
     this.som = true,
     this.equipados = const [],
+    this.respostasDoQuiz = const {},
     required this.missed,
     required this.payPlan,
     required this.usageAccess,
@@ -94,6 +95,10 @@ class AppSnapshot {
 
   /// Itens de fato em uso. Ter não é o mesmo que estar usando.
   final List<String> equipados;
+
+  /// As respostas do quiz, por id de pergunta. Id estável, nunca o rótulo
+  /// traduzido — senão trocar de idioma invalida tudo.
+  final Map<String, String> respostasDoQuiz;
   final bool missed;
   final PayPlan payPlan;
   final bool usageAccess;
@@ -165,6 +170,7 @@ class AppSnapshot {
         'sexo': sexo.name,
         'som': som,
         'equipados': equipados,
+        'respostasDoQuiz': respostasDoQuiz,
         'missed': missed,
         'payPlan': payPlan.name,
         'usageAccess': usageAccess,
@@ -224,6 +230,10 @@ class AppSnapshot {
       som: j['som'] != false,
       equipados:
           (j['equipados'] as List?)?.map((e) => '$e').toList() ?? const [],
+      respostasDoQuiz: {
+        for (final e in (j['respostasDoQuiz'] as Map? ?? const {}).entries)
+          '${e.key}': '${e.value}',
+      },
       missed: j['missed'] != false,
       payPlan: (j['payPlan'] as String?) == 'monthly' ? PayPlan.monthly : PayPlan.annual,
       usageAccess: j['usageAccess'] == true,
@@ -313,6 +323,9 @@ class AppSnapshot {
       // O que está em uso é escolha, não conquista: quem manda é o remoto,
       // mas um remoto vazio não pode tirar a roupa do bicho.
       equipados: equipados.isEmpty ? local.equipados : equipados,
+      // Resposta de quiz não se perde: o remoto pode não ter a coluna ainda.
+      respostasDoQuiz:
+          respostasDoQuiz.isEmpty ? local.respostasDoQuiz : respostasDoQuiz,
       missoesResgatadas: uniao(missoesResgatadas, local.missoesResgatadas),
       // Do dia e da semana: o remoto não guarda nada disso.
       minutosDeFocoHoje: local.minutosDeFocoHoje,
@@ -378,6 +391,7 @@ class AppSnapshot {
     Sexo? sexo,
     bool? som,
     List<String>? equipados,
+    Map<String, String>? respostasDoQuiz,
     bool? missed,
     PayPlan? payPlan,
     bool? usageAccess,
@@ -437,6 +451,7 @@ class AppSnapshot {
       sexo: sexo ?? this.sexo,
       som: som ?? this.som,
       equipados: equipados ?? this.equipados,
+      respostasDoQuiz: respostasDoQuiz ?? this.respostasDoQuiz,
       missed: missed ?? this.missed,
       payPlan: payPlan ?? this.payPlan,
       usageAccess: usageAccess ?? this.usageAccess,

@@ -1,4 +1,5 @@
 import 'package:baru_app/models.dart';
+import 'package:baru_app/data/quiz.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -132,7 +133,7 @@ void main() {
     Species responde(int opcao) {
       final s = AppState();
       for (var q = 0; q < 3; q++) {
-        s.pickQuiz(q, s.t.quizO[q][opcao]);
+        s.pickQuiz(quiz[q].id, quiz[q].opcoes[opcao].id);
       }
       return s.resolveSpecies();
     }
@@ -174,7 +175,7 @@ void main() {
         for (final lang in ['pt', 'en', 'es', 'zh']) {
           final s = AppState()..lang = lang;
           for (var q = 0; q < 3; q++) {
-            s.pickQuiz(q, s.t.quizO[q][opcao]);
+            s.pickQuiz(quiz[q].id, quiz[q].opcoes[opcao].id);
           }
           especies.add(s.resolveSpecies());
         }
@@ -186,29 +187,33 @@ void main() {
       }
     });
 
-    test('trocar de idioma no passo do quiz limpa as respostas', () {
-      // As respostas são guardadas como rótulos traduzidos, então manter as
-      // antigas depois de trocar o idioma quebraria a correspondência.
+    test('trocar de idioma nao apaga mais as respostas', () {
+      // Isto era o contrario: as respostas eram guardadas como rotulo
+      // traduzido, e o unico jeito de nao mentir era zerar tudo ao trocar de
+      // idioma. Agora o que se guarda e o id da opcao.
       final s = AppState()
         ..go(AppScreen.onb)
         ..onb = 2;
-      s.pickQuiz(0, s.t.quizO[0][1]);
+      s.pickQuiz(quiz[0].id, quiz[0].opcoes[1].id);
       expect(s.q0, isNotNull);
 
       s.setLang('en');
 
-      expect(s.q0, isNull);
-      expect(s.quizDone, isFalse);
+      expect(s.q0, isNotNull);
+      expect(s.respostasDoQuiz[quiz[0].id], quiz[0].opcoes[1].id);
+      s.dispose();
     });
 
-    test('o quiz só termina com as três respostas', () {
+    test('o quiz so termina com todas as perguntas respondidas', () {
       final s = AppState();
       expect(s.quizDone, isFalse);
-      s.pickQuiz(0, s.t.quizO[0][0]);
-      s.pickQuiz(1, s.t.quizO[1][0]);
-      expect(s.quizDone, isFalse);
-      s.pickQuiz(2, s.t.quizO[2][0]);
+      for (final p in quiz) {
+        expect(s.quizDone, isFalse, reason: 'faltava ${p.id}');
+        s.pickQuiz(p.id, p.opcoes.first.id);
+      }
       expect(s.quizDone, isTrue);
+      expect(s.quizRespondidas, quiz.length);
+      s.dispose();
     });
   });
 

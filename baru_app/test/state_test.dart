@@ -91,13 +91,13 @@ void main() {
 
   test('quiz escolhe a espécie pelos pesos do design', () {
     final s = AppState();
-    s.pickQuiz(0, 'Água');
-    s.pickQuiz(1, 'De madrugada');
-    s.pickQuiz(2, 'Água quente');
+    s.pickQuiz('elemento', 'agua');
+    s.pickQuiz('clareza', 'madrugada');
+    s.pickQuiz('acalma', 'agua_quente');
     expect(s.resolveSpecies(), Species.capybara);
-    s.pickQuiz(0, 'Fogo');
-    s.pickQuiz(1, 'À tarde');
-    s.pickQuiz(2, 'Boa companhia');
+    s.pickQuiz('elemento', 'fogo');
+    s.pickQuiz('clareza', 'tarde');
+    s.pickQuiz('acalma', 'companhia');
     expect(s.resolveSpecies(), Species.otter);
   });
 

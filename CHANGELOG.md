@@ -3,6 +3,57 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — o quiz sem astrologia, com o dobro de perguntas e guardado inteiro
+
+### O QUE MUDOU NA TELA
+
+- **A astrologia saiu.** "O elemento do seu signo" virou "Com qual elemento
+  você se parece" — os quatro elementos continuam, a leitura do horóscopo não.
+- **Três perguntas viraram seis**, e cada uma declara para que serve. Novas:
+  **o que mais rouba seu foco**, **como você recarrega** e **o que você quer
+  do Baru**.
+- O botão dizia **"Responda as três"** com seis perguntas na tela. Agora diz
+  quantas faltam.
+
+### Corrigido
+
+- **Trocar de idioma apagava as respostas.** O app guardava o **rótulo
+  traduzido**, então mudar de língua quebrava a correspondência — e havia um
+  `if` no `setLang` zerando as três de propósito. Agora se guarda o **id da
+  opção**, que não muda com o idioma. O `if` saiu.
+- **Dois ids de opção colidiam.** `companhia` existia em "o que te acalma" e
+  em "o que você quer": como o id é a chave da tradução, uma pergunta mostrava
+  o rótulo da outra. Apareceu na minha própria captura. Teste novo garante id
+  único no quiz inteiro, não só dentro da pergunta.
+
+### As respostas não são dado morto
+
+- **"O que você quer do Baru"** move a meta sugerida: quem veio por menos tela
+  recebe 0,62 da média; quem veio por companhia, 0,88. Antes era 0,75 para
+  todo mundo.
+- **"O que rouba seu foco"** vira uma lista de pacotes suspeitos — o app já
+  sabe onde olhar antes da primeira medição de tempo de tela.
+
+### Balanceamento, medido
+
+Varrendo as 4096 combinações possíveis: 28% capivara, 26% coruja, 24% lontra,
+22% tartaruga. O teste faz essa varredura e falha se alguma espécie cair
+abaixo de 10% ou passar de 45% — "um quiz que sempre devolve capivara não é
+quiz".
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: 422+ passando
+- Evidência: `onboarding-quiz.png`
+
+### Migration 13
+
+`baru_onboarding_answers.respostas` (`jsonb`): o mapa inteiro
+`{id_da_pergunta: id_da_opcao}`. Pergunta nova não pede coluna nova. As três
+colunas antigas continuam sendo escritas — com o id, não o rótulo — porque
+apagá-las seria migração destrutiva num banco com dados reais.
+
 ## 2026-08-27 — ticker que não para, e um vazamento que nasceu com o botão "Tirar"
 
 O relato foi um assert do Flutter **web** em laço:

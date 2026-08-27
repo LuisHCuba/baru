@@ -66,6 +66,8 @@ class BaruRowCodec {
       'q0': s.q0,
       'q1': s.q1,
       'q2': s.q2,
+      // O mapa inteiro num jsonb: pergunta nova não pede migração.
+      'respostas': s.respostasDoQuiz,
       'updated_at': _nowIso(),
     };
   }
@@ -265,6 +267,11 @@ class BaruRowCodec {
       q0: onboarding?['q0'] as String?,
       q1: onboarding?['q1'] as String?,
       q2: onboarding?['q2'] as String?,
+      respostasDoQuiz: {
+        for (final e
+            in (onboarding?['respostas'] as Map? ?? const {}).entries)
+          '${e.key}': '${e.value}',
+      },
       leaves: (wallet?['leaves'] as num?)?.toInt() ?? 0,
       streak: (streak?['streak'] as num?)?.toInt() ?? 0,
       usage: (screenTime?['usage_min'] as num?)?.toInt() ?? 0,

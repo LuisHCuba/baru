@@ -10,6 +10,7 @@ import 'data/baru_env.dart';
 import 'data/repositories.dart';
 import 'data/missoes.dart';
 import 'data/progressao.dart';
+import 'data/quiz.dart';
 import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
 import 'l10n.dart';
@@ -490,7 +491,15 @@ class AppState extends ChangeNotifier {
       screen == AppScreen.missoes ||
       screen == AppScreen.profile;
 
-  bool get quizDone => q0 != null && q1 != null && q2 != null;
+  /// As respostas do quiz, por id de pergunta. **Id, não rótulo traduzido:**
+  /// guardar o texto em português fazia trocar de idioma apagar tudo.
+  Map<String, String> respostasDoQuiz = {};
+
+  bool get quizDone => quiz.every((p) => respostasDoQuiz.containsKey(p.id));
+
+  /// Quantas já foram respondidas — a barra de progresso do quiz.
+  int get quizRespondidas =>
+      quiz.where((p) => respostasDoQuiz.containsKey(p.id)).length;
 
   bool get underGoal => usage < goal;
   bool get onGoal => usage == goal;
@@ -540,24 +549,11 @@ class AppState extends ChangeNotifier {
 
   String fmt(int min) => fmtMinutes(min, lang);
 
-  Species resolveSpecies() {
-    final score = {
-      Species.capybara: 0,
-      Species.otter: 0,
-      Species.tortoise: 0,
-      Species.owl: 0,
-    };
-    final answers = [q0, q1, q2];
-    for (var i = 0; i < 3; i++) {
-      final idx = t.quizO[i].indexOf(answers[i] ?? '');
-      if (idx >= 0) {
-        quizWeights[i][idx].forEach((k, v) {
-          score[k] = score[k]! + v;
-        });
-      }
-    }
-    return score.entries.reduce((a, b) => b.value > a.value ? b : a).key;
-  }
+  Species resolveSpecies() => especiePelasRespostas(respostasDoQuiz);
+
+  /// Os pacotes que o usuário disse que roubam o foco dele. Vira dica na tela
+  /// de tempo de tela antes mesmo da primeira medição.
+  List<String> get suspeitosDoQuiz => pacotesSuspeitos(respostasDoQuiz);
 
   void go(AppScreen next) {
     confirming = false;
@@ -667,19 +663,23 @@ class AppState extends ChangeNotifier {
 
   void setLang(String id) {
     lang = id;
-    if (screen == AppScreen.onb && onb == 2) {
-      q0 = null;
-      q1 = null;
-      q2 = null;
-    }
+    // As respostas do quiz **não** são mais apagadas aqui.
+    //
+    // Elas eram guardadas como rótulo traduzido, então trocar de idioma
+    // quebrava a correspondência e o jeito de não mentir era zerar tudo.
+    // Agora o que se guarda é o id da opção, que não muda com o idioma.
     _markSync(_syncSettings);
     notifyListeners();
   }
 
-  void pickQuiz(int q, String label) {
-    if (q == 0) q0 = label;
-    if (q == 1) q1 = label;
-    if (q == 2) q2 = label;
+  void pickQuiz(String pergunta, String opcao) {
+    respostasDoQuiz = {...respostasDoQuiz, pergunta: opcao};
+    // As três primeiras continuam nas colunas antigas, agora com o **id**:
+    // elas existiam antes do mapa e não vale migração destrutiva para sumir.
+    final i = quiz.indexWhere((p) => p.id == pergunta);
+    if (i == 0) q0 = opcao;
+    if (i == 1) q1 = opcao;
+    if (i == 2) q2 = opcao;
     _markSync(_syncPet);
     notifyListeners();
   }
@@ -702,7 +702,9 @@ class AppState extends ChangeNotifier {
       final cleaned = petName.trim();
       petName = cleaned.isEmpty ? petNames[species]! : cleaned;
       onb = 4;
-      goal = suggestedGoal(avg);
+      // A meta sugerida ouve o que a pessoa disse que quer: quem veio por
+      // menos tela recebe uma meta mais apertada que quem veio por companhia.
+      goal = metaSugerida(avg, fatorDaMeta(respostasDoQuiz));
       _markSync(_syncPet | _syncSettings);
       notifyListeners();
       return;
@@ -1043,6 +1045,7 @@ class AppState extends ChangeNotifier {
   void restartOnboarding() {
     _restauraPilha(AppScreen.onb);
     onb = 0;
+    respostasDoQuiz = {};
     q0 = null;
     q1 = null;
     q2 = null;
@@ -1710,6 +1713,7 @@ class AppState extends ChangeNotifier {
       diasAbaixoNaSemana: diasAbaixoNaSemana,
       missoesResgatadas: missoesResgatadas.toList(),
       equipados: equipados.toList(),
+      respostasDoQuiz: respostasDoQuiz,
     );
   }
 
@@ -1775,6 +1779,7 @@ class AppState extends ChangeNotifier {
     missoesResgatadas = s.missoesResgatadas.toSet();
     // Inventário antigo não tinha "equipado": tudo o que já era do usuário
     // continua em cena, senão o habitat esvazia na atualização.
+    respostasDoQuiz = Map<String, String>.from(s.respostasDoQuiz);
     equipados = s.equipados.isEmpty && s.owned.isNotEmpty
         ? s.owned
             .where(

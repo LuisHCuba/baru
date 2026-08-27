@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models.dart';
+import '../data/quiz.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -52,7 +53,11 @@ class OnboardingScreen extends StatelessWidget {
     }
     if (app.onb == 2) {
       return PrimaryButton(
-        label: app.quizDone ? app.t.quizCta : app.t.quizWait,
+        label: app.quizDone
+            ? app.t.quizCta
+            : app.t.fill(app.t.quizWait, {
+                'n': quiz.length - app.quizRespondidas,
+              }),
         onTap: app.quizDone ? app.nextOnb : null,
         enabled: app.quizDone,
       );
@@ -180,7 +185,6 @@ class OnboardingScreen extends StatelessWidget {
   }
 
   Widget _quiz(AppState app) {
-    final answers = [app.q0, app.q1, app.q2];
     return ListView(
       padding: const EdgeInsets.only(top: 26),
       children: [
@@ -194,18 +198,18 @@ class OnboardingScreen extends StatelessWidget {
           style: nunito(size: 14.5, height: 1.5, color: AppColors.inkA(0.65)),
         ),
         const SizedBox(height: 20),
-        for (var i = 0; i < 3; i++) ...[
-          SectionLabel(app.t.quizQ[i]),
+        for (final pergunta in quiz) ...[
+          SectionLabel(app.t.perguntaDoQuiz(pergunta.id)),
           const SizedBox(height: 9),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final o in app.t.quizO[i])
+              for (final o in pergunta.opcoes)
                 SelectChip(
-                  label: o,
-                  selected: answers[i] == o,
-                  onTap: () => app.pickQuiz(i, o),
+                  label: app.t.opcaoDoQuiz(o.id),
+                  selected: app.respostasDoQuiz[pergunta.id] == o.id,
+                  onTap: () => app.pickQuiz(pergunta.id, o.id),
                 ),
             ],
           ),

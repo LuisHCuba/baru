@@ -1,13 +1,22 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models.dart';
 import '../theme.dart';
 
-/// Estudo de formas 200×150 — o HTML importa um Pet que não veio na pasta.
-/// Humores: sleepy, neutral, content, radiant, missing_you.
-class PetView extends StatelessWidget {
+/// O companheiro. **Nunca está parado.**
+///
+/// Um bicho estático mata o conceito de habitat: vira wallpaper. Aqui ele
+/// respira continuamente, pisca em intervalos irregulares, reage ao toque e
+/// tem movimento próprio por atividade — boiar na água, cochilar, pastar.
+///
+/// Quando o sistema pede movimento reduzido, as animações contínuas param e
+/// a pose fica neutra, mas o toque **continua respondendo**: quem pediu menos
+/// movimento ainda precisa saber que o dedo foi registrado.
+class PetView extends StatefulWidget {
   const PetView({
     super.key,
     required this.species,
@@ -18,6 +27,7 @@ class PetView extends StatelessWidget {
     this.width = 200,
     this.height = 150,
     this.alignment = Alignment.center,
+    this.interativo = true,
   });
 
   final Species species;
@@ -29,23 +39,166 @@ class PetView extends StatelessWidget {
   final double height;
   final Alignment alignment;
 
+  /// Responde ao toque. Desligado em miniaturas e capturas.
+  final bool interativo;
+
+  /// Chave da camada que o teste captura para provar que o desenho mudou.
+  static const cenaKey = Key('pet-cena');
+
+  @override
+  State<PetView> createState() => _PetViewState();
+}
+
+class _PetViewState extends State<PetView> with TickerProviderStateMixin {
+  late final AnimationController _respiro = AnimationController(
+    vsync: this,
+    duration: Tempo.respiracao,
+  );
+
+  /// Período diferente do da respiração de propósito: se os dois ciclos
+  /// batessem, o movimento pareceria mecânico.
+  late final AnimationController _flutua = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 4700),
+  );
+
+  late final AnimationController _pisca = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 170),
+  );
+
+  /// `preserve` de propósito: com "reduzir movimento" ligado, o Flutter
+  /// encurta a duração de um controller para 5% — a quicada do toque acabaria
+  /// antes de ser vista. Amplitude a gente reduz; o feedback fica.
+  late final AnimationController _toque = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+    animationBehavior: AnimationBehavior.preserve,
+  );
+
+  final _sorte = math.Random();
+  Timer? _proximoPiscar;
+  bool _continuoLigado = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _toque.value = 0;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduzido = Movimento.reduzido(context);
+    if (reduzido) {
+      _paraContinuo();
+    } else {
+      _iniciaContinuo();
+    }
+  }
+
+  void _iniciaContinuo() {
+    if (_continuoLigado) return;
+    _continuoLigado = true;
+    _respiro.repeat(reverse: true);
+    _flutua.repeat(reverse: true);
+    _agendaPiscar();
+  }
+
+  void _paraContinuo() {
+    _continuoLigado = false;
+    _proximoPiscar?.cancel();
+    _respiro
+      ..stop()
+      ..value = 0.5;
+    _flutua
+      ..stop()
+      ..value = 0.5;
+    _pisca
+      ..stop()
+      ..value = 0;
+  }
+
+  /// Piscada em intervalo irregular. Cadência fixa parece relógio, não bicho.
+  void _agendaPiscar() {
+    _proximoPiscar?.cancel();
+    final espera = Duration(milliseconds: 2200 + _sorte.nextInt(4200));
+    _proximoPiscar = Timer(espera, () async {
+      if (!mounted || !_continuoLigado) return;
+      await _pisca.forward(from: 0);
+      if (!mounted) return;
+      await _pisca.reverse();
+      if (!mounted) return;
+      _agendaPiscar();
+    });
+  }
+
+  void _reageAoToque() {
+    if (!widget.interativo) return;
+    HapticFeedback.lightImpact();
+    _toque.forward(from: 0);
+    // Uma piscada junto do toque: o bicho "olha" para quem tocou.
+    if (_continuoLigado && !_pisca.isAnimating) {
+      _pisca.forward(from: 0).then((_) {
+        if (mounted) _pisca.reverse();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _proximoPiscar?.cancel();
+    _respiro.dispose();
+    _flutua.dispose();
+    _pisca.dispose();
+    _toque.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Transform.scale(
-      scale: scale,
-      alignment: alignment,
-      child: SizedBox(
-        width: width,
-        height: height,
-        child: CustomPaint(
-          painter: _PetPainter(
-            species: species,
-            mood: mood,
-            activity: activity,
-            coat: AppColors.coat[coat.clamp(0, AppColors.coat.length - 1)],
-          ),
-        ),
+    final amplitude = Movimento.reduzido(context) ? 0.25 : 1.0;
+    final cena = RepaintBoundary(
+      key: PetView.cenaKey,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_respiro, _flutua, _pisca, _toque]),
+        builder: (context, _) {
+          return CustomPaint(
+            size: Size(widget.width, widget.height),
+            painter: _PetPainter(
+              species: widget.species,
+              mood: widget.mood,
+              activity: widget.activity,
+              coat: AppColors.coat[
+                  widget.coat.clamp(0, AppColors.coat.length - 1)],
+              respiro: Curvas.organica.transform(_respiro.value),
+              flutua: Curvas.organica.transform(_flutua.value),
+              pisca: _pisca.value,
+              toque: _toque.value,
+              amplitude: amplitude,
+            ),
+          );
+        },
       ),
+    );
+
+    final corpo = Transform.scale(
+      scale: widget.scale,
+      alignment: widget.alignment,
+      child: SizedBox(
+        width: widget.width,
+        height: widget.height,
+        child: cena,
+      ),
+    );
+
+    if (!widget.interativo) return corpo;
+    // `opaque`, não `deferToChild`: um CustomPaint sem filho não responde a
+    // hit-test, então deferir ao filho deixaria o toque no bicho sem efeito.
+    return GestureDetector(
+      onTap: _reageAoToque,
+      behavior: HitTestBehavior.opaque,
+      child: corpo,
     );
   }
 }
@@ -56,12 +209,48 @@ class _PetPainter extends CustomPainter {
     required this.mood,
     required this.activity,
     required this.coat,
+    required this.respiro,
+    required this.flutua,
+    required this.pisca,
+    required this.toque,
+    required this.amplitude,
   });
 
   final Species species;
   final Mood mood;
   final Activity activity;
   final Color coat;
+
+  /// 0..1, ida e volta contínua. Comprime e estica o corpo.
+  final double respiro;
+
+  /// 0..1, ida e volta contínua, período diferente do respiro.
+  final double flutua;
+
+  /// 0..1, onde 1 é olho fechado.
+  final double pisca;
+
+  /// 0..1, um pulso disparado pelo toque.
+  final double toque;
+
+  /// Fator global de movimento (menor quando o sistema pede movimento
+  /// reduzido).
+  final double amplitude;
+
+  /// Amplitude do toque.
+  ///
+  /// Tem piso próprio: o §7 manda **reduzir** amplitude quando o sistema pede
+  /// menos movimento, não remover o feedback. Com o fator global de 0.25 a
+  /// quicada ficava abaixo de um pixel — feedback invisível é feedback que
+  /// não existe.
+  double get _amplitudeToque => math.max(amplitude, 0.55);
+
+  /// Quicada do toque: sobe rápido e volta oscilando.
+  double get _quique {
+    if (toque == 0) return 0;
+    final t = toque;
+    return math.sin(t * math.pi * 3) * math.exp(-t * 4);
+  }
 
   bool get asleep => activity == Activity.nap || mood == Mood.sleepy;
   bool get droop =>
@@ -97,8 +286,35 @@ class _PetPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2 + 8;
+
+    // Sopro: -1..1. Peito enche e esvazia.
+    final sopro = (respiro * 2 - 1) * amplitude;
+    // Boia: -1..1, para o corpo subir e descer na água ou no sono.
+    final boia = (flutua * 2 - 1) * amplitude;
+
+    final balancoPorAtividade = switch (activity) {
+      Activity.swim => boia * 3.4,
+      Activity.nap => sopro * 1.6,
+      Activity.graze => boia * 1.8,
+      Activity.idle => boia * 1.1,
+    };
+
     canvas.save();
-    canvas.translate(cx, cy);
+    canvas.translate(
+      cx,
+      cy + balancoPorAtividade + _quique * 7 * _amplitudeToque,
+    );
+
+    // Respiração como leve squash/stretch: o corpo alarga ao encher.
+    final respiraX = 1 + sopro * 0.016 + _quique * 0.07 * _amplitudeToque;
+    final respiraY = 1 - sopro * 0.012 - _quique * 0.07 * _amplitudeToque;
+    canvas.scale(respiraX, respiraY);
+
+    if (activity == Activity.graze) {
+      // Pastar é abaixar e levantar a cabeça: uma inclinação que respira.
+      canvas.rotate(boia * 0.05 * amplitude);
+    }
+
     switch (activity) {
       case Activity.nap:
         canvas.rotate(-0.24);
@@ -251,6 +467,30 @@ class _PetPainter extends CustomPainter {
   }
 
   void _eye(Canvas canvas, Offset o, double r) {
+    if (pisca > 0.02 && !asleep) {
+      // Fecha o olho comprimindo verticalmente e desenha a pálpebra ao final.
+      canvas.save();
+      canvas.translate(o.dx, o.dy);
+      canvas.scale(1, (1 - pisca).clamp(0.0, 1.0));
+      canvas.translate(-o.dx, -o.dy);
+      _olhoAberto(canvas, o, r);
+      canvas.restore();
+      if (pisca > 0.6) {
+        canvas.drawLine(
+          o + Offset(-r * 0.9, 0),
+          o + Offset(r * 0.9, 0),
+          Paint()
+            ..color = AppColors.ink
+            ..strokeWidth = 2
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+      return;
+    }
+    _olhoAberto(canvas, o, r);
+  }
+
+  void _olhoAberto(Canvas canvas, Offset o, double r) {
     final ink = Paint()
       ..color = AppColors.ink
       ..strokeWidth = 2
@@ -387,14 +627,20 @@ class _PetPainter extends CustomPainter {
     );
   }
 
+  /// Ondas que abrem a partir do bicho, cada anel numa fase diferente.
   void _ripples(Canvas canvas, Size size) {
     final c = Offset(size.width / 2, size.height - 12);
     const rings = [(130.0, 16.0, 0.22), (96.0, 11.0, 0.14), (64.0, 7.0, 0.10)];
-    for (final e in rings) {
+    for (var i = 0; i < rings.length; i++) {
+      final (w, h, a) = rings[i];
+      // Cada anel adianta a fase: a água anda em vez de pulsar em bloco.
+      final fase = (flutua + i * 0.33) % 1.0;
+      final cresce = 1 + fase * 0.16 * amplitude;
+      final some = (1 - fase * 0.55).clamp(0.25, 1.0);
       canvas.drawOval(
-        Rect.fromCenter(center: c, width: e.$1, height: e.$2),
+        Rect.fromCenter(center: c, width: w * cresce, height: h * cresce),
         Paint()
-          ..color = AppColors.green.withValues(alpha: e.$3)
+          ..color = AppColors.green.withValues(alpha: a * some)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.5,
       );
@@ -406,6 +652,11 @@ class _PetPainter extends CustomPainter {
     return old.species != species ||
         old.mood != mood ||
         old.activity != activity ||
-        old.coat != coat;
+        old.coat != coat ||
+        old.respiro != respiro ||
+        old.flutua != flutua ||
+        old.pisca != pisca ||
+        old.toque != toque ||
+        old.amplitude != amplitude;
   }
 }

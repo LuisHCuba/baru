@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../models.dart';
@@ -5,177 +7,486 @@ import '../state.dart';
 import '../theme.dart';
 import 'pet.dart';
 
-class HabitatScene extends StatelessWidget {
-  const HabitatScene({super.key, this.height = 296});
+/// Paleta da cena para um momento do dia.
+///
+/// A luz é o que faz o habitat parecer um lugar e não um fundo: às 22h a água
+/// escurece, o céu vira índigo e a lua substitui o sol.
+class LuzDaCena {
+  const LuzDaCena({
+    required this.ceuAlto,
+    required this.ceuBaixo,
+    required this.astro,
+    required this.haloAstro,
+    required this.agua,
+    required this.aguaFunda,
+    required this.colina,
+    required this.areia,
+    required this.brilho,
+    required this.sombraAmbiente,
+    required this.astroAlto,
+  });
+
+  final Color ceuAlto;
+  final Color ceuBaixo;
+  final Color astro;
+  final Color haloAstro;
+  final Color agua;
+  final Color aguaFunda;
+  final Color colina;
+  final Color areia;
+
+  /// Reflexo na água.
+  final Color brilho;
+
+  /// Escurecimento geral aplicado por cima, para a noite pesar.
+  final Color sombraAmbiente;
+
+  /// 0 = astro no horizonte, 1 = a pino.
+  final double astroAlto;
+
+  static LuzDaCena de(PeriodoDoDia p) {
+    switch (p) {
+      case PeriodoDoDia.amanhecer:
+        return const LuzDaCena(
+          ceuAlto: Color(0xFFF6D9B0),
+          ceuBaixo: Color(0xFFF9E9CF),
+          astro: Color(0xFFFFC98A),
+          haloAstro: Color(0x55FFB870),
+          agua: Color(0xFFCFDCC4),
+          aguaFunda: Color(0xFFB5C8A8),
+          colina: Color(0xFFCBD6B4),
+          areia: Color(0xFFE8D5B4),
+          brilho: Color(0x66FFF3E0),
+          sombraAmbiente: Color(0x0D3E2F23),
+          astroAlto: 0.22,
+        );
+      case PeriodoDoDia.dia:
+        return const LuzDaCena(
+          ceuAlto: Color(0xFFF4E6CB),
+          ceuBaixo: Color(0xFFFAF1E3),
+          astro: Color(0xFFFFD79A),
+          haloAstro: Color(0x44EF8354),
+          agua: Color(0xFFC9DCC0),
+          aguaFunda: Color(0xFFAECBA3),
+          colina: Color(0xFFC5D8B6),
+          areia: Color(0xFFE9D6B6),
+          brilho: Color(0x88FFFFFF),
+          sombraAmbiente: Color(0x00000000),
+          astroAlto: 0.86,
+        );
+      case PeriodoDoDia.entardecer:
+        return const LuzDaCena(
+          ceuAlto: Color(0xFFF3C9A0),
+          ceuBaixo: Color(0xFFF9DFC0),
+          astro: Color(0xFFFF9E5E),
+          haloAstro: Color(0x66EF8354),
+          agua: Color(0xFFC2CFAE),
+          aguaFunda: Color(0xFFA6B896),
+          colina: Color(0xFFB9C6A2),
+          areia: Color(0xFFE0C39C),
+          brilho: Color(0x77FFD9A8),
+          sombraAmbiente: Color(0x143E2F23),
+          astroAlto: 0.16,
+        );
+      case PeriodoDoDia.noite:
+        return const LuzDaCena(
+          ceuAlto: Color(0xFF4A4763),
+          ceuBaixo: Color(0xFF7A7189),
+          astro: Color(0xFFE8E6F2),
+          haloAstro: Color(0x44CFD6F0),
+          agua: Color(0xFF5B6B63),
+          aguaFunda: Color(0xFF47554F),
+          colina: Color(0xFF5E6660),
+          areia: Color(0xFF8A7E6E),
+          brilho: Color(0x55D6DCF5),
+          sombraAmbiente: Color(0x33232033),
+          astroAlto: 0.74,
+        );
+    }
+  }
+}
+
+/// A cena do habitat.
+///
+/// Sete camadas com paralaxe própria: céu, astro, colinas, areia, água,
+/// itens e companheiro — mais vinheta e luz ambiente por cima. Antes era um
+/// retângulo de cor única com formas absolutas em cima.
+class HabitatScene extends StatefulWidget {
+  const HabitatScene({
+    super.key,
+    this.height = 296,
+    this.animado = true,
+    this.agora,
+  });
 
   final double height;
+
+  /// Desligado em miniaturas e capturas.
+  final bool animado;
+
+  /// Injetável para o teste conseguir olhar a cena às 22h.
+  final DateTime? agora;
 
   /// Largura útil do HTML: frame 412 − padding 20+20.
   static const design = Size(372, 296);
 
+  static const cenaKey = Key('habitat-cena');
+
+  @override
+  State<HabitatScene> createState() => _HabitatSceneState();
+}
+
+class _HabitatSceneState extends State<HabitatScene>
+    with TickerProviderStateMixin {
+  /// Deriva contínua e lenta que move as camadas em velocidades diferentes.
+  late final AnimationController _deriva = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 14),
+  );
+
+  /// Itens que já estavam na cena. Item novo entra animado.
+  Set<String> _jaVistos = {};
+  final Map<String, AnimationController> _chegadas = {};
+
+  bool _continuo = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.animado && !Movimento.reduzido(context)) {
+      if (!_continuo) {
+        _continuo = true;
+        _deriva.repeat(reverse: true);
+      }
+    } else {
+      _continuo = false;
+      _deriva
+        ..stop()
+        ..value = 0.5;
+    }
+  }
+
+  void _sincronizaChegadas(List<String> possuidos) {
+    for (final id in possuidos) {
+      if (_jaVistos.contains(id)) continue;
+      final c = AnimationController(
+        vsync: this,
+        duration: Tempo.celebracao,
+        animationBehavior: AnimationBehavior.preserve,
+      );
+      _chegadas[id] = c;
+      // Primeira montagem não é chegada: o habitat já vinha com os itens.
+      if (_jaVistos.isEmpty && possuidos.length > 1) {
+        c.value = 1;
+      } else {
+        c.forward();
+      }
+    }
+    _jaVistos = possuidos.toSet();
+  }
+
+  @override
+  void dispose() {
+    _deriva.dispose();
+    for (final c in _chegadas.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    final luz = LuzDaCena.de(periodoDe(widget.agora ?? DateTime.now()));
+    _sincronizaChegadas(app.owned);
+
+    final possuidos =
+        shopItems.where((i) => app.owned.contains(i.id)).toList();
+
     return Semantics(
       image: true,
       label: app.t.fill(app.t.moodCap(app.moodKey), {'n': app.displayName}),
-      child: Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: AppColors.habitat,
-        borderRadius: BorderRadius.circular(AppRadii.habitat),
-        boxShadow: AppShadows.habitat,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final sx = c.maxWidth / design.width;
-          final sy = height / design.height;
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: CustomPaint(painter: _HabitatBackdrop(sx: sx, sy: sy)),
-              ),
-              for (final item in shopItems.where((i) => app.owned.contains(i.id)))
-                for (final p in item.parts)
-                  Positioned(
-                    left: p.x * sx,
-                    top: p.y * sy,
-                    child: Container(
-                      width: p.w * sx,
-                      height: p.h * sy,
-                      decoration: BoxDecoration(
-                        color: p.c,
-                        borderRadius: BorderRadius.circular(p.r * sx),
+      child: RepaintBoundary(
+        key: HabitatScene.cenaKey,
+        child: Container(
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: Raio.todos(Raio.cena),
+            boxShadow: Elevacao.cena,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: LayoutBuilder(
+            builder: (context, c) {
+              final sx = c.maxWidth / HabitatScene.design.width;
+              final sy = widget.height / HabitatScene.design.height;
+              return AnimatedBuilder(
+                animation: Listenable.merge([_deriva, ..._chegadas.values]),
+                builder: (context, _) {
+                  final fase = _deriva.value;
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CustomPaint(
+                        painter: _FundoDaCena(
+                          sx: sx,
+                          sy: sy,
+                          luz: luz,
+                          fase: fase,
+                        ),
                       ),
-                    ),
-                  ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 50 * sy,
-                child: Center(
-                  child: Container(
-                    width: 152 * sx,
-                    height: 16 * sy,
-                    decoration: BoxDecoration(
-                      color: AppColors.inkA(0.11),
-                      borderRadius: BorderRadius.circular(AppRadii.pill),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 56 * sy,
-                child: Center(
-                  child: PetView(
-                    species: app.species,
-                    mood: app.mood,
-                    activity: app.activity,
-                    coat: app.color,
-                    scale: 1.05,
-                    alignment: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-              const Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(painter: _InsetVignette()),
-                ),
-              ),
-            ],
-          );
-        },
+                      for (final item in possuidos)
+                        for (final p in item.parts)
+                          _peca(item.id, p, sx, sy),
+                      // O companheiro ocupa o lugar da cena que combina com
+                      // o que está fazendo: dentro d'água ao nadar, na
+                      // margem ao pastar, na areia ao cochilar.
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: (_alturaDoPet(app.activity) + 21) * sy,
+                        child: Center(
+                          child: Container(
+                            width: 116 * sx,
+                            height: 13 * sy,
+                            decoration: BoxDecoration(
+                              color: Cores.tintaA(
+                                app.activity == Activity.swim ? 0.07 : 0.13,
+                              ),
+                              borderRadius: Raio.todos(Raio.pilula),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: _alturaDoPet(app.activity) * sy,
+                        child: Center(
+                          child: PetView(
+                            species: app.species,
+                            mood: app.mood,
+                            activity: app.activity,
+                            coat: app.color,
+                            scale: 0.82,
+                            alignment: Alignment.bottomCenter,
+                            interativo: widget.animado,
+                          ),
+                        ),
+                      ),
+                      IgnorePointer(
+                        child: CustomPaint(
+                          painter: _LuzEVinheta(luz: luz),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
       ),
-    ),
+    );
+  }
+
+  /// Onde o companheiro se apoia, em unidades do design, medido do fundo.
+  double _alturaDoPet(Activity a) {
+    switch (a) {
+      case Activity.swim:
+        return 34; // dentro d'água, o corpo afunda um pouco
+      case Activity.nap:
+        return 52; // deitado na areia
+      case Activity.graze:
+        return 62; // na margem, mais alto
+      case Activity.idle:
+        return 56;
+    }
+  }
+
+  /// Uma peça de item. Entra caindo com mola quando é comprada.
+  Widget _peca(String itemId, ShapePart p, double sx, double sy) {
+    final chegada = _chegadas[itemId];
+    final t = chegada == null
+        ? 1.0
+        : Curves.easeOutBack.transform(chegada.value.clamp(0.0, 1.0));
+    final queda = (1 - t) * 26 * sy;
+    return Positioned(
+      left: p.x * sx,
+      top: p.y * sy - queda,
+      child: Opacity(
+        opacity: t.clamp(0.0, 1.0),
+        child: Transform.scale(
+          scale: 0.6 + 0.4 * t,
+          child: Container(
+            width: p.w * sx,
+            height: p.h * sy,
+            decoration: BoxDecoration(
+              color: p.c,
+              borderRadius: Raio.todos(p.r * sx),
+              // Sombra curta: sem ela a peça parece adesivo colado no fundo.
+              boxShadow: [
+                BoxShadow(
+                  color: Cores.tintaA(0.13),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-/// Sol, colinas, faixa de areia, água e reflexos — iguais ao markup da home.
-class _HabitatBackdrop extends CustomPainter {
-  const _HabitatBackdrop({required this.sx, required this.sy});
+/// Céu, astro, colinas, areia e água — cada camada com a sua deriva.
+class _FundoDaCena extends CustomPainter {
+  const _FundoDaCena({
+    required this.sx,
+    required this.sy,
+    required this.luz,
+    required this.fase,
+  });
 
   final double sx;
   final double sy;
+  final LuzDaCena luz;
+  final double fase;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawCircle(
-      Offset(size.width - 26 * sx - 28 * sx, 20 * sy + 28 * sx),
-      28 * sx,
-      Paint()..color = AppColors.orangeA(0.2),
+    final w = size.width;
+    final h = size.height;
+
+    // --- céu: gradiente, não cor chapada -----------------------------------
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [luz.ceuAlto, luz.ceuBaixo],
+        ).createShader(Offset.zero & size),
     );
+
+    // --- astro com halo ----------------------------------------------------
+    final ax = w - 54 * sx;
+    final ay = h * (0.30 - luz.astroAlto * 0.20) + math.sin(fase * math.pi) * 2;
+    canvas.drawCircle(Offset(ax, ay), 46 * sx, Paint()..color = luz.haloAstro);
+    canvas.drawCircle(Offset(ax, ay), 26 * sx, Paint()..color = luz.astro);
+
+    // --- colinas: a de trás anda menos que a da frente ---------------------
+    final derivaLonge = (fase - 0.5) * 6 * sx;
+    final derivaPerto = (fase - 0.5) * 11 * sx;
 
     canvas.drawRRect(
       RRect.fromRectAndCorners(
-        Rect.fromLTWH(-34 * sx, 104 * sy, 224 * sx, 130 * sy),
+        Rect.fromLTWH(-34 * sx + derivaLonge, 104 * sy, 224 * sx, 130 * sy),
         topLeft: Radius.circular(112 * sx),
         topRight: Radius.circular(112 * sx),
       ),
-      Paint()..color = AppColors.greenA(0.14),
+      Paint()..color = luz.colina.withValues(alpha: 0.85),
     );
     canvas.drawRRect(
       RRect.fromRectAndCorners(
-        Rect.fromLTWH(size.width - 206 * sx + 44 * sx, 92 * sy, 206 * sx, 140 * sy),
+        Rect.fromLTWH(w - 162 * sx + derivaPerto, 92 * sy, 206 * sx, 140 * sy),
         topLeft: Radius.circular(104 * sx),
         topRight: Radius.circular(104 * sx),
       ),
-      Paint()..color = AppColors.greenA(0.10),
+      Paint()..color = luz.colina.withValues(alpha: 0.62),
     );
 
+    // --- água: gradiente de profundidade -----------------------------------
+    final aguaTopo = h - 118 * sy;
+    final agua = Rect.fromLTWH(0, aguaTopo, w, h - aguaTopo);
     canvas.drawRect(
-      Rect.fromLTWH(0, 150 * sy, size.width, 34 * sy),
-      Paint()..color = AppColors.sandA(0.17),
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(0, size.height - 120 * sy, size.width, 120 * sy),
-      Paint()..color = AppColors.greenA(0.17),
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(0, size.height - 112 * sy, size.width, 2),
-      Paint()..color = AppColors.greenA(0.26),
+      agua,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [luz.agua, luz.aguaFunda],
+        ).createShader(agua),
     );
 
-    final glint = Paint()..color = Colors.white.withValues(alpha: 0.4);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(38 * sx, size.height - 76 * sy - 4, 62 * sx, 4),
-        const Radius.circular(AppRadii.pill),
-      ),
-      glint,
+    // --- margem de areia: uma curva por cima da água, não uma tarja reta ---
+    // Pintada depois da água de propósito: antes, a água cobria a curva e só
+    // sobrava uma linha horizontal dura separando os dois.
+    final margem = Path()
+      ..moveTo(0, aguaTopo + 10 * sy)
+      ..cubicTo(
+        w * 0.26, aguaTopo - 16 * sy,
+        w * 0.62, aguaTopo + 14 * sy,
+        w, aguaTopo - 10 * sy,
+      )
+      ..lineTo(w, 0)
+      ..lineTo(0, 0)
+      ..close();
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, aguaTopo - 34 * sy, w, 52 * sy));
+    canvas.drawPath(
+      margem,
+      Paint()..color = luz.areia.withValues(alpha: 0.72),
     );
+    canvas.restore();
+
+    // --- brilhos que deslizam na superfície --------------------------------
+    _brilho(canvas, Offset(38 * sx + derivaPerto, h - 76 * sy), 62 * sx, luz.brilho);
+    _brilho(canvas, Offset(w - 102 * sx - derivaPerto, h - 44 * sy), 46 * sx,
+        luz.brilho.withValues(alpha: 0.6));
+    _brilho(canvas, Offset(w * 0.5 + derivaLonge, h - 24 * sy), 34 * sx,
+        luz.brilho.withValues(alpha: 0.4));
+  }
+
+  void _brilho(Canvas canvas, Offset o, double largura, Color cor) {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width - 56 * sx - 46 * sx, size.height - 44 * sy - 4, 46 * sx, 4),
-        const Radius.circular(AppRadii.pill),
+        Rect.fromLTWH(o.dx, o.dy, largura, 4),
+        const Radius.circular(4),
       ),
-      Paint()..color = Colors.white.withValues(alpha: 0.3),
+      Paint()..color = cor,
     );
   }
 
   @override
-  bool shouldRepaint(covariant _HabitatBackdrop old) => old.sx != sx || old.sy != sy;
+  bool shouldRepaint(covariant _FundoDaCena old) =>
+      old.fase != fase || old.luz != luz || old.sx != sx || old.sy != sy;
 }
 
-/// `box-shadow: inset 0 0 46px rgba(62,47,35,.09)`
-class _InsetVignette extends CustomPainter {
-  const _InsetVignette();
+/// Vinheta e luz ambiente por cima de tudo — é o que dá profundidade.
+class _LuzEVinheta extends CustomPainter {
+  const _LuzEVinheta({required this.luz});
+
+  final LuzDaCena luz;
 
   @override
   void paint(Canvas canvas, Size size) {
     final rrect = RRect.fromRectAndRadius(
       Offset.zero & size,
-      const Radius.circular(AppRadii.habitat),
+      const Radius.circular(Raio.cena),
     );
     canvas.save();
     canvas.clipRRect(rrect);
+
+    if (luz.sombraAmbiente.a > 0) {
+      canvas.drawRect(Offset.zero & size, Paint()..color = luz.sombraAmbiente);
+    }
+
+    // Luz difusa vinda do astro, no canto superior direito.
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(0.72, -0.72),
+          radius: 1.1,
+          colors: [luz.haloAstro.withValues(alpha: 0.22), const Color(0x00000000)],
+        ).createShader(Offset.zero & size),
+    );
+
     canvas.drawRRect(
       rrect,
       Paint()
-        ..color = AppColors.ink.withValues(alpha: 0.09)
+        ..color = Cores.tintaA(0.09)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 52
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24),
@@ -184,5 +495,5 @@ class _InsetVignette extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _LuzEVinheta old) => old.luz != luz;
 }

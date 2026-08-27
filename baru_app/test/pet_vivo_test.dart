@@ -1,0 +1,178 @@
+import 'dart:ui' as ui;
+
+import 'package:baru_app/models.dart';
+import 'package:baru_app/widgets/pet.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// O companheiro nunca está parado.
+///
+/// Estes testes não conferem se a animação "existe no código" — eles
+/// **capturam os pixels** em dois instantes e exigem que tenham mudado. Um
+/// `AnimationController` esquecido sem `repeat()` passaria em qualquer teste
+/// que só olhasse a árvore de widgets.
+
+Widget _cena({
+  Activity activity = Activity.swim,
+  Mood mood = Mood.content,
+  bool interativo = true,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: Center(
+        child: PetView(
+          species: Species.capybara,
+          mood: mood,
+          activity: activity,
+          coat: 0,
+          interativo: interativo,
+        ),
+      ),
+    ),
+  );
+}
+
+/// Pixels do desenho do companheiro neste instante.
+///
+/// `toImage()` completa na thread de rasterização, fora do fake-async do
+/// `flutter_test` — sem `runAsync` o Future nunca resolve e o teste trava.
+Future<Uint8List> _quadro(WidgetTester tester) async {
+  final boundary = tester.renderObject<RenderRepaintBoundary>(
+    find.byKey(PetView.cenaKey),
+  );
+  final bytes = await tester.runAsync(() async {
+    final img = await boundary.toImage();
+    final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+    return data!.buffer.asUint8List();
+  });
+  return bytes!;
+}
+
+bool _mudou(Uint8List a, Uint8List b) {
+  if (a.length != b.length) return true;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return true;
+  }
+  return false;
+}
+
+void _movimentoReduzido(WidgetTester tester, bool valor) {
+  tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+      FakeAccessibilityFeatures(disableAnimations: valor);
+  addTearDown(
+    tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+  );
+}
+
+void main() {
+  testWidgets('o companheiro respira: o desenho muda sozinho', (tester) async {
+    await tester.pumpWidget(_cena(activity: Activity.idle));
+    await tester.pump();
+
+    final antes = await _quadro(tester);
+    // Meio ciclo de respiração: tempo de sobra para o peito encher.
+    await tester.pump(const Duration(milliseconds: 900));
+    final depois = await _quadro(tester);
+
+    expect(
+      _mudou(antes, depois),
+      isTrue,
+      reason: 'um bicho parado é wallpaper, não habitat',
+    );
+  });
+
+  testWidgets('na água ele boia e as ondas andam', (tester) async {
+    await tester.pumpWidget(_cena(activity: Activity.swim));
+    await tester.pump();
+
+    final antes = await _quadro(tester);
+    await tester.pump(const Duration(milliseconds: 1200));
+    final depois = await _quadro(tester);
+
+    expect(_mudou(antes, depois), isTrue);
+  });
+
+  testWidgets('cochilando ele continua respirando', (tester) async {
+    await tester.pumpWidget(_cena(activity: Activity.nap, mood: Mood.sleepy));
+    await tester.pump();
+
+    final antes = await _quadro(tester);
+    await tester.pump(const Duration(milliseconds: 1100));
+    final depois = await _quadro(tester);
+
+    expect(_mudou(antes, depois), isTrue);
+  });
+
+  testWidgets('ele reage ao toque', (tester) async {
+    _movimentoReduzido(tester, true); // isola o toque do movimento contínuo
+    await tester.pumpWidget(_cena(activity: Activity.idle));
+    await tester.pump();
+
+    final parado = await _quadro(tester);
+    await tester.pump(const Duration(milliseconds: 400));
+    final aindaParado = await _quadro(tester);
+    expect(
+      _mudou(parado, aindaParado),
+      isFalse,
+      reason: 'com movimento reduzido a cena fica quieta até alguém tocar',
+    );
+
+    await tester.tap(find.byType(PetView));
+    // O primeiro pump depois de iniciar uma animação só marca o t0 do ticker:
+    // o valor ainda é zero. É o segundo que anda.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 70)); // pico da quicada
+    final tocado = await _quadro(tester);
+
+    expect(
+      _mudou(aindaParado, tocado),
+      isTrue,
+      reason: 'movimento reduzido diminui a amplitude, não remove o feedback',
+    );
+  });
+
+  testWidgets('movimento reduzido para a animação contínua', (tester) async {
+    _movimentoReduzido(tester, true);
+    await tester.pumpWidget(_cena(activity: Activity.swim, interativo: false));
+    await tester.pump();
+
+    final antes = await _quadro(tester);
+    await tester.pump(const Duration(milliseconds: 1500));
+    final depois = await _quadro(tester);
+
+    expect(_mudou(antes, depois), isFalse);
+  });
+
+  testWidgets('o toque dá retorno háptico', (tester) async {
+    final chamadas = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate') {
+          chamadas.add('${call.arguments}');
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await tester.pumpWidget(_cena());
+    await tester.tap(find.byType(PetView));
+    await tester.pump();
+
+    expect(chamadas, isNotEmpty, reason: 'toque sem háptico é toque mudo');
+  });
+
+  testWidgets('miniatura não é interativa', (tester) async {
+    await tester.pumpWidget(_cena(interativo: false));
+    await tester.pump();
+    expect(find.byType(GestureDetector), findsNothing);
+  });
+}

@@ -12,6 +12,20 @@ enum Activity { idle, nap, swim, graze }
 
 enum WeekDayKind { present, frozen, today, empty }
 
+/// Momento do dia. O habitat às 22h não pode ser igual ao das 9h.
+enum PeriodoDoDia { amanhecer, dia, entardecer, noite }
+
+/// Fatias escolhidas para que a cena mude de luz nos horários em que o
+/// usuário efetivamente abre o app: de manhã cedo, ao longo do dia, no fim da
+/// tarde (quando chega o relatório) e à noite.
+PeriodoDoDia periodoDe(DateTime agora) {
+  final h = agora.hour;
+  if (h >= 5 && h < 9) return PeriodoDoDia.amanhecer;
+  if (h >= 9 && h < 17) return PeriodoDoDia.dia;
+  if (h >= 17 && h < 20) return PeriodoDoDia.entardecer;
+  return PeriodoDoDia.noite;
+}
+
 enum PayPlan { annual, monthly }
 
 class LangDef {

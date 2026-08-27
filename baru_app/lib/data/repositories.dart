@@ -15,11 +15,13 @@ class BaruRepositories {
     ShopRepository? shop,
     SettingsRepository? settings,
     TrialRepository? trial,
+    ProgressoRepository? progresso,
   })  : pet = pet ?? LocalPetRepository(store),
         sessions = sessions ?? LocalSessionRepository(store),
         shop = shop ?? LocalShopRepository(store),
         settings = settings ?? LocalSettingsRepository(store),
-        trial = trial ?? LocalTrialRepository(store);
+        trial = trial ?? LocalTrialRepository(store),
+        progresso = progresso ?? LocalProgressoRepository(store);
 
   final SnapshotStore store;
   final PetRepository pet;
@@ -27,6 +29,7 @@ class BaruRepositories {
   final ShopRepository shop;
   final SettingsRepository settings;
   final TrialRepository trial;
+  final ProgressoRepository progresso;
 
   static BaruRepositories local() => BaruRepositories(PrefsSnapshotStore());
   static BaruRepositories memory() => BaruRepositories(MemorySnapshotStore());
@@ -77,6 +80,15 @@ abstract class SettingsRepository {
     required bool missed,
     required bool usageAccess,
   });
+  Future<void> pullRemote();
+  Future<void> pushRemote();
+}
+
+/// XP, nível, marcos e vínculo.
+///
+/// Domínio próprio porque tem um ciclo de escrita diferente dos outros: sobe
+/// a cada afago e a cada sessão, e nunca desce.
+abstract class ProgressoRepository {
   Future<void> pullRemote();
   Future<void> pushRemote();
 }
@@ -211,6 +223,21 @@ class LocalSettingsRepository implements SettingsRepository {
     if (snap == null) return;
     await BaruSupabase.instance.pushSettings(snap);
     await BaruSupabase.instance.pushAccount(snap);
+  }
+}
+
+class LocalProgressoRepository implements ProgressoRepository {
+  LocalProgressoRepository(this._store);
+  final SnapshotStore _store;
+
+  @override
+  Future<void> pullRemote() async => _syncPull(_store);
+
+  @override
+  Future<void> pushRemote() async {
+    final snap = await _current(_store);
+    if (snap == null) return;
+    await BaruSupabase.instance.pushProgression(snap);
   }
 }
 

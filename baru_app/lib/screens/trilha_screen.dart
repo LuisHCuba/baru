@@ -189,6 +189,28 @@ class CartaoNivel extends StatelessWidget {
                   }),
             style: estilo(Tipo.corpoPequeno, color: Cores.primariaEscura),
           ),
+          // O vínculo só aparece depois do primeiro afago: uma linha zerada
+          // seria só uma coisa a mais para ler.
+          if (app.afeto > 0) ...[
+            const SizedBox(height: Espaco.xs),
+            Row(
+              children: [
+                Icon(
+                  Icons.favorite_rounded,
+                  size: 14,
+                  color: Cores.acento,
+                ),
+                const SizedBox(width: Espaco.xxs),
+                Text(
+                  '${t.vinculoRotulo} · ${t.fill(t.vinculoSub, {'n': app.afeto})}',
+                  style: estilo(
+                    Tipo.corpoPequeno,
+                    color: Cores.primariaEscura,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

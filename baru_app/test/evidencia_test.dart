@@ -292,6 +292,23 @@ void main() {
     await _salva(tester, PetView.cenaKey, 'reacao-3-carinho');
     await tester.pump(const Duration(seconds: 4));
 
+    // 3b. Afago: a mão passando pelo corpo.
+    await monta(Species.capybara);
+    final centro = tester.getCenter(find.byType(PetView));
+    final mao = await tester.startGesture(centro - const Offset(55, 0));
+    // Ida e volta, como se afaga de verdade — em linha reta a mão sai do
+    // bicho antes de ele começar a gostar.
+    for (var passada = 0; passada < 5; passada++) {
+      final dx = passada.isEven ? 10.0 : -10.0;
+      for (var i = 0; i < 11; i++) {
+        await mao.moveBy(Offset(dx, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+    }
+    await _salva(tester, PetView.cenaKey, 'reacao-7-afago');
+    await mao.up();
+    await tester.pump(const Duration(seconds: 4));
+
     // 4 a 6. Os gestos de ocioso. O sorteio é fixado: sem isso a captura do
     // bocejo dependia de o dado de três faces cair no lado certo, e o teste
     // falhava um terço das vezes.
@@ -427,7 +444,8 @@ void main() {
         ..sessoesConcluidas = 6
         ..melhorSequencia = 4
         ..diasAbaixoDaMeta = 2
-        ..xp = Balanco.xpAcumuladoPara(4) + 30,
+        ..xp = Balanco.xpAcumuladoPara(4) + 30
+        ..afeto = 23,
     };
     for (final e in casos.entries) {
       await tester.pumpWidget(

@@ -4,6 +4,7 @@ import 'data/app_snapshot.dart';
 import 'data/repositories.dart';
 import 'services/notification_service.dart';
 import 'models.dart';
+import 'navegacao.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/paywall_screen.dart';
@@ -46,6 +47,8 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     onUserMessage: _onUserMessage,
   );
   final _scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+  late final _rotas = BaruRouterDelegate(app: state, paginaDe: _telaDe);
+  static const _parser = BaruRouteParser();
 
   @override
   void initState() {
@@ -106,8 +109,36 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _rotas.dispose();
     state.dispose();
     super.dispose();
+  }
+
+  Widget _telaDe(AppScreen tela) {
+    switch (tela) {
+      case AppScreen.onb:
+        return const OnboardingScreen();
+      case AppScreen.paywall:
+        return const PaywallScreen();
+      case AppScreen.home:
+        return const HomeScreen();
+      case AppScreen.session:
+        return const SessionScreen();
+      case AppScreen.result:
+        return const ResultScreen();
+      case AppScreen.report:
+        return const ReportScreen();
+      case AppScreen.shop:
+        return const ShopScreen();
+      case AppScreen.profile:
+        return const SettingsScreen();
+      case AppScreen.tempo:
+        return const TempoScreen();
+      case AppScreen.trilha:
+        return const TrilhaScreen();
+      case AppScreen.missoes:
+        return const MissoesScreen();
+    }
   }
 
   @override
@@ -117,14 +148,21 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
       child: ListenableBuilder(
         listenable: state,
         builder: (context, _) {
-          return MaterialApp(
+          return MaterialApp.router(
             title: 'Baru',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.data,
             locale: localeFor(state.lang),
             scrollBehavior: const BaruScrollBehavior(),
             scaffoldMessengerKey: _scaffoldKey,
-            home: const AppFrame(child: _Shell()),
+            routerDelegate: _rotas,
+            routeInformationParser: _parser,
+            // A casca — fundo, barra de destinos, celebração, folha de
+            // compartilhamento — envolve o `Navigator`. Ela não é uma rota:
+            // a barra é fixa e sobrevive à troca de tela, que é o que §4B
+            // pede.
+            builder: (context, navegador) =>
+                AppFrame(child: _Casca(navegador: navegador!)),
           );
         },
       ),
@@ -132,26 +170,36 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
   }
 }
 
-class _Shell extends StatelessWidget {
-  const _Shell();
+class _Casca extends StatelessWidget {
+  const _Casca({required this.navegador});
+
+  final Widget navegador;
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     return Scaffold(
-      backgroundColor:
-          app.screen == AppScreen.session ? AppColors.sessionBg : AppColors.cream,
+      backgroundColor: app.screen == AppScreen.session
+          ? AppColors.sessionBg
+          : AppColors.cream,
       body: SafeArea(
         bottom: !app.showTabs,
         child: Stack(
           children: [
-            _body(app),
+            navegador,
             if (app.sharing) const ShareSheet(),
             if (app.temCelebracaoPendente) _celebracao(app),
           ],
         ),
       ),
-      bottomNavigationBar: app.showTabs ? const BottomTabs() : null,
+      // `AnimatedSize` para a barra não sumir num corte seco ao abrir um
+      // detalhe.
+      bottomNavigationBar: AnimatedSize(
+        duration: Tempo.componente,
+        curve: Curvas.padrao,
+        alignment: Alignment.topCenter,
+        child: app.showTabs ? const BottomTabs() : const SizedBox(width: 412),
+      ),
       floatingActionButton: const DebugFab(),
     );
   }
@@ -177,30 +225,4 @@ class _Shell extends StatelessWidget {
     );
   }
 
-  Widget _body(AppState app) {
-    switch (app.screen) {
-      case AppScreen.onb:
-        return const OnboardingScreen();
-      case AppScreen.paywall:
-        return const PaywallScreen();
-      case AppScreen.home:
-        return const HomeScreen();
-      case AppScreen.session:
-        return const SessionScreen();
-      case AppScreen.result:
-        return const ResultScreen();
-      case AppScreen.report:
-        return const ReportScreen();
-      case AppScreen.shop:
-        return const ShopScreen();
-      case AppScreen.profile:
-        return const SettingsScreen();
-      case AppScreen.tempo:
-        return TempoScreen(aoVoltar: () => app.go(AppScreen.report));
-      case AppScreen.trilha:
-        return const TrilhaScreen();
-      case AppScreen.missoes:
-        return const MissoesScreen();
-    }
-  }
 }

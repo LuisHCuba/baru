@@ -41,6 +41,8 @@ class AppSnapshot {
     this.sessionDur = 0,
     this.ajustesDeCategoria = const {},
     this.xp = 0,
+    this.afeto = 0,
+    this.carinhosHoje = 0,
     this.sessoesConcluidas = 0,
     this.melhorSequencia = 0,
     this.diasAbaixoDaMeta = 0,
@@ -98,6 +100,12 @@ class AppSnapshot {
 
   // --- progressão ---------------------------------------------------------
   final int xp;
+
+  /// Afagos completos de todos os tempos — o vínculo.
+  final int afeto;
+
+  /// Afagos que já renderam XP hoje.
+  final int carinhosHoje;
   final int sessoesConcluidas;
   final int melhorSequencia;
   final int diasAbaixoDaMeta;
@@ -150,6 +158,8 @@ class AppSnapshot {
         'sessionDur': sessionDur,
         'ajustesDeCategoria': ajustesDeCategoria,
         'xp': xp,
+        'afeto': afeto,
+        'carinhosHoje': carinhosHoje,
         'sessoesConcluidas': sessoesConcluidas,
         'melhorSequencia': melhorSequencia,
         'diasAbaixoDaMeta': diasAbaixoDaMeta,
@@ -209,6 +219,8 @@ class AppSnapshot {
           ) ??
           const {},
       xp: (j['xp'] as num?)?.toInt() ?? 0,
+      afeto: (j['afeto'] as num?)?.toInt() ?? 0,
+      carinhosHoje: (j['carinhosHoje'] as num?)?.toInt() ?? 0,
       sessoesConcluidas: (j['sessoesConcluidas'] as num?)?.toInt() ?? 0,
       melhorSequencia: (j['melhorSequencia'] as num?)?.toInt() ?? 0,
       diasAbaixoDaMeta: (j['diasAbaixoDaMeta'] as num?)?.toInt() ?? 0,
@@ -291,6 +303,8 @@ class AppSnapshot {
     int? sessionDur,
     Map<String, String>? ajustesDeCategoria,
     int? xp,
+    int? afeto,
+    int? carinhosHoje,
     int? sessoesConcluidas,
     int? melhorSequencia,
     int? diasAbaixoDaMeta,
@@ -345,6 +359,8 @@ class AppSnapshot {
       sessionDur: clearSession ? 0 : (sessionDur ?? this.sessionDur),
       ajustesDeCategoria: ajustesDeCategoria ?? this.ajustesDeCategoria,
       xp: xp ?? this.xp,
+      afeto: afeto ?? this.afeto,
+      carinhosHoje: carinhosHoje ?? this.carinhosHoje,
       sessoesConcluidas: sessoesConcluidas ?? this.sessoesConcluidas,
       melhorSequencia: melhorSequencia ?? this.melhorSequencia,
       diasAbaixoDaMeta: diasAbaixoDaMeta ?? this.diasAbaixoDaMeta,

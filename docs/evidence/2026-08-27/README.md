@@ -47,6 +47,7 @@ idênticas: a cena não conhecia a hora.
 | `reacao-1-repouso.png` | o bicho em repouso, para comparação |
 | `reacao-2-um-toque.png` | um toque: a quicada, no pico |
 | `reacao-3-carinho.png` | três toques em 3 s: coraçõezinhos subindo |
+| `reacao-7-afago.png` | afago: olhos apertados de contentamento, pelo levantado sob a mão e coraçõezinhos subindo |
 | `reacao-4-espreguica.png` | gesto de ocioso — espreguiçar, com bocejo e olhos fechados |
 | `reacao-5-sacode.png` | gesto de ocioso — sacudir a cabeça |
 | `reacao-6-olha-em-volta.png` | gesto de ocioso — olhar de lado |

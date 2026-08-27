@@ -79,7 +79,7 @@ class ResultScreen extends StatelessWidget {
           ),
           GhostButton(label: t.shareBtn, onTap: app.openShare, icon: Icons.share_outlined),
           const SizedBox(height: 10),
-          PrimaryButton(label: t.back, onTap: () => app.go(AppScreen.home)),
+          PrimaryButton(label: t.back, onTap: app.voltar),
         ],
       ),
     );

@@ -144,6 +144,14 @@ class _HabitatSceneState extends State<HabitatScene>
     duration: const Duration(seconds: 14),
   );
 
+  /// O "+3 XP" que sobe quando um afago é concluído.
+  late final AnimationController _premio = AnimationController(
+    vsync: this,
+    duration: Tempo.celebracao,
+    animationBehavior: AnimationBehavior.preserve,
+  );
+  String? _textoDoPremio;
+
   /// Itens que já estavam na cena. Item novo entra animado.
   Set<String> _jaVistos = {};
   final Map<String, AnimationController> _chegadas = {};
@@ -187,11 +195,24 @@ class _HabitatSceneState extends State<HabitatScene>
 
   @override
   void dispose() {
+    _premio.dispose();
     _deriva.dispose();
     for (final c in _chegadas.values) {
       c.dispose();
     }
     super.dispose();
+  }
+
+  /// Um afago terminou. Credita e mostra o que ele rendeu.
+  ///
+  /// Passado o teto do dia o vínculo continua subindo mas o XP não — e dizer
+  /// isso é melhor do que não mostrar nada, que pareceria bug.
+  void _premia(AppState app) {
+    final xp = app.recebeCarinho();
+    setState(() {
+      _textoDoPremio = xp > 0 ? '+$xp ${app.t.xpRotulo}' : app.t.vinculoTeto;
+    });
+    _premio.forward(from: 0);
   }
 
   @override
@@ -270,6 +291,7 @@ class _HabitatSceneState extends State<HabitatScene>
                             scale: 0.82,
                             alignment: Alignment.bottomCenter,
                             interativo: widget.animado,
+                            aoCarinho: () => _premia(app),
                           ),
                         ),
                       ),
@@ -278,6 +300,18 @@ class _HabitatSceneState extends State<HabitatScene>
                           painter: _LuzEVinheta(luz: luz),
                         ),
                       ),
+                      if (_textoDoPremio != null)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: (_alturaDoPet(app.activity) + 96) * sy,
+                          child: IgnorePointer(
+                            child: _PremioSubindo(
+                              anima: _premio,
+                              texto: _textoDoPremio!,
+                            ),
+                          ),
+                        ),
                     ],
                   );
                 },
@@ -496,4 +530,53 @@ class _LuzEVinheta extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LuzEVinheta old) => old.luz != luz;
+}
+
+/// O ganho de um afago, subindo e sumindo.
+///
+/// Recompensa sem retorno visível é recompensa que o usuário não sabe que
+/// recebeu — e o afago já é a interação mais silenciosa do app.
+class _PremioSubindo extends StatelessWidget {
+  const _PremioSubindo({required this.anima, required this.texto});
+
+  final Animation<double> anima;
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    final sobe = Movimento.amplitude(context, 26);
+    return AnimatedBuilder(
+      animation: anima,
+      builder: (context, _) {
+        final t = anima.value;
+        if (t == 0 || t >= 1) return const SizedBox.shrink();
+        // Aparece rápido e some devagar: o olho tem de pegar o número.
+        final opacidade = t < 0.18 ? t / 0.18 : (1 - (t - 0.18) / 0.82);
+        return Opacity(
+          opacity: opacidade.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, -Curvas.padrao.transform(t) * sobe),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Espaco.sm,
+                  vertical: Espaco.xxs,
+                ),
+                decoration: BoxDecoration(
+                  color: Cores.superficie.withValues(alpha: 0.94),
+                  borderRadius: Raio.todos(Raio.pilula),
+                  boxShadow: Elevacao.cartao,
+                ),
+                child: Text(
+                  texto,
+                  textAlign: TextAlign.center,
+                  style: estilo(Tipo.rotulo, color: Cores.primariaEscura),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

@@ -3,6 +3,67 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — navegação, carinho e o elenco refeito
+
+### O QUE MUDOU NA TELA
+
+- **O botão voltar do Android funciona.** Era a queixa: em qualquer tela ele
+  fechava o app. Agora tem pilha de verdade: num detalhe volta um passo, numa
+  aba que não é a home volta para a home, e só na home ele sai. Durante uma
+  sessão de foco ele **pergunta** em vez de descartar o foco em silêncio.
+- **As telas entram com transição, não com corte seco.** Irmãos deslizam de
+  lado, filho entra em profundidade, modal sobe de baixo — e a barra de
+  destinos é fixa: ela sobrevive à troca de tela.
+- **Cada tela tem endereço** (`/trilha`, `/missoes`, `/tempo`…): o app tem deep
+  link, e na web a barra do navegador mostra onde você está.
+- **Dá para acariciar o Baru.** Passe a mão nele: ele acompanha a mão com o
+  olhar, encosta a cabeça, aperta os olhinhos de contentamento, o pelo se
+  levanta sob o dedo e sobem coraçõezinhos. A mão **ronrona** — um clique curto
+  a cada tanto de percurso.
+- Afago completo rende **+3 XP** com um rótulo que sobe do bicho, e o
+  **Vínculo** aparece na trilha ("Vínculo · 23 afagos").
+- **Capivara, lontra e tartaruga foram refeitas.** Eram de perfil: um corpo-ovo
+  comprido com uma cabeça-ovo colada na ponta. Agora são personagens de frente,
+  na mesma construção da coruja — cabeça grande, cara legível, corpo compacto,
+  membros visíveis. A capivara ganhou o focinho rombudo que a define; a lontra,
+  bigodes dos dois lados e focinheira escura; a tartaruga virou casco-corpo com
+  a cabeça saindo por cima.
+
+### Corrigido
+
+- **"Erro ao sincronizar" a cada gravação.** Causa encontrada e provada por
+  sonda REST: `baru_app_categories` **não existe no projeto remoto**, e
+  `pushSettings` faz um `delete` nela em toda gravação, mesmo sem nenhuma
+  reclassificação. O que dependia deste lado está feito — a migração existe,
+  foi validada em banco limpo, e o app parou de chamar isso de falha de rede.
+  Aplicar no remoto é do humano: **BL-10**.
+- Tabela ausente no remoto agora tem tipo próprio (`TabelaAusenteNoRemoto`) e
+  mensagem própria em 4 idiomas, dizendo **qual** tabela falta. Antes o app
+  dizia "não foi possível sincronizar" e tentava de novo para sempre — mentira
+  em dois níveis: não é falha de rede, e tentar de novo nunca resolve.
+- XP, nível celebrado e marcos existiam **só no aparelho**: nenhuma coluna
+  remota. Desinstalar zerava a trilha. Agora vão para `baru_progression`.
+
+### Adicionado
+
+- `lib/navegacao.dart`: classificação de rota (destino/detalhe/modal/fluxo),
+  `PaginaBaru` com transição derivada do tipo, `BaruRouterDelegate` e
+  `BaruRouteParser`. `MaterialApp` virou `MaterialApp.router`.
+- Migration 8 `baru_progression` (xp, nível celebrado, marcos, afeto, carinhos
+  do dia) com RLS e as 4 políticas.
+- `Balanco.carinhosPorDia` (5) e `Balanco.xpPorCarinho` (3).
+- `test/navegacao_test.dart` (17) e `test/carinho_test.dart` (11).
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: **324 passando, 1 pulado** (eram 296)
+- `supabase db reset` em banco limpo: 8 migrations, 15 tabelas, **0 sem RLS**,
+  58 políticas
+- RLS de `baru_progression` provada em SQL: A vê 1 linha, `UPDATE 0` e
+  `DELETE 0` na linha de B, `anon` vê 0
+- Os testes de voltar-do-sistema e de carinho foram verificados por mutação
+
 ## 2026-08-27 — arte e reações do companheiro
 
 ### O QUE MUDOU NA TELA

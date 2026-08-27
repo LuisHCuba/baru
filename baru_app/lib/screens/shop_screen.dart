@@ -23,7 +23,7 @@ class ShopScreen extends StatelessWidget {
                 button: true,
                 label: t.back,
                 child: GestureDetector(
-                  onTap: () => app.go(AppScreen.home),
+                  onTap: app.voltar,
                   behavior: HitTestBehavior.opaque,
                   child: const SizedBox(
                     width: 44,

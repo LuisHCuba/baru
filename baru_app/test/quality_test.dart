@@ -1,5 +1,6 @@
 import 'package:baru_app/app.dart';
 import 'package:baru_app/data/app_snapshot.dart';
+import 'package:baru_app/design/motion.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +52,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(BaruApp(snapshot: _snap(screen)));
     await tester.pump();
+    // A tela agora entra por uma rota de verdade, e uma rota em transição
+    // ignora ponteiro. Sem esperar a transição, todo toque no teste cai no
+    // vazio.
+    await tester.pump(Tempo.tela + const Duration(milliseconds: 50));
   }
 
   testWidgets('8 telas cabem em 412×892 sem overflow', (tester) async {

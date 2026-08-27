@@ -13,6 +13,32 @@ import 'row_codec.dart';
 
 /// Client Supabase: auth email/senha + sync por domínio (tabelas normalizadas).
 /// Falha → fallback local com erro visível. Nunca service_role.
+/// O schema do projeto remoto está atrás do repositório: uma tabela que o app
+/// escreve não existe lá.
+///
+/// Merece um tipo próprio porque **não é falha de rede**: tentar de novo não
+/// resolve, e a mensagem genérica de sincronização ("tente mais tarde")
+/// mente. A correção é aplicar a migração que falta.
+class TabelaAusenteNoRemoto implements Exception {
+  const TabelaAusenteNoRemoto(this.tabela);
+
+  final String tabela;
+
+  /// O PostgREST responde 404 com `PGRST205` quando a tabela não está no
+  /// cache de schema — que é o que acontece com migração não aplicada.
+  static const codigo = 'PGRST205';
+
+  static TabelaAusenteNoRemoto? de(Object erro) {
+    if (erro is! PostgrestException) return null;
+    if (erro.code != codigo) return null;
+    final m = RegExp(r"'public\.([a-z_]+)'").firstMatch(erro.message);
+    return TabelaAusenteNoRemoto(m?.group(1) ?? 'desconhecida');
+  }
+
+  @override
+  String toString() => 'TabelaAusenteNoRemoto($tabela)';
+}
+
 class BaruSupabase {
   BaruSupabase._();
   static final BaruSupabase instance = BaruSupabase._();
@@ -263,6 +289,15 @@ class BaruSupabase {
         );
   }
 
+  Future<void> pushProgression(AppSnapshot snapshot) async {
+    final uid = _uid;
+    final client = _client;
+    if (!_ready || uid == null || client == null) return;
+    await client.from('baru_progression').upsert(
+          _codec.progressionRow(userId: uid, s: snapshot),
+        );
+  }
+
   Future<void> pushSubscription(AppSnapshot snapshot) async {
     final uid = _uid;
     final client = _client;
@@ -318,6 +353,7 @@ class BaruSupabase {
         _maybeSingle('baru_streaks', uid),
         _maybeSingle('baru_daily_progress', uid),
         _maybeSingle('baru_subscriptions', uid),
+        _maybeSingle('baru_progression', uid),
       ]);
       final pet = linhas[0];
       final onboarding = linhas[1];
@@ -327,6 +363,7 @@ class BaruSupabase {
       final streak = linhas[5];
       final daily = linhas[6];
       final subscription = linhas[7];
+      final progresso = linhas[8];
 
       final listas = await Future.wait([
         client
@@ -361,6 +398,7 @@ class BaruSupabase {
           streak: streak,
           daily: daily,
           subscription: subscription,
+          progresso: progresso,
           inventory: inventory,
           week: week,
           sessions: sessions,

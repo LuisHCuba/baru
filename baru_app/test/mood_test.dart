@@ -171,7 +171,7 @@ void main() {
       // As respostas são guardadas como rótulos traduzidos, então manter as
       // antigas depois de trocar o idioma quebraria a correspondência.
       final s = AppState()
-        ..screen = AppScreen.onb
+        ..go(AppScreen.onb)
         ..onb = 2;
       s.pickQuiz(0, s.t.quizO[0][1]);
       expect(s.q0, isNotNull);

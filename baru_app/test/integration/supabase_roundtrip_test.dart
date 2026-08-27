@@ -125,7 +125,7 @@ AppSnapshot _snapshotRico() {
     ..q1 = 'Por la tarde'
     ..q2 = 'Una rutina'
     ..onb = 5
-    ..screen = AppScreen.home
+    ..go(AppScreen.home)
     ..trialStartedAt = DateTime.utc(2026, 8, 20, 12)
     ..lastOpenDate = DateTime(2026, 8, 26)
     ..todayIndex = 2

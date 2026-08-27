@@ -24,6 +24,21 @@ class BaruRowCodec {
     };
   }
 
+  Map<String, dynamic> progressionRow({
+    required String userId,
+    required AppSnapshot s,
+  }) {
+    return {
+      'user_id': userId,
+      'xp': s.xp,
+      'nivel_celebrado': s.nivelCelebrado,
+      'afeto': s.afeto,
+      'carinhos_hoje': s.carinhosHoje,
+      'marcos_resgatados': s.marcosResgatados,
+      'updated_at': _nowIso(),
+    };
+  }
+
   Map<String, dynamic> petRow({
     required String userId,
     required AppSnapshot s,
@@ -227,6 +242,7 @@ class BaruRowCodec {
     Map<String, dynamic>? streak,
     Map<String, dynamic>? daily,
     Map<String, dynamic>? subscription,
+    Map<String, dynamic>? progresso,
     List<Map<String, dynamic>> inventory = const [],
     List<Map<String, dynamic>> week = const [],
     List<SessionRecord> sessions = const [],
@@ -261,6 +277,13 @@ class BaruRowCodec {
           : PayPlan.annual,
       usageAccess: settings?['usage_access'] == true,
       companionshipStarted: profile['companionship_started'] == true,
+      xp: (progresso?['xp'] as num?)?.toInt() ?? 0,
+      nivelCelebrado: (progresso?['nivel_celebrado'] as num?)?.toInt() ?? 1,
+      afeto: (progresso?['afeto'] as num?)?.toInt() ?? 0,
+      carinhosHoje: (progresso?['carinhos_hoje'] as num?)?.toInt() ?? 0,
+      marcosResgatados:
+          (progresso?['marcos_resgatados'] as List?)?.map((e) => '$e').toList() ??
+              const [],
       week: weekKinds,
       todayIndex: ((streak?['today_index'] as num?)?.toInt() ?? weekdayIndex())
           .clamp(0, 6),

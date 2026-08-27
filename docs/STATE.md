@@ -5,18 +5,22 @@ Branch: `night/2026-08-27`, integrada em `main` | Build: **verde**
 | Portão | Resultado (execução real) |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | **296 passando, 1 pulado** (era 151 no início do dia) |
+| `flutter test` | **324 passando, 1 pulado** (era 151 no início do dia) |
 | `flutter test test/integration` | 7/7 contra Supabase local |
-| `supabase db reset` em banco limpo | 7 migrations · 14 tabelas · 54 políticas · nenhuma sem RLS |
-| Evidência visual | 39 PNGs em `docs/evidence/2026-08-27/` |
+| `supabase db reset` em banco limpo | **8 migrations · 15 tabelas · 58 políticas · nenhuma sem RLS** |
+| Evidência visual | 40 PNGs em `docs/evidence/2026-08-27/` |
 
 ## Abra o app e você vê
 
 Frases que são verdade hoje e não eram ontem:
 
-- **Cada bicho tem anatomia própria**, desenhada com curvas: a lontra tem
-  bigodes e cauda que afina, a tartaruga tem casco com escudos e plastrão, a
-  coruja tem disco facial, tufos, asas dobradas e pés com três dedos.
+- **O botão voltar do aparelho funciona**: num detalhe volta um passo, numa
+  aba volta para a home, e só na home sai do app. Durante a sessão, pergunta.
+- **As telas entram com transição** e a barra de destinos é fixa.
+- **Dá para acariciar o Baru**: ele acompanha a mão, aperta os olhos, o pelo
+  se levanta sob o dedo, sobem corações, e a mão ronrona.
+- **As quatro espécies são um elenco coerente**, todas de frente, com cabeça
+  grande e cara legível.
 - **O Baru respira, pisca e reage ao toque**, e **faz coisas sozinho**: a
   cada 7–15 s parado ele se espreguiça com bocejo, sacode a cabeça ou olha em
   volta.
@@ -53,15 +57,13 @@ Frases que são verdade hoje e não eram ontem:
 
 Nada pela metade. Todos os ciclos fecharam com portões verdes.
 
-**Próximo passo exato:** §4B — rotas de verdade. A navegação ainda é troca de
-tela por variável de estado: o botão voltar do Android não funciona, não há
-pilha nem deep link, e as transições entre telas são corte seco. A barra de
-destinos e a hierarquia já estão certas; falta o roteador.
+**Próximo passo exato:** aplicar as migrations 7 e 8 no Supabase remoto
+(**BL-10**) — é o que faz o "erro ao sincronizar" sumir. Precisa de um humano
+com acesso ao projeto; o comando está no arquivo de bloqueios.
 
 ## Próximos itens da fila
 
-1. **Rotas de verdade + transições** (§4B) — a maior dívida de forma que
-   sobrou. Sem isso toda tela nova nasce sem histórico.
+1. **Aplicar as migrations no remoto** (BL-10).
 2. **B-15 assinatura de release do Android** — único bloqueio de publicação.
 3. **Estágios de habitat visíveis** — o dado existe (`estagioDoHabitat` sobe
    com os marcos) mas a cena ainda não muda com ele.
@@ -72,7 +74,10 @@ destinos e a hierarquia já estão certas; falta o roteador.
 
 ## Riscos e dívidas conhecidas
 
-- **Navegação sem roteador** (acima).
+- **O banco remoto está atrás do repositório** (BL-10): faltam
+  `baru_app_categories` e `baru_progression`. O app avisa qual tabela falta e
+  segue gravando local; nada se perde, mas nada de ajustes, tempo de tela e
+  progressão sobe.
 - **Nada foi verificado em aparelho.** Animações, notificação e permissão de
   uso têm teste, mas ninguém rodou o app num telefone depois deste turno.
 - **A permissão de tempo de tela nunca rodou contra o Android real.** A
@@ -95,6 +100,7 @@ destinos e a hierarquia já estão certas; falta o roteador.
 | BL-06 | Entitlement de Screen Time no iOS |
 | BL-07 | Produtos de IAP nas lojas |
 | BL-09 | **Verificar a notificação da sessão num aparelho** (roteiro no arquivo) |
+| BL-10 | **Aplicar as migrations 7 e 8 no Supabase remoto** — é a causa do "erro ao sincronizar" |
 
 ## Comandos para rodar e validar agora
 

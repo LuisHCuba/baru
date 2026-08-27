@@ -13,6 +13,7 @@ import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
 import 'l10n.dart';
 import 'models.dart';
+import 'navegacao.dart';
 import 'services/notification_service.dart';
 import 'services/usage_service.dart';
 
@@ -114,7 +115,29 @@ class AppState extends ChangeNotifier {
     if (quanto <= 0) return;
     xp += quanto;
     _colheMarcos();
-    _markSync(_syncSession | _syncShop);
+    _markSync(_syncSession | _syncShop | _syncProgresso);
+  }
+
+  /// Um afago completo.
+  ///
+  /// O vínculo sobe sempre — carinho não tem teto. O **XP** tem: sem teto,
+  /// esfregar a tela seria a forma mais barata de subir de nível, e o app
+  /// passaria a recompensar isso em vez de foco. Passado o teto ele continua
+  /// reagindo na tela; só não paga mais.
+  ///
+  /// Devolve o XP creditado, para a tela poder mostrar o "+3" só quando ele
+  /// existe.
+  int recebeCarinho() {
+    afeto += 1;
+    var ganho = 0;
+    if (carinhosHoje < Balanco.carinhosPorDia) {
+      carinhosHoje += 1;
+      ganho = Balanco.xpPorCarinho;
+      ganhaXp(ganho);
+    }
+    _markSync(_syncProgresso);
+    notifyListeners();
+    return ganho;
   }
 
   /// Credita o premio dos marcos recem-alcancados.
@@ -216,7 +239,16 @@ class AppState extends ChangeNotifier {
   /// snapshot: as folhas já estão em [leaves], isto é só o recado pendente.
   int pendingUnderGoalBonus = 0;
 
-  AppScreen screen = AppScreen.onb;
+  /// A pilha de navegação, da raiz ao topo. Nunca vazia.
+  ///
+  /// Antes existia só uma variável `screen`: sem pilha o botão voltar do
+  /// Android não tinha o que fazer e fechava o app em qualquer tela.
+  final List<AppScreen> _pilha = [AppScreen.onb];
+
+  /// A tela no topo.
+  AppScreen get screen => _pilha.last;
+
+  List<AppScreen> get pilha => List.unmodifiable(_pilha);
   int onb = 0;
   String lang = 'pt';
   Species species = Species.capybara;
@@ -237,6 +269,12 @@ class AppState extends ChangeNotifier {
   bool confirming = false;
   int completedToday = 0;
   bool abandonedToday = false;
+
+  /// Vínculo: afagos completos de todos os tempos. Só sobe.
+  int afeto = 0;
+
+  /// Afagos que já renderam XP hoje. Zera na virada do calendário.
+  int carinhosHoje = 0;
   int daysAway = 0;
   int reward = 0;
   bool aborted = false;
@@ -277,13 +315,23 @@ class AppState extends ChangeNotifier {
   bool _persisting = false;
   bool _syncFailNotified = false;
 
+  /// Tabelas que o remoto não tem. Uma por episódio, e sem repetir: o aviso
+  /// de schema desatualizado é acionável, o de rede não.
+  final Set<String> _tabelasAusentesAvisadas = {};
+
   static const _syncPet = 1;
   static const _syncShop = 2;
   static const _syncSession = 4;
   static const _syncSettings = 8;
   static const _syncTrial = 16;
+  static const _syncProgresso = 32;
   static const _syncAll =
-      _syncPet | _syncShop | _syncSession | _syncSettings | _syncTrial;
+      _syncPet |
+      _syncShop |
+      _syncSession |
+      _syncSettings |
+      _syncTrial |
+      _syncProgresso;
 
   void _markSync(int mask) => _syncMask |= mask;
 
@@ -424,9 +472,102 @@ class AppState extends ChangeNotifier {
   }
 
   void go(AppScreen next) {
-    screen = next;
     confirming = false;
+    _empilha(next);
     notifyListeners();
+  }
+
+  /// Onde cada tela entra na pilha. Sai do tipo da rota, não de quem chamou:
+  /// assim a mesma tela nunca aparece de dois jeitos diferentes.
+  void _empilha(AppScreen next) {
+    switch (next.tipo) {
+      case TipoDeRota.fluxo:
+      case TipoDeRota.destino:
+        // Trocar de destino zera o ramo. Tocar na aba em que já se está
+        // volta à raiz dela — que é o que a barra fixa promete.
+        _pilha
+          ..clear()
+          ..add(next);
+      case TipoDeRota.detalhe:
+      case TipoDeRota.modal:
+        if (_pilha.last == next) return;
+        // Um detalhe aberto a partir de um fluxo (o resultado depois da
+        // sessão) não pode ficar sem raiz: sem isto o voltar sairia do app.
+        if (_pilha.last.tipo == TipoDeRota.fluxo &&
+            next.tipo == TipoDeRota.detalhe) {
+          _pilha
+            ..clear()
+            ..add(AppScreen.home);
+        }
+        // Reabrir a mesma tela por outro caminho não pode deixar duas cópias
+        // na pilha.
+        _pilha
+          ..remove(next)
+          ..add(next);
+    }
+  }
+
+  /// Um passo para trás.
+  ///
+  /// `false` quer dizer "não há para onde voltar" — só então o sistema
+  /// assume, e no Android isso fecha o app.
+  bool voltar() {
+    if (confirming) {
+      confirming = false;
+      notifyListeners();
+      return true;
+    }
+    if (_pilha.length > 1) {
+      _pilha.removeLast();
+      notifyListeners();
+      return true;
+    }
+    final atual = _pilha.single;
+    // Voltar durante a sessão não descarta o foco em silêncio: pergunta.
+    if (atual == AppScreen.session) {
+      askQuit();
+      return true;
+    }
+    // De um destino que não é a home, voltar leva à home antes de sair.
+    if (atual.tipo == TipoDeRota.destino && atual != AppScreen.home) {
+      _pilha[0] = AppScreen.home;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  /// O `Navigator` removeu uma página (gesto de voltar do iOS, botão da
+  /// AppBar). Mantém a pilha do estado em dia com a de verdade.
+  void removeDaPilha(AppScreen tela) {
+    if (_pilha.length > 1 && _pilha.last == tela) {
+      _pilha.removeLast();
+      notifyListeners();
+    }
+  }
+
+  /// Abre uma tela vinda de fora: deep link, restauração de sessão do
+  /// navegador. Reconstrói uma pilha plausível para ela.
+  void abrePorEndereco(AppScreen tela) {
+    // Quem não terminou o onboarding não entra por link.
+    if (_pilha.first == AppScreen.onb && !companionshipStarted) return;
+    if (screen == tela) return;
+    _restauraPilha(tela);
+    notifyListeners();
+  }
+
+  void _restauraPilha(AppScreen tela) {
+    _pilha.clear();
+    switch (tela.tipo) {
+      case TipoDeRota.fluxo:
+      case TipoDeRota.destino:
+        _pilha.add(tela);
+      case TipoDeRota.detalhe:
+      case TipoDeRota.modal:
+        _pilha
+          ..add(AppScreen.home)
+          ..add(tela);
+    }
   }
 
   void setLang(String id) {
@@ -751,7 +892,7 @@ class AppState extends ChangeNotifier {
   }
 
   void restartOnboarding() {
-    screen = AppScreen.onb;
+    _restauraPilha(AppScreen.onb);
     onb = 0;
     q0 = null;
     q1 = null;
@@ -838,7 +979,7 @@ class AppState extends ChangeNotifier {
     running = true;
     confirming = false;
     overrideMood = null;
-    screen = AppScreen.session;
+    _empilha(AppScreen.session);
     _markSync(_syncSession);
     // Grava a sessão em curso: se o app for morto agora, ela é retomada.
     notifyListeners();
@@ -939,7 +1080,7 @@ class AppState extends ChangeNotifier {
     // registro da última sessão, que é o que a tela de resultado mostra.
     sessionStartedAt = null;
     sessionEndsAt = null;
-    if (navega) screen = AppScreen.result;
+    if (navega) _empilha(AppScreen.result);
     _markSync(_syncSession | _syncShop);
     // O aviso agendado já cumpriu (ou vai cumprir) o papel; o que sai é a
     // notificação fixa. Agendamento sem motivo tem de sumir.
@@ -978,7 +1119,7 @@ class AppState extends ChangeNotifier {
     if (now.isBefore(fim)) {
       running = true;
       confirming = false;
-      screen = AppScreen.session;
+      _empilha(AppScreen.session);
       _recalculaRestante();
       _iniciaTicker();
       // Reboot ou swipe podem ter tirado a notificação da barra; recoloca.
@@ -1004,7 +1145,7 @@ class AppState extends ChangeNotifier {
   void abandon() {
     _timer?.cancel();
     final minutos = sessionDur > 0 ? sessionDur : dur;
-    screen = AppScreen.result;
+    _empilha(AppScreen.result);
     aborted = true;
     reward = 0;
     abandonedToday = true;
@@ -1138,6 +1279,7 @@ class AppState extends ChangeNotifier {
     usage = debugUsage && usageAccess ? 40 : 0;
     completedToday = 0;
     abandonedToday = false;
+    carinhosHoje = 0;
     overrideMood = null;
 
     // Missões diárias expiram à meia-noite, sem punição: o contador zera e a
@@ -1321,6 +1463,8 @@ class AppState extends ChangeNotifier {
         for (final e in ajustesDeCategoria.entries) e.key: e.value.name,
       },
       xp: xp,
+      afeto: afeto,
+      carinhosHoje: carinhosHoje,
       sessoesConcluidas: sessoesConcluidas,
       melhorSequencia: melhorSequencia,
       diasAbaixoDaMeta: diasAbaixoDaMeta,
@@ -1336,7 +1480,8 @@ class AppState extends ChangeNotifier {
   }
 
   void _applySnapshot(AppSnapshot s) {
-    screen = s.screen == AppScreen.session ? AppScreen.home : s.screen;
+    _restauraPilha(
+        s.screen == AppScreen.session ? AppScreen.home : s.screen);
     onb = s.onb;
     lang = s.lang;
     species = s.species;
@@ -1376,6 +1521,8 @@ class AppState extends ChangeNotifier {
           e.key: categoriaPorNome(e.value)!,
     };
     xp = s.xp;
+    afeto = s.afeto;
+    carinhosHoje = s.carinhosHoje;
     sessoesConcluidas = s.sessoesConcluidas;
     melhorSequencia = s.melhorSequencia;
     diasAbaixoDaMeta = s.diasAbaixoDaMeta;
@@ -1428,7 +1575,19 @@ class AppState extends ChangeNotifier {
         if (mask & bit == 0) return;
         try {
           await push();
-        } catch (_) {
+        } catch (e) {
+          // Tabela que não existe no remoto não é falha de rede: tentar de
+          // novo não resolve nunca, e chamar isso de "não foi possível
+          // sincronizar, tente mais tarde" é mentir para o usuário.
+          final ausente = TabelaAusenteNoRemoto.de(e);
+          if (ausente != null) {
+            if (_tabelasAusentesAvisadas.add(ausente.tabela)) {
+              onSyncError?.call(
+                t.fill(t.syncSchemaFail, {'t': ausente.tabela}),
+              );
+            }
+            return;
+          }
           // Devolve a intenção à máscara: o domínio tenta de novo na próxima
           // gravação, em vez de a mudança sumir sem ninguém saber.
           falhou |= bit;
@@ -1442,6 +1601,7 @@ class AppState extends ChangeNotifier {
       await envia(_syncSettings, r.settings.pushRemote);
       await envia(_syncSession, r.sessions.pushRemote);
       await envia(_syncTrial, r.trial.pushRemote);
+      await envia(_syncProgresso, r.progresso.pushRemote);
 
       if (falhou != 0) {
         _syncMask |= falhou;

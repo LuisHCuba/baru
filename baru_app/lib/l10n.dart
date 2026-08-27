@@ -200,6 +200,7 @@ class T {
   String get authAttachFail => s('authAttachFail');
   String get authBootstrapLoading => s('authBootstrapLoading');
   String get syncFail => s('syncFail');
+  String get syncSchemaFail => s('syncSchemaFail');
   String get bootstrapOffline => s('bootstrapOffline');
   String get bonusUnderGoal => s('bonusUnderGoal');
   String get telaT => s('telaT');
@@ -243,6 +244,9 @@ class T {
   String get trilhaVaziaT => s('trilhaVaziaT');
   String get trilhaVaziaB => s('trilhaVaziaB');
   String get xpRotulo => s('xpRotulo');
+  String get vinculoRotulo => s('vinculoRotulo');
+  String get vinculoSub => s('vinculoSub');
+  String get vinculoTeto => s('vinculoTeto');
   String get missoesT => s('missoesT');
   String get missoesSub => s('missoesSub');
   String get missoesDiarias => s('missoesDiarias');
@@ -328,6 +332,7 @@ const _pt = <String, Object>{
   'authAttachFail': 'Não foi possível conectar ao servidor. Verifique a internet ou tente mais tarde.',
   'authBootstrapLoading': 'Carregando seu habitat…',
   'syncFail': 'Não foi possível sincronizar. Seus dados ficam salvos neste aparelho.',
+  'syncSchemaFail': 'O banco na nuvem está desatualizado: falta a tabela {t}. Seus dados ficam salvos neste aparelho.',
   'bootstrapOffline': 'Conta nova ou sem dados remotos — começando habitat vazio.',
   'bonusUnderGoal': 'Ontem você fechou abaixo da meta. +{k} folhas para o habitat.',
   'telaT': 'Seu tempo de tela',
@@ -354,6 +359,9 @@ const _pt = <String, Object>{
   'trilhaAgora': 'Agora',
   'trilhaBloqueado': 'A caminho',
   'nivelRotulo': 'Nível {n}',
+  'vinculoRotulo': 'Vínculo',
+  'vinculoSub': '{n} afagos',
+  'vinculoTeto': 'Ele já recebeu carinho de sobra hoje',
   'nivelFalta': '{x} XP para o nível {n}',
   'nivelMax': 'Nível máximo',
   'marcoSessao1': 'Sua primeira sessão de foco',
@@ -634,6 +642,7 @@ const _en = <String, Object>{
   'authAttachFail': 'Could not reach the server. Check your connection or try again later.',
   'authBootstrapLoading': 'Loading your habitat…',
   'syncFail': 'Could not sync. Your data stays saved on this device.',
+  'syncSchemaFail': 'The cloud database is out of date: table {t} is missing. Your data stays saved on this device.',
   'bootstrapOffline': 'New account or no remote data — starting with an empty habitat.',
   'bonusUnderGoal': 'You finished yesterday under your goal. +{k} leaves for the habitat.',
   'telaT': 'Your screen time',
@@ -660,6 +669,9 @@ const _en = <String, Object>{
   'trilhaAgora': 'Now',
   'trilhaBloqueado': 'Ahead',
   'nivelRotulo': 'Level {n}',
+  'vinculoRotulo': 'Bond',
+  'vinculoSub': '{n} cuddles',
+  'vinculoTeto': 'They have had plenty of love today',
   'nivelFalta': '{x} XP to level {n}',
   'nivelMax': 'Max level',
   'marcoSessao1': 'Your first focus session',
@@ -937,6 +949,7 @@ const _es = <String, Object>{
   'authAttachFail': 'No se pudo conectar al servidor. Revisa tu conexión o inténtalo más tarde.',
   'authBootstrapLoading': 'Cargando tu hábitat…',
   'syncFail': 'No se pudo sincronizar. Tus datos quedan guardados en este dispositivo.',
+  'syncSchemaFail': 'La base en la nube está desactualizada: falta la tabla {t}. Tus datos quedan guardados en este dispositivo.',
   'bootstrapOffline': 'Cuenta nueva o sin datos remotos: empezamos con un hábitat vacío.',
   'bonusUnderGoal': 'Ayer cerraste por debajo de tu meta. +{k} hojas para el hábitat.',
   'telaT': 'Tu tiempo de pantalla',
@@ -963,6 +976,9 @@ const _es = <String, Object>{
   'trilhaAgora': 'Ahora',
   'trilhaBloqueado': 'Por venir',
   'nivelRotulo': 'Nivel {n}',
+  'vinculoRotulo': 'Vínculo',
+  'vinculoSub': '{n} mimos',
+  'vinculoTeto': 'Ya recibió cariño de sobra hoy',
   'nivelFalta': '{x} XP para el nivel {n}',
   'nivelMax': 'Nivel máximo',
   'marcoSessao1': 'Tu primera sesión de enfoque',
@@ -1242,6 +1258,7 @@ const _zh = <String, Object>{
   'authAttachFail': '无法连接服务器。请检查网络或稍后重试。',
   'authBootstrapLoading': '正在加载你的栖息地…',
   'syncFail': '同步失败。你的数据已保存在本机。',
+  'syncSchemaFail': '云端数据库版本过旧：缺少数据表 {t}。你的数据已保存在本机。',
   'bootstrapOffline': '新账号或没有云端数据 — 从空的栖息地开始。',
   'bonusUnderGoal': '昨天你的用时低于目标。栖息地 +{k} 片叶子。',
   'telaT': '你的屏幕时间',
@@ -1268,6 +1285,9 @@ const _zh = <String, Object>{
   'trilhaAgora': '现在',
   'trilhaBloqueado': '即将到来',
   'nivelRotulo': '等级 {n}',
+  'vinculoRotulo': '羁绊',
+  'vinculoSub': '{n} 次抚摸',
+  'vinculoTeto': '今天它已经收获了满满的爱',
   'nivelFalta': '还差 {x} XP 到等级 {n}',
   'nivelMax': '已满级',
   'marcoSessao1': '你的第一次专注',

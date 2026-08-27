@@ -12,11 +12,7 @@ import '../widgets/componentes.dart';
 /// confia nele. Antes o app mostrava um total que somava launcher, system UI e
 /// Spotify tocando no bolso, sem nenhuma forma de conferir.
 class TempoScreen extends StatelessWidget {
-  const TempoScreen({super.key, this.aoVoltar});
-
-  final VoidCallback? aoVoltar;
-
-  static const rota = '/tempo';
+  const TempoScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +23,7 @@ class TempoScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Cabecalho(titulo: t.telaT, aoVoltar: aoVoltar),
+        _Cabecalho(titulo: t.telaT, aoVoltar: app.voltar),
         Expanded(
           child: !app.usageAccess
               ? EstadoVazio(
@@ -52,10 +48,10 @@ class TempoScreen extends StatelessWidget {
 }
 
 class _Cabecalho extends StatelessWidget {
-  const _Cabecalho({required this.titulo, this.aoVoltar});
+  const _Cabecalho({required this.titulo, required this.aoVoltar});
 
   final String titulo;
-  final VoidCallback? aoVoltar;
+  final VoidCallback aoVoltar;
 
   @override
   Widget build(BuildContext context) {
@@ -68,20 +64,19 @@ class _Cabecalho extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (aoVoltar != null)
-            Semantics(
-              button: true,
-              label: 'voltar',
-              child: GestureDetector(
-                onTap: aoVoltar,
-                behavior: HitTestBehavior.opaque,
-                child: const SizedBox(
-                  width: Toque.minimo,
-                  height: Toque.minimo,
-                  child: Icon(Icons.arrow_back_rounded, size: 22),
-                ),
+          Semantics(
+            button: true,
+            label: 'voltar',
+            child: GestureDetector(
+              onTap: aoVoltar,
+              behavior: HitTestBehavior.opaque,
+              child: const SizedBox(
+                width: Toque.minimo,
+                height: Toque.minimo,
+                child: Icon(Icons.arrow_back_rounded, size: 22),
               ),
             ),
+          ),
           Expanded(
             child: Text(
               titulo,

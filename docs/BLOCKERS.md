@@ -4,6 +4,55 @@ Cada item traz a ação exata. Tudo o que dependia do agente já está pronto.
 
 ---
 
+## BL-10 — **O banco remoto está atrás do repositório. É isto que causa o "erro ao sincronizar".**
+
+**Situação, verificada agora** (sonda REST com a chave anon deste repositório,
+em 2026-08-27):
+
+| Tabela | Remoto |
+|---|---|
+| `baru_app_categories` (migration 7) | **404 · PGRST205 · não existe** |
+| `baru_progression` (migration 8) | **404 · PGRST205 · não existe** |
+| as outras 13 | 200 · existem |
+
+**Impacto exato.** `pushSettings` faz um `delete` em `baru_app_categories` em
+**toda** gravação — mesmo sem nenhuma reclassificação de app. A tabela não
+existe, o PostgREST devolve 404, o domínio de ajustes falha, e o app mostra o
+aviso de sincronização a cada salvamento. **Os dados não se perdem** — o
+snapshot local é gravado antes de qualquer envio — mas nada de ajustes,
+tempo de tela e (a partir deste turno) progressão sobe para a nuvem.
+
+**O que já foi feito deste lado.** As duas migrations existem no repositório e
+**foram aplicadas e validadas num banco limpo** (`supabase db reset`: 8
+migrations, 15 tabelas, nenhuma sem RLS, 58 políticas). A RLS da tabela nova
+foi provada em SQL: o usuário A vê só a própria linha, `UPDATE`/`DELETE` na
+linha do B afetam 0 linhas, e `anon` vê 0. O app também parou de chamar isto
+de "falha de rede": agora diz qual tabela falta.
+
+**Ação pedida.** Não consigo executar: não há token de acesso do Supabase
+neste ambiente e o MCP nega permissão de escrita no projeto.
+
+```
+cd baru_app
+supabase login
+supabase link --project-ref slqpuppkapiewjqvedtj
+supabase db push
+```
+
+Ou, sem CLI, colar no SQL Editor do dashboard, na ordem:
+
+```
+baru_app/supabase/migrations/20260827100000_baru_app_categories.sql
+baru_app/supabase/migrations/20260827200000_baru_progression.sql
+```
+
+As duas são aditivas e idempotentes (`create table if not exists` + `drop
+policy if exists` antes de cada `create policy`). Nenhuma apaga dado.
+
+Se o `db push` reclamar do ledger, resolva o BL-01 primeiro.
+
+---
+
 ## BL-01 — Ledger de migrations ausente no projeto remoto
 
 **Situação.** As 5 migrations foram aplicadas à mão pelo SQL Editor. O schema

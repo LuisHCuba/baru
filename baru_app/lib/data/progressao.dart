@@ -35,6 +35,18 @@ class Balanco {
   /// Cada dia de sequência mantida.
   static const xpPorDiaDeSequencia = 5;
 
+  // --- Vínculo -----------------------------------------------------------
+
+  /// Afagos que rendem XP por dia.
+  ///
+  /// Existe teto porque sem ele o carinho vira a forma mais barata de subir
+  /// de nível, e o app passa a recompensar esfregar a tela em vez de foco.
+  /// Depois do teto o bicho continua reagindo — só não paga mais.
+  static const carinhosPorDia = 5;
+
+  /// XP de um afago completo, dentro do teto do dia.
+  static const xpPorCarinho = 3;
+
   // --- Curva de nível ----------------------------------------------------
 
   /// XP para sair do nível [nivel] e chegar no seguinte.

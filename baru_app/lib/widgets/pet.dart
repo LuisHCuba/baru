@@ -45,6 +45,7 @@ class PetView extends StatefulWidget {
     this.height = 150,
     this.alignment = Alignment.center,
     this.interativo = true,
+    this.aoCarinho,
   });
 
   final Species species;
@@ -58,6 +59,19 @@ class PetView extends StatefulWidget {
 
   /// Responde ao toque. Desligado em miniaturas e capturas.
   final bool interativo;
+
+  /// Um afago completo: o dedo percorreu o bicho até ele ficar satisfeito.
+  /// Dispara uma vez por gesto.
+  final VoidCallback? aoCarinho;
+
+  /// Quanto o dedo precisa percorrer para encher a satisfação.
+  ///
+  /// Curto demais e o carinho vira um toque; longo demais e ninguém chega ao
+  /// fim. 520 px é da ordem de três passadas no corpo inteiro.
+  static const percursoDoAfago = 520.0;
+
+  /// A cada tanto de percurso, um clique — o ronronar.
+  static const passoDoRonrom = 26.0;
 
   /// Chave da camada que o teste captura para provar que o desenho mudou.
   static const cenaKey = Key('pet-cena');
@@ -139,6 +153,20 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
   /// Toques seguidos: a partir do terceiro ele se anima de verdade.
   int _toquesSeguidos = 0;
   Timer? _esfriaToques;
+
+  /// O quanto ele está gostando **agora**. Sobe com o dedo andando em cima
+  /// dele e desce sozinho quando o dedo sai.
+  late final AnimationController _gosto = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+    animationBehavior: AnimationBehavior.preserve,
+  );
+
+  /// Onde o dedo está durante o afago, em coordenadas do widget.
+  Offset? _dedo;
+  double _percorrido = 0;
+  double _desdeORonrom = 0;
+  bool _afagoCreditado = false;
 
   @override
   void didChangeDependencies() {
@@ -298,6 +326,63 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
     }
   }
 
+  // ======================================================================
+  // AFAGO — a mão passando, não o dedo cutucando
+  // ======================================================================
+
+  void _comecaAfago(DragStartDetails d) {
+    if (!widget.interativo) return;
+    _gesto.stop();
+    _gestoAtual = GestoOcioso.nenhum;
+    _percorrido = 0;
+    _desdeORonrom = 0;
+    _afagoCreditado = false;
+    setState(() => _dedo = d.localPosition);
+  }
+
+  void _afaga(DragUpdateDetails d) {
+    if (!widget.interativo) return;
+    final andou = d.delta.distance;
+    _percorrido += andou;
+    _desdeORonrom += andou;
+
+    // Ronronar: um clique curto a cada tanto de percurso. Por tempo ficaria
+    // igual com o dedo parado — o que não é carinho, é dedo pousado.
+    if (_desdeORonrom >= PetView.passoDoRonrom) {
+      _desdeORonrom = 0;
+      HapticFeedback.selectionClick();
+    }
+
+    _gosto.value = (_percorrido / PetView.percursoDoAfago).clamp(0.0, 1.0);
+
+    if (_gosto.value >= 1 && !_afagoCreditado) {
+      _afagoCreditado = true;
+      HapticFeedback.mediumImpact();
+      widget.aoCarinho?.call();
+    }
+
+    final tamanho = Size(widget.width, widget.height);
+    setState(() {
+      _dedo = d.localPosition;
+      // Ele acompanha a mão com o olhar enquanto está sendo afagado.
+      _olhar = Offset(
+        ((d.localPosition.dx / tamanho.width) * 2 - 1).clamp(-1.0, 1.0),
+        ((d.localPosition.dy / tamanho.height) * 2 - 1).clamp(-1.0, 1.0),
+      );
+    });
+  }
+
+  void _terminaAfago() {
+    if (!widget.interativo) return;
+    setState(() => _dedo = null);
+    // Desce sozinho: a satisfação não some no instante em que a mão sai.
+    if (_gosto.value > 0) _gosto.reverse();
+    _voltaAOlharPraFrente?.cancel();
+    _voltaAOlharPraFrente = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) setState(() => _olhar = Offset.zero);
+    });
+  }
+
   @override
   void dispose() {
     _proximoPiscar?.cancel();
@@ -312,6 +397,7 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
     _orelha.dispose();
     _toque.dispose();
     _gesto.dispose();
+    _gosto.dispose();
     super.dispose();
   }
 
@@ -330,6 +416,7 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
           _orelha,
           _toque,
           _gesto,
+          _gosto,
         ]),
         builder: (context, _) {
           return CustomPaint(
@@ -355,6 +442,8 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
                 amplitude: amplitude,
                 gesto: _gestoAtual,
                 gestoT: _gesto.value,
+                dedo: _dedo,
+                gosto: _gosto.value,
               ),
             ),
           );
@@ -377,6 +466,10 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
     // hit-test, então deferir ao filho deixaria o toque no bicho sem efeito.
     return GestureDetector(
       onTapDown: _reageAoToque,
+      onPanStart: _comecaAfago,
+      onPanUpdate: _afaga,
+      onPanEnd: (_) => _terminaAfago(),
+      onPanCancel: _terminaAfago,
       behavior: HitTestBehavior.opaque,
       child: corpo,
     );
@@ -397,6 +490,8 @@ class _Pose {
     required this.amplitude,
     this.gesto = GestoOcioso.nenhum,
     this.gestoT = 0,
+    this.dedo,
+    this.gosto = 0,
   });
 
   /// -1 a 1, ida e volta contínua. Enche e esvazia o peito.
@@ -429,6 +524,13 @@ class _Pose {
   /// Gesto de ocioso em andamento, e onde ele está (0 a 1).
   final GestoOcioso gesto;
   final double gestoT;
+
+  /// Onde a mão está, em coordenadas do widget. Nulo quando ninguém está
+  /// afagando.
+  final Offset? dedo;
+
+  /// 0 a 1: o quanto ele está gostando do afago.
+  final double gosto;
 
   /// Amplitude do toque, com piso próprio.
   ///
@@ -489,14 +591,20 @@ class _PetPainter extends CustomPainter {
 
   bool get dormindo => activity == Activity.nap || mood == Mood.sleepy;
   bool get triste => mood == Mood.missingYou;
-  bool get feliz => mood == Mood.radiant || pose.carinho > 0.35;
+  bool get feliz =>
+      mood == Mood.radiant || pose.carinho > 0.35 || pose.gosto > 0.25;
   bool get nadando => activity == Activity.swim;
   bool get pastando => activity == Activity.graze;
 
-  /// Olho fechado por sono, por piscada ou por bocejo.
-  double get fechamento => dormindo
-      ? 1.0
-      : math.max(pose.pisca, pose.bocejo).clamp(0.0, 1.0);
+  /// Olho fechado por sono, por piscada, por bocejo ou de contentamento.
+  ///
+  /// O afago fecha aos poucos: os olhos apertam conforme ele vai gostando,
+  /// e o arco de pálpebra virado para cima é a carinha de quem está gostando.
+  double get fechamento {
+    if (dormindo) return 1.0;
+    final derrete = ((pose.gosto - 0.34) / 0.16).clamp(0.0, 1.0);
+    return math.max(math.max(pose.pisca, pose.bocejo), derrete).clamp(0.0, 1.0);
+  }
 
   // --- paleta -------------------------------------------------------------
 
@@ -637,6 +745,49 @@ class _PetPainter extends CustomPainter {
     if (feliz) _brilhos(canvas, size);
     if (triste) _pingo(canvas, size);
     if (pose.animado && pose.toque > 0) _coracoes(canvas, size);
+    if (pose.gosto > 0) _afago(canvas, size);
+  }
+
+  /// O afago, desenhado em coordenadas do widget — não do corpo — porque a
+  /// mão está por cima dele, não presa à anatomia.
+  void _afago(Canvas canvas, Size size) {
+    final g = pose.gosto;
+    final dedo = pose.dedo;
+
+    // Pelo levantado sob a mão: dois arcos curtos, como um rastro.
+    if (dedo != null) {
+      final risco = _traco(luz.withValues(alpha: 0.30 + g * 0.35), 2.4);
+      for (var i = 0; i < 2; i++) {
+        final r = 11.0 + i * 7;
+        canvas.drawArc(
+          Rect.fromCircle(center: dedo, radius: r),
+          math.pi * 1.15,
+          math.pi * 0.7,
+          false,
+          risco,
+        );
+      }
+    }
+
+    // Coraçõezinhos contínuos: a partir da metade da satisfação eles sobem
+    // sem parar, e ficam mais fortes até encher.
+    if (g < 0.45) return;
+    final base = dedo ?? Offset(size.width * 0.5, size.height * 0.42);
+    final fase = (pose.respiro + 1) / 2;
+    for (var i = 0; i < 3; i++) {
+      final f = (fase + i / 3) % 1.0;
+      final a = math.sin(f * math.pi) * ((g - 0.45) / 0.55).clamp(0.0, 1.0);
+      if (a <= 0.03) continue;
+      _coracao(
+        canvas,
+        Offset(
+          base.dx + math.sin(f * math.pi * 2 + i * 2.1) * 13,
+          base.dy - 12 - f * 40,
+        ),
+        3.6 + a * 3.6,
+        Cores.acento.withValues(alpha: a * 0.9),
+      );
+    }
   }
 
   /// Carinho insistente: três coraçõezinhos que sobem e somem.
@@ -694,272 +845,314 @@ class _PetPainter extends CustomPainter {
   /// A cabeça acompanha um pouco o olhar, e balança ao pastar.
   double get _cabecaGiro =>
       pose.sacudida +
+      // Encosta a cabeça na mão.
+      (pose.dedo == null ? 0 : pose.gosto * 0.06 * pose.amplitudeToque) +
       pose.olhar.dx * 0.05 * pose.amplitudeToque +
       (pastando ? pose.boia * 0.05 * pose.amplitude : 0);
 
   // ======================================================================
-  // CAPIVARA — corpo de barril, focinho reto, orelhas pequenas
+  // CAPIVARA — de frente: cabeça grande e chata, focinho rombudo, corpo baixo
+  //
+  // Antes era de perfil: um corpo-ovo comprido com uma cabeça-ovo colada na
+  // ponta. Duas elipses sobrepostas não fazem pescoço nem bochecha, e o
+  // resultado lia como batata. De frente a cara domina — que é o que faz um
+  // personagem funcionar, e é por isso que a coruja já funcionava.
   // ======================================================================
 
   void _capivara(Canvas canvas) {
     final amp = pose.amplitude;
     final passo = pose.boia * amp;
 
-    // Patas de trás, atrás do corpo. Escuras, senão somem na barriga.
-    _pata(canvas, const Offset(38, 28), 15, 18, sombraForte, passo * 2.2,
-        dedos: false);
-    _pata(canvas, const Offset(16, 30), 15, 18, sombraForte, -passo * 2.2,
-        dedos: false);
+    // Patas da frente, apoiadas. Sobem e descem alternadas ao boiar.
+    _pata(canvas, const Offset(-23, 51), 27, 17, sombra, passo * 1.6);
+    _pata(canvas, const Offset(23, 51), 27, 17, sombra, -passo * 1.6);
 
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(12, 2), width: 118, height: 68),
-      topo: 0.92,
-      base: 1.04,
+      Rect.fromCenter(center: const Offset(0, 18), width: 92, height: 80),
+      topo: 0.86,
+      base: 1.02,
     );
     canvas.drawPath(corpo, _p(pelo));
 
     canvas.save();
     canvas.clipPath(corpo);
-    // Barriga: uma faixa baixa, não a metade do bicho.
-    _oval(
-      canvas,
-      Rect.fromCenter(center: const Offset(18, 30), width: 78, height: 30),
-      barriga,
-    );
-    // Luz no lombo, discreta: contraste forte aqui vira linha dura.
-    _oval(
-      canvas,
-      Rect.fromCenter(center: const Offset(2, -30), width: 80, height: 22),
-      luz.withValues(alpha: 0.16),
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 32), width: 64, height: 62),
+        topo: 0.9,
+      ),
+      _p(barriga),
     );
     canvas.restore();
 
-    // Patas da frente, na frente do corpo.
-    _pata(canvas, const Offset(-24, 28), 15, 19, sombra, -passo * 2.4);
-    _pata(canvas, const Offset(-2, 30), 15, 19, sombraForte, passo * 2.4);
-
-    // Pescoço: sem esta massa a cabeça lia como uma bola solta encostada.
-    canvas.drawPath(
-      _bolha(
-        Rect.fromCenter(center: const Offset(-34, -4), width: 46, height: 52),
-      ),
-      _p(pelo),
-    );
-
     // --- cabeça -----------------------------------------------------------
     canvas.save();
-    canvas.translate(-56, -12 + pose.respiro * amp * 0.9);
-    canvas.rotate(_cabecaGiro - (pastando ? 0.18 : 0) + (triste ? 0.10 : 0));
+    canvas.translate(0, -30 + pose.respiro * amp * 0.7);
+    canvas.rotate(_cabecaGiro * 0.9);
 
-    // Orelhas antes da cabeça: ficam encaixadas, não flutuando.
-    _orelhaRedonda(canvas, const Offset(-8, -26), 15, 16, -0.30);
-    _orelhaRedonda(canvas, const Offset(15, -29), 15, 16, 0.22);
+    // Orelhas antes da cabeça: nascem atrás dela, então a base some sob o
+    // contorno em vez de ficar boiando em cima.
+    // Orelhas pequenas e afastadas: na capivara elas são dois botõezinhos
+    // nos cantos de cima. Grandes e altas, ela vira urso.
+    _orelhaRedonda(canvas, const Offset(-40, -19), 16, 14, -0.34);
+    _orelhaRedonda(canvas, const Offset(40, -19), 16, 14, 0.34);
 
+    // Cabeça larga e de topo baixo: a capivara é quadradona, não redonda.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: Offset.zero, width: 68, height: 60),
-        topo: 0.96,
+        Rect.fromCenter(center: Offset.zero, width: 96, height: 78),
+        topo: 0.86,
+        base: 1.04,
       ),
       _p(pelo),
     );
 
-    // Focinho: baixo e achatado. A capivara tem a frente do rosto reta, e um
-    // focinho redondo grande faria dela um urso.
+    // Focinho rombudo, largo e baixo — mas com testa sobrando acima dele.
+    // Ocupando a cara toda, o contorno da cabeça sumia e os olhos ficavam
+    // espremidos na borda de cima.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(-22, 16), width: 34, height: 20),
-        esq: 0.76,
-        base: 0.86,
+        Rect.fromCenter(center: const Offset(0, 19), width: 62, height: 34),
+        topo: 0.82,
+        base: 1.04,
       ),
       _p(claro),
     );
 
-    _narina(canvas, const Offset(-31, 12));
-    _boca(canvas, const Offset(-24, 21), 11);
-    if (feliz) _bochecha(canvas, const Offset(-12, 15), const Offset(20, 12));
+    _narina(canvas, const Offset(-12, 11));
+    _narina(canvas, const Offset(12, 11));
+    _boca(canvas, const Offset(0, 26), 24);
+    if (feliz) {
+      _bochecha(canvas, const Offset(-35, 16), const Offset(35, 16));
+    }
 
-    _olho(canvas, const Offset(-10, -7), 5.6);
-    _olho(canvas, const Offset(16, -9), 5.6);
+    // Olhos altos e afastados: na capivara eles ficam bem acima do focinho,
+    // para o bicho poder olhar em volta com o corpo na água.
+    _olho(canvas, const Offset(-26, -10), 8);
+    _olho(canvas, const Offset(26, -10), 8);
 
     canvas.restore();
   }
 
   // ======================================================================
-  // LONTRA — corpo comprido e liso, cauda grossa que afina
+  // LONTRA — cabeça redonda, focinho claro, bigodes dos dois lados, cauda
   // ======================================================================
 
   void _lontra(Canvas canvas) {
     final amp = pose.amplitude;
-    final rabo = pose.cauda * amp;
+    final rema = pose.boia * amp;
+    final balanca = pose.cauda * amp;
 
-    // Cauda: uma faixa que sai do corpo e afina, curvando com a animação.
+    // Cauda grossa saindo por trás, para um lado, afinando na ponta.
     canvas.drawPath(
       Path()
-        ..moveTo(50, -10)
-        ..cubicTo(82, -14 + rabo * 5, 100, 6 + rabo * 14, 94, 30 + rabo * 18)
-        ..cubicTo(90, 16 + rabo * 12, 76, 10 + rabo * 5, 50, 14)
+        ..moveTo(26, 34)
+        ..cubicTo(
+          58 + balanca * 5, 40,
+          74 + balanca * 8, 24 + balanca * 4,
+          78 + balanca * 9, 6 + balanca * 6,
+        )
+        ..cubicTo(
+          70 + balanca * 6, 12 + balanca * 3,
+          58 + balanca * 3, 30,
+          26, 50,
+        )
         ..close(),
-      _p(sombra),
+      _p(sombraForte),
     );
 
-    _patinha(canvas, Offset(30, 26 + rabo * 1.5), sombraForte);
+    _patinha(canvas, Offset(-20, 50 + rema * 1.6), sombra);
+    _patinha(canvas, Offset(20, 50 - rema * 1.6), sombra);
 
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(6, 2), width: 124, height: 54),
-      topo: 0.9,
-      dir: 0.84,
+      Rect.fromCenter(center: const Offset(0, 18), width: 82, height: 76),
+      topo: 0.88,
     );
     canvas.drawPath(corpo, _p(pelo));
 
     canvas.save();
     canvas.clipPath(corpo);
-    _oval(
-      canvas,
-      Rect.fromCenter(center: const Offset(2, 18), width: 104, height: 32),
-      barriga,
-    );
-    _oval(
-      canvas,
-      Rect.fromCenter(center: const Offset(-4, -18), width: 92, height: 20),
-      luz.withValues(alpha: 0.30),
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 30), width: 56, height: 58),
+        topo: 0.9,
+      ),
+      _p(barriga),
     );
     canvas.restore();
 
-    // Patas da frente remam quando ela nada.
-    final remada = nadando ? math.sin(pose.boia * math.pi) * 4.5 * amp : 0.0;
-    _patinha(canvas, Offset(-24, 23 + remada), claro);
-    _patinha(canvas, Offset(-6, 26 - remada), pelo);
-
     // --- cabeça -----------------------------------------------------------
     canvas.save();
-    canvas.translate(-52, -14 + pose.respiro * amp * 0.9);
-    canvas.rotate(_cabecaGiro + (nadando ? -0.12 : 0));
+    canvas.translate(0, -28 + pose.respiro * amp * 0.7);
+    canvas.rotate(_cabecaGiro * 0.9);
 
-    _orelhaRedonda(canvas, const Offset(-4, -18), 9, 9, -0.22);
-    _orelhaRedonda(canvas, const Offset(16, -19), 9, 9, 0.22);
+    // Orelhas pequenas e altas: na lontra elas quase somem na cabeça.
+    _orelhaRedonda(canvas, const Offset(-33, -24), 16, 14, -0.24);
+    _orelhaRedonda(canvas, const Offset(33, -24), 16, 14, 0.24);
 
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: Offset.zero, width: 48, height: 44),
-        base: 1.05,
+        Rect.fromCenter(center: Offset.zero, width: 84, height: 74),
+        base: 1.02,
       ),
       _p(pelo),
     );
 
-    // Focinho largo e achatado, a marca da lontra.
+    // Máscara clara do focinho, larga e baixa.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(-12, 11), width: 34, height: 24),
-        base: 0.86,
+        Rect.fromCenter(center: const Offset(0, 14), width: 50, height: 34),
+        topo: 0.9,
       ),
-      _p(barriga),
+      _p(claro),
     );
 
-    _narina(canvas, const Offset(-22, 6));
-    _boca(canvas, const Offset(-16, 16), 12);
-    _bigodes(canvas, const Offset(-24, 10));
-    if (feliz) _bochecha(canvas, const Offset(-5, 12), const Offset(16, 10));
+    // Bigodes presos na borda do focinho, dos dois lados.
+    _bigodes(canvas, const Offset(-22, 12));
+    _bigodes(canvas, const Offset(22, 12), lado: 1);
 
-    _olho(canvas, const Offset(-5, -6), 4.8);
-    _olho(canvas, const Offset(14, -7), 4.8);
+    // Focinheira escura, o traço que faz ler "lontra" e não "gato".
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 6), width: 19, height: 13),
+        base: 1.1,
+      ),
+      _p(sombraForte),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: const Offset(-3.5, 3),
+        width: 6,
+        height: 3.5,
+      ),
+      _p(luz.withValues(alpha: 0.45)),
+    );
+
+    _boca(canvas, const Offset(0, 19), 20);
+    if (feliz) {
+      _bochecha(canvas, const Offset(-30, 11), const Offset(30, 11));
+    }
+
+    _olho(canvas, const Offset(-21, -12), 7.5);
+    _olho(canvas, const Offset(21, -12), 7.5);
 
     canvas.restore();
   }
 
   // ======================================================================
-  // TARTARUGA — casco em cúpula com escudos, pescoço que estica
+  // TARTARUGA — de frente: casco em cúpula, cabeça grande saindo por cima
+  //
+  // De perfil o casco virava uma meia-lua com uma cabecinha espetada na
+  // ponta. De frente a cúpula sustenta a cara, que é o que a gente olha.
   // ======================================================================
 
   void _tartaruga(Canvas canvas) {
     final amp = pose.amplitude;
-    // O pescoço estica de leve ao respirar, e bastante quando fazem carinho.
-    final estica = (pose.boia * 3 * amp) + pose.carinho * 6;
+    // A cabeça recolhe e estica de leve ao respirar, e sai mais quando fazem
+    // carinho — é o gesto que todo mundo reconhece numa tartaruga.
+    final estica = (pose.boia * 2.4 * amp) + pose.carinho * 7;
 
-    // Patas maiores e mais baixas: numa tartaruga elas aparecem sob o casco.
-    _pata(canvas, const Offset(36, 28), 20, 17, sombraForte,
-        pose.boia * amp * 1.6);
-    _pata(canvas, const Offset(-16, 30), 20, 17, sombra,
-        -pose.boia * amp * 1.6);
+    // Patas: saem por baixo do casco, nos cantos.
+    _pata(canvas, const Offset(-47, 52), 25, 22, sombra, pose.boia * amp * 1.4);
+    _pata(canvas, const Offset(47, 52), 25, 22, sombra, -pose.boia * amp * 1.4);
 
-    // Casco: uma cúpula, não meia elipse.
-    final casco = Path()
-      ..moveTo(-58, 18)
-      ..cubicTo(-56, -42, 54, -42, 62, 18)
-      ..close();
+    // --- casco, atrás da cabeça -------------------------------------------
+    //
+    // O casco fica **atrás**: desenhado por cima, ele engolia o queixo e o
+    // bicho parecia dentro de uma panela. Atrás, lê como carapaça nas costas.
+    final casco = _bolha(
+      Rect.fromCenter(center: const Offset(0, 26), width: 102, height: 78),
+      topo: 0.94,
+      base: 0.94,
+    );
     canvas.drawPath(casco, _p(sombra));
 
     canvas.save();
     canvas.clipPath(casco);
-    // Escudos: é isso que faz ler "casco" em vez de "meia-lua".
-    final linha = _traco(sombraForte.withValues(alpha: 0.55), 2.2);
-    for (final x in [-32.0, -8.0, 16.0, 38.0]) {
-      canvas.drawPath(
-        Path()
-          ..moveTo(x, 18)
-          ..cubicTo(x + 3, -6, x + 7, -18, x + 13, -26),
-        linha,
-      );
-    }
+    final linha = _traco(sombraForte.withValues(alpha: 0.55), 2.4);
+    // Escudos: um anel e os raios que saem dele.
+    // Escudos: uma fileira central e uma marginal, com divisórias curtas
+    // entre elas. Raios convergindo para um ponto liam como guarda-chuva.
     canvas.drawPath(
       Path()
-        ..moveTo(-54, -4)
-        ..cubicTo(-20, -18, 26, -18, 56, -4),
+        ..moveTo(-47, 26)
+        ..cubicTo(-30, 0, 30, 0, 47, 26),
       linha,
     );
+    canvas.drawPath(
+      Path()
+        ..moveTo(-50, 50)
+        ..cubicTo(-30, 34, 30, 34, 50, 50),
+      linha,
+    );
+    for (final x in [-33.0, -11.0, 11.0, 33.0]) {
+      // Divisórias só entre as duas fileiras: curtas e quase verticais.
+      canvas.drawLine(Offset(x, 12), Offset(x * 1.06, 40), linha);
+    }
+    // Brilho do casco: fraco e no ombro, não no alto. No alto ele caía bem
+    // onde a cabeça encosta e virava uma mancha solta.
     _oval(
       canvas,
-      Rect.fromCenter(center: const Offset(-10, -22), width: 56, height: 16),
-      luz.withValues(alpha: 0.28),
+      Rect.fromCenter(center: const Offset(-22, 16), width: 34, height: 13),
+      luz.withValues(alpha: 0.16),
+    );
+    // Plastrão: a faixa clara da barriga, na frente do casco.
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 54), width: 68, height: 42),
+        topo: 0.9,
+      ),
+      _p(barriga),
     );
     canvas.restore();
 
-    // Plastrão: o casco de baixo. Recuado das pontas — a carapaça avança
-    // sobre ele — e com aresta própria, senão lia como um vão branco entre
-    // o casco e as patas.
-    final plastrao = Path()
-      ..moveTo(-50, 17)
-      ..cubicTo(-28, 33, 30, 33, 54, 17)
-      ..cubicTo(30, 23, -28, 23, -50, 17)
-      ..close();
-    canvas.drawPath(plastrao, _p(barriga));
-    canvas.drawPath(
-      Path()
-        ..moveTo(-50, 17)
-        ..cubicTo(-28, 33, 30, 33, 54, 17),
-      _traco(sombraForte.withValues(alpha: 0.35), 1.6),
-    );
-
-    // --- pescoço e cabeça -------------------------------------------------
+    // --- cabeça, na frente ------------------------------------------------
     canvas.save();
-    canvas.translate(-54 - estica, 4 - estica * 0.3);
-    canvas.rotate(_cabecaGiro - 0.06);
+    canvas.translate(0, -36 - estica);
+    canvas.rotate(_cabecaGiro * 0.8);
 
-    // O pescoço liga a cabeça ao casco. Sem ele a cabeça flutuava. Da cor da
-    // pele, não do plastrão: com o tom claro os dois viravam uma faixa só.
+    // Pescoço: sai da cabeça e entra no casco. É ele que faz a cabeça
+    // **sair** do casco em vez de ficar apoiada nele como um chapéu.
     canvas.drawPath(
       Path()
-        ..moveTo(2, -7)
-        ..cubicTo(16, -10, 30, -7, 38, 2)
-        ..cubicTo(30, 11, 16, 13, 2, 11)
+        ..moveTo(-17, 12)
+        ..cubicTo(-19, 34, 19, 34, 17, 12)
+        ..cubicTo(9, 20, -9, 20, -17, 12)
         ..close(),
-      _p(sombra),
+      _p(claro),
     );
 
-    // Cabeça pequena: numa tartaruga o casco domina, não o rosto.
+    // Cabeça menor que o casco: numa tartaruga a carapaça é o corpo.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: Offset.zero, width: 34, height: 29),
-        esq: 1.04,
+        Rect.fromCenter(center: Offset.zero, width: 66, height: 60),
+        base: 1.04,
       ),
       _p(pelo),
     );
 
-    _narina(canvas, const Offset(-13, -2));
-    _boca(canvas, const Offset(-10, 7), 10);
-    if (feliz) _bochecha(canvas, const Offset(-3, 6), const Offset(11, 4));
+    // Faixa clara atrás do olho: a marca da tartaruga-de-orelha-vermelha.
+    // Baixa e curta de propósito — alta e comprida ela virava orelha.
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(lado * 26, 0),
+          width: 12,
+          height: 8,
+        ),
+        _p(Color.lerp(claro, Cores.acento, 0.34)!),
+      );
+    }
 
-    _olho(canvas, const Offset(-3, -5), 3.9);
-    _olho(canvas, const Offset(10, -6), 3.9);
+    _narina(canvas, const Offset(-6, 6));
+    _narina(canvas, const Offset(6, 6));
+    _boca(canvas, const Offset(0, 16), 24);
+    if (feliz) {
+      _bochecha(canvas, const Offset(-21, 12), const Offset(21, 12));
+    }
+
+    _olho(canvas, const Offset(-16, -9), 7);
+    _olho(canvas, const Offset(16, -9), 7);
 
     canvas.restore();
   }
@@ -1340,7 +1533,9 @@ class _PetPainter extends CustomPainter {
     }
   }
 
-  void _bigodes(Canvas canvas, Offset o) {
+  /// Bigodes. [lado] -1 aponta para a esquerda, 1 para a direita — de frente
+  /// o bicho tem os dois.
+  void _bigodes(Canvas canvas, Offset o, {double lado = -1}) {
     final t = _traco(sombraForte.withValues(alpha: 0.5), 1.2);
     // Os bigodes acompanham a respiração de leve.
     final abre = pose.respiro * pose.amplitude * 1.1;
@@ -1350,9 +1545,9 @@ class _PetPainter extends CustomPainter {
         Path()
           ..moveTo(o.dx, o.dy + dy)
           ..cubicTo(
-            o.dx - 6, o.dy + dy - 1 - abre,
-            o.dx - 11, o.dy + dy - 2 - abre * 1.3,
-            o.dx - 16, o.dy + dy - 2 - abre * 1.5,
+            o.dx + lado * 7, o.dy + dy - 1 - abre,
+            o.dx + lado * 13, o.dy + dy - 2 - abre * 1.3,
+            o.dx + lado * 19, o.dy + dy - 3 - abre * 1.5,
           ),
         t,
       );
@@ -1474,6 +1669,8 @@ class _PetPainter extends CustomPainter {
         old.pose.animado != pose.animado ||
         old.pose.gesto != pose.gesto ||
         old.pose.gestoT != pose.gestoT ||
+        old.pose.dedo != pose.dedo ||
+        old.pose.gosto != pose.gosto ||
         old.pose.amplitude != pose.amplitude;
   }
 }

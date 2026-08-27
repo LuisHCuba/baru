@@ -11,7 +11,7 @@ Legenda de esforço: **P** ≤30 min · **M** 30–90 min · **G** > 90 min (que
 
 | # | Item | Valor | Esforço | Risco | Pronto quando |
 |---|---|---|---|---|---|
-| C-01 | **Rotas de verdade e transições** (§4B) | Alto — sem roteador, toda tela nova nasce sem histórico | G | Médio | Navegação declarativa com pilha, botão voltar do Android funcionando, deep link para as telas principais, e transição em vez de corte seco (irmãos deslizam, filho entra em profundidade, modal sobe) |
+| C-01 | ~~Rotas de verdade e transições (§4B)~~ | **Feito em 2026-08-27** — `lib/navegacao.dart`, 17 testes | — | — | — |
 | C-02 | Assinatura de release do Android | **Bloqueia publicação** | M | Alto | Keystore fora do repo, `key.properties`, build assinado (BL-05) |
 | C-03 | Estágios de habitat visíveis | Alto — o dado existe e a cena ignora | M | Baixo | `estagioDoHabitat` muda a cena: mais vegetação, companheiros visitantes, água mais viva |
 | C-04 | Lembretes com propósito (§6) | Alto — o app só fala quando a sessão roda | M | Baixo | Sequência em risco, missão quase concluída, marco ao alcance; cada um cancelado quando o motivo some; ajuste por categoria respeitado |

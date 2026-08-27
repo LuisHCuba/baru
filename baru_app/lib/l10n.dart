@@ -17,7 +17,18 @@ class T {
   List<String> get quizQ => List<String>.from(_m['quizQ'] as List);
   List<List<String>> get quizO =>
       (_m['quizO'] as List).map((e) => List<String>.from(e as List)).toList();
+  /// Nomes dos itens da loja, **na ordem de `shopItems`**.
+  ///
+  /// `items` tinha oito nomes e a loja passou a ter dezessete: indexar por
+  /// posição de `shopItems` estourava a lista. Use [nomeDoItem], que resolve
+  /// pelo id e nunca sai da faixa.
   List<String> get items => List<String>.from(_m['items'] as List);
+
+  String nomeDoItem(String id, List<String> ordemDosIds) {
+    final i = ordemDosIds.indexOf(id);
+    final nomes = itemNames;
+    return i < 0 || i >= nomes.length ? id : nomes[i];
+  }
   List<String> get days => List<String>.from(_m['days'] as List);
   List<String> get tabs => List<String>.from(_m['tabs'] as List);
   List<String> species(String id) =>
@@ -254,6 +265,17 @@ class T {
   String get setSom => s('setSom');
   String get setSomSub => s('setSomSub');
   String get trilhaAqui => s('trilhaAqui');
+  String get lojaObjetos => s('lojaObjetos');
+  String get lojaCenarios => s('lojaCenarios');
+  String get lojaRoupas => s('lojaRoupas');
+  String get lojaColocar => s('lojaColocar');
+  String get lojaTirar => s('lojaTirar');
+  String get lojaEmUso => s('lojaEmUso');
+  String get lojaFalta => s('lojaFalta');
+  String get lojaSubObjetos => s('lojaSubObjetos');
+  String get lojaSubCenarios => s('lojaSubCenarios');
+  String get lojaSubRoupas => s('lojaSubRoupas');
+  List<String> get itemNames => List<String>.from(_m['itemNames'] as List);
   String get sobreT => s('sobreT');
   String get sobreSub => s('sobreSub');
   String get sobreLigar => s('sobreLigar');
@@ -497,6 +519,17 @@ const _pt = <String, Object>{
   'setDuracao': 'Duração da sessão',
   'setSom': 'Som',
   'trilhaAqui': 'VOCÊ ESTÁ AQUI',
+  'lojaObjetos': 'NO HABITAT',
+  'lojaCenarios': 'CENÁRIOS',
+  'lojaRoupas': 'PARA VESTIR',
+  'lojaColocar': 'Colocar',
+  'lojaTirar': 'Tirar',
+  'lojaEmUso': 'Em uso',
+  'lojaFalta': 'Faltam {n}',
+  'lojaSubObjetos': 'Coisas que moram na cena. Pode ter todas ao mesmo tempo.',
+  'lojaSubCenarios': 'Muda o mundo inteiro. Um por vez.',
+  'lojaSubRoupas': 'Uma peça por lugar do corpo.',
+  'itemNames': ['Vitórias-régias', 'Bambuzal', 'Pedra da fonte', 'Deque de madeira', 'Lampião', 'Árvore antiga', 'Barquinho', 'Ponte de pedra', 'Chapéu de palha', 'Coroa de folhas', 'Gorro de lã', 'Cachecol', 'Óculos redondos', 'Entardecer', 'Noite estrelada', 'Chuva mansa', 'Neblina da manhã'],
   'sobreT': 'Sobre outros apps',
   'sobreSub': 'Quando o tempo estourar, {n} dá um oi no canto da tela — sem travar nada.',
   'sobreLigar': 'Permitir',
@@ -886,6 +919,17 @@ const _en = <String, Object>{
   'setDuracao': 'Session length',
   'setSom': 'Sound',
   'trilhaAqui': 'YOU ARE HERE',
+  'lojaObjetos': 'IN THE HABITAT',
+  'lojaCenarios': 'SCENERY',
+  'lojaRoupas': 'TO WEAR',
+  'lojaColocar': 'Place',
+  'lojaTirar': 'Remove',
+  'lojaEmUso': 'In use',
+  'lojaFalta': '{n} to go',
+  'lojaSubObjetos': 'Things that live in the scene. You can have them all at once.',
+  'lojaSubCenarios': 'Changes the whole world. One at a time.',
+  'lojaSubRoupas': 'One piece per spot.',
+  'itemNames': ['Water lilies', 'Bamboo grove', 'Spring stone', 'Wooden deck', 'Lantern', 'Old tree', 'Little boat', 'Stone bridge', 'Straw hat', 'Leaf crown', 'Wool beanie', 'Scarf', 'Round glasses', 'Sunset', 'Starry night', 'Gentle rain', 'Morning mist'],
   'sobreT': 'Over other apps',
   'sobreSub': 'When time runs out, {n} says hi in the corner — without blocking anything.',
   'sobreLigar': 'Allow',
@@ -1272,6 +1316,17 @@ const _es = <String, Object>{
   'setDuracao': 'Duración de la sesión',
   'setSom': 'Sonido',
   'trilhaAqui': 'ESTÁS AQUÍ',
+  'lojaObjetos': 'EN EL HÁBITAT',
+  'lojaCenarios': 'ESCENARIOS',
+  'lojaRoupas': 'PARA VESTIR',
+  'lojaColocar': 'Poner',
+  'lojaTirar': 'Quitar',
+  'lojaEmUso': 'En uso',
+  'lojaFalta': 'Faltan {n}',
+  'lojaSubObjetos': 'Cosas que viven en la escena. Puedes tenerlas todas a la vez.',
+  'lojaSubCenarios': 'Cambia el mundo entero. Uno a la vez.',
+  'lojaSubRoupas': 'Una pieza por lugar.',
+  'itemNames': ['Nenúfares', 'Bambudal', 'Piedra del manantial', 'Muelle de madera', 'Farol', 'Árbol antiguo', 'Barquito', 'Puente de piedra', 'Sombrero de paja', 'Corona de hojas', 'Gorro de lana', 'Bufanda', 'Gafas redondas', 'Atardecer', 'Noche estrellada', 'Lluvia suave', 'Niebla de la mañana'],
   'sobreT': 'Sobre otras apps',
   'sobreSub': 'Cuando el tiempo se acabe, {n} saluda en la esquina — sin bloquear nada.',
   'sobreLigar': 'Permitir',
@@ -1660,6 +1715,17 @@ const _zh = <String, Object>{
   'setDuracao': '专注时长',
   'setSom': '声音',
   'trilhaAqui': '你在这里',
+  'lojaObjetos': '栖息地',
+  'lojaCenarios': '场景',
+  'lojaRoupas': '穿戴',
+  'lojaColocar': '放置',
+  'lojaTirar': '取下',
+  'lojaEmUso': '使用中',
+  'lojaFalta': '还差 {n}',
+  'lojaSubObjetos': '住在场景里的东西，可以同时拥有。',
+  'lojaSubCenarios': '改变整个世界，一次一个。',
+  'lojaSubRoupas': '每个部位一件。',
+  'itemNames': ['睡莲', '竹林', '泉边石', '木栈道', '灯笼', '老树', '小船', '石桥', '草帽', '叶冠', '毛线帽', '围巾', '圆框眼镜', '黄昏', '星夜', '细雨', '晨雾'],
   'sobreT': '显示在其他应用之上',
   'sobreSub': '时间用完时，{n} 会在屏幕角落打个招呼——不会挡住任何操作。',
   'sobreLigar': '允许',

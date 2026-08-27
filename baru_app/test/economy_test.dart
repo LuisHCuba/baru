@@ -226,11 +226,32 @@ void main() {
       expect(nivel(8), 3);
     });
 
-    test('preços da loja são os do contrato', () {
+    test('os preços dos objetos de cena são os do contrato', () {
+      // A loja ganhou roupas e cenários; a curva dos objetos de cena não
+      // pode ter mudado junto.
       expect(
-        shopItems.map((i) => i.price).toList(),
+        itensDeCena.map((i) => i.price).toList(),
         [40, 70, 110, 150, 190, 240, 300, 400],
       );
+    });
+
+    test('roupa é mais barata que objeto de cena, e cenário é mais caro', () {
+      // Roupa é o que se troca todo dia; objeto de cena é conquista; cenário
+      // é o mundo. A curva tem de refletir isso ou a loja não tem ritmo.
+      final roupas = shopItems
+          .where((i) => i.categoria == CategoriaDeItem.roupa)
+          .map((i) => i.price);
+      final cenarios = shopItems
+          .where((i) => i.categoria == CategoriaDeItem.cenario)
+          .map((i) => i.price);
+      expect(roupas.reduce((a, b) => a > b ? a : b), lessThan(150));
+      expect(cenarios.reduce((a, b) => a < b ? a : b), greaterThanOrEqualTo(200));
+    });
+
+    test('nenhum item é de graça', () {
+      for (final i in shopItems) {
+        expect(i.price, greaterThan(0), reason: i.id);
+      }
     });
   });
 }

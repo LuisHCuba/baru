@@ -513,6 +513,23 @@ class ItemSwatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Roupa e cenário não têm peças de cena: `reduce` numa lista vazia
+    // estoura. Quem quiser desenhá-los usa a miniatura da loja.
+    if (item.parts.isEmpty) {
+      return SizedBox(
+        width: maxW,
+        height: maxH,
+        child: Center(
+          child: Icon(
+            item.categoria == CategoriaDeItem.roupa
+                ? Icons.checkroom_rounded
+                : Icons.wb_twilight_rounded,
+            size: 30,
+            color: item.cor ?? AppColors.inkA(0.4),
+          ),
+        ),
+      );
+    }
     final xs = item.parts.map((p) => p.x);
     final ys = item.parts.map((p) => p.y);
     final x0 = xs.reduce((a, b) => a < b ? a : b);

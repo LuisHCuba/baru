@@ -93,6 +93,7 @@ class BaruRowCodec {
           (itemId) => {
             'user_id': userId,
             'item_id': itemId,
+            'equipped': s.equipados.contains(itemId),
             'acquired_at': now,
           },
         )
@@ -275,6 +276,12 @@ class BaruRowCodec {
       eveningHour: (settings?['evening_hour'] as num?)?.toInt() ?? 21,
       eveningMinute: (settings?['evening_minute'] as num?)?.toInt() ?? 0,
       owned: inventory.map((e) => '${e['item_id']}').toList(),
+      // Linha antiga não tem `equipped`; `default true` na migration cobre o
+      // que já existia, e aqui o nulo também vale por "em uso".
+      equipados: inventory
+          .where((e) => e['equipped'] != false)
+          .map((e) => '${e['item_id']}')
+          .toList(),
       dur: (settings?['default_duration_min'] as num?)?.toInt() ?? 25,
       completedToday: (daily?['completed_sessions'] as num?)?.toInt() ?? 0,
       abandonedToday: daily?['abandoned_today'] == true,

@@ -3,6 +3,58 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — a loja virou guarda-roupa, e a trilha voltou a fazer sentido
+
+### Corrigido
+
+**A trilha dizia "VOCÊ ESTÁ AQUI" no último nó com os primeiros apagados.**
+Duas coisas somadas, e as duas eram minhas:
+
+- O dado estava corrompido pela perda no arranque (corrigido no commit
+  anterior): o XP sobrevivia porque tinha coluna remota, e
+  `sessoesConcluidas` não — daí "nível 3 conquistado" com "primeira sessão"
+  em aberto.
+- E o `proximoMarco` apontava para o **mais perto de fechar**, não para o
+  primeiro em aberto. Num caminho isso manda a frente para o fim da trilha.
+  Agora `proximoMarco` é o primeiro em aberto — é o que um caminho significa
+  — e "o que dá para fechar hoje" virou `marcoMaisPerto`, outra pergunta.
+
+**`ItemSwatch` estourava** (`reduce` em lista vazia) para itens sem peças de
+cena, e `t.items[...]` era indexado pela posição em `shopItems`: com dezessete
+itens no lugar de oito, `RangeError` na home. Nome de item agora se resolve
+por id.
+
+### O QUE MUDOU NA TELA
+
+- **A loja tem três seções e cada uma diz a sua regra.** Objetos do habitat
+  (pode ter todos), roupas (uma peça por lugar do corpo) e cenários (um por
+  vez, muda o mundo inteiro).
+- **Ter deixou de ser o mesmo que usar.** Todo item comprado tem "Colocar" e
+  "Tirar". O habitat é seu; você decide o que fica nele.
+- **Cinco roupas**: chapéu de palha, coroa de folhas, gorro de lã, cachecol e
+  óculos redondos. Desenhadas no sistema de coordenadas da cabeça de cada
+  espécie e escaladas por ele — a mesma peça serve na capivara larga e na
+  tartaruga pequena, sem código por espécie.
+- **Quatro cenários**: entardecer, noite estrelada, chuva mansa e neblina da
+  manhã. Cenário comprado ganha da hora do dia — senão comprar "noite
+  estrelada" às 14h não mudaria nada.
+- Na loja, a miniatura de roupa mostra **o bicho vestindo**. Um quadradinho
+  colorido não vende roupa.
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: 390+ passando
+- Evidência: `folha-roupas.png` (4 espécies × 5 peças), `tela-loja.png`
+
+### Migration 11
+
+`baru_inventory_items.equipped`, com `default true` — o inventário que já
+existe foi comprado quando comprar era o mesmo que colocar, e marcar como
+não-equipado esvaziaria o habitat de quem já tinha itens. Também derruba o
+`check` de ids fechado: eram oito, agora são dezessete e cada item novo
+exigiria uma migração.
+
 ## 2026-08-27 — perda de dado no arranque, e o companheiro por cima dos outros apps
 
 ### Corrigido — e era perda de dado, não bug de tela

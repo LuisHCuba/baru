@@ -131,10 +131,8 @@ class FolhasScreen extends StatelessWidget {
 
   /// O nome do item vem do catálogo por **posição**, então o id tem de ser
   /// resolvido para o índice de `shopItems`.
-  static String _nomeDoItem(T t, String id) {
-    final i = shopItems.indexWhere((e) => e.id == id);
-    return i < 0 || i >= t.items.length ? id : t.items[i];
-  }
+  static String _nomeDoItem(T t, String id) =>
+      t.nomeDoItem(id, shopItems.map((e) => e.id).toList());
 }
 
 class _Saldo extends StatelessWidget {

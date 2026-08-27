@@ -634,7 +634,8 @@ void abreDetalheDoMarco(
                 ),
                 const SizedBox(height: Espaco.xs),
                 Text(
-                  '$valor / ${m.alvo}',
+                  // Sem espaços, igual ao cartão do topo: "4/7".
+                  '$valor/${m.alvo}',
                   style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
                 ),
               ] else

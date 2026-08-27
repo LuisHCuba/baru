@@ -137,11 +137,50 @@ class ShapePart {
   final Color c;
 }
 
+/// O que se compra na loja.
+///
+/// Antes havia só objeto de cena, e comprar era a mesma coisa que colocar:
+/// o item caía no habitat e ficava lá para sempre. Agora há três naturezas
+/// diferentes, e **ter não é o mesmo que estar usando**.
+enum CategoriaDeItem {
+  /// Móvel do habitat: pedra, ponte, lampião.
+  objeto,
+
+  /// Muda a cena inteira — a luz, o céu, a água.
+  cenario,
+
+  /// Vai no bicho.
+  roupa,
+}
+
+/// Onde a roupa fica. Um lugar, uma peça: dois chapéus na mesma cabeça é
+/// bug, não estilo.
+enum Vestimenta { cabeca, pescoco, rosto }
+
 class ShopItemDef {
-  const ShopItemDef(this.id, this.price, this.parts);
+  const ShopItemDef(
+    this.id,
+    this.price,
+    this.parts, {
+    this.categoria = CategoriaDeItem.objeto,
+    this.vestimenta,
+    this.cor,
+  });
+
   final String id;
   final int price;
+
+  /// As peças desenhadas no habitat. Vazio para roupa e cenário, que têm
+  /// desenho próprio.
   final List<ShapePart> parts;
+
+  final CategoriaDeItem categoria;
+
+  /// Só para [CategoriaDeItem.roupa].
+  final Vestimenta? vestimenta;
+
+  /// Cor principal — a roupa e o cenário usam; o objeto já traz nas peças.
+  final Color? cor;
 }
 
 const shopItems = [
@@ -182,7 +221,93 @@ const shopItems = [
     ShapePart(108, 260, 10, 24, 5, AppColors.rockDark),
     ShapePart(220, 260, 10, 24, 5, AppColors.rockDark),
   ]),
+
+  // --- roupas ------------------------------------------------------------
+  // Baratas de propósito: são o que se troca todo dia. Objeto de cena é
+  // conquista; roupa é humor.
+  ShopItemDef(
+    'chapeu_palha',
+    60,
+    [],
+    categoria: CategoriaDeItem.roupa,
+    vestimenta: Vestimenta.cabeca,
+    cor: Color(0xFFE0BE7A),
+  ),
+  ShopItemDef(
+    'coroa_folhas',
+    90,
+    [],
+    categoria: CategoriaDeItem.roupa,
+    vestimenta: Vestimenta.cabeca,
+    cor: AppColors.green,
+  ),
+  ShopItemDef(
+    'gorro',
+    80,
+    [],
+    categoria: CategoriaDeItem.roupa,
+    vestimenta: Vestimenta.cabeca,
+    cor: Color(0xFFD5695A),
+  ),
+  ShopItemDef(
+    'cachecol',
+    70,
+    [],
+    categoria: CategoriaDeItem.roupa,
+    vestimenta: Vestimenta.pescoco,
+    cor: Color(0xFFC96A86),
+  ),
+  ShopItemDef(
+    'oculos',
+    120,
+    [],
+    categoria: CategoriaDeItem.roupa,
+    vestimenta: Vestimenta.rosto,
+    cor: Color(0xFF3E2F23),
+  ),
+
+  // --- cenários -----------------------------------------------------------
+  // Um por vez: cenário é o mundo, e o bicho só mora num.
+  ShopItemDef(
+    'entardecer',
+    200,
+    [],
+    categoria: CategoriaDeItem.cenario,
+    cor: Color(0xFFE8935C),
+  ),
+  ShopItemDef(
+    'noite_estrelada',
+    260,
+    [],
+    categoria: CategoriaDeItem.cenario,
+    cor: Color(0xFF3B4A73),
+  ),
+  ShopItemDef(
+    'chuva',
+    280,
+    [],
+    categoria: CategoriaDeItem.cenario,
+    cor: Color(0xFF7C93B8),
+  ),
+  ShopItemDef(
+    'neblina',
+    220,
+    [],
+    categoria: CategoriaDeItem.cenario,
+    cor: Color(0xFFCBC4B4),
+  ),
 ];
+
+/// Os objetos que moram no habitat, na ordem da loja.
+List<ShopItemDef> get itensDeCena =>
+    shopItems.where((i) => i.categoria == CategoriaDeItem.objeto).toList();
+
+ShopItemDef? itemPorId(String id) {
+  for (final i in shopItems) {
+    if (i.id == id) return i;
+  }
+  return null;
+}
 
 const habitats = {
   'empty': <String>[],

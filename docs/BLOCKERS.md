@@ -4,6 +4,30 @@ Cada item traz a ação exata. Tudo o que dependia do agente já está pronto.
 
 ---
 
+## BL-12 — Faltam as migrations 10 e 11 no remoto
+
+**Situação.** As migrations 7, 8 e 9 já foram aplicadas (sonda REST em
+2026-08-27: as tabelas e colunas respondem 200). Faltam duas, ambas aditivas
+e idempotentes:
+
+| Arquivo | O que faz |
+|---|---|
+| `20260827220000_baru_progression_totais.sql` | `missoes_resgatadas`, `sessoes_concluidas`, `melhor_sequencia`, `dias_abaixo_da_meta` em `baru_progression` |
+| `20260827230000_baru_inventory_equipped.sql` | `equipped` em `baru_inventory_items`, e derruba o `check` de ids fechado (eram 8 itens, agora são 17) |
+
+**Sem elas o app não quebra**: `AppSnapshot.fundeCom` já impede a perda de
+dado no arranque, e o "em uso" fica guardado no aparelho. O que não acontece é
+o dado chegar ao **segundo aparelho**.
+
+```
+cd baru_app
+supabase db push
+```
+
+Ou cole os dois arquivos no SQL Editor, nessa ordem.
+
+---
+
 ## BL-10 — **O banco remoto está atrás do repositório. É isto que causa o "erro ao sincronizar".**
 
 **Situação, verificada agora** (sonda REST com a chave anon deste repositório,

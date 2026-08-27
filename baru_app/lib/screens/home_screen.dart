@@ -225,7 +225,10 @@ class HomeScreen extends StatelessWidget {
                           ? t.unlockDone
                           : t.fill(t.unlock, {
                               'x': (next.price - app.leaves).clamp(0, 9999),
-                              'i': t.items[shopItems.indexOf(next)],
+                              'i': t.nomeDoItem(
+                                next.id,
+                                shopItems.map((e) => e.id).toList(),
+                              ),
                             }),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

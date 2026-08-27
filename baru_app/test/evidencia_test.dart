@@ -14,6 +14,7 @@ import 'package:baru_app/screens/conta_screen.dart';
 import 'package:baru_app/screens/folhas_screen.dart';
 import 'package:baru_app/screens/sequencia_screen.dart';
 import 'package:baru_app/screens/settings_screen.dart';
+import 'package:baru_app/screens/shop_screen.dart';
 import 'package:baru_app/screens/sobreposicao_screen.dart';
 import 'package:baru_app/screens/tempo_screen.dart';
 import 'package:baru_app/screens/trilha_screen.dart';
@@ -387,6 +388,13 @@ void main() {
       'ajustes': (const SettingsScreen(), comHistorico),
       'conta': (const ContaScreen(), comHistorico),
       'sobreposicao': (const SobreposicaoScreen(), comHistorico),
+      'loja': (
+        const ShopScreen(),
+        _estado()
+          ..leaves = 260
+          ..owned = ['lily', 'rock', 'chapeu_palha', 'cachecol']
+          ..equipados = {'lily', 'chapeu_palha'},
+      ),
     };
 
     for (final e in casos.entries) {
@@ -433,6 +441,61 @@ void main() {
     await tester.pump(Tempo.tela);
     await _salva(tester, const Key('captura-saida'), 'folha-de-saida');
     await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('folha de roupas', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(900, 460);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final roupas = shopItems
+        .where((i) => i.categoria == CategoriaDeItem.roupa)
+        .toList();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: Cores.habitat,
+          body: RepaintBoundary(
+            key: const Key('captura-roupas'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final sp in Species.values)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (final r in roupas)
+                        SizedBox(
+                          width: 170,
+                          height: 110,
+                          child: PetView(
+                            species: sp,
+                            mood: Mood.content,
+                            activity: Activity.idle,
+                            coat: 0,
+                            scale: 0.72,
+                            interativo: false,
+                            roupas: {r.vestimenta!: r.cor!},
+                            roupaDeCabeca: r.id,
+                          ),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await _salva(tester, const Key('captura-roupas'), 'folha-roupas');
   });
 
   testWidgets('as quatro espécies', (tester) async {

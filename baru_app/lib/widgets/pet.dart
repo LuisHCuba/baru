@@ -47,6 +47,8 @@ class PetView extends StatefulWidget {
     this.alignment = Alignment.center,
     this.interativo = true,
     this.aoCarinho,
+    this.roupas = const {},
+    this.roupaDeCabeca,
   });
 
   final Species species;
@@ -64,6 +66,12 @@ class PetView extends StatefulWidget {
   /// Um afago completo: o dedo percorreu o bicho até ele ficar satisfeito.
   /// Dispara uma vez por gesto.
   final VoidCallback? aoCarinho;
+
+  /// O que ele está vestindo, por lugar do corpo.
+  final Map<Vestimenta, Color> roupas;
+
+  /// O id da peça de cabeça, que muda o desenho.
+  final String? roupaDeCabeca;
 
   /// Quanto o dedo precisa percorrer para encher a satisfação.
   ///
@@ -428,6 +436,8 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
               mood: widget.mood,
               activity: widget.activity,
               coat: AppColors.pelagemDe(widget.species, widget.coat),
+              roupas: widget.roupas,
+              roupaDeCabeca: widget.roupaDeCabeca,
               pose: _Pose(
                 respiro: Curvas.organica.transform(_respiro.value) * 2 - 1,
                 boia: Curvas.organica.transform(_flutua.value) * 2 - 1,
@@ -580,6 +590,8 @@ class _PetPainter extends CustomPainter {
     required this.activity,
     required this.coat,
     required this.pose,
+    this.roupas = const {},
+    this.roupaDeCabeca,
   });
 
   final Species species;
@@ -587,6 +599,12 @@ class _PetPainter extends CustomPainter {
   final Activity activity;
   final Color coat;
   final _Pose pose;
+
+  /// A cor da peça em cada lugar do corpo. Vazio: o bicho está pelado.
+  final Map<Vestimenta, Color> roupas;
+
+  /// Qual peça de cabeça — chapéu, gorro ou coroa mudam o desenho.
+  final String? roupaDeCabeca;
 
   // --- estado derivado ----------------------------------------------------
 
@@ -964,6 +982,7 @@ class _PetPainter extends CustomPainter {
     // orelhas, para o bicho olhar em volta com o corpo na água.
     _olho(canvas, const Offset(-26, -13), 7.5);
     _olho(canvas, const Offset(26, -13), 7.5);
+    _veste(canvas, 96, 78);
 
     canvas.restore();
   }
@@ -1069,6 +1088,7 @@ class _PetPainter extends CustomPainter {
 
     _olho(canvas, const Offset(-21, -12), 7.5);
     _olho(canvas, const Offset(21, -12), 7.5);
+    _veste(canvas, 84, 74);
 
     canvas.restore();
   }
@@ -1194,6 +1214,7 @@ class _PetPainter extends CustomPainter {
 
     _olho(canvas, const Offset(-14, -9), 7);
     _olho(canvas, const Offset(14, -9), 7);
+    _veste(canvas, 66, 60);
 
     canvas.restore();
   }
@@ -1351,7 +1372,170 @@ class _PetPainter extends CustomPainter {
     );
 
     if (feliz) _bochecha(canvas, const Offset(-34, 17), const Offset(34, 17));
+    _veste(canvas, 86, 70);
     canvas.restore();
+  }
+
+  // ======================================================================
+  // ROUPA
+  // ======================================================================
+
+  /// Veste o que o usuário colocou.
+  ///
+  /// Desenhado **dentro do sistema de coordenadas da cabeça** de cada
+  /// espécie, e escalado pelo tamanho dela: a mesma peça serve na capivara
+  /// larga e na tartaruga pequena sem código por espécie.
+  void _veste(Canvas canvas, double larguraDaCabeca, double alturaDaCabeca) {
+    if (roupas.isEmpty) return;
+    final w = larguraDaCabeca / 2;
+    final h = alturaDaCabeca / 2;
+
+    // Pescoço primeiro: fica atrás do queixo.
+    final pescoco = roupas[Vestimenta.pescoco];
+    if (pescoco != null) _cachecol(canvas, w, h, pescoco);
+
+    final rosto = roupas[Vestimenta.rosto];
+    if (rosto != null) _oculos(canvas, w, h, rosto);
+
+    final cabeca = roupas[Vestimenta.cabeca];
+    if (cabeca != null) _naCabeca(canvas, w, h, cabeca);
+  }
+
+  void _cachecol(Canvas canvas, double w, double h, Color cor) {
+    final y = h * 0.94;
+    canvas.drawPath(
+      Path()
+        ..moveTo(-w * 0.62, y - h * 0.10)
+        ..cubicTo(-w * 0.30, y + h * 0.16, w * 0.30, y + h * 0.16,
+            w * 0.62, y - h * 0.10)
+        ..cubicTo(w * 0.58, y + h * 0.22, -w * 0.58, y + h * 0.22,
+            -w * 0.62, y - h * 0.10)
+        ..close(),
+      _p(cor),
+    );
+    // A ponta caindo de um lado.
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.30, y + h * 0.06)
+        ..lineTo(w * 0.50, y + h * 0.62)
+        ..lineTo(w * 0.26, y + h * 0.60)
+        ..close(),
+      _p(Color.lerp(cor, Cores.tinta, 0.18)!),
+    );
+  }
+
+  void _oculos(Canvas canvas, double w, double h, Color cor) {
+    final r = w * 0.20;
+    final y = -h * 0.16;
+    final aro = _traco(cor, w * 0.045);
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawCircle(Offset(lado * w * 0.30, y), r, aro);
+    }
+    canvas.drawLine(
+      Offset(-w * 0.10, y),
+      Offset(w * 0.10, y),
+      aro,
+    );
+    // Hastes indo para trás da cabeça.
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawLine(
+        Offset(lado * (w * 0.30 + r), y),
+        Offset(lado * w * 0.96, y - h * 0.06),
+        aro,
+      );
+    }
+  }
+
+  void _naCabeca(Canvas canvas, double w, double h, Color cor) {
+    switch (roupaDeCabeca) {
+      case 'gorro':
+        // Gorro: cobre o topo e tem uma pompom.
+        canvas.save();
+        canvas.clipPath(
+          _bolha(
+            Rect.fromCenter(
+              center: Offset.zero,
+              width: w * 2,
+              height: h * 2,
+            ),
+          ),
+        );
+        // Para em -0.50h: os olhos ficam por volta de -0.33h da cabeça em
+        // todas as espécies, e um gorro que os cobre não é gorro, é venda.
+        canvas.drawRect(
+          Rect.fromLTRB(-w, -h, w, -h * 0.50),
+          _p(cor),
+        );
+        canvas.restore();
+        // Barra e pompom saem por fora do recorte.
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTRB(-w * 0.94, -h * 0.64, w * 0.94, -h * 0.46),
+            Radius.circular(h * 0.09),
+          ),
+          _p(Color.lerp(cor, Cores.superficie, 0.30)!),
+        );
+        canvas.drawCircle(
+          Offset(0, -h * 1.08),
+          w * 0.13,
+          _p(Color.lerp(cor, Cores.superficie, 0.30)!),
+        );
+
+      case 'coroa_folhas':
+        // Coroa: folhinhas em volta do topo.
+        for (var i = -2; i <= 2; i++) {
+          final a = i * 0.34;
+          canvas.save();
+          canvas.translate(math.sin(a) * w * 0.72, -math.cos(a) * h * 0.82);
+          canvas.rotate(a);
+          canvas.drawPath(
+            _bolha(
+              Rect.fromCenter(
+                center: Offset.zero,
+                width: w * 0.20,
+                height: h * 0.34,
+              ),
+            ),
+            _p(i.isEven ? cor : Color.lerp(cor, Cores.superficie, 0.24)!),
+          );
+          canvas.restore();
+        }
+
+      default:
+        // Chapéu de palha: aba larga e copa baixa. É o padrão.
+        // Aba em -0.74h: mais baixa que isso e ela passa na frente dos
+        // olhos, que ficam por volta de -0.33h.
+        canvas.drawPath(
+          _bolha(
+            Rect.fromCenter(
+              center: Offset(0, -h * 0.92),
+              width: w * 1.02,
+              height: h * 0.56,
+            ),
+            base: 0.4,
+          ),
+          _p(cor),
+        );
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(0, -h * 0.76),
+            width: w * 2.04,
+            height: h * 0.34,
+          ),
+          _p(Color.lerp(cor, Cores.superficie, 0.16)!),
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: Offset(0, -h * 0.88),
+              width: w * 1.04,
+              height: h * 0.14,
+            ),
+            Radius.circular(h * 0.07),
+          ),
+          _p(Color.lerp(cor, Cores.tinta, 0.30)!),
+        );
+    }
   }
 
   // ======================================================================
@@ -1710,6 +1894,8 @@ class _PetPainter extends CustomPainter {
         old.pose.animado != pose.animado ||
         old.pose.gesto != pose.gesto ||
         old.pose.gestoT != pose.gestoT ||
+        old.roupas.length != roupas.length ||
+        old.roupaDeCabeca != roupaDeCabeca ||
         old.pose.dedo != pose.dedo ||
         old.pose.gosto != pose.gosto ||
         old.pose.amplitude != pose.amplitude;

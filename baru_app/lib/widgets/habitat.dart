@@ -44,6 +44,50 @@ class LuzDaCena {
   /// 0 = astro no horizonte, 1 = a pino.
   final double astroAlto;
 
+  /// A luz que o cenário comprado impõe.
+  ///
+  /// Cenário é o mundo: quando há um, ele ganha da hora do dia. Sem isso,
+  /// comprar "noite estrelada" às 14h não mudaria nada e o item pareceria
+  /// quebrado.
+  static LuzDaCena? doCenario(String? id) {
+    switch (id) {
+      case 'entardecer':
+        return de(PeriodoDoDia.entardecer);
+      case 'noite_estrelada':
+        return de(PeriodoDoDia.noite);
+      case 'chuva':
+        return const LuzDaCena(
+          ceuAlto: Color(0xFF8A9AAB),
+          ceuBaixo: Color(0xFFAFBDC7),
+          astro: Color(0x00000000),
+          haloAstro: Color(0x00000000),
+          agua: Color(0xFF8FA3A8),
+          aguaFunda: Color(0xFF75898F),
+          colina: Color(0xFF8FA091),
+          areia: Color(0xFFB4AC9C),
+          brilho: Color(0x44E8F0F4),
+          sombraAmbiente: Color(0x1A2A3440),
+          astroAlto: 0.5,
+        );
+      case 'neblina':
+        return const LuzDaCena(
+          ceuAlto: Color(0xFFE4E0D6),
+          ceuBaixo: Color(0xFFF2EEE4),
+          astro: Color(0x66FFF0D0),
+          haloAstro: Color(0x33FFF0D0),
+          agua: Color(0xFFD3D7CB),
+          aguaFunda: Color(0xFFBEC3B7),
+          colina: Color(0xFFD6DAC9),
+          areia: Color(0xFFE3DCCB),
+          brilho: Color(0x55FFFFFF),
+          sombraAmbiente: Color(0x0DFFFFFF),
+          astroAlto: 0.72,
+        );
+      default:
+        return null;
+    }
+  }
+
   static LuzDaCena de(PeriodoDoDia p) {
     switch (p) {
       case PeriodoDoDia.amanhecer:
@@ -218,11 +262,13 @@ class _HabitatSceneState extends State<HabitatScene>
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final luz = LuzDaCena.de(periodoDe(widget.agora ?? DateTime.now()));
-    _sincronizaChegadas(app.owned);
+    // Cenário comprado ganha da hora do dia — é isso que se compra.
+    final luz = LuzDaCena.doCenario(app.cenarioAtivo?.id) ??
+        LuzDaCena.de(periodoDe(widget.agora ?? DateTime.now()));
+    _sincronizaChegadas(app.objetosNaCena);
 
     final possuidos =
-        shopItems.where((i) => app.owned.contains(i.id)).toList();
+        itensDeCena.where((i) => app.estaEquipado(i.id)).toList();
 
     return Semantics(
       image: true,
@@ -292,6 +338,8 @@ class _HabitatSceneState extends State<HabitatScene>
                             alignment: Alignment.bottomCenter,
                             interativo: widget.animado,
                             aoCarinho: () => _premia(app),
+                            roupas: app.roupasDoBicho,
+                            roupaDeCabeca: app.roupaDeCabeca,
                           ),
                         ),
                       ),

@@ -94,16 +94,24 @@ void main() {
     expect(find.text(app.t.trilhaFeito), findsWidgets);
   });
 
-  testWidgets('marco não alcançado mostra progresso x de y', (tester) async {
+  testWidgets('marco não alcançado mostra progresso x de y ao abrir', (
+    tester,
+  ) async {
     final app = _conta(sessoes: 3);
     await _abre(tester, app);
 
-    // O marco de 5 sessões está em 3/5, mais abaixo na trilha.
+    // No caminho o progresso é o anel em volta do nó; o número exato vive no
+    // detalhe. Cinco sessões está em 3/5.
+    final marco = trilha.firstWhere((m) => m.id == 'cinco_focos');
     await tester.scrollUntilVisible(
-      find.text('3/5'),
+      find.text(tituloDoMarco(app, marco)),
       160,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.tap(find.text(tituloDoMarco(app, marco)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
     expect(find.text('3/5'), findsOneWidget);
   });
 

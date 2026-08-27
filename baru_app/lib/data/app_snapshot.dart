@@ -30,6 +30,7 @@ class AppSnapshot {
     this.eveningMinute = 0,
     this.sexo = Sexo.naoDito,
     this.som = true,
+    this.equipados = const [],
     required this.missed,
     required this.payPlan,
     required this.usageAccess,
@@ -90,6 +91,9 @@ class AppSnapshot {
 
   /// Som ligado.
   final bool som;
+
+  /// Itens de fato em uso. Ter não é o mesmo que estar usando.
+  final List<String> equipados;
   final bool missed;
   final PayPlan payPlan;
   final bool usageAccess;
@@ -160,6 +164,7 @@ class AppSnapshot {
         'eveningMinute': eveningMinute,
         'sexo': sexo.name,
         'som': som,
+        'equipados': equipados,
         'missed': missed,
         'payPlan': payPlan.name,
         'usageAccess': usageAccess,
@@ -217,6 +222,8 @@ class AppSnapshot {
       eveningMinute: (j['eveningMinute'] as num?)?.toInt() ?? 0,
       sexo: parseSexo(j['sexo'] as String?),
       som: j['som'] != false,
+      equipados:
+          (j['equipados'] as List?)?.map((e) => '$e').toList() ?? const [],
       missed: j['missed'] != false,
       payPlan: (j['payPlan'] as String?) == 'monthly' ? PayPlan.monthly : PayPlan.annual,
       usageAccess: j['usageAccess'] == true,
@@ -303,6 +310,9 @@ class AppSnapshot {
       melhorSequencia: maior(melhorSequencia, local.melhorSequencia),
       diasAbaixoDaMeta: maior(diasAbaixoDaMeta, local.diasAbaixoDaMeta),
       marcosResgatados: uniao(marcosResgatados, local.marcosResgatados),
+      // O que está em uso é escolha, não conquista: quem manda é o remoto,
+      // mas um remoto vazio não pode tirar a roupa do bicho.
+      equipados: equipados.isEmpty ? local.equipados : equipados,
       missoesResgatadas: uniao(missoesResgatadas, local.missoesResgatadas),
       // Do dia e da semana: o remoto não guarda nada disso.
       minutosDeFocoHoje: local.minutosDeFocoHoje,
@@ -367,6 +377,7 @@ class AppSnapshot {
     int? eveningMinute,
     Sexo? sexo,
     bool? som,
+    List<String>? equipados,
     bool? missed,
     PayPlan? payPlan,
     bool? usageAccess,
@@ -425,6 +436,7 @@ class AppSnapshot {
       eveningMinute: eveningMinute ?? this.eveningMinute,
       sexo: sexo ?? this.sexo,
       som: som ?? this.som,
+      equipados: equipados ?? this.equipados,
       missed: missed ?? this.missed,
       payPlan: payPlan ?? this.payPlan,
       usageAccess: usageAccess ?? this.usageAccess,

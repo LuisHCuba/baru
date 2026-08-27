@@ -1097,12 +1097,91 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// O que está de fato em uso.
+  ///
+  /// Comprar e usar deixaram de ser a mesma coisa: o item entra no inventário
+  /// e só aparece no habitat (ou no bicho) se estiver aqui.
+  Set<String> equipados = {};
+
+  bool estaEquipado(String id) => equipados.contains(id);
+
+  /// Os objetos de cena que devem ser desenhados agora.
+  List<String> get objetosNaCena =>
+      owned.where((id) => equipados.contains(id)).toList();
+
+  /// O cenário em uso, se houver. Um por vez.
+  ShopItemDef? get cenarioAtivo {
+    for (final id in equipados) {
+      final item = itemPorId(id);
+      if (item?.categoria == CategoriaDeItem.cenario) return item;
+    }
+    return null;
+  }
+
+  /// A peça de roupa naquele lugar do corpo, se houver.
+  /// O que passar para o `PetView`: a cor de cada peça vestida.
+  Map<Vestimenta, Color> get roupasDoBicho => {
+        for (final onde in Vestimenta.values)
+          if (roupaEm(onde)?.cor != null) onde: roupaEm(onde)!.cor!,
+      };
+
+  /// O id da peça de cabeça — chapéu, gorro e coroa têm desenhos diferentes.
+  String? get roupaDeCabeca => roupaEm(Vestimenta.cabeca)?.id;
+
+  ShopItemDef? roupaEm(Vestimenta onde) {
+    for (final id in equipados) {
+      final item = itemPorId(id);
+      if (item?.categoria == CategoriaDeItem.roupa &&
+          item?.vestimenta == onde) {
+        return item;
+      }
+    }
+    return null;
+  }
+
   void buy(ShopItemDef item) {
     if (owned.contains(item.id) || leaves < item.price) return;
     leaves -= item.price;
     owned = [...owned, item.id];
+    // Recém-comprado já entra em cena: ninguém compra para deixar na gaveta.
+    _equipa(item);
     _markSync(_syncShop);
     notifyListeners();
+  }
+
+  /// Coloca ou tira. Devolve `true` se ficou equipado.
+  bool alternaEquipado(ShopItemDef item) {
+    if (!owned.contains(item.id)) return false;
+    if (equipados.contains(item.id)) {
+      equipados = {...equipados}..remove(item.id);
+    } else {
+      _equipa(item);
+    }
+    _markSync(_syncShop);
+    notifyListeners();
+    return equipados.contains(item.id);
+  }
+
+  /// Regras de exclusão: **um** cenário e **uma** peça por lugar do corpo.
+  /// Dois chapéus na mesma cabeça é bug, não estilo.
+  void _equipa(ShopItemDef item) {
+    final novo = {...equipados};
+    switch (item.categoria) {
+      case CategoriaDeItem.cenario:
+        novo.removeWhere(
+          (id) => itemPorId(id)?.categoria == CategoriaDeItem.cenario,
+        );
+      case CategoriaDeItem.roupa:
+        novo.removeWhere((id) {
+          final outro = itemPorId(id);
+          return outro?.categoria == CategoriaDeItem.roupa &&
+              outro?.vestimenta == item.vestimenta;
+        });
+      case CategoriaDeItem.objeto:
+        break;
+    }
+    novo.add(item.id);
+    equipados = novo;
   }
 
   /// Duração da sessão que está na tela: a que ela começou, não a que está
@@ -1630,6 +1709,7 @@ class AppState extends ChangeNotifier {
       minutosNaSemana: minutosNaSemana,
       diasAbaixoNaSemana: diasAbaixoNaSemana,
       missoesResgatadas: missoesResgatadas.toList(),
+      equipados: equipados.toList(),
     );
   }
 
@@ -1693,6 +1773,15 @@ class AppState extends ChangeNotifier {
     minutosNaSemana = s.minutosNaSemana;
     diasAbaixoNaSemana = s.diasAbaixoNaSemana;
     missoesResgatadas = s.missoesResgatadas.toSet();
+    // Inventário antigo não tinha "equipado": tudo o que já era do usuário
+    // continua em cena, senão o habitat esvazia na atualização.
+    equipados = s.equipados.isEmpty && s.owned.isNotEmpty
+        ? s.owned
+            .where(
+              (id) => itemPorId(id)?.categoria == CategoriaDeItem.objeto,
+            )
+            .toSet()
+        : s.equipados.toSet();
   }
 
   void _schedulePersist() {

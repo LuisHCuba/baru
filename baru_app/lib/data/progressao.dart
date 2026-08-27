@@ -283,21 +283,32 @@ class ProgressoDaTrilha {
     return ((valorDe(m.tipo) - piso) / alvo).clamp(0.0, 1.0);
   }
 
-  /// O próximo marco: o **mais perto de acontecer**, não o primeiro da lista.
+  /// Onde você está na trilha: o **primeiro** marco ainda não alcançado.
   ///
-  /// Os marcos são independentes — nível, sessões, sequência e dias abaixo da
-  /// meta correm em paralelo — então dá para conquistar o terceiro sem ter o
-  /// primeiro. Pegando o primeiro não alcançado, a tela dizia "você está no
-  /// passo 1" para quem já tinha o 3 conquistado logo acima. Isso não é
-  /// mentira sobre o dado, mas é sobre o que está acontecendo.
+  /// Um caminho tem ordem. Apontar para o "mais perto de acontecer" mandava o
+  /// "VOCÊ ESTÁ AQUI" para o fim da trilha enquanto os primeiros passos
+  /// seguiam apagados — que foi o que o usuário viu e não fez sentido nenhum.
+  ///
+  /// Os marcos continuam independentes: quem alcançar um lá embaixo antes da
+  /// hora fica com o ✓ dele, e isso lê como bônus. O que não pode é a
+  /// **frente** da trilha pular para trás de um degrau apagado.
   Marco? get proximoMarco {
+    for (final m in trilha) {
+      if (!alcancou(m)) return m;
+    }
+    return null;
+  }
+
+  /// O marco não alcançado mais perto de fechar.
+  ///
+  /// Responde outra pergunta: não "onde estou", e sim "o que dá para fechar
+  /// hoje". A trilha usa [proximoMarco]; quem quiser sugerir ação usa este.
+  Marco? get marcoMaisPerto {
     Marco? melhor;
     var melhorFracao = -1.0;
     for (final m in trilha) {
       if (alcancou(m)) continue;
       final f = fracaoDe(m);
-      // Estritamente maior: empate fica com quem vem antes na trilha, que é
-      // a ordem em que o produto pensa a jornada.
       if (f > melhorFracao) {
         melhorFracao = f;
         melhor = m;

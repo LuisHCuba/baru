@@ -73,14 +73,30 @@ void main() {
       s.dispose();
     });
 
-    test('escolhe o mais perto de acontecer, não o primeiro da lista', () {
-      // Nada feito em sessões, mas quase lá na sequência: o próximo passo
-      // tem de ser a sequência.
+    test('a frente da trilha é o primeiro passo em aberto, não o último', () {
+      // Um marco lá embaixo já conquistado não pode empurrar o "você está
+      // aqui" para o fim da trilha com os primeiros degraus apagados.
       final s = AppState()
         ..startCompanionship()
-        ..melhorSequencia = 2; // marco 'tres_dias' está a um dia
-      final proximo = s.progresso.proximoMarco;
-      expect(proximo?.id, 'tres_dias');
+        ..xp = 5000; // nível alto: vários marcos de nível conquistados
+      expect(
+        s.progresso.proximoMarco?.id,
+        'primeiro_foco',
+        reason: 'era exatamente o que não fazia sentido na tela',
+      );
+      s.dispose();
+    });
+
+    test('"o que dá para fechar hoje" é outra pergunta, e tem resposta', () {
+      final s = AppState()
+        ..startCompanionship()
+        ..melhorSequencia = 2; // 'tres_dias' está a um dia
+      expect(s.progresso.marcoMaisPerto?.id, 'tres_dias');
+      expect(
+        s.progresso.proximoMarco?.id,
+        'primeiro_foco',
+        reason: 'a frente da trilha continua sendo o primeiro em aberto',
+      );
       s.dispose();
     });
   });

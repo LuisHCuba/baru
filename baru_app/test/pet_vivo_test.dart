@@ -18,12 +18,13 @@ Widget _cena({
   Activity activity = Activity.swim,
   Mood mood = Mood.content,
   bool interativo = true,
+  Species species = Species.capybara,
 }) {
   return MaterialApp(
     home: Scaffold(
       body: Center(
         child: PetView(
-          species: Species.capybara,
+          species: species,
           mood: mood,
           activity: activity,
           coat: 0,
@@ -168,6 +169,153 @@ void main() {
     await tester.pump();
 
     expect(chamadas, isNotEmpty, reason: 'toque sem háptico é toque mudo');
+  });
+
+  testWidgets('sozinho, ele faz alguma coisa além de respirar', (tester) async {
+    final visto = <GestoOcioso>[];
+    final observador = ValueNotifier(GestoOcioso.nenhum);
+    observador.addListener(() => visto.add(observador.value));
+    PetView.observadorDeGesto = observador;
+    addTearDown(() {
+      PetView.observadorDeGesto = null;
+      observador.dispose();
+    });
+
+    await tester.pumpWidget(_cena(activity: Activity.idle));
+    await tester.pump();
+
+    // O gesto é sorteado entre 7 e 15 s. Trinta segundos cabem dois.
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
+    final gestos = visto.where((g) => g != GestoOcioso.nenhum).toList();
+    expect(
+      gestos,
+      isNotEmpty,
+      reason: 'em meio minuto parado ele tem que ter feito algo',
+    );
+    expect(
+      visto,
+      contains(GestoOcioso.nenhum),
+      reason: 'todo gesto termina e devolve o bicho ao repouso — se nunca '
+          'voltasse a nenhum, ele ficaria preso na pose',
+    );
+  });
+
+  testWidgets('nadando ele não se espreguiça: o corpo já está ocupado', (
+    tester,
+  ) async {
+    final visto = <GestoOcioso>[];
+    final observador = ValueNotifier(GestoOcioso.nenhum);
+    observador.addListener(() => visto.add(observador.value));
+    PetView.observadorDeGesto = observador;
+    addTearDown(() {
+      PetView.observadorDeGesto = null;
+      observador.dispose();
+    });
+
+    await tester.pumpWidget(_cena(activity: Activity.swim));
+    await tester.pump();
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
+    expect(visto.where((g) => g != GestoOcioso.nenhum), isEmpty);
+  });
+
+  testWidgets('tocar interrompe o gesto de ocioso', (tester) async {
+    final observador = ValueNotifier(GestoOcioso.nenhum);
+    PetView.observadorDeGesto = observador;
+    addTearDown(() {
+      PetView.observadorDeGesto = null;
+      observador.dispose();
+    });
+
+    await tester.pumpWidget(_cena(activity: Activity.idle));
+    await tester.pump();
+
+    // Anda até pegar um gesto no meio.
+    for (var i = 0; i < 80; i++) {
+      if (observador.value != GestoOcioso.nenhum) break;
+      await tester.pump(const Duration(milliseconds: 250));
+    }
+    expect(observador.value, isNot(GestoOcioso.nenhum), reason: 'nada a testar');
+
+    await tester.tap(find.byType(PetView));
+    await tester.pump();
+    expect(
+      observador.value,
+      GestoOcioso.nenhum,
+      reason: 'quem está sendo tocado para de se espreguiçar e olha',
+    );
+
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('carinho insistente muda o que aparece na tela', (tester) async {
+    // Com movimento reduzido o contínuo para: o único que anda é o toque.
+    // Assim a diferença entre um toque e três é só a reação, não a fase da
+    // respiração.
+    _movimentoReduzido(tester, true);
+
+    Future<Uint8List> comToques(int quantos) async {
+      await tester.pumpWidget(_cena(activity: Activity.idle));
+      await tester.pump();
+      for (var i = 0; i < quantos; i++) {
+        await tester.tap(find.byType(PetView));
+        await tester.pump();
+        // 500 ms: a orelha (420 ms) já assentou, então ela não entra na
+        // diferença entre as duas capturas.
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+      final q = await _quadro(tester);
+      // Deixa o toque acabar antes de trocar a árvore.
+      await tester.pump(const Duration(seconds: 4));
+      return q;
+    }
+
+    final umToque = await comToques(1);
+    final tresToques = await comToques(3);
+
+    expect(
+      _mudou(umToque, tresToques),
+      isTrue,
+      reason: 'do terceiro toque em diante o háptico muda; a tela também tem '
+          'que mudar, senão a escalada é invisível',
+    );
+  });
+
+  testWidgets('depois do toque nada fica preso na pose', (tester) async {
+    // Coruja de propósito: o tufo dela responde de forma linear a `orelha`, e
+    // um controller que termina em 1.0 e fica lá deixa o tufo torto. Na
+    // orelha redonda o defeito se esconde, porque `sin(2π)` volta a zero.
+    //
+    // Movimento reduzido isola: sem o contínuo, o único que anda é o toque.
+    _movimentoReduzido(tester, true);
+    await tester.pumpWidget(
+      _cena(activity: Activity.idle, species: Species.owl),
+    );
+    await tester.pump();
+
+    final repouso = await _quadro(tester);
+
+    await tester.tap(find.byType(PetView));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 210));
+    final reagindo = await _quadro(tester);
+    expect(_mudou(repouso, reagindo), isTrue, reason: 'o toque tem que aparecer');
+
+    // Bem depois do fim de tudo: toque (900 ms) e tremor de orelha (420 ms).
+    await tester.pump(const Duration(milliseconds: 1200));
+    final voltou = await _quadro(tester);
+
+    expect(
+      _mudou(repouso, voltou),
+      isFalse,
+      reason: 'acabada a reação ele volta exatamente ao repouso; qualquer '
+          'sobra é uma parte do corpo que ficou travada',
+    );
   });
 
   testWidgets('miniatura não é interativa', (tester) async {

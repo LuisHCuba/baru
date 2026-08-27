@@ -3,6 +3,53 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — arte e reações do companheiro
+
+### O QUE MUDOU NA TELA
+
+- **Cada bicho virou um bicho.** A silhueta é desenhada em camadas de anatomia
+  com curvas de Bézier — corpo, barriga, membros, cauda, cabeça, focinho,
+  olhos — no lugar dos retângulos arredondados empilhados. A lontra tem
+  bigodes e cauda grossa que afina; a tartaruga tem cúpula com escudos,
+  plastrão e cabeça pequena; a coruja tem disco facial, tufos de base larga e
+  ponta afiada, asas dobradas sobre o corpo e **pés pousados com três dedos**.
+- **Ele faz coisas sozinho.** A cada 7 a 15 s ele se espreguiça (com bocejo e
+  olhos fechados), sacode a cabeça, ou olha em volta. Só quando está à toa:
+  nadando, pastando ou dormindo o corpo já tem o que fazer.
+- **Insistir no carinho aparece na tela.** Do terceiro toque em 3 s em diante
+  sobem coraçõezinhos. O háptico já ficava mais forte; a tela não mudava.
+- Ele **olha para onde você tocou** e a cabeça acompanha o olhar.
+- A piscada tem intervalo irregular e às vezes é dupla.
+
+### Corrigido
+- **A orelha ficava levantada depois do toque.** `AnimationController.forward`
+  termina em 1.0 e fica lá; só o agendador do tremor resetava, até dez
+  segundos depois. Na orelha redonda o defeito se escondia (`sin(2π) = 0`),
+  mas o tufo da coruja é linear e ficava torto. Teste em
+  `pet_vivo_test.dart` captura os pixels no repouso e depois da reação e
+  exige que sejam iguais.
+- Com "reduzir movimento" o tremor de orelha do toque não acontecia. O §7
+  manda reduzir amplitude, não apagar o retorno.
+- Os tufos da coruja eram cortados pelo topo do quadro ao se espreguiçar: ela
+  nascia com 3 px de folga.
+- As asas da coruja chegavam a ±56 num corpo de ±47 e liam como um halo
+  escuro atrás dela, não como asas dobradas.
+- Os riscos de pena vazavam a silhueta da asa e pareciam arranhões no fundo.
+- Os bigodes da lontra saíam do quadro de 200×150.
+- O plastrão da tartaruga era um fio branco entre o casco e as patas.
+
+### Adicionado
+- `GestoOcioso` e o rig de gesto em `pet.dart`.
+- Costuras de teste `PetView.observadorDeGesto` e `PetView.gestoForcado`,
+  nulas em produção: o gesto é disparado por `Timer` com sorteio, e sem elas
+  não há como afirmar que aconteceu nem capturar um gesto específico.
+- Seis PNGs de reação em `docs/evidence/2026-08-27/` (`reacao-1..6`).
+- Sete testes novos em `pet_vivo_test.dart`, todos verificados por mutação:
+  removida a funcionalidade, o teste falha.
+
+Portões: `flutter analyze` sem issues, `flutter test` **296 passando e 1
+pulado**, 13 testes de evidência verdes em três execuções seguidas.
+
 ## 2026-08-27 — turno de produto
 
 ### O QUE MUDOU NA TELA

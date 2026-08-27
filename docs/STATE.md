@@ -5,17 +5,24 @@ Branch: `night/2026-08-27`, integrada em `main` | Build: **verde**
 | Portão | Resultado (execução real) |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | **289 passando, 1 pulado** (era 151 no início do turno) |
+| `flutter test` | **296 passando, 1 pulado** (era 151 no início do dia) |
 | `flutter test test/integration` | 7/7 contra Supabase local |
 | `supabase db reset` em banco limpo | 7 migrations · 14 tabelas · 54 políticas · nenhuma sem RLS |
-| Evidência visual | 33 PNGs em `docs/evidence/2026-08-27/` |
+| Evidência visual | 39 PNGs em `docs/evidence/2026-08-27/` |
 
 ## Abra o app e você vê
 
 Frases que são verdade hoje e não eram ontem:
 
-- **O Baru respira, pisca e reage ao toque.** O habitat tem céu em gradiente,
-  colinas que derivam e reflexos andando na água.
+- **Cada bicho tem anatomia própria**, desenhada com curvas: a lontra tem
+  bigodes e cauda que afina, a tartaruga tem casco com escudos e plastrão, a
+  coruja tem disco facial, tufos, asas dobradas e pés com três dedos.
+- **O Baru respira, pisca e reage ao toque**, e **faz coisas sozinho**: a
+  cada 7–15 s parado ele se espreguiça com bocejo, sacode a cabeça ou olha em
+  volta.
+- **Insistir no carinho faz subir coraçõezinhos** — do terceiro toque em 3 s.
+- O habitat tem céu em gradiente, colinas que derivam e reflexos andando na
+  água.
 - **O habitat às 22h é diferente do das 9h** — céu índigo, lua com halo, água
   escura.
 - **Comprar um item o faz cair na cena com mola**, e ele projeta sombra.

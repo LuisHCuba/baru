@@ -40,6 +40,22 @@ idênticas: a cena não conhecia a hora.
 | `pet-idle.png` | parado (sentindo falta) |
 | `especie-*.png` | capivara, lontra, tartaruga e coruja |
 
+## Reações ao toque e gestos de ocioso
+
+| Arquivo | O que mostra |
+|---|---|
+| `reacao-1-repouso.png` | o bicho em repouso, para comparação |
+| `reacao-2-um-toque.png` | um toque: a quicada, no pico |
+| `reacao-3-carinho.png` | três toques em 3 s: coraçõezinhos subindo |
+| `reacao-4-espreguica.png` | gesto de ocioso — espreguiçar, com bocejo e olhos fechados |
+| `reacao-5-sacode.png` | gesto de ocioso — sacudir a cabeça |
+| `reacao-6-olha-em-volta.png` | gesto de ocioso — olhar de lado |
+
+Os três gestos saem sozinhos, sorteados a cada 7–15 s, e só quando ele está à
+toa: nadando, pastando ou dormindo o corpo já tem o que fazer. Nas capturas o
+sorteio é fixado por `PetView.gestoForcado` — sem isso a captura do bocejo
+dependia do dado cair no lado certo e falhava um terço das vezes.
+
 ## Movimento (sequências de quadros)
 
 | Arquivo | O que mostra |

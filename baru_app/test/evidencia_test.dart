@@ -182,6 +182,151 @@ void main() {
     }
   });
 
+  testWidgets('folha das quatro especies em quatro humores', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(900, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const casos = [
+      (Mood.radiant, Activity.swim),
+      (Mood.content, Activity.graze),
+      (Mood.sleepy, Activity.nap),
+      (Mood.missingYou, Activity.idle),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: Cores.habitat,
+          body: RepaintBoundary(
+            key: const Key('captura-folha'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final sp in Species.values)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (final (humor, atividade) in casos)
+                        SizedBox(
+                          width: 200,
+                          height: 150,
+                          child: PetView(
+                            species: sp,
+                            mood: humor,
+                            activity: atividade,
+                            coat: 0,
+                            interativo: false,
+                          ),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await _salva(tester, const Key('captura-folha'), 'folha-especies');
+  });
+
+  testWidgets('folha de reacoes: o que muda quando alguem interage', (
+    tester,
+  ) async {
+    // Sem movimento reduzido aqui: o gesto de ocioso só existe com o contínuo
+    // ligado. O preço é que respiração e cauda também andam — o que a folha
+    // prova é a reação, não a ausência de outro movimento (isso é papel do
+    // pet_vivo_test).
+    // 400x300 físicos a 2x = 200x150 lógicos: o quadro inteiro do bicho.
+    tester.view.physicalSize = const Size(400, 300);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    Future<void> monta(Species sp) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            backgroundColor: Cores.habitat,
+            body: Center(
+              child: PetView(
+                species: sp,
+                mood: Mood.content,
+                activity: Activity.idle,
+                coat: 0,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    // 1. Repouso.
+    await monta(Species.capybara);
+    await _salva(tester, PetView.cenaKey, 'reacao-1-repouso');
+
+    // 2. Um toque: a quicada.
+    await tester.tap(find.byType(PetView));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 70));
+    await _salva(tester, PetView.cenaKey, 'reacao-2-um-toque');
+    await tester.pump(const Duration(milliseconds: 900));
+
+    // 3. Três toques seguidos: coraçõezinhos.
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.byType(PetView));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+    await tester.tap(find.byType(PetView));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 260));
+    await _salva(tester, PetView.cenaKey, 'reacao-3-carinho');
+    await tester.pump(const Duration(seconds: 4));
+
+    // 4 a 6. Os gestos de ocioso. O sorteio é fixado: sem isso a captura do
+    // bocejo dependia de o dado de três faces cair no lado certo, e o teste
+    // falhava um terço das vezes.
+    final observador = ValueNotifier(GestoOcioso.nenhum);
+    PetView.observadorDeGesto = observador;
+    addTearDown(() {
+      PetView.observadorDeGesto = null;
+      PetView.gestoForcado = null;
+      observador.dispose();
+    });
+
+    const gestos = {
+      GestoOcioso.espreguica: ('reacao-4-espreguica', 800),
+      GestoOcioso.sacode: ('reacao-5-sacode', 200),
+      GestoOcioso.olhaEmVolta: ('reacao-6-olha-em-volta', 400),
+    };
+
+    for (final g in gestos.entries) {
+      PetView.gestoForcado = g.key;
+      observador.value = GestoOcioso.nenhum;
+      await monta(Species.owl);
+      var achou = false;
+      // O gesto sai entre 7 e 15 s.
+      for (var i = 0; i < 180 && !achou; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        achou = observador.value == g.key;
+      }
+      expect(achou, isTrue, reason: 'o gesto ${g.key.name} não veio em 18 s');
+      // Instante escolhido dentro do gesto (ele dura 1600 ms).
+      await tester.pump(Duration(milliseconds: g.value.$2));
+      await _salva(tester, PetView.cenaKey, g.value.$1);
+      await tester.pump(const Duration(seconds: 3));
+    }
+  });
+
   testWidgets('as quatro espécies', (tester) async {
     tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);

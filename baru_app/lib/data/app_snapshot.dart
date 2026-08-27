@@ -46,6 +46,12 @@ class AppSnapshot {
     this.diasAbaixoDaMeta = 0,
     this.marcosResgatados = const [],
     this.nivelCelebrado = 1,
+    this.minutosDeFocoHoje = 0,
+    this.maiorSessaoHoje = 0,
+    this.sessoesNaSemana = 0,
+    this.minutosNaSemana = 0,
+    this.diasAbaixoNaSemana = 0,
+    this.missoesResgatadas = const [],
   });
 
   final AppScreen screen;
@@ -98,6 +104,14 @@ class AppSnapshot {
   final List<String> marcosResgatados;
   final int nivelCelebrado;
 
+  // --- missões ------------------------------------------------------------
+  final int minutosDeFocoHoje;
+  final int maiorSessaoHoje;
+  final int sessoesNaSemana;
+  final int minutosNaSemana;
+  final int diasAbaixoNaSemana;
+  final List<String> missoesResgatadas;
+
   Map<String, dynamic> toJson() => {
         'v': 1,
         'screen': screen.name,
@@ -141,6 +155,12 @@ class AppSnapshot {
         'diasAbaixoDaMeta': diasAbaixoDaMeta,
         'marcosResgatados': marcosResgatados,
         'nivelCelebrado': nivelCelebrado,
+        'minutosDeFocoHoje': minutosDeFocoHoje,
+        'maiorSessaoHoje': maiorSessaoHoje,
+        'sessoesNaSemana': sessoesNaSemana,
+        'minutosNaSemana': minutosNaSemana,
+        'diasAbaixoNaSemana': diasAbaixoNaSemana,
+        'missoesResgatadas': missoesResgatadas,
       };
 
   factory AppSnapshot.fromJson(Map<String, dynamic> j) {
@@ -196,6 +216,14 @@ class AppSnapshot {
           (j['marcosResgatados'] as List?)?.map((e) => '$e').toList() ??
               const [],
       nivelCelebrado: (j['nivelCelebrado'] as num?)?.toInt() ?? 1,
+      minutosDeFocoHoje: (j['minutosDeFocoHoje'] as num?)?.toInt() ?? 0,
+      maiorSessaoHoje: (j['maiorSessaoHoje'] as num?)?.toInt() ?? 0,
+      sessoesNaSemana: (j['sessoesNaSemana'] as num?)?.toInt() ?? 0,
+      minutosNaSemana: (j['minutosNaSemana'] as num?)?.toInt() ?? 0,
+      diasAbaixoNaSemana: (j['diasAbaixoNaSemana'] as num?)?.toInt() ?? 0,
+      missoesResgatadas:
+          (j['missoesResgatadas'] as List?)?.map((e) => '$e').toList() ??
+              const [],
     );
   }
 
@@ -268,6 +296,12 @@ class AppSnapshot {
     int? diasAbaixoDaMeta,
     List<String>? marcosResgatados,
     int? nivelCelebrado,
+    int? minutosDeFocoHoje,
+    int? maiorSessaoHoje,
+    int? sessoesNaSemana,
+    int? minutosNaSemana,
+    int? diasAbaixoNaSemana,
+    List<String>? missoesResgatadas,
     bool clearQuiz = false,
     bool clearTrialStart = false,
     bool clearSession = false,
@@ -316,6 +350,12 @@ class AppSnapshot {
       diasAbaixoDaMeta: diasAbaixoDaMeta ?? this.diasAbaixoDaMeta,
       marcosResgatados: marcosResgatados ?? this.marcosResgatados,
       nivelCelebrado: nivelCelebrado ?? this.nivelCelebrado,
+      minutosDeFocoHoje: minutosDeFocoHoje ?? this.minutosDeFocoHoje,
+      maiorSessaoHoje: maiorSessaoHoje ?? this.maiorSessaoHoje,
+      sessoesNaSemana: sessoesNaSemana ?? this.sessoesNaSemana,
+      minutosNaSemana: minutosNaSemana ?? this.minutosNaSemana,
+      diasAbaixoNaSemana: diasAbaixoNaSemana ?? this.diasAbaixoNaSemana,
+      missoesResgatadas: missoesResgatadas ?? this.missoesResgatadas,
     );
   }
 

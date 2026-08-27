@@ -243,6 +243,29 @@ class T {
   String get trilhaVaziaT => s('trilhaVaziaT');
   String get trilhaVaziaB => s('trilhaVaziaB');
   String get xpRotulo => s('xpRotulo');
+  String get missoesT => s('missoesT');
+  String get missoesSub => s('missoesSub');
+  String get missoesDiarias => s('missoesDiarias');
+  String get missoesSemanais => s('missoesSemanais');
+  String get missaoResgatar => s('missaoResgatar');
+  String get missaoResgatada => s('missaoResgatada');
+  String get missaoConcluida => s('missaoConcluida');
+  String get missaoPrecisaPermissao => s('missaoPrecisaPermissao');
+  String get missaoExpiraHoje => s('missaoExpiraHoje');
+  String get missaoExpiraSemana => s('missaoExpiraSemana');
+  String get missoesVaziaT => s('missoesVaziaT');
+  String get missoesVaziaB => s('missoesVaziaB');
+  String get missoesTodasFeitas => s('missoesTodasFeitas');
+  String get msSessoes1 => s('msSessoes1');
+  String get msSessoes => s('msSessoes');
+  String get msMinutos => s('msMinutos');
+  String get msSessaoLonga => s('msSessaoLonga');
+  String get msAbaixo => s('msAbaixo');
+  String get msDispersivo => s('msDispersivo');
+  String get msSemanaSessoes => s('msSemanaSessoes');
+  String get msSemanaMinutos => s('msSemanaMinutos');
+  String get msSemanaAbaixo => s('msSemanaAbaixo');
+  String get missaoGanhou => s('missaoGanhou');
 
 
   static const _weekdayLong = {
@@ -343,6 +366,29 @@ const _pt = <String, Object>{
   'trilhaVaziaT': 'A trilha começa amanhã',
   'trilhaVaziaB': 'Termine o onboarding e o primeiro passo aparece aqui.',
   'xpRotulo': 'XP',
+  'missoesT': 'Missões',
+  'missoesSub': 'Ritmo para hoje, amplitude para a semana.',
+  'missoesDiarias': 'HOJE',
+  'missoesSemanais': 'ESTA SEMANA',
+  'missaoResgatar': 'Resgatar',
+  'missaoResgatada': 'Resgatada',
+  'missaoConcluida': 'Concluída',
+  'missaoPrecisaPermissao': 'Precisa do acesso ao uso',
+  'missaoExpiraHoje': 'até meia-noite',
+  'missaoExpiraSemana': 'até domingo',
+  'missoesVaziaT': 'As missões começam amanhã',
+  'missoesVaziaB': 'Termine o onboarding e as três primeiras aparecem aqui.',
+  'missoesTodasFeitas': 'Tudo feito por hoje. O próximo passo da trilha te espera.',
+  'msSessoes1': 'Faça uma sessão de foco',
+  'msSessoes': 'Faça {n} sessões de foco',
+  'msMinutos': 'Some {n} min de foco',
+  'msSessaoLonga': 'Faça um foco de {n} min',
+  'msAbaixo': 'Feche o dia abaixo da meta',
+  'msDispersivo': 'Fique abaixo de {n} min em apps dispersivos',
+  'msSemanaSessoes': '{n} sessões nesta semana',
+  'msSemanaMinutos': '{n} min de foco nesta semana',
+  'msSemanaAbaixo': '{n} dias abaixo da meta nesta semana',
+  'missaoGanhou': '+{n} folhas',
   'langTitle': 'Em que idioma você quer falar com ele?',
   'langSub': 'Pode trocar depois nos ajustes.',
   'cont': 'Continuar',
@@ -554,7 +600,7 @@ const _pt = <String, Object>{
       'O Baru lê só o total de tempo de tela do dia, se você permitir. Nunca quais apps, nunca o conteúdo. Nada disso sai do aparelho nesta fase. Sessões, folhas e o habitat ficam no telefone. A assinatura desta versão é um teste local — a compra pela loja vem depois.',
   'termsBody':
       'Você usa o Baru para sessões de foco e um habitat. Ele nunca morre, nunca perde progresso e nunca te culpa. O teste de 7 dias desta versão não cobra na loja. Restaurar compras só marca o teste local. Trocar o idioma e a meta não apaga o habitat.',
-  'tabs': ['Habitat', 'Trilha', 'Loja', 'Ajustes'],
+  'tabs': ['Habitat', 'Trilha', 'Missões', 'Ajustes'],
 };
 
 const _en = <String, Object>{
@@ -621,6 +667,29 @@ const _en = <String, Object>{
   'trilhaVaziaT': 'The path starts tomorrow',
   'trilhaVaziaB': 'Finish onboarding and the first step shows up here.',
   'xpRotulo': 'XP',
+  'missoesT': 'Missions',
+  'missoesSub': 'Rhythm for today, breadth for the week.',
+  'missoesDiarias': 'TODAY',
+  'missoesSemanais': 'THIS WEEK',
+  'missaoResgatar': 'Claim',
+  'missaoResgatada': 'Claimed',
+  'missaoConcluida': 'Done',
+  'missaoPrecisaPermissao': 'Needs usage access',
+  'missaoExpiraHoje': 'until midnight',
+  'missaoExpiraSemana': 'until Sunday',
+  'missoesVaziaT': 'Missions start tomorrow',
+  'missoesVaziaB': 'Finish onboarding and the first three show up here.',
+  'missoesTodasFeitas': 'All done for today. The next step on your path is waiting.',
+  'msSessoes1': 'Do one focus session',
+  'msSessoes': 'Do {n} focus sessions',
+  'msMinutos': 'Add up {n} min of focus',
+  'msSessaoLonga': 'Do a {n} min focus session',
+  'msAbaixo': 'Finish the day under your goal',
+  'msDispersivo': 'Stay under {n} min in distracting apps',
+  'msSemanaSessoes': '{n} sessions this week',
+  'msSemanaMinutos': '{n} min of focus this week',
+  'msSemanaAbaixo': '{n} days under your goal this week',
+  'missaoGanhou': '+{n} leaves',
   'langTitle': 'Which language should we speak?',
   'langSub': 'You can change it later in settings.',
   'cont': 'Continue',
@@ -829,7 +898,7 @@ const _en = <String, Object>{
       'Baru reads only the daily screen-time total, if you allow it. Never which apps, never content. Nothing leaves your device in this phase. Sessions, leaves, and the habitat stay on the phone. The subscription here is a local trial — store billing comes later.',
   'termsBody':
       'You use Baru for focus sessions and a habitat. It never dies, never loses progress, and never blames you. The 7-day trial in this build does not charge through the store. Restore purchases only marks the local trial. Changing language or goal does not wipe the habitat.',
-  'tabs': ['Habitat', 'Path', 'Shop', 'Settings'],
+  'tabs': ['Habitat', 'Path', 'Missions', 'Settings'],
 };
 
 const _es = <String, Object>{
@@ -896,6 +965,29 @@ const _es = <String, Object>{
   'trilhaVaziaT': 'El camino empieza mañana',
   'trilhaVaziaB': 'Termina el onboarding y el primer paso aparece aquí.',
   'xpRotulo': 'XP',
+  'missoesT': 'Misiones',
+  'missoesSub': 'Ritmo para hoy, amplitud para la semana.',
+  'missoesDiarias': 'HOY',
+  'missoesSemanais': 'ESTA SEMANA',
+  'missaoResgatar': 'Reclamar',
+  'missaoResgatada': 'Reclamada',
+  'missaoConcluida': 'Hecha',
+  'missaoPrecisaPermissao': 'Necesita acceso al uso',
+  'missaoExpiraHoje': 'hasta medianoche',
+  'missaoExpiraSemana': 'hasta el domingo',
+  'missoesVaziaT': 'Las misiones empiezan mañana',
+  'missoesVaziaB': 'Termina el onboarding y las tres primeras aparecen aquí.',
+  'missoesTodasFeitas': 'Todo hecho por hoy. El siguiente paso del camino te espera.',
+  'msSessoes1': 'Haz una sesión de enfoque',
+  'msSessoes': 'Haz {n} sesiones de enfoque',
+  'msMinutos': 'Suma {n} min de enfoque',
+  'msSessaoLonga': 'Haz un enfoque de {n} min',
+  'msAbaixo': 'Cierra el día bajo tu meta',
+  'msDispersivo': 'Quédate bajo {n} min en apps dispersivas',
+  'msSemanaSessoes': '{n} sesiones esta semana',
+  'msSemanaMinutos': '{n} min de enfoque esta semana',
+  'msSemanaAbaixo': '{n} días bajo tu meta esta semana',
+  'missaoGanhou': '+{n} hojas',
   'langTitle': '¿En qué idioma quieres hablarle?',
   'langSub': 'Puedes cambiarlo después en ajustes.',
   'cont': 'Continuar',
@@ -1106,7 +1198,7 @@ const _es = <String, Object>{
       'Baru solo lee el total diario de tiempo de pantalla, si lo permites. Nunca qué apps ni el contenido. Nada sale del aparato en esta fase. Sesiones, hojas y el hábitat quedan en el teléfono. La suscripción de esta versión es una prueba local — el cobro en la tienda llega después.',
   'termsBody':
       'Usas Baru para sesiones de enfoque y un hábitat. Nunca muere, nunca pierde progreso y nunca te culpa. La prueba de 7 días de esta versión no cobra en la tienda. Restaurar compras solo marca la prueba local. Cambiar idioma o meta no borra el hábitat.',
-  'tabs': ['Hábitat', 'Camino', 'Tienda', 'Ajustes'],
+  'tabs': ['Hábitat', 'Camino', 'Misiones', 'Ajustes'],
 };
 
 const _zh = <String, Object>{
@@ -1173,6 +1265,29 @@ const _zh = <String, Object>{
   'trilhaVaziaT': '路径明天开始',
   'trilhaVaziaB': '完成引导后，第一步就会出现在这里。',
   'xpRotulo': 'XP',
+  'missoesT': '任务',
+  'missoesSub': '今天有节奏，本周有广度。',
+  'missoesDiarias': '今天',
+  'missoesSemanais': '本周',
+  'missaoResgatar': '领取',
+  'missaoResgatada': '已领取',
+  'missaoConcluida': '已完成',
+  'missaoPrecisaPermissao': '需要使用权限',
+  'missaoExpiraHoje': '到午夜',
+  'missaoExpiraSemana': '到周日',
+  'missoesVaziaT': '任务明天开始',
+  'missoesVaziaB': '完成引导后，前三个任务会出现在这里。',
+  'missoesTodasFeitas': '今天都完成了。路径上的下一步在等你。',
+  'msSessoes1': '完成一次专注',
+  'msSessoes': '完成 {n} 次专注',
+  'msMinutos': '累计 {n} 分钟专注',
+  'msSessaoLonga': '完成一次 {n} 分钟的专注',
+  'msAbaixo': '今天的用时低于目标',
+  'msDispersivo': '分心应用少于 {n} 分钟',
+  'msSemanaSessoes': '本周 {n} 次专注',
+  'msSemanaMinutos': '本周 {n} 分钟专注',
+  'msSemanaAbaixo': '本周 {n} 天低于目标',
+  'missaoGanhou': '+{n} 片叶子',
   'langTitle': '你想用哪种语言？',
   'langSub': '之后可以在设置里更改。',
   'cont': '继续',
@@ -1346,5 +1461,5 @@ const _zh = <String, Object>{
       '如果你允许，Baru 只读取当天的屏幕总时长。不看具体应用，也不看内容。这一阶段数据不离开你的设备。专注时段、叶子和栖息地都留在手机上。这里的订阅是本地试用，商店扣款稍后才会接入。',
   'termsBody':
       '你用 Baru 做专注时段、照料栖息地。它不会死，不会丢掉进度，也不会责怪你。这个版本的 7 天试用不会通过商店扣款。恢复购买只标记本地试用。改语言或目标不会清空栖息地。',
-  'tabs': ['栖息地', '路径', '商店', '设置'],
+  'tabs': ['栖息地', '路径', '任务', '设置'],
 };

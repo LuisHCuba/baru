@@ -72,6 +72,7 @@ void main() {
       AppScreen.paywall,
       AppScreen.tempo,
       AppScreen.trilha,
+      AppScreen.missoes,
     ]) {
       await pumpAt412(tester, screen);
       expect(tester.takeException(), isNull, reason: 'exceção em ${screen.name}');
@@ -120,7 +121,7 @@ void main() {
     await pumpAt412(tester, AppScreen.home);
     expect(find.byIcon(Icons.home_rounded), findsOneWidget);
     expect(find.byIcon(Icons.route_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.storefront_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
     expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
   });
 
@@ -128,7 +129,7 @@ void main() {
     await pumpAt412(tester, AppScreen.home);
     expect(find.text('1 dia presente'), findsWidgets);
     expect(find.text('Habitat'), findsWidgets);
-    expect(find.text('Loja'), findsOneWidget);
+    expect(find.text('Missões'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Começar foco'),
       120,

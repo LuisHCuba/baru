@@ -12,6 +12,7 @@ import 'screens/session_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/shop_screen.dart';
 import 'screens/tempo_screen.dart';
+import 'screens/missoes_screen.dart';
 import 'screens/trilha_screen.dart';
 import 'state.dart';
 import 'theme.dart';
@@ -193,6 +194,8 @@ class _Shell extends StatelessWidget {
         return TempoScreen(aoVoltar: () => app.go(AppScreen.report));
       case AppScreen.trilha:
         return const TrilhaScreen();
+      case AppScreen.missoes:
+        return const MissoesScreen();
     }
   }
 }

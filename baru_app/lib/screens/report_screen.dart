@@ -22,6 +22,19 @@ class ReportScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Semantics(
+                button: true,
+                label: t.back,
+                child: GestureDetector(
+                  onTap: () => app.go(AppScreen.home),
+                  behavior: HitTestBehavior.opaque,
+                  child: const SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: AppIcon(Icons.arrow_back_rounded, size: 22),
+                  ),
+                ),
+              ),
               Text(
                 t.fill(t.repTitle, {'n': app.displayName}),
                 maxLines: 2,

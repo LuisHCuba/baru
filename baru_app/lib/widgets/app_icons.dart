@@ -69,6 +69,6 @@ class TabGlyph {
 const tabGlyphs = [
   TabGlyph(Icons.home_outlined, Icons.home_rounded),
   TabGlyph(Icons.route_outlined, Icons.route_rounded),
-  TabGlyph(Icons.storefront_outlined, Icons.storefront_rounded),
+  TabGlyph(Icons.flag_outlined, Icons.flag_rounded),
   TabGlyph(Icons.settings_outlined, Icons.settings_rounded),
 ];

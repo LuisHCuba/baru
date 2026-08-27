@@ -19,6 +19,19 @@ class ShopScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(2, 10, 2, 20),
           child: Row(
             children: [
+              Semantics(
+                button: true,
+                label: t.back,
+                child: GestureDetector(
+                  onTap: () => app.go(AppScreen.home),
+                  behavior: HitTestBehavior.opaque,
+                  child: const SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: AppIcon(Icons.arrow_back_rounded, size: 22),
+                  ),
+                ),
+              ),
               Text(t.shopT, style: nunito(size: 27, weight: FontWeight.w800, height: 1.2, letterSpacing: -0.5)),
               const Spacer(),
               LeafBadge(leaves: app.leaves, filled: false),

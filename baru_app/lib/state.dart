@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import 'data/app_snapshot.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
+import 'data/missoes.dart';
 import 'data/progressao.dart';
 import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
@@ -124,6 +125,84 @@ class AppState extends ChangeNotifier {
       leaves += m.recompensa.folhas;
       marcosACelebrar = [...marcosACelebrar, m];
     }
+  }
+
+  // --- missoes -----------------------------------------------------------
+
+  /// Minutos de foco somados hoje.
+  int minutosDeFocoHoje = 0;
+
+  /// A sessao mais longa de hoje, em minutos.
+  int maiorSessaoHoje = 0;
+
+  /// Sessoes, minutos e dias abaixo da meta da semana corrente.
+  int sessoesNaSemana = 0;
+  int minutosNaSemana = 0;
+  int diasAbaixoNaSemana = 0;
+
+  /// Chaves de missao ja resgatadas, com o periodo dentro. Resgate e
+  /// idempotente: tocar duas vezes nao paga duas vezes.
+  Set<String> missoesResgatadas = {};
+
+  /// Missoes concluidas que ainda nao viraram animacao na tela.
+  List<String> missoesACelebrar = [];
+
+  static const _quadro = QuadroDeMissoes();
+
+  ContadoresDeMissao get contadoresDeMissao => ContadoresDeMissao(
+        sessoesHoje: completedToday,
+        minutosHoje: minutosDeFocoHoje,
+        maiorSessaoHoje: maiorSessaoHoje,
+        fechouAbaixoHoje: usageAccess && usage < goal,
+        dispersivoHoje: resumoTela?.dispersivo.inMinutes,
+        sessoesNaSemana: sessoesNaSemana,
+        minutosNaSemana: minutosNaSemana,
+        diasAbaixoNaSemana: diasAbaixoNaSemana,
+        temPermissaoDeUso: usageAccess,
+      );
+
+  /// As missoes de hoje. Sorteio deterministico por conta e data.
+  List<Missao> get missoes => _quadro.doDia(
+        dia: lastOpenDate,
+        conta: _sementeDaConta,
+        contadores: contadoresDeMissao,
+        resgatadas: missoesResgatadas,
+      );
+
+  /// Semente estavel por conta: as missoes do dia sao as mesmas em qualquer
+  /// aparelho, sem precisar sincronizar a escolha.
+  String get _sementeDaConta =>
+      BaruSupabase.instance.currentUserEmail ?? 'local';
+
+  List<Missao> get missoesDiarias =>
+      missoes.where((m) => m.ritmo == RitmoDaMissao.diaria).toList();
+
+  List<Missao> get missoesSemanais =>
+      missoes.where((m) => m.ritmo == RitmoDaMissao.semanal).toList();
+
+  int get missoesResgataveis => missoes.where((m) => m.resgatavel).length;
+
+  /// Recolhe o premio de uma missao concluida.
+  ///
+  /// Idempotente por construcao: a chave inclui o periodo e entra no conjunto
+  /// antes de qualquer credito.
+  void resgataMissao(Missao m) {
+    if (!m.resgatavel) return;
+    final chave = QuadroDeMissoes.chaveDeResgate(m.definicao, lastOpenDate);
+    if (missoesResgatadas.contains(chave)) return;
+    missoesResgatadas = {...missoesResgatadas, chave};
+    leaves += m.folhas;
+    missoesACelebrar = [...missoesACelebrar, m.id];
+    ganhaXp(m.xp);
+    _markSync(_syncShop | _syncSession);
+    notifyListeners();
+  }
+
+  /// Consome o aviso de missao concluida depois de a tela anima-lo.
+  void celebrouMissao(String id) {
+    if (!missoesACelebrar.contains(id)) return;
+    missoesACelebrar = [...missoesACelebrar]..remove(id);
+    notifyListeners();
   }
 
   /// Detalhamento do tempo de tela de hoje. `null` = ainda não medido ou sem
@@ -276,10 +355,9 @@ class AppState extends ChangeNotifier {
 
   /// A faixa de tabs some em tela de detalhe e em modal.
   bool get showTabs =>
-      screen == AppScreen.trilha ||
       screen == AppScreen.home ||
-      screen == AppScreen.report ||
-      screen == AppScreen.shop ||
+      screen == AppScreen.trilha ||
+      screen == AppScreen.missoes ||
       screen == AppScreen.profile;
 
   bool get quizDone => q0 != null && q1 != null && q2 != null;
@@ -586,6 +664,13 @@ class AppState extends ChangeNotifier {
     marcosResgatados = {};
     marcosACelebrar = [];
     nivelCelebrado = 1;
+    minutosDeFocoHoje = 0;
+    maiorSessaoHoje = 0;
+    sessoesNaSemana = 0;
+    minutosNaSemana = 0;
+    diasAbaixoNaSemana = 0;
+    missoesResgatadas = {};
+    missoesACelebrar = [];
     lastOpenDate = dateOnly(DateTime.now());
     _markSync(_syncShop | _syncSession);
   }
@@ -811,6 +896,11 @@ class AppState extends ChangeNotifier {
     }
     completedToday += 1;
     sessoesConcluidas += 1;
+    // Contadores de missão vêm do evento de domínio, não da tela (§5).
+    minutosDeFocoHoje += minutos;
+    minutosNaSemana += minutos;
+    sessoesNaSemana += 1;
+    if (minutos > maiorSessaoHoje) maiorSessaoHoje = minutos;
     overrideMood = null;
     ganhaXp(Balanco.xpDeSessao(minutos));
     _logSession(
@@ -982,6 +1072,7 @@ class AppState extends ChangeNotifier {
       leaves += underGoalBonus;
       pendingUnderGoalBonus += 1;
       diasAbaixoDaMeta += 1;
+      diasAbaixoNaSemana += 1;
       ganhaXp(Balanco.xpDiaAbaixoDaMeta);
       _markSync(_syncShop);
     }
@@ -1016,6 +1107,18 @@ class AppState extends ChangeNotifier {
     completedToday = 0;
     abandonedToday = false;
     overrideMood = null;
+
+    // Missões diárias expiram à meia-noite, sem punição: o contador zera e a
+    // missão de amanhã é outra.
+    minutosDeFocoHoje = 0;
+    maiorSessaoHoje = 0;
+    resumoTela = null;
+    if (iPara == 0) {
+      // Semana nova, missões semanais novas.
+      sessoesNaSemana = 0;
+      minutosNaSemana = 0;
+      diasAbaixoNaSemana = 0;
+    }
   }
 
   /// O dia que está fechando terminou abaixo da meta?
@@ -1191,6 +1294,12 @@ class AppState extends ChangeNotifier {
       diasAbaixoDaMeta: diasAbaixoDaMeta,
       marcosResgatados: marcosResgatados.toList(),
       nivelCelebrado: nivelCelebrado,
+      minutosDeFocoHoje: minutosDeFocoHoje,
+      maiorSessaoHoje: maiorSessaoHoje,
+      sessoesNaSemana: sessoesNaSemana,
+      minutosNaSemana: minutosNaSemana,
+      diasAbaixoNaSemana: diasAbaixoNaSemana,
+      missoesResgatadas: missoesResgatadas.toList(),
     );
   }
 
@@ -1240,6 +1349,12 @@ class AppState extends ChangeNotifier {
     diasAbaixoDaMeta = s.diasAbaixoDaMeta;
     marcosResgatados = s.marcosResgatados.toSet();
     nivelCelebrado = s.nivelCelebrado;
+    minutosDeFocoHoje = s.minutosDeFocoHoje;
+    maiorSessaoHoje = s.maiorSessaoHoje;
+    sessoesNaSemana = s.sessoesNaSemana;
+    minutosNaSemana = s.minutosNaSemana;
+    diasAbaixoNaSemana = s.diasAbaixoNaSemana;
+    missoesResgatadas = s.missoesResgatadas.toSet();
   }
 
   void _schedulePersist() {

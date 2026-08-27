@@ -4,9 +4,11 @@ import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import 'app_icons.dart';
+import 'componentes.dart';
 
 export 'app_frame.dart';
 export 'app_icons.dart';
+export 'componentes.dart';
 
 class _Hover extends StatefulWidget {
   const _Hover({required this.builder, this.onTap, this.enabled = true});
@@ -340,6 +342,11 @@ class LeafMark extends StatelessWidget {
   }
 }
 
+/// O saldo de folhas.
+///
+/// O número **sobe animado**: recompensa que troca de valor sem transição some
+/// da percepção. O usuário resgata uma missão e precisa ver as folhas
+/// chegarem, não descobrir depois que o número mudou.
 class LeafBadge extends StatelessWidget {
   const LeafBadge({
     super.key,
@@ -350,9 +357,12 @@ class LeafBadge extends StatelessWidget {
   final int leaves;
   final bool filled;
 
+  static const chave = Key('saldo-de-folhas');
+
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: chave,
       padding: const EdgeInsets.fromLTRB(11, 8, 14, 8),
       decoration: BoxDecoration(
         color: filled ? AppColors.card : AppColors.greenA(0.13),
@@ -367,7 +377,12 @@ class LeafBadge extends StatelessWidget {
           children: [
             const ExcludeSemantics(child: LeafMark()),
             const SizedBox(width: 8),
-            Text('$leaves', style: nunito(size: 15, weight: FontWeight.w800)),
+            ExcludeSemantics(
+              child: ContadorAnimado(
+                valor: leaves,
+                estiloTexto: nunito(size: 15, weight: FontWeight.w800),
+              ),
+            ),
           ],
         ),
       ),
@@ -551,7 +566,7 @@ class BottomTabs extends StatelessWidget {
     final ids = [
       AppScreen.home,
       AppScreen.trilha,
-      AppScreen.shop,
+      AppScreen.missoes,
       AppScreen.profile,
     ];
     return Container(

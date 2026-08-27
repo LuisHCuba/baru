@@ -2,7 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'theme.dart';
 
-enum AppScreen { onb, paywall, home, session, result, report, shop, profile, tempo, trilha }
+enum AppScreen {
+  onb,
+  paywall,
+  home,
+  session,
+  result,
+  report,
+  shop,
+  profile,
+  tempo,
+  trilha,
+  missoes,
+}
 
 enum Species { capybara, otter, tortoise, owl }
 

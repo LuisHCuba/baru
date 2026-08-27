@@ -39,6 +39,29 @@ class TabelaAusenteNoRemoto implements Exception {
   String toString() => 'TabelaAusenteNoRemoto($tabela)';
 }
 
+/// Uma coluna que o app escreve e o banco remoto ainda não tem.
+///
+/// Acontece toda vez que o repositório anda antes de a migração ser aplicada.
+/// **Não é falha de rede e não é fatal**: a coluna nova costuma ser um
+/// acréscimo, e insistir nela sacrifica tudo o que ia junto na mesma escrita.
+class ColunaAusenteNoRemoto implements Exception {
+  const ColunaAusenteNoRemoto(this.coluna);
+
+  final String coluna;
+
+  /// `PGRST204` é o PostgREST sem a coluna no cache de schema; `42703` é o
+  /// Postgres dizendo que ela não existe.
+  static ColunaAusenteNoRemoto? de(Object erro) {
+    if (erro is! PostgrestException) return null;
+    if (erro.code != 'PGRST204' && erro.code != '42703') return null;
+    final m = RegExp("'([a-z_]+)'").firstMatch(erro.message);
+    return ColunaAusenteNoRemoto(m?.group(1) ?? 'desconhecida');
+  }
+
+  @override
+  String toString() => 'ColunaAusenteNoRemoto($coluna)';
+}
+
 class BaruSupabase {
   BaruSupabase._();
   static final BaruSupabase instance = BaruSupabase._();
@@ -268,15 +291,58 @@ class BaruSupabase {
     }
 
     final rows = _codec.inventoryRows(userId: uid, s: snapshot);
-    if (rows.isNotEmpty) {
-      // `ignoreDuplicates` preserva o `acquired_at` de quem já estava lá: sem
-      // isso, todo push reescrevia a data de compra com "agora" e embaralhava
-      // a ordem em que o habitat foi montado.
-      await client
-          .from('baru_inventory_items')
-          .upsert(rows, ignoreDuplicates: true);
+    if (rows.isEmpty) return;
+
+    // Duas escritas de propósito.
+    //
+    // A primeira cria o que é novo com `ignoreDuplicates`, que preserva o
+    // `acquired_at` de quem já estava lá — sem isso, todo push reescrevia a
+    // data de compra com "agora" e embaralhava a ordem em que o habitat foi
+    // montado.
+    //
+    // Mas `ignoreDuplicates` também **não atualiza nada** numa linha que já
+    // existe: colocar e tirar um item já comprado nunca chegaria ao remoto.
+    // Daí a segunda, que manda só `equipped` — o upsert atualiza apenas as
+    // colunas presentes no corpo, então `acquired_at` continua intacto.
+    await client.from('baru_inventory_items').upsert(
+          [
+            for (final r in rows)
+              {
+                'user_id': r['user_id'],
+                'item_id': r['item_id'],
+                'acquired_at': r['acquired_at'],
+              },
+          ],
+          ignoreDuplicates: true,
+        );
+
+    if (_semColunaEquipped) return;
+    try {
+      await client.from('baru_inventory_items').upsert([
+        for (final r in rows)
+          {
+            'user_id': r['user_id'],
+            'item_id': r['item_id'],
+            'equipped': r['equipped'],
+          },
+      ]);
+    } catch (e) {
+      // Coluna nova, banco antigo: o app anda antes da migração. Degrada em
+      // vez de derrubar a gravação inteira — o inventário já subiu acima, e
+      // o "em uso" fica guardado no aparelho até a migração ser aplicada.
+      final ausente = ColunaAusenteNoRemoto.de(e);
+      if (ausente == null) rethrow;
+      _semColunaEquipped = true;
+      debugPrint(
+        'Baru: sem `equipped` no remoto — o item em uso só fica no aparelho '
+        'até a migração 11 ser aplicada.',
+      );
     }
   }
+
+  /// Lembrado por sessão: sem isto, toda gravação repetiria a tentativa que
+  /// já se sabe que falha.
+  bool _semColunaEquipped = false;
 
   Future<void> pushSettings(AppSnapshot snapshot) async {
     final uid = _uid;

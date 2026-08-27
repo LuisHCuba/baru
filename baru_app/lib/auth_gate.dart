@@ -144,7 +144,10 @@ class AuthGateState extends State<AuthGate> {
     if (BaruSupabase.instance.ready) {
       final pull = await widget.repos.pullRemoteResult();
       if (pull.error != null) {
-        notice = _t.syncFail;
+        // A leitura falhou, não a escrita: `syncFail` fala de domínios que
+        // não subiram e traz um `{q}` que aqui não existe — sairia cru na
+        // tela.
+        notice = _t.bootstrapOffline;
       } else if (pull.snapshot != null) {
         // Em login novo (`clearLocal`) não há local para fundir: o snapshot
         // do remoto é o que existe.

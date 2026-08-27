@@ -3,6 +3,38 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — "não foi possível sincronizar (pet, loja)": causa e conserto
+
+### Corrigido
+
+**A causa era uma só, e o nome de dois domínios enganava.**
+`LocalPetRepository.pushRemote` chama `pushPet` **e** `pushShop`; a falha
+estava só na segunda, e derrubava as duas. A falha: o app passou a escrever
+`baru_inventory_items.equipped`, coluna inventada no mesmo turno e ainda
+ausente no banco remoto (migration 11).
+
+Três consertos:
+
+- **O app degrada em vez de quebrar.** Coluna nova que o banco ainda não tem
+  virou `ColunaAusenteNoRemoto` (PostgREST `PGRST204`, Postgres `42703`). O
+  inventário sobe; só o "em uso" fica no aparelho até a migração ser
+  aplicada. Lembrado por sessão, para não repetir a tentativa que já se sabe
+  que falha.
+- **`ignoreDuplicates: true` escondia um segundo defeito:** ele preserva o
+  `acquired_at` de quem já estava lá, mas também **não atualiza nada** numa
+  linha existente — colocar e tirar um item já comprado nunca chegaria ao
+  remoto. Agora são duas escritas: uma cria o que é novo, outra manda só
+  `equipped` (o upsert só toca nas colunas do corpo, então `acquired_at`
+  continua intacto).
+- **O aviso do arranque mostrava `{q}` cru.** A leitura falhando usava a
+  mensagem da escrita, que ganhou um marcador de domínio que ali não existe.
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: **396 passando, 1 pulado**
+- Sonda REST no projeto remoto: migrations 7, 8, 9 e 10 aplicadas; a 11 não.
+
 ## 2026-08-27 — a loja virou guarda-roupa, e a trilha voltou a fazer sentido
 
 ### Corrigido

@@ -114,11 +114,20 @@ class AuthGateState extends State<AuthGate> {
 
   Future<AppSnapshot?> _loadOfflineSnapshot() async {
     final remote = await widget.repos.pullRemote();
-    if (remote != null) {
-      await widget.repos.saveSnapshot(remote);
-      return remote;
-    }
+    if (remote != null) return _guarda(remote);
     return widget.repos.loadSnapshot();
+  }
+
+  /// Grava o snapshot do remoto **fundido** com o que já está no aparelho.
+  ///
+  /// Gravar por cima apagava tudo o que o remoto não tem coluna para guardar:
+  /// missões resgatadas voltavam a aparecer por resgatar e a trilha zerava a
+  /// cada arranque. Ver [AppSnapshot.fundeCom].
+  Future<AppSnapshot> _guarda(AppSnapshot remoto) async {
+    final local = await widget.repos.loadSnapshot();
+    final fundido = local == null ? remoto : remoto.fundeCom(local);
+    await widget.repos.saveSnapshot(fundido);
+    return fundido;
   }
 
   Future<void> _bootstrapAfterAuth({required bool clearLocal}) async {
@@ -137,8 +146,14 @@ class AuthGateState extends State<AuthGate> {
       if (pull.error != null) {
         notice = _t.syncFail;
       } else if (pull.snapshot != null) {
-        await widget.repos.saveSnapshot(pull.snapshot!);
-        snap = pull.snapshot;
+        // Em login novo (`clearLocal`) não há local para fundir: o snapshot
+        // do remoto é o que existe.
+        if (clearLocal) {
+          await widget.repos.saveSnapshot(pull.snapshot!);
+          snap = pull.snapshot;
+        } else {
+          snap = await _guarda(pull.snapshot!);
+        }
       } else {
         notice = _t.bootstrapOffline;
       }

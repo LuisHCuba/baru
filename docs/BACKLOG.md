@@ -7,6 +7,22 @@ Legenda de esforço: **P** ≤30 min · **M** 30–90 min · **G** > 90 min (que
 
 ---
 
+## Pedido em 2026-08-27 e **não** entregue
+
+Está aqui em vez de num commit porque cada um é trabalho nativo de verdade,
+não um ajuste de tela. O que foi entregue no mesmo pedido: a correção da
+perda de dado, o overlay sobre outros apps (Android nativo) e a tela de
+permissão com pré-visualização.
+
+| # | Item | Por que não saiu ainda |
+|---|---|---|
+| W-01 | **Widget de tela inicial** (Android AppWidget) | Precisa de `AppWidgetProvider`, `RemoteViews`, layouts XML e um provedor de dados que leia o snapshot fora do processo Flutter. É um turno inteiro sozinho. |
+| W-02 | **Widget de tela de bloqueio** | No Android, widget de bloqueio só existe de novo no **Android 15+** (`WIDGET_CATEGORY_LOCK_SCREEN` voltou em preview); entre o 5 e o 14 a API não existe. No iOS seria WidgetKit, e o app ainda não tem alvo iOS configurado. **Prometer isso para "o celular" hoje seria mentira.** O que dá para fazer nesta faixa é a notificação persistente, que já existe. |
+| W-03 | **Ícone do launcher** | O `ic_launcher` ainda é o padrão do Flutter. Fazer certo é gerar as densidades, o adaptativo (fore/background) e o monocromático do Android 13. |
+| W-04 | **As quatro espécies novas do `baru-pets.html`** (Lume, Nino, Kiwi, Rio, Tuca, Mel, Faísca) | Cada uma é um método de painter novo, entrada em `Species`, `check` no banco, desbloqueio na trilha e nome nos quatro idiomas. |
+
+---
+
 ## Fila — próximo turno, em ordem
 
 | # | Item | Valor | Esforço | Risco | Pronto quando |

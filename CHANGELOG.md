@@ -3,6 +3,57 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — perda de dado no arranque, e o companheiro por cima dos outros apps
+
+### Corrigido — e era perda de dado, não bug de tela
+
+**Missão resgatada voltava a aparecer por resgatar a cada vez que o app
+abria.** A causa não era a missão: o arranque montava um `AppSnapshot` das
+linhas do remoto e gravava **por cima** do snapshot local. Todo campo sem
+coluna remota voltava ao padrão.
+
+Não era só a missão. Iam junto `sessoesConcluidas`, `melhorSequencia` e
+`diasAbaixoDaMeta` — **os três contadores que a trilha inteira lê** — mais os
+contadores do dia e da semana.
+
+Duas correções, e as duas eram necessárias:
+
+- `AppSnapshot.fundeCom`: o arranque **funde** em vez de sobrescrever.
+  Contador que só sobe fica com o maior; conquista vira união; o que é do dia
+  fica com o aparelho; o resto é do remoto. Isso protege o dado **mesmo com o
+  banco desatualizado**.
+- Migration 10: `missoes_resgatadas`, `sessoes_concluidas`,
+  `melhor_sequencia` e `dias_abaixo_da_meta` em `baru_progression`, para o
+  dado chegar ao segundo aparelho.
+
+### O QUE MUDOU NA TELA
+
+- **O companheiro aparece por cima dos outros apps.** Passou o tempo de tela,
+  ele dá um oi no canto com um balão e dois botões: "Fechar o app" e "+5 min".
+  É `TYPE_APPLICATION_OVERLAY` de verdade, desenhado em `Canvas` nativo —
+  overlay não pode depender do motor do Flutter estar vivo, já que ele aparece
+  justamente quando você está noutro app.
+- **Não bloqueia e não insiste.** `FLAG_NOT_TOUCH_MODAL`: o toque fora do
+  balão continua indo para o app de baixo. Some sozinho em 12 s. No máximo 4
+  vezes por dia, com 25 minutos entre uma e outra.
+- **Tela nova "Sobre outros apps"** com a **pré-visualização** antes de pedir
+  a permissão. `SYSTEM_ALERT_WINDOW` é a mesma permissão que malware usa:
+  pedir sem mostrar é o jeito mais rápido de ser negado.
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: 375+ passando
+- `AppSnapshot.fundeCom` verificado por mutação: trocado por `=> this`,
+  quatro testes de persistência falham.
+
+### Não entregue neste pedido
+
+Widget de tela inicial, widget de tela de bloqueio, ícone do launcher e as
+espécies novas do `baru-pets.html`. Cada um é trabalho nativo de um turno.
+Ver `docs/BACKLOG.md` — **inclusive por que "widget de tela de bloqueio" não
+existe como API no Android entre a 5 e a 14.**
+
 ## 2026-08-27 — conta, trilha em caminho, e três defeitos que o usuário viu antes de mim
 
 ### Corrigido

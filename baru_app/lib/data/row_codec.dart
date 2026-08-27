@@ -35,6 +35,10 @@ class BaruRowCodec {
       'afeto': s.afeto,
       'carinhos_hoje': s.carinhosHoje,
       'marcos_resgatados': s.marcosResgatados,
+      'missoes_resgatadas': s.missoesResgatadas,
+      'sessoes_concluidas': s.sessoesConcluidas,
+      'melhor_sequencia': s.melhorSequencia,
+      'dias_abaixo_da_meta': s.diasAbaixoDaMeta,
       'updated_at': _nowIso(),
     };
   }
@@ -288,8 +292,21 @@ class BaruRowCodec {
       afeto: (progresso?['afeto'] as num?)?.toInt() ?? 0,
       carinhosHoje: (progresso?['carinhos_hoje'] as num?)?.toInt() ?? 0,
       marcosResgatados:
-          (progresso?['marcos_resgatados'] as List?)?.map((e) => '$e').toList() ??
+          (progresso?['marcos_resgatados'] as List?)
+                  ?.map((e) => '$e')
+                  .toList() ??
               const [],
+      missoesResgatadas:
+          (progresso?['missoes_resgatadas'] as List?)
+                  ?.map((e) => '$e')
+                  .toList() ??
+              const [],
+      sessoesConcluidas:
+          (progresso?['sessoes_concluidas'] as num?)?.toInt() ?? 0,
+      melhorSequencia:
+          (progresso?['melhor_sequencia'] as num?)?.toInt() ?? 0,
+      diasAbaixoDaMeta:
+          (progresso?['dias_abaixo_da_meta'] as num?)?.toInt() ?? 0,
       week: weekKinds,
       todayIndex: ((streak?['today_index'] as num?)?.toInt() ?? weekdayIndex())
           .clamp(0, 6),

@@ -270,6 +270,53 @@ class AppSnapshot {
     return DateTime(n.year, n.month, n.day);
   }
 
+  /// Funde este snapshot (vindo do remoto) com o que já existe no aparelho.
+  ///
+  /// **Este método existe por causa de perda de dado real.** O arranque
+  /// gravava por cima do snapshot local o snapshot montado das linhas do
+  /// remoto; tudo que o remoto não tem coluna para guardar voltava ao padrão a
+  /// cada vez que o app abria. Missões resgatadas reapareciam por resgatar,
+  /// e a trilha zerava — sessões concluídas, melhor sequência e dias abaixo da
+  /// meta também não têm coluna.
+  ///
+  /// As regras são as do domínio, não uma preferência:
+  ///
+  /// - **Contador que só sobe fica com o maior.** XP, sessões concluídas,
+  ///   melhor sequência, dias abaixo da meta, afeto: nenhum deles pode
+  ///   diminuir por sincronização.
+  /// - **Conjunto de conquista vira união.** Marco e missão resgatados nunca
+  ///   são retirados (§ "o usuário nunca perde nada").
+  /// - **O que é do dia e o que o remoto não carrega fica com o local.**
+  ///   Contadores de hoje e da semana, medição de tela, sessão em curso.
+  /// - **O resto é do remoto**, que é a fonte da verdade entre aparelhos.
+  AppSnapshot fundeCom(AppSnapshot local) {
+    int maior(int a, int b) => a > b ? a : b;
+    List<String> uniao(List<String> a, List<String> b) =>
+        {...a, ...b}.toList();
+
+    return copyWith(
+      xp: maior(xp, local.xp),
+      afeto: maior(afeto, local.afeto),
+      carinhosHoje: maior(carinhosHoje, local.carinhosHoje),
+      nivelCelebrado: maior(nivelCelebrado, local.nivelCelebrado),
+      sessoesConcluidas: maior(sessoesConcluidas, local.sessoesConcluidas),
+      melhorSequencia: maior(melhorSequencia, local.melhorSequencia),
+      diasAbaixoDaMeta: maior(diasAbaixoDaMeta, local.diasAbaixoDaMeta),
+      marcosResgatados: uniao(marcosResgatados, local.marcosResgatados),
+      missoesResgatadas: uniao(missoesResgatadas, local.missoesResgatadas),
+      // Do dia e da semana: o remoto não guarda nada disso.
+      minutosDeFocoHoje: local.minutosDeFocoHoje,
+      maiorSessaoHoje: local.maiorSessaoHoje,
+      sessoesNaSemana: local.sessoesNaSemana,
+      minutosNaSemana: local.minutosNaSemana,
+      diasAbaixoNaSemana: local.diasAbaixoNaSemana,
+      // Sessão em curso: quem sabe dela é o aparelho onde ela roda.
+      sessionStartedAt: local.sessionStartedAt,
+      sessionEndsAt: local.sessionEndsAt,
+      sessionDur: local.sessionDur,
+    );
+  }
+
   static Sexo parseSexo(String? n) {
     for (final s in Sexo.values) {
       if (s.name == n) return s;

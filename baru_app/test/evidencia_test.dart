@@ -14,6 +14,7 @@ import 'package:baru_app/screens/conta_screen.dart';
 import 'package:baru_app/screens/folhas_screen.dart';
 import 'package:baru_app/screens/sequencia_screen.dart';
 import 'package:baru_app/screens/settings_screen.dart';
+import 'package:baru_app/screens/sobreposicao_screen.dart';
 import 'package:baru_app/screens/tempo_screen.dart';
 import 'package:baru_app/screens/trilha_screen.dart';
 import 'package:baru_app/theme.dart';
@@ -385,6 +386,7 @@ void main() {
       'sequencia': (const SequenciaScreen(), comHistorico),
       'ajustes': (const SettingsScreen(), comHistorico),
       'conta': (const ContaScreen(), comHistorico),
+      'sobreposicao': (const SobreposicaoScreen(), comHistorico),
     };
 
     for (final e in casos.entries) {

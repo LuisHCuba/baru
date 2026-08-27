@@ -19,6 +19,7 @@ import 'screens/shop_screen.dart';
 import 'screens/conta_screen.dart';
 import 'screens/folhas_screen.dart';
 import 'screens/sequencia_screen.dart';
+import 'screens/sobreposicao_screen.dart';
 import 'screens/tempo_screen.dart';
 import 'screens/missoes_screen.dart';
 import 'screens/trilha_screen.dart';
@@ -148,6 +149,8 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
         return const TempoScreen();
       case AppScreen.conta:
         return const ContaScreen();
+      case AppScreen.sobreposicao:
+        return const SobreposicaoScreen();
       case AppScreen.folhas:
         return const FolhasScreen();
       case AppScreen.sequencia:

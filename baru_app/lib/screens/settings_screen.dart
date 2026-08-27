@@ -138,6 +138,12 @@ class SettingsScreen extends StatelessWidget {
             ),
             _Linha(
               chave: null,
+              icone: Icons.layers_outlined,
+              rotulo: t.sobreT,
+              aoTocar: () => app.go(AppScreen.sobreposicao),
+            ),
+            _Linha(
+              chave: null,
               icone: Icons.language_rounded,
               rotulo: t.setLang,
               valor: langs.firstWhere((l) => l.id == app.lang).label,

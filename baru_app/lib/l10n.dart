@@ -254,6 +254,19 @@ class T {
   String get setSom => s('setSom');
   String get setSomSub => s('setSomSub');
   String get trilhaAqui => s('trilhaAqui');
+  String get sobreT => s('sobreT');
+  String get sobreSub => s('sobreSub');
+  String get sobreLigar => s('sobreLigar');
+  String get sobreLigado => s('sobreLigado');
+  String get sobreDesligado => s('sobreDesligado');
+  String get sobreComo => s('sobreComo');
+  String get sobrePreview => s('sobrePreview');
+  String get sobreFechar => s('sobreFechar');
+  String get sobreMais => s('sobreMais');
+  String get sobreFala1 => s('sobreFala1');
+  String get sobreFala2 => s('sobreFala2');
+  String get sobreFala3 => s('sobreFala3');
+  String get sobreSoAndroid => s('sobreSoAndroid');
   String get contaT => s('contaT');
   String get contaSub => s('contaSub');
   String get contaEmail => s('contaEmail');
@@ -484,6 +497,19 @@ const _pt = <String, Object>{
   'setDuracao': 'Duração da sessão',
   'setSom': 'Som',
   'trilhaAqui': 'VOCÊ ESTÁ AQUI',
+  'sobreT': 'Sobre outros apps',
+  'sobreSub': 'Quando o tempo estourar, {n} dá um oi no canto da tela — sem travar nada.',
+  'sobreLigar': 'Permitir',
+  'sobreLigado': 'Ligado',
+  'sobreDesligado': 'Desligado',
+  'sobreComo': 'O Android exige que você ligue na tela do sistema. No máximo 4 vezes por dia, com 25 minutos entre uma e outra.',
+  'sobrePreview': 'Assim que vai aparecer',
+  'sobreFechar': 'Fechar o app',
+  'sobreMais': '+5 min',
+  'sobreFala1': 'Ei! Já deu um tempão aí. Que tal uma pausinha comigo?',
+  'sobreFala2': 'Psiu… o app não vai fugir. Bora respirar um pouco?',
+  'sobreFala3': 'Seu tempo de tela de hoje acabou. Sem culpa — só um lembrete de amigo.',
+  'sobreSoAndroid': 'Por enquanto só no Android. No iPhone a Apple não deixa um app desenhar por cima de outro.',
   'setSomSub': 'Sons curtos nas conquistas e no toque',
   'pronome': {'naoDito': 'ele', 'macho': 'ele', 'femea': 'ela'},
   'possessivo': {'naoDito': 'dele', 'macho': 'dele', 'femea': 'dela'},
@@ -860,6 +886,19 @@ const _en = <String, Object>{
   'setDuracao': 'Session length',
   'setSom': 'Sound',
   'trilhaAqui': 'YOU ARE HERE',
+  'sobreT': 'Over other apps',
+  'sobreSub': 'When time runs out, {n} says hi in the corner — without blocking anything.',
+  'sobreLigar': 'Allow',
+  'sobreLigado': 'On',
+  'sobreDesligado': 'Off',
+  'sobreComo': 'Android requires you to turn this on in system settings. At most 4 times a day, 25 minutes apart.',
+  'sobrePreview': 'How it will look',
+  'sobreFechar': 'Close the app',
+  'sobreMais': '+5 min',
+  'sobreFala1': 'Hey! That was a long stretch. How about a little break with me?',
+  'sobreFala2': 'Psst… the app is not going anywhere. Shall we breathe a bit?',
+  'sobreFala3': 'Today\'s screen time is up. No guilt — just a friendly nudge.',
+  'sobreSoAndroid': 'Android only for now. On iPhone, Apple does not let an app draw over another.',
   'setSomSub': 'Short sounds on wins and taps',
   'pronome': {'naoDito': 'they', 'macho': 'he', 'femea': 'she'},
   'possessivo': {'naoDito': 'their', 'macho': 'his', 'femea': 'her'},
@@ -1233,6 +1272,19 @@ const _es = <String, Object>{
   'setDuracao': 'Duración de la sesión',
   'setSom': 'Sonido',
   'trilhaAqui': 'ESTÁS AQUÍ',
+  'sobreT': 'Sobre otras apps',
+  'sobreSub': 'Cuando el tiempo se acabe, {n} saluda en la esquina — sin bloquear nada.',
+  'sobreLigar': 'Permitir',
+  'sobreLigado': 'Activado',
+  'sobreDesligado': 'Desactivado',
+  'sobreComo': 'Android exige activarlo en los ajustes del sistema. Máximo 4 veces al día, con 25 minutos entre una y otra.',
+  'sobrePreview': 'Así se verá',
+  'sobreFechar': 'Cerrar la app',
+  'sobreMais': '+5 min',
+  'sobreFala1': '¡Ey! Ya fue un buen rato. ¿Y si hacemos una pausita?',
+  'sobreFala2': 'Psst… la app no se va a escapar. ¿Respiramos un poco?',
+  'sobreFala3': 'Tu tiempo de pantalla de hoy se acabó. Sin culpa — solo un recordatorio de amigo.',
+  'sobreSoAndroid': 'Por ahora solo en Android. En iPhone, Apple no permite que una app dibuje sobre otra.',
   'setSomSub': 'Sonidos cortos en logros y toques',
   'pronome': {'naoDito': 'él', 'macho': 'él', 'femea': 'ella'},
   'possessivo': {'naoDito': 'de él', 'macho': 'de él', 'femea': 'de ella'},
@@ -1608,6 +1660,19 @@ const _zh = <String, Object>{
   'setDuracao': '专注时长',
   'setSom': '声音',
   'trilhaAqui': '你在这里',
+  'sobreT': '显示在其他应用之上',
+  'sobreSub': '时间用完时，{n} 会在屏幕角落打个招呼——不会挡住任何操作。',
+  'sobreLigar': '允许',
+  'sobreLigado': '已开启',
+  'sobreDesligado': '已关闭',
+  'sobreComo': 'Android 要求你在系统设置里开启。每天最多 4 次，间隔 25 分钟。',
+  'sobrePreview': '显示效果预览',
+  'sobreFechar': '关闭该应用',
+  'sobreMais': '+5 分钟',
+  'sobreFala1': '嘿！已经看了好一会儿了。要不要和我一起歇一下？',
+  'sobreFala2': '嘘……应用不会跑掉。一起喘口气好吗？',
+  'sobreFala3': '今天的屏幕时间用完了。别自责——只是朋友的提醒。',
+  'sobreSoAndroid': '目前仅支持 Android。在 iPhone 上，苹果不允许应用覆盖其他应用。',
   'setSomSub': '成就与轻触时的短音效',
   'pronome': {'naoDito': '它', 'macho': '它', 'femea': '它'},
   'possessivo': {'naoDito': '它的', 'macho': '它的', 'femea': '它的'},

@@ -17,6 +17,7 @@ enum AppScreen {
   folhas,
   sequencia,
   conta,
+  sobreposicao,
 }
 
 enum Species { capybara, otter, tortoise, owl }

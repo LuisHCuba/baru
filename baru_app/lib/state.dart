@@ -17,6 +17,7 @@ import 'theme.dart';
 import 'models.dart';
 import 'navegacao.dart';
 import 'services/notification_service.dart';
+import 'services/overlay_service.dart';
 import 'services/som_service.dart';
 import 'services/usage_service.dart';
 
@@ -224,6 +225,7 @@ class AppState extends ChangeNotifier {
     final chave = QuadroDeMissoes.chaveDeResgate(m.definicao, lastOpenDate);
     if (missoesResgatadas.contains(chave)) return;
     missoesResgatadas = {...missoesResgatadas, chave};
+    _markSync(_syncProgresso);
     leaves += m.folhas;
     missoesACelebrar = [...missoesACelebrar, m.id];
     ganhaXp(m.xp);
@@ -740,6 +742,7 @@ class AppState extends ChangeNotifier {
           _markSync(_syncSettings);
         }
         changed = true;
+        unawaited(_talvezApareceSobreOsApps());
       }
     }
 
@@ -751,6 +754,25 @@ class AppState extends ChangeNotifier {
     await _syncNotificationSchedules();
 
     if (notify && changed) notifyListeners();
+  }
+
+  /// O companheiro dá um oi por cima do outro app.
+  ///
+  /// Só quando a meta já estourou — antes disso não há o que dizer — e a
+  /// regra de não insistir mora no serviço, não aqui. O texto sai do
+  /// catálogo já traduzido: o lado nativo não escreve produto.
+  Future<void> _talvezApareceSobreOsApps() async {
+    if (!usageAccess || usage <= goal) return;
+    final falas = [t.sobreFala1, t.sobreFala2, t.sobreFala3];
+    // Varia com o dia para não repetir a mesma frase toda vez.
+    final fala = falas[lastOpenDate.day % falas.length];
+    await OverlayService.instance.mostra(
+      fala: fala,
+      pelo: AppColors.pelagemDe(species, color).toARGB32(),
+      especie: species.name,
+      acaoFechar: t.sobreFechar,
+      acaoMais: t.sobreMais,
+    );
   }
 
   void _finishUsagePermissionFlow(bool osUsage) {

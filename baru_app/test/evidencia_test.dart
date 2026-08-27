@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 import 'package:baru_app/data/tempo_de_tela.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/data/progressao.dart';
+import 'package:baru_app/screens/home_screen.dart';
 import 'package:baru_app/screens/missoes_screen.dart';
 import 'package:baru_app/screens/tempo_screen.dart';
 import 'package:baru_app/screens/trilha_screen.dart';
@@ -336,6 +337,44 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
     await _salva(tester, const Key('captura-missoes'), 'missoes');
+  });
+
+  testWidgets('home completa', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(412, 892);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final app = _estado(itens: const ['lily', 'dock', 'rock'])
+      ..leaves = 137
+      ..streak = 4
+      ..usageAccess = true
+      ..usage = 96
+      ..goal = 150
+      ..completedToday = 1
+      ..minutosDeFocoHoje = 50
+      ..sessoesConcluidas = 6
+      ..melhorSequencia = 4
+      ..xp = Balanco.xpAcumuladoPara(4) + 30;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RepaintBoundary(
+            key: const Key('captura-home'),
+            child: AppScope(state: app, child: const HomeScreen()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    await _salva(tester, const Key('captura-home'), 'home');
   });
 
   testWidgets('celebracao de nivel', (tester) async {

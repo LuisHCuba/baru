@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../state.dart';
+import 'trilha_screen.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/habitat.dart';
@@ -23,7 +24,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             LeafBadge(leaves: app.leaves),
             const SizedBox(width: 8),
-            Flexible(
+            Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                 decoration: BoxDecoration(
@@ -47,25 +48,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: AppColors.inkA(0.06),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    t.fill(t.level, {'n': 1 + app.owned.length ~/ 3}),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: nunito(size: 11.5, weight: FontWeight.w700, color: AppColors.inkA(0.55)),
-                  ),
                 ),
               ),
             ),
@@ -155,26 +137,26 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       t.fill(t.usageOf, {'u': app.fmt(app.usage), 'g': app.fmt(app.goal)}),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: nunito(size: 14, weight: FontWeight.w700),
+                      style: nunito(size: 14, weight: FontWeight.w700, height: 1.35),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      app.usageShortLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.right,
-                      style: nunito(size: 13, weight: FontWeight.w600, color: AppColors.inkA(0.5)),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   const Chevron(),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  app.usageShortLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: nunito(size: 13, weight: FontWeight.w600, color: AppColors.inkA(0.5)),
+                ),
+              ),
+              const SizedBox(height: 10),
               TrackFill(
                 pct: usagePct,
                 color: app.underGoal ? AppColors.green : AppColors.orange,
@@ -183,18 +165,10 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        SoftCard(
-          padding: const EdgeInsets.fromLTRB(19, 17, 19, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SectionLabel(t.questsT),
-              const SizedBox(height: 6),
-              _quest(t.quest1, '+10', app.completedToday >= 1),
-              _quest(t.quest2, '+${AppState.underGoalBonus}', app.underGoalQuestDone),
-            ],
-          ),
-        ),
+        // Nível e XP de verdade, com a trilha a um toque.
+        CartaoNivel(app: app, compacto: true),
+        const SizedBox(height: 12),
+        _ResumoDeMissoes(app: app),
         const SizedBox(height: 12),
         SoftCard(
           padding: const EdgeInsets.fromLTRB(17, 15, 17, 15),
@@ -308,15 +282,70 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  Widget _quest(String label, String reward, bool done) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 11),
+}
+
+/// As missões do dia em uma linha, com o que ainda dá para resgatar.
+///
+/// O cartão antigo mostrava duas quests com visto binário e um "+10" que nada
+/// creditava. Este aponta para a tela onde elas existem de verdade.
+class _ResumoDeMissoes extends StatelessWidget {
+  const _ResumoDeMissoes({required this.app});
+
+  final AppState app;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = app.t;
+    final diarias = app.missoesDiarias;
+    final feitas = diarias.where((m) => m.resgatada).length;
+    final aResgatar = app.missoesResgataveis;
+
+    return SoftCard(
+      onTap: () => app.go(AppScreen.missoes),
       child: Row(
         children: [
-          QuestMark(done: done),
-          const SizedBox(width: 12),
-          Expanded(child: Text(label, style: nunito(size: 14, weight: FontWeight.w600, height: 1.35))),
-          Text(reward, style: nunito(size: 13, weight: FontWeight.w800, color: AppColors.orange)),
+          AppIcon(
+            aResgatar > 0 ? Icons.redeem_rounded : Icons.flag_outlined,
+            size: 18,
+            color: aResgatar > 0 ? AppColors.orange : AppColors.green,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.missoesT,
+                  style: nunito(size: 14, weight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                TrackFill(
+                  pct: diarias.isEmpty ? 0 : feitas / diarias.length,
+                  height: 8,
+                  color: AppColors.green,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          if (aResgatar > 0)
+            Etiqueta(
+              texto: t.missaoResgatar,
+              cor: AppColors.orange,
+              forte: true,
+            )
+          else
+            Text(
+              '$feitas/${diarias.length}',
+              style: nunito(
+                size: 13,
+                weight: FontWeight.w700,
+                color: AppColors.inkA(0.5),
+                tabular: true,
+              ),
+            ),
+          const SizedBox(width: 6),
+          const Chevron(),
         ],
       ),
     );

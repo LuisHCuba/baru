@@ -5,14 +5,12 @@ import 'package:baru_app/models.dart';
 import 'package:baru_app/screens/auth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// A escolha de idioma é o passo 1 do onboarding — mas o login vem antes dele.
 /// Num app com quatro idiomas de primeira classe (contrato §2), a porta de
 /// entrada não pode falar só português.
 
 void main() {
-  GoogleFonts.config.allowRuntimeFetching = false;
 
   group('idioma a partir do locale do aparelho', () {
     test('reconhece os quatro idiomas do contrato', () {

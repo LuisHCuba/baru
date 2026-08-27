@@ -4,7 +4,6 @@ import 'package:baru_app/models.dart';
 import 'package:baru_app/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 AppSnapshot _snap(AppScreen screen) {
   final now = DateTime.now();
@@ -44,7 +43,6 @@ AppSnapshot _snap(AppScreen screen) {
 }
 
 void main() {
-  GoogleFonts.config.allowRuntimeFetching = false;
 
   Future<void> pumpAt412(WidgetTester tester, AppScreen screen) async {
     tester.view.physicalSize = const Size(412, 892);

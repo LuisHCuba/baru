@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../models.dart';
 import '../state.dart';
@@ -8,24 +7,6 @@ import 'app_icons.dart';
 
 export 'app_frame.dart';
 export 'app_icons.dart';
-
-TextStyle nunito({
-  required double size,
-  FontWeight weight = FontWeight.w400,
-  Color? color,
-  double? height,
-  double? letterSpacing,
-  bool tabular = false,
-}) {
-  return GoogleFonts.nunito(
-    fontSize: size,
-    fontWeight: weight,
-    color: color ?? AppColors.ink,
-    height: height,
-    letterSpacing: letterSpacing,
-    fontFeatures: tabular ? const [FontFeature.tabularFigures()] : null,
-  );
-}
 
 class _Hover extends StatefulWidget {
   const _Hover({required this.builder, this.onTap, this.enabled = true});

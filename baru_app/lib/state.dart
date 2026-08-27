@@ -843,6 +843,32 @@ class AppState extends ChangeNotifier {
     // Grava a sessão em curso: se o app for morto agora, ela é retomada.
     notifyListeners();
     _iniciaTicker();
+    unawaited(_anunciaSessao());
+  }
+
+  /// Põe a sessão na barra de notificações e agenda o aviso de conclusão.
+  ///
+  /// A contagem regressiva é desenhada pelo Android a partir do instante de
+  /// término, então ela continua andando com o app fechado — que é o estado
+  /// normal de uma sessão que deu certo.
+  Future<void> _anunciaSessao() async {
+    final fim = sessionEndsAt;
+    if (fim == null) return;
+    final minutos = sessionMinutes;
+    await BaruNotifications.instance.mostraSessao(
+      terminaEm: fim,
+      titulo: t.fill(t.notifSessaoTitulo, {'n': displayName}),
+      corpo: t.notifSessaoCorpo,
+      rotuloDesistir: t.notifSessaoDesistir,
+    );
+    await BaruNotifications.instance.agendaFimDaSessao(
+      terminaEm: fim,
+      titulo: t.notifFimTitulo,
+      corpo: t.fill(t.notifFimCorpo, {
+        'm': minutos,
+        'k': sessionReward(minutos),
+      }),
+    );
   }
 
   void _iniciaTicker() {
@@ -915,6 +941,9 @@ class AppState extends ChangeNotifier {
     sessionEndsAt = null;
     if (navega) screen = AppScreen.result;
     _markSync(_syncSession | _syncShop);
+    // O aviso agendado já cumpriu (ou vai cumprir) o papel; o que sai é a
+    // notificação fixa. Agendamento sem motivo tem de sumir.
+    unawaited(BaruNotifications.instance.encerraSessao());
     notifyListeners();
   }
 
@@ -952,6 +981,8 @@ class AppState extends ChangeNotifier {
       screen = AppScreen.session;
       _recalculaRestante();
       _iniciaTicker();
+      // Reboot ou swipe podem ter tirado a notificação da barra; recoloca.
+      unawaited(_anunciaSessao());
       return;
     }
     // O tempo acabou com o app fechado — que é exatamente o que se pede ao
@@ -985,6 +1016,7 @@ class AppState extends ChangeNotifier {
     sessionDur = minutos;
     _logSession(completed: false, gained: 0, minutos: minutos);
     _markSync(_syncSession);
+    unawaited(BaruNotifications.instance.encerraSessao());
     notifyListeners();
   }
 

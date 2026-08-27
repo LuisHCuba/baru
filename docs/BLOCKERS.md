@@ -128,3 +128,36 @@ autenticada, só não era a ativa; o agente trocou com
 precisar voltar a ser a conta ativa, dar permissão de escrita a ela no
 repositório ou reverter com `gh auth switch --user goworksistemas` e empurrar
 manualmente.
+
+---
+
+## BL-09 — Notificação da sessão: o que falta é aparelho, não código
+
+**Situação.** A sessão em curso já vai para a barra de notificações como
+notificação **fixa**, silenciosa, com a contagem regressiva desenhada pelo
+próprio Android (`usesChronometer` + `chronometerCountDown` a partir do
+instante de término) e um botão "Desistir" que age no app. O fim da sessão é
+**agendado**, então o aviso de recompensa chega mesmo com o app fechado.
+
+O que os testes cobrem: a configuração da notificação (fixa, silenciosa,
+cronômetro apontando para o instante certo, ação presente, canal separado) e o
+ciclo de vida dela no estado (some ao concluir e ao desistir; desistir duas
+vezes não dispara duas vezes).
+
+O que **não** foi verificado: a entrega pelo sistema operacional. Isso exige
+aparelho, e o agente não tem.
+
+**Ação pedida.** Instale num Android e confira:
+1. começar uma sessão põe a notificação na barra, com a contagem andando;
+2. a contagem continua andando com o app fechado (é o ponto todo);
+3. "Desistir" na notificação encerra a sessão dentro do app;
+4. o aviso de conclusão chega com o app fechado.
+
+Se o item 4 atrasar muito, é a permissão de alarme exato: o app declara
+`SCHEDULE_EXACT_ALARM` e cai para agendamento inexato quando ela é negada.
+Ajustes → Apps → Baru → Alarmes e lembretes.
+
+**Fora de escopo por ora:** serviço em primeiro plano no Android e Live
+Activity no iOS. O primeiro exige código nativo e uma permissão a mais; o
+segundo exige entitlement da Apple (ver BL-06). A contagem via cronômetro do
+sistema cobre o caso principal sem nenhum dos dois.

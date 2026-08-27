@@ -266,6 +266,11 @@ class T {
   String get msSemanaMinutos => s('msSemanaMinutos');
   String get msSemanaAbaixo => s('msSemanaAbaixo');
   String get missaoGanhou => s('missaoGanhou');
+  String get notifSessaoTitulo => s('notifSessaoTitulo');
+  String get notifSessaoCorpo => s('notifSessaoCorpo');
+  String get notifSessaoDesistir => s('notifSessaoDesistir');
+  String get notifFimTitulo => s('notifFimTitulo');
+  String get notifFimCorpo => s('notifFimCorpo');
 
 
   static const _weekdayLong = {
@@ -389,6 +394,11 @@ const _pt = <String, Object>{
   'msSemanaMinutos': '{n} min de foco nesta semana',
   'msSemanaAbaixo': '{n} dias abaixo da meta nesta semana',
   'missaoGanhou': '+{n} folhas',
+  'notifSessaoTitulo': '{n} está em foco',
+  'notifSessaoCorpo': 'Deixe o telefone de lado. Volte quando acabar.',
+  'notifSessaoDesistir': 'Desistir',
+  'notifFimTitulo': 'Sessão concluída',
+  'notifFimCorpo': '{m} min de foco. +{k} folhas para o habitat.',
   'langTitle': 'Em que idioma você quer falar com ele?',
   'langSub': 'Pode trocar depois nos ajustes.',
   'cont': 'Continuar',
@@ -690,6 +700,11 @@ const _en = <String, Object>{
   'msSemanaMinutos': '{n} min of focus this week',
   'msSemanaAbaixo': '{n} days under your goal this week',
   'missaoGanhou': '+{n} leaves',
+  'notifSessaoTitulo': '{n} is focusing',
+  'notifSessaoCorpo': 'Put the phone down. Come back when it ends.',
+  'notifSessaoDesistir': 'Give up',
+  'notifFimTitulo': 'Session complete',
+  'notifFimCorpo': '{m} min of focus. +{k} leaves for the habitat.',
   'langTitle': 'Which language should we speak?',
   'langSub': 'You can change it later in settings.',
   'cont': 'Continue',
@@ -988,6 +1003,11 @@ const _es = <String, Object>{
   'msSemanaMinutos': '{n} min de enfoque esta semana',
   'msSemanaAbaixo': '{n} días bajo tu meta esta semana',
   'missaoGanhou': '+{n} hojas',
+  'notifSessaoTitulo': '{n} está enfocado',
+  'notifSessaoCorpo': 'Deja el móvil. Vuelve cuando termine.',
+  'notifSessaoDesistir': 'Rendirse',
+  'notifFimTitulo': 'Sesión completada',
+  'notifFimCorpo': '{m} min de enfoque. +{k} hojas para el hábitat.',
   'langTitle': '¿En qué idioma quieres hablarle?',
   'langSub': 'Puedes cambiarlo después en ajustes.',
   'cont': 'Continuar',
@@ -1288,6 +1308,11 @@ const _zh = <String, Object>{
   'msSemanaMinutos': '本周 {n} 分钟专注',
   'msSemanaAbaixo': '本周 {n} 天低于目标',
   'missaoGanhou': '+{n} 片叶子',
+  'notifSessaoTitulo': '{n} 正在专注',
+  'notifSessaoCorpo': '把手机放下，结束后再回来。',
+  'notifSessaoDesistir': '放弃',
+  'notifFimTitulo': '专注完成',
+  'notifFimCorpo': '专注 {m} 分钟。栖息地 +{k} 片叶子。',
   'langTitle': '你想用哪种语言？',
   'langSub': '之后可以在设置里更改。',
   'cont': '继续',

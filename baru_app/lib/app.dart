@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'data/app_snapshot.dart';
 import 'data/repositories.dart';
+import 'services/notification_service.dart';
 import 'models.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -51,6 +52,10 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     state.initPlatformServices();
+    // "Desistir" na notificação da sessão age no app, não só some da barra.
+    BaruNotifications.instance.aoDesistirPelaBarra = () {
+      if (state.sessionEndsAt != null) state.abandon();
+    };
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.bootstrapNotice != null) {
         _scaffoldKey.currentState?.showSnackBar(

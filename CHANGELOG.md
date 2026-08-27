@@ -3,6 +3,45 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — ticker que não para, e um vazamento que nasceu com o botão "Tirar"
+
+O relato foi um assert do Flutter **web** em laço:
+`"Trying to render a disposed EngineFlutterView"`. Ele é lançado quando um
+quadro é desenhado depois de a view morrer — na prática, em hot restart com
+animação em laço rodando. Auditei o que o app mantém vivo e achei dois
+problemas de verdade.
+
+### Corrigido
+
+- **Animação em laço não parava com o app fora da tela.** O companheiro
+  respira e a cena deriva com `repeat()`, que pede quadro para sempre. Agora
+  os dois param em `inactive`, `hidden`, `paused` e `detached`, e voltam em
+  `resumed`. É bateria no telefone — e no web é justamente o que segue
+  pedindo quadro depois de a view sumir.
+- **Vazamento de memória que nasceu com o botão "Tirar".** Cada objeto de cena
+  ganha um `AnimationController` de chegada. Antes um item nunca saía do
+  habitat, então ninguém reparava; com "Colocar/Tirar", cada retirada deixava
+  um controller órfão no mapa, e recolocar criava outro por cima sem descartar
+  o primeiro.
+
+### Uma correção minha, no meio do caminho
+
+Eu tinha escrito que o controller órfão "continua pedindo quadro" e por isso
+causava o assert do web. **Está errado**: a chegada é um `forward()` que
+termina, e controller parado não pede quadro. Descobri isso porque a mutação
+não derrubou o teste — o `flutter_test` só acusa ticker **animando**. Refiz o
+teste com uma costura que conta os controllers vivos, e aí a mutação cai.
+
+O vazamento é real e vale corrigir; ele só não é a causa do assert. Quem pede
+quadro para sempre é `repeat()`, e disso cuida a pausa por ciclo de vida —
+essa sim verificada por mutação.
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: 408+ passando
+- As duas correções verificadas por mutação, cada uma no seu teste.
+
 ## 2026-08-27 — as oito espécies do `baru-pets.html`
 
 ### O QUE MUDOU NA TELA

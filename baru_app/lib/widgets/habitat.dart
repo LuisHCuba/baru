@@ -165,6 +165,10 @@ class HabitatScene extends StatefulWidget {
 
   final double height;
 
+  /// porque vazamento de memória não aparece na tela nem no teste de widget.
+  @visibleForTesting
+  static ValueNotifier<int>? observadorDeChegadas;
+
   /// Desligado em miniaturas e capturas.
   final bool animado;
 
@@ -181,7 +185,7 @@ class HabitatScene extends StatefulWidget {
 }
 
 class _HabitatSceneState extends State<HabitatScene>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   /// Deriva contínua e lenta que move as camadas em velocidades diferentes.
   late final AnimationController _deriva = AnimationController(
     vsync: this,
@@ -196,6 +200,8 @@ class _HabitatSceneState extends State<HabitatScene>
   );
   String? _textoDoPremio;
 
+  /// Quantos controllers de chegada estão vivos. Nulo em produção — existe
+
   /// Itens que já estavam na cena. Item novo entra animado.
   Set<String> _jaVistos = {};
   final Map<String, AnimationController> _chegadas = {};
@@ -203,24 +209,69 @@ class _HabitatSceneState extends State<HabitatScene>
   bool _continuo = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Cena escondida não deriva. Mesmo motivo do companheiro: `repeat()` pede
+  /// quadro para sempre, e app fora da tela não tem quadro para dar.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (!mounted) return;
+    if (estado == AppLifecycleState.resumed) {
+      _ajustaContinuo();
+    } else {
+      _paraContinuo();
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _ajustaContinuo();
+  }
+
+  void _ajustaContinuo() {
     if (widget.animado && !Movimento.reduzido(context)) {
       if (!_continuo) {
         _continuo = true;
         _deriva.repeat(reverse: true);
       }
     } else {
-      _continuo = false;
-      _deriva
-        ..stop()
-        ..value = 0.5;
+      _paraContinuo();
     }
   }
 
+  void _paraContinuo() {
+    _continuo = false;
+    _deriva
+      ..stop()
+      ..value = 0.5;
+  }
+
   void _sincronizaChegadas(List<String> possuidos) {
+    // Quem saiu da cena leva o controller junto.
+    //
+    // **Isto vazava memória.** Antes um item nunca saía do habitat, então
+    // ninguém reparava; com o botão "Tirar" da loja nova, cada retirada
+    // deixava um `AnimationController` órfão no mapa, e recolocar o item
+    // criava outro por cima sem descartar o primeiro. Colocar e tirar em
+    // sequência acumula um por vez.
+    //
+    // Não é a causa do assert do Flutter web: a chegada é um `forward()` que
+    // termina, e controller parado não pede quadro. Quem pede quadro para
+    // sempre é `repeat()` — e disso cuida a pausa por ciclo de vida.
+    final agora = possuidos.toSet();
+    for (final id in _chegadas.keys.toList()) {
+      if (agora.contains(id)) continue;
+      _chegadas.remove(id)!.dispose();
+    }
+
     for (final id in possuidos) {
       if (_jaVistos.contains(id)) continue;
+      // Substituir sem descartar é a outra metade do mesmo vazamento.
+      _chegadas.remove(id)?.dispose();
       final c = AnimationController(
         vsync: this,
         duration: Tempo.celebracao,
@@ -235,10 +286,12 @@ class _HabitatSceneState extends State<HabitatScene>
       }
     }
     _jaVistos = possuidos.toSet();
+    HabitatScene.observadorDeChegadas?.value = _chegadas.length;
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _premio.dispose();
     _deriva.dispose();
     for (final c in _chegadas.values) {

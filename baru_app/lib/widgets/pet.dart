@@ -101,7 +101,8 @@ class PetView extends StatefulWidget {
   State<PetView> createState() => _PetViewState();
 }
 
-class _PetViewState extends State<PetView> with TickerProviderStateMixin {
+class _PetViewState extends State<PetView>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _respiro = AnimationController(
     vsync: this,
     duration: Tempo.respiracao,
@@ -176,6 +177,32 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
   double _percorrido = 0;
   double _desdeORonrom = 0;
   bool _afagoCreditado = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Bicho escondido não respira.
+  ///
+  /// Um `repeat()` pede quadro para sempre. Com o app fora da tela isso é
+  /// bateria queimada à toa — e no Flutter web é o que segue pedindo quadro
+  /// depois de a view morrer, virando "Trying to render a disposed
+  /// EngineFlutterView".
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (!mounted) return;
+    switch (estado) {
+      case AppLifecycleState.resumed:
+        if (!Movimento.reduzido(context)) _iniciaContinuo();
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _paraContinuo();
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -395,6 +422,7 @@ class _PetViewState extends State<PetView> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _proximoPiscar?.cancel();
     _proximaOrelha?.cancel();
     _proximoGesto?.cancel();

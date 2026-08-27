@@ -152,6 +152,39 @@ class BaruSupabase {
     _ready = false;
   }
 
+  /// Troca o e-mail da conta.
+  ///
+  /// O Supabase **não** troca na hora: manda um link de confirmação para o
+  /// endereço novo, e só depois de clicado o login passa a ser por ele. Quem
+  /// chama tem de dizer isso ao usuário, senão parece que não funcionou.
+  Future<void> trocaEmail(String novo) async {
+    _ensureAttached();
+    await _client!.auth.updateUser(UserAttributes(email: novo.trim()));
+  }
+
+  /// Troca a senha da sessão atual. Vale imediatamente.
+  Future<void> trocaSenha(String nova) async {
+    _ensureAttached();
+    await _client!.auth.updateUser(UserAttributes(password: nova));
+  }
+
+  /// Manda o e-mail de recuperação de senha.
+  Future<void> recuperaSenha(String email) async {
+    _ensureAttached();
+    await _client!.auth.resetPasswordForEmail(email.trim());
+  }
+
+  /// Quando a conta foi criada. Nulo quando não há sessão.
+  DateTime? get contaCriadaEm {
+    final iso = _client?.auth.currentUser?.createdAt;
+    if (iso == null) return null;
+    return DateTime.tryParse(iso);
+  }
+
+  /// O e-mail está confirmado?
+  bool get emailConfirmado =>
+      _client?.auth.currentUser?.emailConfirmedAt != null;
+
   @visibleForTesting
   Future<void> dispose() async {
     await _authSub?.cancel();

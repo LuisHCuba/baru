@@ -53,6 +53,7 @@ extension RotaDaTela on AppScreen {
         AppScreen.tempo ||
         AppScreen.folhas ||
         AppScreen.sequencia ||
+        AppScreen.conta ||
         AppScreen.result =>
           TipoDeRota.detalhe,
         AppScreen.paywall => TipoDeRota.modal,
@@ -70,6 +71,7 @@ extension RotaDaTela on AppScreen {
         AppScreen.shop => '/loja',
         AppScreen.tempo => '/tempo',
         AppScreen.folhas => '/folhas',
+        AppScreen.conta => '/conta',
         AppScreen.sequencia => '/sequencia',
         AppScreen.result => '/resultado',
         AppScreen.paywall => '/assinatura',

@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:uuid/uuid.dart';
 
 import 'data/app_snapshot.dart';
+import 'data/auth_errors.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
 import 'data/missoes.dart';
@@ -12,6 +13,7 @@ import 'data/progressao.dart';
 import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
 import 'l10n.dart';
+import 'theme.dart';
 import 'models.dart';
 import 'navegacao.dart';
 import 'services/notification_service.dart';
@@ -338,6 +340,22 @@ class AppState extends ChangeNotifier {
   /// de schema desatualizado é acionável, o de rede não.
   final Set<String> _tabelasAusentesAvisadas = {};
 
+  /// O usuário apertou voltar na home. A tela pergunta antes de deixar o
+  /// sistema fechar o app.
+  bool pedindoParaSair = false;
+
+  void cancelaSaida() {
+    if (!pedindoParaSair) return;
+    pedindoParaSair = false;
+    _notifyEfemero();
+  }
+
+  /// Quais domínios falharam no último episódio. Vazio quando está tudo bem.
+  ///
+  /// Existe porque "não foi possível sincronizar" sozinho não dá para
+  /// investigar: são treze tabelas em seis domínios.
+  String ultimoErroDeSync = '';
+
   static const _syncPet = 1;
   static const _syncShop = 2;
   static const _syncSession = 4;
@@ -367,6 +385,49 @@ class AppState extends ChangeNotifier {
 
   bool get canSignOut =>
       BaruEnv.supabaseEnabled && BaruSupabase.instance.isEmailUser;
+
+  /// O e-mail da conta, ou vazio quando não há conta.
+  String get emailDaConta => BaruSupabase.instance.currentUserEmail ?? '';
+
+  bool get emailConfirmado => BaruSupabase.instance.emailConfirmado;
+
+  DateTime? get contaCriadaEm => BaruSupabase.instance.contaCriadaEm;
+
+  /// Resultado de uma operação de conta: nulo deu certo, texto é o erro já
+  /// traduzido.
+  Future<String?> trocaEmail(String novo) async {
+    if (!_emailValido(novo)) return t.contaEmailInvalido;
+    try {
+      await BaruSupabase.instance.trocaEmail(novo);
+      return null;
+    } catch (e) {
+      return translateAuthError(e, lang);
+    }
+  }
+
+  Future<String?> trocaSenha(String nova) async {
+    if (nova.length < 6) return t.contaSenhaCurta;
+    try {
+      await BaruSupabase.instance.trocaSenha(nova);
+      return null;
+    } catch (e) {
+      return translateAuthError(e, lang);
+    }
+  }
+
+  Future<String?> recuperaSenha() async {
+    final email = emailDaConta;
+    if (email.isEmpty) return t.contaSemConta;
+    try {
+      await BaruSupabase.instance.recuperaSenha(email);
+      return null;
+    } catch (e) {
+      return translateAuthError(e, lang);
+    }
+  }
+
+  static bool _emailValido(String e) =>
+      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(e.trim());
 
   Future<void> signOut() async {
     if (!canSignOut) return;
@@ -557,6 +618,13 @@ class AppState extends ChangeNotifier {
     if (atual.tipo == TipoDeRota.destino && atual != AppScreen.home) {
       _pilha[0] = AppScreen.home;
       notifyListeners();
+      return true;
+    }
+    // Na home, voltar pergunta antes. Fechar sem avisar num app de
+    // companhia é justamente o gesto que a companhia não faz.
+    if (!pedindoParaSair) {
+      pedindoParaSair = true;
+      _notifyEfemero();
       return true;
     }
     return false;
@@ -850,7 +918,9 @@ class AppState extends ChangeNotifier {
   }
 
   void setColor(int i) {
-    color = i.clamp(0, 3);
+    // Limite da paleta **da espécie**, não um 3 escrito à mão: com paletas de
+    // seis tons, as duas últimas bolinhas apareciam e não faziam nada.
+    color = i.clamp(0, AppColors.coatDe(species).length - 1);
     _markSync(_syncPet);
     notifyListeners();
   }
@@ -861,6 +931,9 @@ class AppState extends ChangeNotifier {
     final current = petName.trim();
     final wasDefault = current.isEmpty || current == petNames[species];
     species = s;
+    // A paleta muda com a espécie: um índice válido na anterior pode não
+    // existir na nova.
+    color = color.clamp(0, AppColors.coatDe(s).length - 1);
     if (wasDefault) {
       petName = petNames[s]!;
     }
@@ -1635,7 +1708,12 @@ class AppState extends ChangeNotifier {
       _syncMask = 0;
 
       var falhou = 0;
-      Future<void> envia(int bit, Future<void> Function() push) async {
+      final dominiosQueFalharam = <String>[];
+      Future<void> envia(
+        int bit,
+        String nome,
+        Future<void> Function() push,
+      ) async {
         if (mask & bit == 0) return;
         try {
           await push();
@@ -1652,6 +1730,10 @@ class AppState extends ChangeNotifier {
             }
             return;
           }
+          // Sem o nome do domínio e sem o erro cru, "não foi possível
+          // sincronizar" não dá para investigar: são treze tabelas.
+          debugPrint('Baru: sync falhou em $nome — $e');
+          dominiosQueFalharam.add(nome);
           // Devolve a intenção à máscara: o domínio tenta de novo na próxima
           // gravação, em vez de a mudança sumir sem ninguém saber.
           falhou |= bit;
@@ -1660,12 +1742,12 @@ class AppState extends ChangeNotifier {
 
       // Cada domínio é isolado: uma falha de rede no pet não pode impedir a
       // loja, os ajustes, as sessões e o trial de subirem.
-      await envia(_syncPet, r.pet.pushRemote);
-      await envia(_syncShop, r.shop.pushRemote);
-      await envia(_syncSettings, r.settings.pushRemote);
-      await envia(_syncSession, r.sessions.pushRemote);
-      await envia(_syncTrial, r.trial.pushRemote);
-      await envia(_syncProgresso, r.progresso.pushRemote);
+      await envia(_syncPet, 'pet', r.pet.pushRemote);
+      await envia(_syncShop, 'loja', r.shop.pushRemote);
+      await envia(_syncSettings, 'ajustes', r.settings.pushRemote);
+      await envia(_syncSession, 'sessoes', r.sessions.pushRemote);
+      await envia(_syncTrial, 'assinatura', r.trial.pushRemote);
+      await envia(_syncProgresso, 'progresso', r.progresso.pushRemote);
 
       if (falhou != 0) {
         _syncMask |= falhou;
@@ -1673,7 +1755,10 @@ class AppState extends ChangeNotifier {
         // debounce dispara a cada toque e viraria enxurrada de SnackBar.
         if (!_syncFailNotified) {
           _syncFailNotified = true;
-          onSyncError?.call(t.syncFail);
+          ultimoErroDeSync = dominiosQueFalharam.join(', ');
+          onSyncError?.call(
+            t.fill(t.syncFail, {'q': ultimoErroDeSync}),
+          );
         }
       } else {
         _syncFailNotified = false;

@@ -40,6 +40,18 @@ idênticas: a cena não conhecia a hora.
 | `pet-idle.png` | parado (sentindo falta) |
 | `especie-*.png` | capivara, lontra, tartaruga e coruja |
 
+## Telas
+
+| Arquivo | O que mostra |
+|---|---|
+| `tela-folhas.png` | de onde cada folha veio, onde foi gasta, e as últimas com data |
+| `tela-sequencia.png` | sequência atual, melhor, congelamentos, semana e próximo marco |
+| `tela-ajustes.png` | cada assunto numa linha com o valor à direita |
+| `tela-conta.png` | e-mail, senha, plano — aqui no estado "sem conta neste aparelho" |
+| `trilha-inicio.png` | o caminho numa conta nova: o primeiro nó é o atual |
+| `trilha-andamento.png` | cinco nós conquistados, linha sólida no trecho feito |
+| `folha-de-saida.png` | a pergunta antes de fechar o app |
+
 ## Reações ao toque e gestos de ocioso
 
 | Arquivo | O que mostra |

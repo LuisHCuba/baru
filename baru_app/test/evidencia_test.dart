@@ -10,6 +10,7 @@ import 'package:baru_app/models.dart';
 import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/screens/home_screen.dart';
 import 'package:baru_app/screens/missoes_screen.dart';
+import 'package:baru_app/screens/conta_screen.dart';
 import 'package:baru_app/screens/folhas_screen.dart';
 import 'package:baru_app/screens/sequencia_screen.dart';
 import 'package:baru_app/screens/settings_screen.dart';
@@ -20,6 +21,7 @@ import 'package:baru_app/widgets/celebracao.dart';
 import 'package:baru_app/state.dart';
 import 'package:baru_app/widgets/habitat.dart';
 import 'package:baru_app/widgets/pet.dart';
+import 'package:baru_app/widgets/saida.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -382,6 +384,7 @@ void main() {
       'folhas': (const FolhasScreen(), comHistorico),
       'sequencia': (const SequenciaScreen(), comHistorico),
       'ajustes': (const SettingsScreen(), comHistorico),
+      'conta': (const ContaScreen(), comHistorico),
     };
 
     for (final e in casos.entries) {
@@ -400,6 +403,34 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await _salva(tester, const Key('captura-tela'), 'tela-${e.key}');
     }
+  });
+
+  testWidgets('folha de saida', (tester) async {
+    tester.view.physicalSize = const Size(412, 892);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final app = _estado()..streak = 5;
+    app.voltar(); // pede para sair
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: Cores.superficie,
+          body: RepaintBoundary(
+            key: const Key('captura-saida'),
+            child: AppScope(
+              state: app,
+              child: const Stack(children: [FolhaDeSaida()]),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(Tempo.tela);
+    await _salva(tester, const Key('captura-saida'), 'folha-de-saida');
+    await tester.pump(const Duration(seconds: 2));
   });
 
   testWidgets('as quatro espécies', (tester) async {

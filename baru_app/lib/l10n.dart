@@ -253,6 +253,30 @@ class T {
   String get setDuracao => s('setDuracao');
   String get setSom => s('setSom');
   String get setSomSub => s('setSomSub');
+  String get trilhaAqui => s('trilhaAqui');
+  String get contaT => s('contaT');
+  String get contaSub => s('contaSub');
+  String get contaEmail => s('contaEmail');
+  String get contaEmailNaoConfirmado => s('contaEmailNaoConfirmado');
+  String get contaTrocarEmail => s('contaTrocarEmail');
+  String get contaTrocarEmailAviso => s('contaTrocarEmailAviso');
+  String get contaSenha => s('contaSenha');
+  String get contaTrocarSenha => s('contaTrocarSenha');
+  String get contaRecuperar => s('contaRecuperar');
+  String get contaRecuperarOk => s('contaRecuperarOk');
+  String get contaEmailInvalido => s('contaEmailInvalido');
+  String get contaSenhaCurta => s('contaSenhaCurta');
+  String get contaSemConta => s('contaSemConta');
+  String get contaDesde => s('contaDesde');
+  String get contaPlano => s('contaPlano');
+  String get contaSalvar => s('contaSalvar');
+  String get contaOk => s('contaOk');
+  String get contaNovoEmail => s('contaNovoEmail');
+  String get contaNovaSenha => s('contaNovaSenha');
+  String get sairT => s('sairT');
+  String get sairB => s('sairB');
+  String get sairFicar => s('sairFicar');
+  String get sairSair => s('sairSair');
   String get seqT => s('seqT');
   String get seqSub => s('seqSub');
   String get seqAtual => s('seqAtual');
@@ -396,7 +420,7 @@ const _pt = <String, Object>{
   'authConfirmEmail': 'Conta criada. Confirme o e-mail no link enviado e depois entre.',
   'authAttachFail': 'Não foi possível conectar ao servidor. Verifique a internet ou tente mais tarde.',
   'authBootstrapLoading': 'Carregando seu habitat…',
-  'syncFail': 'Não foi possível sincronizar. Seus dados ficam salvos neste aparelho.',
+  'syncFail': 'Não foi possível sincronizar ({q}). Seus dados ficam salvos neste aparelho.',
   'syncSchemaFail': 'O banco na nuvem está desatualizado: falta a tabela {t}. Seus dados ficam salvos neste aparelho.',
   'bootstrapOffline': 'Conta nova ou sem dados remotos — começando habitat vazio.',
   'bonusUnderGoal': 'Ontem você fechou abaixo da meta. +{k} folhas para o habitat.',
@@ -424,6 +448,29 @@ const _pt = <String, Object>{
   'trilhaAgora': 'Agora',
   'trilhaBloqueado': 'A caminho',
   'nivelRotulo': 'Nível {n}',
+  'contaT': 'Sua conta',
+  'contaSub': 'E-mail, senha e plano.',
+  'contaEmail': 'E-mail',
+  'contaEmailNaoConfirmado': 'ainda não confirmado',
+  'contaTrocarEmail': 'Trocar e-mail',
+  'contaTrocarEmailAviso': 'Enviamos um link para o endereço novo. O login só muda depois que você clicar nele.',
+  'contaSenha': 'Senha',
+  'contaTrocarSenha': 'Trocar senha',
+  'contaRecuperar': 'Esqueci a senha',
+  'contaRecuperarOk': 'Link de recuperação enviado para {e}.',
+  'contaEmailInvalido': 'Esse e-mail não parece certo.',
+  'contaSenhaCurta': 'A senha precisa de pelo menos 6 caracteres.',
+  'contaSemConta': 'Você ainda não tem conta neste aparelho.',
+  'contaDesde': 'Companheiro desde',
+  'contaPlano': 'Plano',
+  'contaSalvar': 'Salvar',
+  'contaOk': 'Pronto.',
+  'contaNovoEmail': 'Novo e-mail',
+  'contaNovaSenha': 'Nova senha',
+  'sairT': 'Já vai?',
+  'sairB': '{P} fica aqui te esperando. Nada se perde — nem as folhas, nem a sequência, nem o habitat.',
+  'sairFicar': 'Ficar mais um pouco',
+  'sairSair': 'Sair',
   'setSexo': 'Sexo',
   'setSexoNao': 'Não dizer',
   'setSexoM': 'Macho',
@@ -436,6 +483,7 @@ const _pt = <String, Object>{
   'setSecoes': 'Ajustes',
   'setDuracao': 'Duração da sessão',
   'setSom': 'Som',
+  'trilhaAqui': 'VOCÊ ESTÁ AQUI',
   'setSomSub': 'Sons curtos nas conquistas e no toque',
   'pronome': {'naoDito': 'ele', 'macho': 'ele', 'femea': 'ela'},
   'possessivo': {'naoDito': 'dele', 'macho': 'dele', 'femea': 'dela'},
@@ -748,7 +796,7 @@ const _en = <String, Object>{
   'authConfirmEmail': 'Account created. Confirm your email with the link we sent, then sign in.',
   'authAttachFail': 'Could not reach the server. Check your connection or try again later.',
   'authBootstrapLoading': 'Loading your habitat…',
-  'syncFail': 'Could not sync. Your data stays saved on this device.',
+  'syncFail': 'Could not sync ({q}). Your data stays saved on this device.',
   'syncSchemaFail': 'The cloud database is out of date: table {t} is missing. Your data stays saved on this device.',
   'bootstrapOffline': 'New account or no remote data — starting with an empty habitat.',
   'bonusUnderGoal': 'You finished yesterday under your goal. +{k} leaves for the habitat.',
@@ -776,6 +824,29 @@ const _en = <String, Object>{
   'trilhaAgora': 'Now',
   'trilhaBloqueado': 'Ahead',
   'nivelRotulo': 'Level {n}',
+  'contaT': 'Your account',
+  'contaSub': 'Email, password and plan.',
+  'contaEmail': 'Email',
+  'contaEmailNaoConfirmado': 'not confirmed yet',
+  'contaTrocarEmail': 'Change email',
+  'contaTrocarEmailAviso': 'We sent a link to the new address. Sign-in only changes after you click it.',
+  'contaSenha': 'Password',
+  'contaTrocarSenha': 'Change password',
+  'contaRecuperar': 'Forgot password',
+  'contaRecuperarOk': 'Recovery link sent to {e}.',
+  'contaEmailInvalido': 'That email doesn\'t look right.',
+  'contaSenhaCurta': 'Password needs at least 6 characters.',
+  'contaSemConta': 'You have no account on this device yet.',
+  'contaDesde': 'Companion since',
+  'contaPlano': 'Plan',
+  'contaSalvar': 'Save',
+  'contaOk': 'Done.',
+  'contaNovoEmail': 'New email',
+  'contaNovaSenha': 'New password',
+  'sairT': 'Leaving already?',
+  'sairB': '{P} will be right here waiting. Nothing is lost — not the leaves, not the streak, not the habitat.',
+  'sairFicar': 'Stay a bit longer',
+  'sairSair': 'Leave',
   'setSexo': 'Sex',
   'setSexoNao': 'Prefer not to say',
   'setSexoM': 'Male',
@@ -788,6 +859,7 @@ const _en = <String, Object>{
   'setSecoes': 'Settings',
   'setDuracao': 'Session length',
   'setSom': 'Sound',
+  'trilhaAqui': 'YOU ARE HERE',
   'setSomSub': 'Short sounds on wins and taps',
   'pronome': {'naoDito': 'they', 'macho': 'he', 'femea': 'she'},
   'possessivo': {'naoDito': 'their', 'macho': 'his', 'femea': 'her'},
@@ -1097,7 +1169,7 @@ const _es = <String, Object>{
   'authConfirmEmail': 'Cuenta creada. Confirma tu correo con el enlace que enviamos y luego entra.',
   'authAttachFail': 'No se pudo conectar al servidor. Revisa tu conexión o inténtalo más tarde.',
   'authBootstrapLoading': 'Cargando tu hábitat…',
-  'syncFail': 'No se pudo sincronizar. Tus datos quedan guardados en este dispositivo.',
+  'syncFail': 'No se pudo sincronizar ({q}). Tus datos quedan guardados en este dispositivo.',
   'syncSchemaFail': 'La base en la nube está desactualizada: falta la tabla {t}. Tus datos quedan guardados en este dispositivo.',
   'bootstrapOffline': 'Cuenta nueva o sin datos remotos: empezamos con un hábitat vacío.',
   'bonusUnderGoal': 'Ayer cerraste por debajo de tu meta. +{k} hojas para el hábitat.',
@@ -1125,6 +1197,29 @@ const _es = <String, Object>{
   'trilhaAgora': 'Ahora',
   'trilhaBloqueado': 'Por venir',
   'nivelRotulo': 'Nivel {n}',
+  'contaT': 'Tu cuenta',
+  'contaSub': 'Correo, contraseña y plan.',
+  'contaEmail': 'Correo',
+  'contaEmailNaoConfirmado': 'aún sin confirmar',
+  'contaTrocarEmail': 'Cambiar correo',
+  'contaTrocarEmailAviso': 'Enviamos un enlace a la dirección nueva. El acceso solo cambia después de que hagas clic.',
+  'contaSenha': 'Contraseña',
+  'contaTrocarSenha': 'Cambiar contraseña',
+  'contaRecuperar': 'Olvidé la contraseña',
+  'contaRecuperarOk': 'Enlace de recuperación enviado a {e}.',
+  'contaEmailInvalido': 'Ese correo no parece correcto.',
+  'contaSenhaCurta': 'La contraseña necesita al menos 6 caracteres.',
+  'contaSemConta': 'Todavía no tienes cuenta en este dispositivo.',
+  'contaDesde': 'Compañero desde',
+  'contaPlano': 'Plan',
+  'contaSalvar': 'Guardar',
+  'contaOk': 'Listo.',
+  'contaNovoEmail': 'Nuevo correo',
+  'contaNovaSenha': 'Nueva contraseña',
+  'sairT': '¿Ya te vas?',
+  'sairB': '{P} se queda aquí esperándote. Nada se pierde: ni las hojas, ni la racha, ni el hábitat.',
+  'sairFicar': 'Quedarme un poco más',
+  'sairSair': 'Salir',
   'setSexo': 'Sexo',
   'setSexoNao': 'Prefiero no decir',
   'setSexoM': 'Macho',
@@ -1137,6 +1232,7 @@ const _es = <String, Object>{
   'setSecoes': 'Ajustes',
   'setDuracao': 'Duración de la sesión',
   'setSom': 'Sonido',
+  'trilhaAqui': 'ESTÁS AQUÍ',
   'setSomSub': 'Sonidos cortos en logros y toques',
   'pronome': {'naoDito': 'él', 'macho': 'él', 'femea': 'ella'},
   'possessivo': {'naoDito': 'de él', 'macho': 'de él', 'femea': 'de ella'},
@@ -1448,7 +1544,7 @@ const _zh = <String, Object>{
   'authConfirmEmail': '账号已创建。请点击我们发送的链接确认邮箱，然后登录。',
   'authAttachFail': '无法连接服务器。请检查网络或稍后重试。',
   'authBootstrapLoading': '正在加载你的栖息地…',
-  'syncFail': '同步失败。你的数据已保存在本机。',
+  'syncFail': '同步失败（{q}）。你的数据已保存在本机。',
   'syncSchemaFail': '云端数据库版本过旧：缺少数据表 {t}。你的数据已保存在本机。',
   'bootstrapOffline': '新账号或没有云端数据 — 从空的栖息地开始。',
   'bonusUnderGoal': '昨天你的用时低于目标。栖息地 +{k} 片叶子。',
@@ -1476,6 +1572,29 @@ const _zh = <String, Object>{
   'trilhaAgora': '现在',
   'trilhaBloqueado': '即将到来',
   'nivelRotulo': '等级 {n}',
+  'contaT': '你的账号',
+  'contaSub': '邮箱、密码与套餐。',
+  'contaEmail': '邮箱',
+  'contaEmailNaoConfirmado': '尚未验证',
+  'contaTrocarEmail': '更换邮箱',
+  'contaTrocarEmailAviso': '我们已向新邮箱发送链接。点击之后登录邮箱才会更改。',
+  'contaSenha': '密码',
+  'contaTrocarSenha': '更改密码',
+  'contaRecuperar': '忘记密码',
+  'contaRecuperarOk': '找回链接已发送至 {e}。',
+  'contaEmailInvalido': '这个邮箱看起来不对。',
+  'contaSenhaCurta': '密码至少需要 6 个字符。',
+  'contaSemConta': '这台设备上还没有账号。',
+  'contaDesde': '相伴自',
+  'contaPlano': '套餐',
+  'contaSalvar': '保存',
+  'contaOk': '好了。',
+  'contaNovoEmail': '新邮箱',
+  'contaNovaSenha': '新密码',
+  'sairT': '这就走了？',
+  'sairB': '{P}会在这里等你。什么都不会丢——叶子、连续天数、栖息地，都还在。',
+  'sairFicar': '再待一会儿',
+  'sairSair': '退出',
   'setSexo': '性别',
   'setSexoNao': '不想说',
   'setSexoM': '雄性',
@@ -1488,6 +1607,7 @@ const _zh = <String, Object>{
   'setSecoes': '设置',
   'setDuracao': '专注时长',
   'setSom': '声音',
+  'trilhaAqui': '你在这里',
   'setSomSub': '成就与轻触时的短音效',
   'pronome': {'naoDito': '它', 'macho': '它', 'femea': '它'},
   'possessivo': {'naoDito': '它的', 'macho': '它的', 'femea': '它的'},

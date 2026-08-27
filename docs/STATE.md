@@ -15,7 +15,12 @@ Branch: `night/2026-08-27`, integrada em `main` | Build: **verde**
 Frases que são verdade hoje e não eram ontem:
 
 - **O botão voltar do aparelho funciona**: num detalhe volta um passo, numa
-  aba volta para a home, e só na home sai do app. Durante a sessão, pergunta.
+  aba volta para a home, e **na home pergunta antes de fechar**, com o bicho
+  na folha. Durante a sessão, pergunta também.
+- **A trilha virou um caminho** com nós grandes, linha tracejada no que falta
+  e "VOCÊ ESTÁ AQUI" no passo atual.
+- **Tela "Sua conta"**: e-mail, trocar e-mail, trocar senha, recuperar senha,
+  plano e sair.
 - **As telas entram com transição** e a barra de destinos é fixa.
 - **Dá para acariciar o Baru**: ele acompanha a mão, aperta os olhos, o pelo
   se levanta sob o dedo, sobem corações, e a mão ronrona.
@@ -100,7 +105,8 @@ com acesso ao projeto; o comando está no arquivo de bloqueios.
 | BL-06 | Entitlement de Screen Time no iOS |
 | BL-07 | Produtos de IAP nas lojas |
 | BL-09 | **Verificar a notificação da sessão num aparelho** (roteiro no arquivo) |
-| BL-10 | **Aplicar as migrations 7, 8 e 9 no Supabase remoto** — é a causa do "erro ao sincronizar" |
+| BL-10 | ~~Migrations 7, 8 e 9~~ — **aplicadas** (sonda REST em 2026-08-27: as duas tabelas e as colunas novas respondem 200) |
+| BL-11 | **O "erro ao sincronizar" ainda aparece no aparelho.** O schema remoto está em dia, então a causa é outra. O app agora nomeia o domínio que falhou; preciso desse nome para investigar |
 
 ## Comandos para rodar e validar agora
 

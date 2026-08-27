@@ -71,12 +71,26 @@ void main() {
     }
   });
 
-  testWidgets('marco alcançado aparece como conquistado', (tester) async {
+  testWidgets('marco alcançado mostra o ✓ no nó e diz "conquistado" ao abrir',
+      (tester) async {
     final app = _conta(sessoes: 1)..ganhaXp(1);
     await _abre(tester, app);
 
     final primeiro = trilha.first;
     expect(app.progresso.alcancou(primeiro), isTrue);
+
+    // No caminho o sinal é o ✓ dentro do nó, não a palavra: o rótulo ao lado
+    // é o nome do marco.
+    expect(
+      find.byIcon(Icons.check_rounded),
+      findsWidgets,
+      reason: 'o que já passou tem de se ver de relance',
+    );
+
+    // A palavra vive no detalhe do nó.
+    await tester.tap(find.text(tituloDoMarco(app, primeiro)).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text(app.t.trilhaFeito), findsWidgets);
   });
 

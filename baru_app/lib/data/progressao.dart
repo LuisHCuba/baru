@@ -270,18 +270,44 @@ class ProgressoDaTrilha {
   bool alcancou(Marco m) => valorDe(m.tipo) >= m.alvo;
 
   /// Progresso de 0 a 1 dentro de um marco.
+  ///
+  /// O piso de cada tipo importa: sessões, sequência e dias abaixo da meta
+  /// começam em 0, mas **o nível começa em 1**. Medindo o nível a partir de
+  /// zero, "chegar ao nível 3" nascia com um terço da barra cheia numa conta
+  /// recém-criada — e passava à frente de "faça sua primeira sessão" na hora
+  /// de escolher o próximo passo.
   double fracaoDe(Marco m) {
-    if (m.alvo <= 0) return 1;
-    return (valorDe(m.tipo) / m.alvo).clamp(0.0, 1.0);
+    final piso = m.tipo == TipoDeMarco.nivel ? 1 : 0;
+    final alvo = m.alvo - piso;
+    if (alvo <= 0) return 1;
+    return ((valorDe(m.tipo) - piso) / alvo).clamp(0.0, 1.0);
   }
 
-  /// O próximo marco não alcançado — o que a home destaca.
+  /// O próximo marco: o **mais perto de acontecer**, não o primeiro da lista.
+  ///
+  /// Os marcos são independentes — nível, sessões, sequência e dias abaixo da
+  /// meta correm em paralelo — então dá para conquistar o terceiro sem ter o
+  /// primeiro. Pegando o primeiro não alcançado, a tela dizia "você está no
+  /// passo 1" para quem já tinha o 3 conquistado logo acima. Isso não é
+  /// mentira sobre o dado, mas é sobre o que está acontecendo.
   Marco? get proximoMarco {
+    Marco? melhor;
+    var melhorFracao = -1.0;
     for (final m in trilha) {
-      if (!alcancou(m)) return m;
+      if (alcancou(m)) continue;
+      final f = fracaoDe(m);
+      // Estritamente maior: empate fica com quem vem antes na trilha, que é
+      // a ordem em que o produto pensa a jornada.
+      if (f > melhorFracao) {
+        melhorFracao = f;
+        melhor = m;
+      }
     }
-    return null;
+    return melhor;
   }
+
+  /// Quantos marcos já foram conquistados.
+  int get conquistados => trilha.where(alcancou).length;
 
   List<Marco> get alcancados => trilha.where(alcancou).toList();
 

@@ -146,12 +146,12 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // --- plano -----------------------------------------------------------
+        // --- conta e plano ---------------------------------------------------
         const SizedBox(height: Espaco.md),
         CartaoBaru(
           cor: Cores.primariaA(0.10),
           elevado: false,
-          onTap: () => app.go(AppScreen.paywall),
+          onTap: () => app.go(AppScreen.conta),
           child: Row(
             children: [
               Expanded(
@@ -186,6 +186,11 @@ class SettingsScreen extends StatelessWidget {
               Text(
                 t.setManage,
                 style: estilo(Tipo.rotulo, color: Cores.primariaEscura),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: Cores.primariaEscura,
               ),
             ],
           ),
@@ -230,14 +235,6 @@ class SettingsScreen extends StatelessWidget {
               apagado: true,
               aoTocar: app.restartOnboarding,
             ),
-            if (app.canSignOut)
-              _Linha(
-                chave: null,
-                icone: Icons.logout_rounded,
-                rotulo: t.authSignOut,
-                apagado: true,
-                aoTocar: app.signOut,
-              ),
           ],
         ),
       ],

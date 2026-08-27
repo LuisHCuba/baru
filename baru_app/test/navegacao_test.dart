@@ -4,6 +4,7 @@ import 'package:baru_app/design/motion.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/navegacao.dart';
 import 'package:baru_app/screens/home_screen.dart';
+import 'package:baru_app/widgets/saida.dart';
 import 'package:baru_app/screens/settings_screen.dart';
 import 'package:baru_app/screens/shop_screen.dart';
 import 'package:baru_app/state.dart';
@@ -134,13 +135,21 @@ void main() {
       s.dispose();
     });
 
-    test('só na home o voltar devolve a decisão ao sistema', () {
+    test('na home o voltar pergunta antes, e so depois entrega ao sistema',
+        () {
       final s = _estado(AppScreen.home);
+
       expect(
         s.voltar(),
-        isFalse,
-        reason: 'este é o único lugar em que fechar o app é a resposta certa',
+        isTrue,
+        reason: 'fechar sem avisar e o gesto que a companhia nao faz',
       );
+      expect(s.pedindoParaSair, isTrue);
+      expect(s.voltar(), isFalse);
+
+      s.cancelaSaida();
+      expect(s.pedindoParaSair, isFalse);
+      expect(s.voltar(), isTrue, reason: 'pergunta de novo, nao sai calado');
       s.dispose();
     });
 
@@ -213,14 +222,38 @@ void main() {
       expect(find.byType(HomeScreen), findsOneWidget);
     });
 
-    testWidgets('na home, aí sim fecha o app', (tester) async {
+    testWidgets('na home, pergunta primeiro e nao fecha ainda', (tester) async {
       await _abre(tester, AppScreen.home);
-      final fechou = await _voltarDoSistemaFechaOApp(tester);
+
+      final fechouNoPrimeiro = await _voltarDoSistemaFechaOApp(tester);
+      expect(fechouNoPrimeiro, isFalse);
       expect(
-        fechou,
-        isTrue,
-        reason: 'prender o usuário dentro do app é o defeito oposto',
+        find.byKey(FolhaDeSaida.chave),
+        findsOneWidget,
+        reason: 'a pergunta tem de aparecer',
       );
+
+      // Com a pergunta aberta, o segundo voltar entrega ao sistema: quem
+      // insiste no gesto quer sair mesmo.
+      final fechouNoSegundo = await _voltarDoSistemaFechaOApp(tester);
+      expect(
+        fechouNoSegundo,
+        isTrue,
+        reason: 'prender o usuario dentro do app e o defeito oposto',
+      );
+    });
+
+    testWidgets('ficar mais um pouco fecha a pergunta e nao sai', (tester) async {
+      await _abre(tester, AppScreen.home);
+      await _voltarDoSistemaFechaOApp(tester);
+      expect(find.byKey(FolhaDeSaida.chave), findsOneWidget);
+
+      await tester.tap(find.text('Ficar mais um pouco'));
+      await tester.pump();
+      await tester.pump(Tempo.tela);
+
+      expect(find.byKey(FolhaDeSaida.chave), findsNothing);
+      expect(find.byType(HomeScreen), findsOneWidget);
     });
   });
 

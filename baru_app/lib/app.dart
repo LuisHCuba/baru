@@ -16,6 +16,7 @@ import 'screens/result_screen.dart';
 import 'screens/session_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/shop_screen.dart';
+import 'screens/conta_screen.dart';
 import 'screens/folhas_screen.dart';
 import 'screens/sequencia_screen.dart';
 import 'screens/tempo_screen.dart';
@@ -25,7 +26,7 @@ import 'state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 import 'widgets/celebracao.dart';
-import 'widgets/debug_panel.dart';
+import 'widgets/saida.dart';
 import 'widgets/share_sheet.dart';
 
 class BaruApp extends StatefulWidget {
@@ -145,6 +146,8 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
         return const SettingsScreen();
       case AppScreen.tempo:
         return const TempoScreen();
+      case AppScreen.conta:
+        return const ContaScreen();
       case AppScreen.folhas:
         return const FolhasScreen();
       case AppScreen.sequencia:
@@ -204,6 +207,7 @@ class _Casca extends StatelessWidget {
             navegador,
             if (app.sharing) const ShareSheet(),
             if (app.temCelebracaoPendente) _celebracao(app),
+            if (app.pedindoParaSair) const FolhaDeSaida(),
           ],
         ),
       ),
@@ -215,7 +219,6 @@ class _Casca extends StatelessWidget {
         alignment: Alignment.topCenter,
         child: app.showTabs ? const BottomTabs() : const SizedBox(width: 412),
       ),
-      floatingActionButton: const DebugFab(),
     );
   }
 

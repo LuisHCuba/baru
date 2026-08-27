@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../data/progressao.dart';
@@ -53,15 +55,7 @@ class TrilhaScreen extends StatelessWidget {
           CartaoProximoPasso(app: app, marco: proximo),
         ],
         const SizedBox(height: Espaco.lg),
-        for (var i = 0; i < trilha.length; i++)
-          _Degrau(
-            app: app,
-            marco: trilha[i],
-            progresso: p,
-            primeiro: i == 0,
-            ultimo: i == trilha.length - 1,
-            atual: proximo?.id == trilha[i].id,
-          ),
+        _Caminho(app: app, progresso: p, atual: proximo),
       ],
     );
   }
@@ -217,175 +211,466 @@ class CartaoNivel extends StatelessWidget {
   }
 }
 
-class _Degrau extends StatelessWidget {
-  const _Degrau({
+/// O caminho: os marcos como nós de uma trilha que serpenteia.
+///
+/// Antes era uma lista de cartões empilhados — informação correta, leitura de
+/// planilha. Um caminho com nós grandes diz de relance onde você está, o que
+/// já passou e o que vem, que é o que faz alguém querer o próximo passo.
+class _Caminho extends StatelessWidget {
+  const _Caminho({required this.app, required this.progresso, this.atual});
+
+  final AppState app;
+  final ProgressoDaTrilha progresso;
+  final Marco? atual;
+
+  /// Distância vertical entre dois nós.
+  static const passo = 104.0;
+  static const diametro = 72.0;
+
+  /// Quanto o caminho serpenteia para os lados.
+  static const amplitude = 0.62;
+
+  /// Onde o nó [i] fica, de -1 (esquerda) a 1 (direita).
+  static double desvioDe(int i) => math.sin(i * 0.95) * amplitude;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final meio = c.maxWidth / 2;
+        final raioUtil = (c.maxWidth - diametro) / 2 - Espaco.sm;
+        Offset centro(int i) => Offset(
+              meio + desvioDe(i) * raioUtil,
+              passo / 2 + i * passo,
+            );
+
+        return SizedBox(
+          height: trilha.length * passo,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _LinhaDoCaminho(
+                    pontos: [
+                      for (var i = 0; i < trilha.length; i++) centro(i),
+                    ],
+                    conquistados: [
+                      for (final m in trilha) progresso.alcancou(m),
+                    ],
+                  ),
+                ),
+              ),
+              // O rótulo fica do lado oposto ao desvio do nó: assim ele
+              // sempre tem espaço e nunca sai do quadro.
+              for (var i = 0; i < trilha.length; i++)
+                _RotuloDoNo(
+                  app: app,
+                  marco: trilha[i],
+                  progresso: progresso,
+                  ehAtual: atual?.id == trilha[i].id,
+                  centro: centro(i),
+                  aEsquerda: desvioDe(i) > 0,
+                  largura: c.maxWidth,
+                ),
+              for (var i = 0; i < trilha.length; i++)
+                Positioned(
+                  left: centro(i).dx - diametro / 2,
+                  top: centro(i).dy - diametro / 2,
+                  child: _No(
+                    app: app,
+                    marco: trilha[i],
+                    progresso: progresso,
+                    ehAtual: atual?.id == trilha[i].id,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// O nome do marco, ao lado do nó.
+///
+/// Sem ele o caminho era uma fileira de bolinhas anônimas: bonito e mudo.
+/// Ninguém descobre o que falta fazer tocando em cada uma.
+class _RotuloDoNo extends StatelessWidget {
+  const _RotuloDoNo({
     required this.app,
     required this.marco,
     required this.progresso,
-    required this.primeiro,
-    required this.ultimo,
-    required this.atual,
+    required this.ehAtual,
+    required this.centro,
+    required this.aEsquerda,
+    required this.largura,
   });
 
   final AppState app;
   final Marco marco;
   final ProgressoDaTrilha progresso;
-  final bool primeiro;
-  final bool ultimo;
-  final bool atual;
+  final bool ehAtual;
+  final Offset centro;
+  final bool aEsquerda;
+  final double largura;
 
   @override
   Widget build(BuildContext context) {
     final feito = progresso.alcancou(marco);
-    final valor = progresso.valorDe(marco.tipo);
-    final cor = feito
-        ? Cores.primaria
-        : atual
-            ? Cores.acento
-            : Cores.tintaA(0.28);
+    final larguraDoTexto =
+        (aEsquerda ? centro.dx : largura - centro.dx) -
+            _Caminho.diametro / 2 -
+            Espaco.sm;
+    if (larguraDoTexto < 60) return const SizedBox.shrink();
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    final cor = feito
+        ? Cores.primariaEscura
+        : ehAtual
+            ? Cores.acentoForte
+            : Cores.tintaA(0.45);
+
+    return Positioned(
+      left: aEsquerda ? 0 : centro.dx + _Caminho.diametro / 2 + Espaco.sm,
+      top: centro.dy - 30,
+      width: larguraDoTexto,
+      // O nome ao lado do nó abre o mesmo detalhe. Antes só o círculo de
+      // 72 px respondia, e o texto ficava ali parecendo tocável sem ser.
+      child: GestureDetector(
+        onTap: () => abreDetalheDoMarco(context, app, marco, progresso),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+        crossAxisAlignment:
+            aEsquerda ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // A linha que liga os degraus: é ela que faz disto uma trilha e não
-          // uma lista de cartões soltos.
-          SizedBox(
-            width: 34,
-            child: Column(
-              children: [
-                Expanded(
-                  child: Container(
-                    width: 3,
-                    color: primeiro
-                        ? Colors.transparent
-                        : (feito ? Cores.primariaA(0.45) : Cores.tintaA(0.12)),
-                  ),
-                ),
-                _No(feito: feito, atual: atual, cor: cor),
-                Expanded(
-                  child: Container(
-                    width: 3,
-                    color: ultimo
-                        ? Colors.transparent
-                        : (feito ? Cores.primariaA(0.45) : Cores.tintaA(0.12)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: Espaco.xs),
-              child: CartaoBaru(
-                padding: const EdgeInsets.all(Espaco.md),
-                cor: atual
-                    ? Cores.acentoA(0.10)
-                    : feito
-                        ? Cores.superficieElevada
-                        : Cores.tintaA(0.035),
-                elevado: atual || feito,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tituloDoMarco(app, marco),
-                      style: estilo(
-                        Tipo.corpoForte,
-                        color: feito || atual
-                            ? Cores.tinta
-                            : Cores.tintaA(0.62),
-                      ),
-                    ),
-                    const SizedBox(height: Espaco.xs),
-                    Row(
-                      children: [
-                        Etiqueta(
-                          texto: feito
-                              ? app.t.trilhaFeito
-                              : atual
-                                  ? app.t.trilhaAgora
-                                  : app.t.trilhaBloqueado,
-                          cor: cor,
-                          forte: atual,
-                          icone: feito ? Icons.check_rounded : null,
-                        ),
-                        const SizedBox(width: Espaco.xs),
-                        if (!feito)
-                          Text(
-                            '$valor/${marco.alvo}',
-                            style: estilo(
-                              Tipo.rotuloPequeno,
-                              color: Cores.tintaA(0.5),
-                              tabular: true,
-                            ),
-                          ),
-                      ],
-                    ),
-                    if (!feito) ...[
-                      const SizedBox(height: Espaco.xs),
-                      BarraAnimada(
-                        fracao: progresso.fracaoDe(marco),
-                        altura: 6,
-                        cor: cor,
-                      ),
-                    ],
-                    const SizedBox(height: Espaco.xs),
-                    Wrap(
-                      spacing: Espaco.xs,
-                      runSpacing: Espaco.xxs,
-                      children: premiosDoMarco(app, marco)
-                          .map(
-                            (p) => Text(
-                              p,
-                              style: estilo(
-                                Tipo.rotuloPequeno,
-                                color: Cores.acentoTexto,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                ),
+          if (ehAtual) ...[
+            // `FittedBox`: a etiqueta tem largura intrínseca e a coluna do
+            // rótulo é estreita quando o nó cai perto da borda. Sem isto ela
+            // estourava para fora do quadro — 58 px no pior caso.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment:
+                  aEsquerda ? Alignment.centerRight : Alignment.centerLeft,
+              child: Etiqueta(
+                texto: app.t.trilhaAqui,
+                cor: Cores.acento,
+                forte: true,
               ),
             ),
+            const SizedBox(height: Espaco.xxs),
+          ],
+          Text(
+            tituloDoMarco(app, marco),
+            textAlign: aEsquerda ? TextAlign.right : TextAlign.left,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: estilo(
+              feito || ehAtual ? Tipo.corpoForte : Tipo.corpo,
+              color: cor,
+            ),
           ),
-        ],
+          if (marco.recompensa.folhas > 0)
+            Text(
+              app.t.fill(app.t.premioFolhas, {'n': marco.recompensa.folhas}),
+              textAlign: aEsquerda ? TextAlign.right : TextAlign.left,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.45)),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _No extends StatelessWidget {
-  const _No({required this.feito, required this.atual, required this.cor});
+/// A linha que liga os nós. O trecho já conquistado é sólido e colorido; o que
+/// falta é pontilhado e apagado — dá para ver a fronteira de longe.
+class _LinhaDoCaminho extends CustomPainter {
+  const _LinhaDoCaminho({required this.pontos, required this.conquistados});
 
-  final bool feito;
-  final bool atual;
-  final Color cor;
+  final List<Offset> pontos;
+  final List<bool> conquistados;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var i = 0; i < pontos.length - 1; i++) {
+      final feito = conquistados[i] && conquistados[i + 1];
+      final a = pontos[i];
+      final b = pontos[i + 1];
+      final tinta = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = feito ? 7 : 6
+        ..strokeCap = StrokeCap.round
+        ..color = feito ? Cores.primaria : Cores.tintaA(0.13);
+
+      // Curva suave em vez de reta: um caminho não tem quinas.
+      final caminho = Path()
+        ..moveTo(a.dx, a.dy)
+        ..cubicTo(
+          a.dx,
+          a.dy + (b.dy - a.dy) * 0.55,
+          b.dx,
+          b.dy - (b.dy - a.dy) * 0.55,
+          b.dx,
+          b.dy,
+        );
+
+      if (feito) {
+        canvas.drawPath(caminho, tinta);
+      } else {
+        _pontilha(canvas, caminho, tinta);
+      }
+    }
+  }
+
+  void _pontilha(Canvas canvas, Path caminho, Paint tinta) {
+    const traco = 9.0;
+    const vao = 9.0;
+    for (final metrica in caminho.computeMetrics()) {
+      var d = 0.0;
+      while (d < metrica.length) {
+        canvas.drawPath(
+          metrica.extractPath(d, math.min(d + traco, metrica.length)),
+          tinta,
+        );
+        d += traco + vao;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LinhaDoCaminho old) =>
+      old.pontos != pontos || old.conquistados != conquistados;
+}
+
+/// Um nó do caminho.
+class _No extends StatefulWidget {
+  const _No({
+    required this.app,
+    required this.marco,
+    required this.progresso,
+    required this.ehAtual,
+  });
+
+  final AppState app;
+  final Marco marco;
+  final ProgressoDaTrilha progresso;
+  final bool ehAtual;
+
+  @override
+  State<_No> createState() => _NoState();
+}
+
+class _NoState extends State<_No> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulso = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Só o nó atual pulsa, e só quando o sistema aceita movimento.
+    if (widget.ehAtual && !Movimento.reduzido(context)) {
+      if (!_pulso.isAnimating) _pulso.repeat(reverse: true);
+    } else {
+      _pulso
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulso.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tamanho = atual ? 22.0 : 16.0;
-    return AnimatedContainer(
-      duration: Movimento.duracao(context, Tempo.componente),
-      width: tamanho,
-      height: tamanho,
-      decoration: BoxDecoration(
-        color: feito ? cor : (atual ? cor : Cores.superficie),
-        shape: BoxShape.circle,
-        border: Border.all(color: cor, width: atual ? 3 : 2.5),
-        boxShadow: atual ? Elevacao.cartao : null,
+    final feito = widget.progresso.alcancou(widget.marco);
+    final fracao = widget.progresso.fracaoDe(widget.marco);
+    // Opaco também quando bloqueado: com fundo translúcido a linha tracejada
+    // atravessava o miolo do nó e parecia rabisco por cima do ícone.
+    final cor = feito
+        ? Cores.primaria
+        : widget.ehAtual
+            ? Cores.acento
+            : Color.alphaBlend(Cores.tintaA(0.14), Cores.superficie);
+    final corDoIcone =
+        feito || widget.ehAtual ? Cores.superficie : Cores.tintaA(0.42);
+
+    return Semantics(
+      button: true,
+      label: tituloDoMarco(widget.app, widget.marco),
+      child: GestureDetector(
+        onTap: () => _abreDetalhe(context),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedBuilder(
+          animation: _pulso,
+          builder: (context, _) {
+            final p = Curvas.organica.transform(_pulso.value);
+            return SizedBox(
+              width: _Caminho.diametro,
+              height: _Caminho.diametro,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Halo do nó atual: o olho vai direto para ele.
+                  if (widget.ehAtual)
+                    Container(
+                      width: _Caminho.diametro * (0.92 + p * 0.14),
+                      height: _Caminho.diametro * (0.92 + p * 0.14),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Cores.acentoA(0.22 - p * 0.10),
+                      ),
+                    ),
+                  // Anel de progresso de quem ainda não chegou.
+                  if (!feito && fracao > 0)
+                    SizedBox(
+                      width: _Caminho.diametro - 8,
+                      height: _Caminho.diametro - 8,
+                      child: CircularProgressIndicator(
+                        value: fracao,
+                        strokeWidth: 5,
+                        backgroundColor: Cores.tintaA(0.10),
+                        valueColor: AlwaysStoppedAnimation(
+                          widget.ehAtual ? Cores.acento : Cores.primariaClara,
+                        ),
+                      ),
+                    ),
+                  Container(
+                    width: _Caminho.diametro - 18,
+                    height: _Caminho.diametro - 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: cor,
+                      boxShadow:
+                          feito || widget.ehAtual ? Elevacao.cartao : null,
+                    ),
+                    child: Icon(
+                      feito ? Icons.check_rounded : _iconeDoMarco(widget.marco.tipo),
+                      size: 26,
+                      color: corDoIcone,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
-      child: feito
-          ? const Icon(Icons.check_rounded, size: 11, color: Cores.tintaClara)
-          : null,
+    );
+  }
+
+
+  void _abreDetalhe(BuildContext context) => abreDetalheDoMarco(
+        context,
+        widget.app,
+        widget.marco,
+        widget.progresso,
+      );
+}
+
+/// O detalhe de um marco. Livre porque **o nó e o rótulo ao lado abrem o
+/// mesmo painel**: só o círculo de 72 px respondia, e o nome do marco logo ao
+/// lado ficava lá parecendo clicável sem ser.
+void abreDetalheDoMarco(
+  BuildContext context,
+  AppState app,
+  Marco m,
+  ProgressoDaTrilha progresso,
+) {
+  {
+    final t = app.t;
+    final feito = progresso.alcancou(m);
+    final valor = progresso.valorDe(m.tipo);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Cores.superficie,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Raio.folha)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(Espaco.margemTela),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: feito ? Cores.primaria : Cores.acentoA(0.16),
+                    ),
+                    child: Icon(
+                      feito ? Icons.check_rounded : _iconeDoMarco(m.tipo),
+                      size: 22,
+                      color: feito ? Cores.superficie : Cores.acentoForte,
+                    ),
+                  ),
+                  const SizedBox(width: Espaco.sm),
+                  Expanded(
+                    child: Text(
+                      tituloDoMarco(app, m),
+                      style: estilo(Tipo.titulo),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Espaco.md),
+              if (!feito) ...[
+                BarraAnimada(
+                  fracao: progresso.fracaoDe(m),
+                  cor: Cores.acento,
+                  fundo: Cores.acentoA(0.16),
+                ),
+                const SizedBox(height: Espaco.xs),
+                Text(
+                  '$valor / ${m.alvo}',
+                  style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+                ),
+              ] else
+                Etiqueta(
+                  texto: t.trilhaFeito,
+                  cor: Cores.primaria,
+                  icone: Icons.check_rounded,
+                ),
+              const SizedBox(height: Espaco.md),
+              for (final premio in premiosDoMarco(app, m))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: Espaco.xxs),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.card_giftcard_rounded,
+                        size: 16,
+                        color: Cores.acentoForte,
+                      ),
+                      const SizedBox(width: Espaco.xs),
+                      Text(
+                        premio,
+                        style: estilo(Tipo.corpo, color: Cores.acentoForte),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
-/// Título do marco montado do tipo e do alvo — sem 12 chaves de i18n para 12
-/// marcos, e novo marco não exige tradução nova.
+
 String tituloDoMarco(AppState app, Marco m) {
   final t = app.t;
   switch (m.tipo) {
@@ -419,3 +704,11 @@ List<String> premiosDoMarco(AppState app, Marco m) {
   }
   return out;
 }
+
+/// O ícone de cada tipo de marco.
+IconData _iconeDoMarco(TipoDeMarco tipo) => switch (tipo) {
+      TipoDeMarco.sessoes => Icons.self_improvement_rounded,
+      TipoDeMarco.sequencia => Icons.local_fire_department_rounded,
+      TipoDeMarco.nivel => Icons.trending_up_rounded,
+      TipoDeMarco.diasAbaixoDaMeta => Icons.phonelink_erase_rounded,
+    };

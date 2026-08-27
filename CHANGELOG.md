@@ -3,6 +3,46 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — conta, trilha em caminho, e três defeitos que o usuário viu antes de mim
+
+### Corrigido
+
+- **O seletor de pelagem mostrava seis bolinhas e só quatro respondiam.**
+  `setColor` fazia `clamp(0, 3)` — travado na paleta antiga de quatro cores,
+  esquecido quando cada espécie ganhou seis tons. Trocar de espécie também
+  podia deixar um índice inválido para trás.
+- **A trilha dizia "você está no passo 1" para quem já tinha conquistado o
+  passo 3.** Duas causas: `proximoMarco` devolvia o primeiro não alcançado na
+  ordem da lista, e a fração do marco de **nível** era medida a partir de
+  zero — mas o nível começa em 1, então "chegar ao nível 3" nascia com um
+  terço da barra cheia numa conta nova. Agora o próximo passo é o **mais perto
+  de acontecer**, e a fração respeita o piso de cada tipo.
+- **"Não foi possível sincronizar" não dizia o que falhou.** São seis domínios
+  e treze tabelas. A mensagem agora nomeia o domínio (pet, loja, ajustes,
+  sessões, assinatura, progresso) e o erro cru vai para o log.
+
+### O QUE MUDOU NA TELA
+
+- **A trilha virou um caminho.** Nós grandes que serpenteiam, linha sólida no
+  trecho conquistado e tracejada no que falta, ícone por tipo de marco,
+  "VOCÊ ESTÁ AQUI" no nó atual com halo pulsando, e o nome e a recompensa ao
+  lado de cada um. Tocar num nó abre o detalhe com o progresso exato.
+- **Tela nova "Sua conta"**: e-mail com aviso de não confirmado, desde quando
+  o companheiro existe, trocar e-mail, trocar senha, recuperar senha, o plano
+  e sair. Trocar e-mail avisa o que realmente acontece — o Supabase manda um
+  link e o login só muda depois do clique.
+- **O voltar na home pergunta antes de fechar**, com o bicho na folha e a
+  frase de que nada se perde. Fechar sem avisar é o gesto que uma companhia
+  não faz. Insistir no voltar sai; "Ficar mais um pouco" cancela.
+- **O botão de debug saiu da tela.**
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: 350+ passando
+- Os três defeitos foram verificados por mutação: reintroduzido o
+  `clamp(0, 3)` e a fração antiga, os testes correspondentes falham.
+
 ## 2026-08-27 — telas novas, cores por espécie, ajustes e transição sem fantasma
 
 ### O QUE MUDOU NA TELA

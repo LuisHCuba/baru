@@ -544,10 +544,14 @@ class BottomTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    // Quatro destinos, na ordem em que o produto pensa: onde o bicho mora,
+    // para onde a coisa vai, onde se gasta, e onde se ajusta. O relatório é
+    // alcançado pelo cartão da home, e o detalhamento de tempo pelo cartão de
+    // uso — nenhum deles é destino de primeiro nível.
     final ids = [
       AppScreen.home,
+      AppScreen.trilha,
       AppScreen.shop,
-      AppScreen.report,
       AppScreen.profile,
     ];
     return Container(

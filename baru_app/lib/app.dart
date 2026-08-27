@@ -12,9 +12,11 @@ import 'screens/session_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/shop_screen.dart';
 import 'screens/tempo_screen.dart';
+import 'screens/trilha_screen.dart';
 import 'state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
+import 'widgets/celebracao.dart';
 import 'widgets/debug_panel.dart';
 import 'widgets/share_sheet.dart';
 
@@ -139,11 +141,33 @@ class _Shell extends StatelessWidget {
           children: [
             _body(app),
             if (app.sharing) const ShareSheet(),
+            if (app.temCelebracaoPendente) _celebracao(app),
           ],
         ),
       ),
       bottomNavigationBar: app.showTabs ? const BottomTabs() : null,
       floatingActionButton: const DebugFab(),
+    );
+  }
+
+  /// Conquista aparece por cima de qualquer tela, inclusive da sessão.
+  Widget _celebracao(AppState app) {
+    final t = app.t;
+    if (app.subiuDeNivel) {
+      return Celebracao(
+        titulo: t.fill(t.celebNivel, {'n': app.nivel}),
+        subtitulo: t.fill(t.celebNivelSub, {'a': app.displayName}),
+        icone: Icons.local_florist_rounded,
+        cor: Cores.primaria,
+        aoFechar: app.celebrou,
+      );
+    }
+    final marco = app.marcosACelebrar.first;
+    return Celebracao(
+      titulo: t.celebMarco,
+      subtitulo: tituloDoMarco(app, marco),
+      cor: Cores.acento,
+      aoFechar: app.celebrou,
     );
   }
 
@@ -167,6 +191,8 @@ class _Shell extends StatelessWidget {
         return const SettingsScreen();
       case AppScreen.tempo:
         return TempoScreen(aoVoltar: () => app.go(AppScreen.report));
+      case AppScreen.trilha:
+        return const TrilhaScreen();
     }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,7 +42,13 @@ void main() {
     test('credita +15 na virada do dia', () {
       final s = _pronto(usageAccess: true, usage: 96, goal: 150, leaves: 40);
       s.nextDay();
-      expect(s.leaves, 40 + AppState.underGoalBonus);
+      // O primeiro dia abaixo da meta também destrava um marco da trilha, e o
+      // prêmio dele cai junto.
+      final marco = trilha.firstWhere((m) => m.id == 'primeiro_dia_abaixo');
+      expect(
+        s.leaves,
+        40 + AppState.underGoalBonus + marco.recompensa.folhas,
+      );
     });
 
     test('não credita se o dia fechou acima da meta', () {
@@ -79,11 +86,13 @@ void main() {
         DateTime.now().subtract(const Duration(days: 12)),
       );
       s.applyCalendar(DateTime.now());
+      final marco = trilha.firstWhere((m) => m.id == 'primeiro_dia_abaixo');
       expect(
         s.leaves,
-        AppState.underGoalBonus,
+        AppState.underGoalBonus + marco.recompensa.folhas,
         reason: 'dias sem o app têm usage sintético em 0 — pagar por eles '
-            'seria inventar medição',
+            'seria inventar medição; só o primeiro conta, e ele destrava o '
+            'marco da trilha uma única vez',
       );
     });
 
@@ -98,7 +107,11 @@ void main() {
         onUserMessage: avisos.add,
       );
 
-      expect(aoAbrir.leaves, 25 + AppState.underGoalBonus);
+      final marco = trilha.firstWhere((m) => m.id == 'primeiro_dia_abaixo');
+      expect(
+        aoAbrir.leaves,
+        25 + AppState.underGoalBonus + marco.recompensa.folhas,
+      );
       expect(avisos, isEmpty, reason: 'ainda não há árvore de widgets');
       aoAbrir.flushPendingNotices();
       expect(avisos.length, 1, reason: 'o aviso sai no primeiro frame');

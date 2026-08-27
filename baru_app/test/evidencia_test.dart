@@ -6,7 +6,11 @@ import 'dart:ui' as ui;
 
 import 'package:baru_app/data/tempo_de_tela.dart';
 import 'package:baru_app/models.dart';
+import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/screens/tempo_screen.dart';
+import 'package:baru_app/screens/trilha_screen.dart';
+import 'package:baru_app/theme.dart';
+import 'package:baru_app/widgets/celebracao.dart';
 import 'package:baru_app/state.dart';
 import 'package:baru_app/widgets/habitat.dart';
 import 'package:baru_app/widgets/pet.dart';
@@ -257,6 +261,78 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await _salva(tester, const Key('captura-tempo'), e.key);
     }
+  });
+
+  testWidgets('trilha, no comeco e em andamento', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(412, 892);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final casos = <String, AppState>{
+      'trilha-inicio': _estado(),
+      'trilha-andamento': _estado()
+        ..sessoesConcluidas = 6
+        ..melhorSequencia = 4
+        ..diasAbaixoDaMeta = 2
+        ..xp = Balanco.xpAcumuladoPara(4) + 30,
+    };
+    for (final e in casos.entries) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RepaintBoundary(
+              key: const Key('captura-trilha'),
+              child: AppScope(state: e.value, child: const TrilhaScreen()),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
+      await _salva(tester, const Key('captura-trilha'), e.key);
+    }
+  });
+
+  testWidgets('celebracao de nivel', (tester) async {
+    tester.view.physicalSize = const Size(412, 892);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RepaintBoundary(
+            key: const Key('captura-celebracao'),
+            child: Stack(
+              children: [
+                const ColoredBox(
+                  color: Cores.superficie,
+                  child: SizedBox.expand(),
+                ),
+                Celebracao(
+                  titulo: 'Nível 4',
+                  subtitulo: 'Baru está mais em casa.',
+                  icone: Icons.local_florist_rounded,
+                  cor: Cores.primaria,
+                  aoFechar: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    // Meio da explosão: é onde as partículas estão espalhadas.
+    await tester.pump(const Duration(milliseconds: 480));
+    await _salva(tester, const Key('captura-celebracao'), 'celebracao-nivel');
   });
 
   testWidgets('sequência de quadros da respiração', (tester) async {

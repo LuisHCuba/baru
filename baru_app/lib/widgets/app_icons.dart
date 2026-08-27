@@ -68,7 +68,7 @@ class TabGlyph {
 /// O HTML só tinha um quadrado 19×19. Estes são os glifos reais das tabs.
 const tabGlyphs = [
   TabGlyph(Icons.home_outlined, Icons.home_rounded),
+  TabGlyph(Icons.route_outlined, Icons.route_rounded),
   TabGlyph(Icons.storefront_outlined, Icons.storefront_rounded),
-  TabGlyph(Icons.insights_outlined, Icons.insights),
   TabGlyph(Icons.settings_outlined, Icons.settings_rounded),
 ];

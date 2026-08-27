@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import 'data/app_snapshot.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
+import 'data/progressao.dart';
 import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
 import 'l10n.dart';
@@ -42,6 +43,88 @@ class AppState extends ChangeNotifier {
 
   /// Bônus de +15 folhas por fechar o dia abaixo da meta (contrato de produto §5).
   static const underGoalBonus = 15;
+
+  // --- progressao --------------------------------------------------------
+
+  /// XP acumulado. **Nunca diminui.**
+  int xp = 0;
+
+  /// Total de sessoes de foco concluidas na vida da conta.
+  int sessoesConcluidas = 0;
+
+  /// A melhor sequencia ja feita. Guardada a parte de [streak] porque marco
+  /// conquistado nao se perde quando a sequencia atual cai.
+  int melhorSequencia = 0;
+
+  /// Dias fechados abaixo da meta, no total.
+  int diasAbaixoDaMeta = 0;
+
+  /// Marcos cujo premio ja foi creditado. Resgate e idempotente: um marco
+  /// pago duas vezes seria dinheiro impresso.
+  Set<String> marcosResgatados = {};
+
+  /// Marcos alcancados que ainda nao viraram celebracao na tela.
+  List<Marco> marcosACelebrar = [];
+
+  /// Nivel ja comemorado, para saber se houve subida nova.
+  int nivelCelebrado = 1;
+
+  ProgressoDaTrilha get progresso => ProgressoDaTrilha(
+        xp: xp,
+        sessoesConcluidas: sessoesConcluidas,
+        melhorSequencia: melhorSequencia,
+        diasAbaixoDaMeta: diasAbaixoDaMeta,
+      );
+
+  int get nivel => progresso.nivel;
+  double get progressoNoNivel => Balanco.progressoNoNivel(xp);
+  int get xpParaProximoNivel => Balanco.faltaParaProximoNivel(xp);
+  Marco? get proximoMarco => progresso.proximoMarco;
+  Set<Species> get especiesLiberadas => progresso.especiesLiberadas(species);
+  int get estagioDoHabitat => progresso.estagioDoHabitat;
+
+  /// Houve subida de nivel ainda nao comemorada?
+  bool get subiuDeNivel => nivel > nivelCelebrado;
+
+  /// Existe alguma conquista esperando celebração?
+  bool get temCelebracaoPendente => subiuDeNivel || marcosACelebrar.isNotEmpty;
+
+  /// O nível vem antes do marco: subir de nível é a conquista maior, e as duas
+  /// costumam cair juntas.
+  void celebrou() {
+    if (subiuDeNivel) {
+      nivelCelebrado = nivel;
+      _markSync(_syncSession);
+      notifyListeners();
+      return;
+    }
+    if (marcosACelebrar.isNotEmpty) {
+      marcosACelebrar = marcosACelebrar.sublist(1);
+      notifyListeners();
+    }
+  }
+
+  /// Credita XP e colhe os marcos que isso destravou.
+  ///
+  /// Todo ganho de XP passa por aqui: e o unico lugar que confere a trilha
+  /// depois, e marco alcancado sem premio creditado e exatamente a mentira que
+  /// este turno esta consertando.
+  void ganhaXp(int quanto) {
+    if (quanto <= 0) return;
+    xp += quanto;
+    _colheMarcos();
+    _markSync(_syncSession | _syncShop);
+  }
+
+  /// Credita o premio dos marcos recem-alcancados.
+  void _colheMarcos() {
+    for (final m in progresso.alcancados) {
+      if (marcosResgatados.contains(m.id)) continue;
+      marcosResgatados = {...marcosResgatados, m.id};
+      leaves += m.recompensa.folhas;
+      marcosACelebrar = [...marcosACelebrar, m];
+    }
+  }
 
   /// Detalhamento do tempo de tela de hoje. `null` = ainda não medido ou sem
   /// permissão — a tela mostra estado vazio honesto, nunca um número chutado.
@@ -193,6 +276,7 @@ class AppState extends ChangeNotifier {
 
   /// A faixa de tabs some em tela de detalhe e em modal.
   bool get showTabs =>
+      screen == AppScreen.trilha ||
       screen == AppScreen.home ||
       screen == AppScreen.report ||
       screen == AppScreen.shop ||
@@ -495,6 +579,13 @@ class AppState extends ChangeNotifier {
     sessionStartedAt = null;
     sessionEndsAt = null;
     sessionDur = 0;
+    xp = 0;
+    sessoesConcluidas = 0;
+    melhorSequencia = 0;
+    diasAbaixoDaMeta = 0;
+    marcosResgatados = {};
+    marcosACelebrar = [];
+    nivelCelebrado = 1;
     lastOpenDate = dateOnly(DateTime.now());
     _markSync(_syncShop | _syncSession);
   }
@@ -713,9 +804,15 @@ class AppState extends ChangeNotifier {
     aborted = false;
     reward = gained;
     leaves += gained;
-    if (completedToday == 0) streak += 1;
+    if (completedToday == 0) {
+      streak += 1;
+      if (streak > melhorSequencia) melhorSequencia = streak;
+      ganhaXp(Balanco.xpPorDiaDeSequencia);
+    }
     completedToday += 1;
+    sessoesConcluidas += 1;
     overrideMood = null;
+    ganhaXp(Balanco.xpDeSessao(minutos));
     _logSession(
       completed: true,
       gained: gained,
@@ -884,6 +981,8 @@ class AppState extends ChangeNotifier {
     if (creditBonus && _closedUnderGoal) {
       leaves += underGoalBonus;
       pendingUnderGoalBonus += 1;
+      diasAbaixoDaMeta += 1;
+      ganhaXp(Balanco.xpDiaAbaixoDaMeta);
       _markSync(_syncShop);
     }
 
@@ -898,6 +997,7 @@ class AppState extends ChangeNotifier {
       week[iDe] = WeekDayKind.frozen;
       freezesLeft -= 1;
       streak += 1;
+      if (streak > melhorSequencia) melhorSequencia = streak;
     } else {
       week[iDe] = WeekDayKind.empty;
       streak = 0;
@@ -1085,6 +1185,12 @@ class AppState extends ChangeNotifier {
       ajustesDeCategoria: {
         for (final e in ajustesDeCategoria.entries) e.key: e.value.name,
       },
+      xp: xp,
+      sessoesConcluidas: sessoesConcluidas,
+      melhorSequencia: melhorSequencia,
+      diasAbaixoDaMeta: diasAbaixoDaMeta,
+      marcosResgatados: marcosResgatados.toList(),
+      nivelCelebrado: nivelCelebrado,
     );
   }
 
@@ -1128,6 +1234,12 @@ class AppState extends ChangeNotifier {
         if (categoriaPorNome(e.value) != null)
           e.key: categoriaPorNome(e.value)!,
     };
+    xp = s.xp;
+    sessoesConcluidas = s.sessoesConcluidas;
+    melhorSequencia = s.melhorSequencia;
+    diasAbaixoDaMeta = s.diasAbaixoDaMeta;
+    marcosResgatados = s.marcosResgatados.toSet();
+    nivelCelebrado = s.nivelCelebrado;
   }
 
   void _schedulePersist() {

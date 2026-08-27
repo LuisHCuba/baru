@@ -219,6 +219,30 @@ class T {
   String get catPassivo => s('catPassivo');
   String get telaMudarCategoria => s('telaMudarCategoria');
   String get telaMudado => s('telaMudado');
+  String get trilhaT => s('trilhaT');
+  String get trilhaSub => s('trilhaSub');
+  String get trilhaProximo => s('trilhaProximo');
+  String get trilhaFeito => s('trilhaFeito');
+  String get trilhaAgora => s('trilhaAgora');
+  String get trilhaBloqueado => s('trilhaBloqueado');
+  String get nivelRotulo => s('nivelRotulo');
+  String get nivelFalta => s('nivelFalta');
+  String get nivelMax => s('nivelMax');
+  String get marcoSessao1 => s('marcoSessao1');
+  String get marcoSessoes => s('marcoSessoes');
+  String get marcoSequencia => s('marcoSequencia');
+  String get marcoNivel => s('marcoNivel');
+  String get marcoAbaixo1 => s('marcoAbaixo1');
+  String get marcoAbaixo => s('marcoAbaixo');
+  String get premioFolhas => s('premioFolhas');
+  String get premioEspecie => s('premioEspecie');
+  String get premioHabitat => s('premioHabitat');
+  String get celebNivel => s('celebNivel');
+  String get celebNivelSub => s('celebNivelSub');
+  String get celebMarco => s('celebMarco');
+  String get trilhaVaziaT => s('trilhaVaziaT');
+  String get trilhaVaziaB => s('trilhaVaziaB');
+  String get xpRotulo => s('xpRotulo');
 
 
   static const _weekdayLong = {
@@ -295,6 +319,30 @@ const _pt = <String, Object>{
   'catPassivo': 'Áudio',
   'telaMudarCategoria': 'Mudar categoria',
   'telaMudado': '{a} agora conta como {c}.',
+  'trilhaT': 'Sua trilha',
+  'trilhaSub': 'Um passo por vez. Nada aqui expira.',
+  'trilhaProximo': 'PRÓXIMO PASSO',
+  'trilhaFeito': 'Conquistado',
+  'trilhaAgora': 'Agora',
+  'trilhaBloqueado': 'A caminho',
+  'nivelRotulo': 'Nível {n}',
+  'nivelFalta': '{x} XP para o nível {n}',
+  'nivelMax': 'Nível máximo',
+  'marcoSessao1': 'Sua primeira sessão de foco',
+  'marcoSessoes': '{n} sessões de foco',
+  'marcoSequencia': '{n} dias seguidos presente',
+  'marcoNivel': 'Chegar ao nível {n}',
+  'marcoAbaixo1': 'Fechar um dia abaixo da meta',
+  'marcoAbaixo': 'Fechar {n} dias abaixo da meta',
+  'premioFolhas': '+{n} folhas',
+  'premioEspecie': '{a} entra no habitat',
+  'premioHabitat': 'O habitat cresce',
+  'celebNivel': 'Nível {n}',
+  'celebNivelSub': '{a} está mais em casa.',
+  'celebMarco': 'Marco alcançado',
+  'trilhaVaziaT': 'A trilha começa amanhã',
+  'trilhaVaziaB': 'Termine o onboarding e o primeiro passo aparece aqui.',
+  'xpRotulo': 'XP',
   'langTitle': 'Em que idioma você quer falar com ele?',
   'langSub': 'Pode trocar depois nos ajustes.',
   'cont': 'Continuar',
@@ -506,7 +554,7 @@ const _pt = <String, Object>{
       'O Baru lê só o total de tempo de tela do dia, se você permitir. Nunca quais apps, nunca o conteúdo. Nada disso sai do aparelho nesta fase. Sessões, folhas e o habitat ficam no telefone. A assinatura desta versão é um teste local — a compra pela loja vem depois.',
   'termsBody':
       'Você usa o Baru para sessões de foco e um habitat. Ele nunca morre, nunca perde progresso e nunca te culpa. O teste de 7 dias desta versão não cobra na loja. Restaurar compras só marca o teste local. Trocar o idioma e a meta não apaga o habitat.',
-  'tabs': ['Habitat', 'Loja', 'Relatório', 'Ajustes'],
+  'tabs': ['Habitat', 'Trilha', 'Loja', 'Ajustes'],
 };
 
 const _en = <String, Object>{
@@ -549,6 +597,30 @@ const _en = <String, Object>{
   'catPassivo': 'Audio',
   'telaMudarCategoria': 'Change category',
   'telaMudado': '{a} now counts as {c}.',
+  'trilhaT': 'Your path',
+  'trilhaSub': 'One step at a time. Nothing here expires.',
+  'trilhaProximo': 'NEXT STEP',
+  'trilhaFeito': 'Earned',
+  'trilhaAgora': 'Now',
+  'trilhaBloqueado': 'Ahead',
+  'nivelRotulo': 'Level {n}',
+  'nivelFalta': '{x} XP to level {n}',
+  'nivelMax': 'Max level',
+  'marcoSessao1': 'Your first focus session',
+  'marcoSessoes': '{n} focus sessions',
+  'marcoSequencia': '{n} days in a row',
+  'marcoNivel': 'Reach level {n}',
+  'marcoAbaixo1': 'Finish a day under your goal',
+  'marcoAbaixo': 'Finish {n} days under your goal',
+  'premioFolhas': '+{n} leaves',
+  'premioEspecie': '{a} joins the habitat',
+  'premioHabitat': 'The habitat grows',
+  'celebNivel': 'Level {n}',
+  'celebNivelSub': '{a} feels more at home.',
+  'celebMarco': 'Milestone reached',
+  'trilhaVaziaT': 'The path starts tomorrow',
+  'trilhaVaziaB': 'Finish onboarding and the first step shows up here.',
+  'xpRotulo': 'XP',
   'langTitle': 'Which language should we speak?',
   'langSub': 'You can change it later in settings.',
   'cont': 'Continue',
@@ -757,7 +829,7 @@ const _en = <String, Object>{
       'Baru reads only the daily screen-time total, if you allow it. Never which apps, never content. Nothing leaves your device in this phase. Sessions, leaves, and the habitat stay on the phone. The subscription here is a local trial — store billing comes later.',
   'termsBody':
       'You use Baru for focus sessions and a habitat. It never dies, never loses progress, and never blames you. The 7-day trial in this build does not charge through the store. Restore purchases only marks the local trial. Changing language or goal does not wipe the habitat.',
-  'tabs': ['Habitat', 'Shop', 'Report', 'Settings'],
+  'tabs': ['Habitat', 'Path', 'Shop', 'Settings'],
 };
 
 const _es = <String, Object>{
@@ -800,6 +872,30 @@ const _es = <String, Object>{
   'catPassivo': 'Audio',
   'telaMudarCategoria': 'Cambiar categoría',
   'telaMudado': '{a} ahora cuenta como {c}.',
+  'trilhaT': 'Tu camino',
+  'trilhaSub': 'Un paso a la vez. Nada aquí caduca.',
+  'trilhaProximo': 'SIGUIENTE PASO',
+  'trilhaFeito': 'Conseguido',
+  'trilhaAgora': 'Ahora',
+  'trilhaBloqueado': 'Por venir',
+  'nivelRotulo': 'Nivel {n}',
+  'nivelFalta': '{x} XP para el nivel {n}',
+  'nivelMax': 'Nivel máximo',
+  'marcoSessao1': 'Tu primera sesión de enfoque',
+  'marcoSessoes': '{n} sesiones de enfoque',
+  'marcoSequencia': '{n} días seguidos',
+  'marcoNivel': 'Llegar al nivel {n}',
+  'marcoAbaixo1': 'Cerrar un día bajo tu meta',
+  'marcoAbaixo': 'Cerrar {n} días bajo tu meta',
+  'premioFolhas': '+{n} hojas',
+  'premioEspecie': '{a} entra en el hábitat',
+  'premioHabitat': 'El hábitat crece',
+  'celebNivel': 'Nivel {n}',
+  'celebNivelSub': '{a} se siente más en casa.',
+  'celebMarco': 'Hito alcanzado',
+  'trilhaVaziaT': 'El camino empieza mañana',
+  'trilhaVaziaB': 'Termina el onboarding y el primer paso aparece aquí.',
+  'xpRotulo': 'XP',
   'langTitle': '¿En qué idioma quieres hablarle?',
   'langSub': 'Puedes cambiarlo después en ajustes.',
   'cont': 'Continuar',
@@ -1010,7 +1106,7 @@ const _es = <String, Object>{
       'Baru solo lee el total diario de tiempo de pantalla, si lo permites. Nunca qué apps ni el contenido. Nada sale del aparato en esta fase. Sesiones, hojas y el hábitat quedan en el teléfono. La suscripción de esta versión es una prueba local — el cobro en la tienda llega después.',
   'termsBody':
       'Usas Baru para sesiones de enfoque y un hábitat. Nunca muere, nunca pierde progreso y nunca te culpa. La prueba de 7 días de esta versión no cobra en la tienda. Restaurar compras solo marca la prueba local. Cambiar idioma o meta no borra el hábitat.',
-  'tabs': ['Hábitat', 'Tienda', 'Informe', 'Ajustes'],
+  'tabs': ['Hábitat', 'Camino', 'Tienda', 'Ajustes'],
 };
 
 const _zh = <String, Object>{
@@ -1053,6 +1149,30 @@ const _zh = <String, Object>{
   'catPassivo': '音频',
   'telaMudarCategoria': '更改类别',
   'telaMudado': '{a} 现在按{c}计算。',
+  'trilhaT': '你的路径',
+  'trilhaSub': '一步一步来。这里的一切都不会过期。',
+  'trilhaProximo': '下一步',
+  'trilhaFeito': '已达成',
+  'trilhaAgora': '现在',
+  'trilhaBloqueado': '即将到来',
+  'nivelRotulo': '等级 {n}',
+  'nivelFalta': '还差 {x} XP 到等级 {n}',
+  'nivelMax': '已满级',
+  'marcoSessao1': '你的第一次专注',
+  'marcoSessoes': '{n} 次专注',
+  'marcoSequencia': '连续 {n} 天',
+  'marcoNivel': '达到等级 {n}',
+  'marcoAbaixo1': '有一天低于目标',
+  'marcoAbaixo': '有 {n} 天低于目标',
+  'premioFolhas': '+{n} 片叶子',
+  'premioEspecie': '{a} 加入栖息地',
+  'premioHabitat': '栖息地成长了',
+  'celebNivel': '等级 {n}',
+  'celebNivelSub': '{a} 更有家的感觉了。',
+  'celebMarco': '达成里程碑',
+  'trilhaVaziaT': '路径明天开始',
+  'trilhaVaziaB': '完成引导后，第一步就会出现在这里。',
+  'xpRotulo': 'XP',
   'langTitle': '你想用哪种语言？',
   'langSub': '之后可以在设置里更改。',
   'cont': '继续',
@@ -1226,5 +1346,5 @@ const _zh = <String, Object>{
       '如果你允许，Baru 只读取当天的屏幕总时长。不看具体应用，也不看内容。这一阶段数据不离开你的设备。专注时段、叶子和栖息地都留在手机上。这里的订阅是本地试用，商店扣款稍后才会接入。',
   'termsBody':
       '你用 Baru 做专注时段、照料栖息地。它不会死，不会丢掉进度，也不会责怪你。这个版本的 7 天试用不会通过商店扣款。恢复购买只标记本地试用。改语言或目标不会清空栖息地。',
-  'tabs': ['栖息地', '商店', '报告', '设置'],
+  'tabs': ['栖息地', '路径', '商店', '设置'],
 };

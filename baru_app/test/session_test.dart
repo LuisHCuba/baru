@@ -1,7 +1,12 @@
 import 'package:baru_app/data/app_snapshot.dart';
+import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// A primeira sessão da conta também destrava o primeiro marco da trilha.
+int get _premioDoPrimeiroFoco =>
+    trilha.firstWhere((m) => m.id == 'primeiro_foco').recompensa.folhas;
 
 /// Sessão de foco — o caminho core do produto.
 ///
@@ -107,9 +112,9 @@ void main() {
 
       expect(
         s.leaves,
-        10 + sessionReward(50),
+        10 + sessionReward(50) + _premioDoPrimeiroFoco,
         reason: 'o usuário cumpriu o tempo longe do telefone, que é o pedido '
-            'do app — a sessão conta',
+            'do app — a sessão conta, e ela é a primeira da trilha',
       );
       expect(s.screen, AppScreen.result);
       expect(s.aborted, isFalse);
@@ -141,7 +146,7 @@ void main() {
       );
       final s = AppState(snapshot: snap);
 
-      expect(s.leaves, sessionReward(25));
+      expect(s.leaves, sessionReward(25) + _premioDoPrimeiroFoco);
       expect(
         s.week[weekdayIndex(ontem)],
         WeekDayKind.present,
@@ -181,7 +186,7 @@ void main() {
 
       s.reconcileSession();
 
-      expect(s.leaves, 5 + sessionReward(25));
+      expect(s.leaves, 5 + sessionReward(25) + _premioDoPrimeiroFoco);
       expect(s.screen, AppScreen.result);
       expect(s.running, isFalse);
       s.dispose();

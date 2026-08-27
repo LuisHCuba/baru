@@ -71,6 +71,7 @@ void main() {
       AppScreen.profile,
       AppScreen.paywall,
       AppScreen.tempo,
+      AppScreen.trilha,
     ]) {
       await pumpAt412(tester, screen);
       expect(tester.takeException(), isNull, reason: 'exceção em ${screen.name}');
@@ -118,8 +119,8 @@ void main() {
   testWidgets('tabs usam ícones Material no lugar dos quadrados', (tester) async {
     await pumpAt412(tester, AppScreen.home);
     expect(find.byIcon(Icons.home_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.route_outlined), findsOneWidget);
     expect(find.byIcon(Icons.storefront_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.insights_outlined), findsOneWidget);
     expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
   });
 

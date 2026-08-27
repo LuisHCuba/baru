@@ -40,6 +40,12 @@ class AppSnapshot {
     this.sessionEndsAt,
     this.sessionDur = 0,
     this.ajustesDeCategoria = const {},
+    this.xp = 0,
+    this.sessoesConcluidas = 0,
+    this.melhorSequencia = 0,
+    this.diasAbaixoDaMeta = 0,
+    this.marcosResgatados = const [],
+    this.nivelCelebrado = 1,
   });
 
   final AppScreen screen;
@@ -84,6 +90,14 @@ class AppSnapshot {
   /// Guardado como texto para o JSON e para as linhas do banco.
   final Map<String, String> ajustesDeCategoria;
 
+  // --- progressão ---------------------------------------------------------
+  final int xp;
+  final int sessoesConcluidas;
+  final int melhorSequencia;
+  final int diasAbaixoDaMeta;
+  final List<String> marcosResgatados;
+  final int nivelCelebrado;
+
   Map<String, dynamic> toJson() => {
         'v': 1,
         'screen': screen.name,
@@ -121,6 +135,12 @@ class AppSnapshot {
         'sessionEndsAt': sessionEndsAt?.toIso8601String(),
         'sessionDur': sessionDur,
         'ajustesDeCategoria': ajustesDeCategoria,
+        'xp': xp,
+        'sessoesConcluidas': sessoesConcluidas,
+        'melhorSequencia': melhorSequencia,
+        'diasAbaixoDaMeta': diasAbaixoDaMeta,
+        'marcosResgatados': marcosResgatados,
+        'nivelCelebrado': nivelCelebrado,
       };
 
   factory AppSnapshot.fromJson(Map<String, dynamic> j) {
@@ -168,6 +188,14 @@ class AppSnapshot {
             (k, v) => MapEntry('$k', '$v'),
           ) ??
           const {},
+      xp: (j['xp'] as num?)?.toInt() ?? 0,
+      sessoesConcluidas: (j['sessoesConcluidas'] as num?)?.toInt() ?? 0,
+      melhorSequencia: (j['melhorSequencia'] as num?)?.toInt() ?? 0,
+      diasAbaixoDaMeta: (j['diasAbaixoDaMeta'] as num?)?.toInt() ?? 0,
+      marcosResgatados:
+          (j['marcosResgatados'] as List?)?.map((e) => '$e').toList() ??
+              const [],
+      nivelCelebrado: (j['nivelCelebrado'] as num?)?.toInt() ?? 1,
     );
   }
 
@@ -234,6 +262,12 @@ class AppSnapshot {
     DateTime? sessionEndsAt,
     int? sessionDur,
     Map<String, String>? ajustesDeCategoria,
+    int? xp,
+    int? sessoesConcluidas,
+    int? melhorSequencia,
+    int? diasAbaixoDaMeta,
+    List<String>? marcosResgatados,
+    int? nivelCelebrado,
     bool clearQuiz = false,
     bool clearTrialStart = false,
     bool clearSession = false,
@@ -276,6 +310,12 @@ class AppSnapshot {
           clearSession ? null : (sessionEndsAt ?? this.sessionEndsAt),
       sessionDur: clearSession ? 0 : (sessionDur ?? this.sessionDur),
       ajustesDeCategoria: ajustesDeCategoria ?? this.ajustesDeCategoria,
+      xp: xp ?? this.xp,
+      sessoesConcluidas: sessoesConcluidas ?? this.sessoesConcluidas,
+      melhorSequencia: melhorSequencia ?? this.melhorSequencia,
+      diasAbaixoDaMeta: diasAbaixoDaMeta ?? this.diasAbaixoDaMeta,
+      marcosResgatados: marcosResgatados ?? this.marcosResgatados,
+      nivelCelebrado: nivelCelebrado ?? this.nivelCelebrado,
     );
   }
 

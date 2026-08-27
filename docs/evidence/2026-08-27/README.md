@@ -48,6 +48,26 @@ idênticas: a cena não conhecia a hora.
 | `chegada-0-antes.png` | a cena antes de comprar a ponte |
 | `chegada-1..4.png` | a ponte caindo na cena com mola, quadro a quadro |
 
+
+## Tempo de tela
+
+| Arquivo | O que mostra |
+|---|---|
+| `tempo-com-dados.png` | o número que conta para a meta, a quebra por categoria e a lista por app |
+| `tempo-sem-permissao.png` | sem acesso ao uso: convite de um toque, nenhum número inventado |
+| `tempo-vazio.png` | com permissão e sem medição ainda |
+
+Repare no Spotify: aparece como **Áudio**, e a legenda diz que áudio fica fora
+da meta. Antes ele era somado ao tempo de tela mesmo tocando no bolso.
+
+## Trilha e nível
+
+| Arquivo | O que mostra |
+|---|---|
+| `trilha-inicio.png` | conta nova: nível 1, primeiro passo em destaque |
+| `trilha-andamento.png` | nível 4, cinco marcos conquistados, próximo passo com progresso |
+| `celebracao-nivel.png` | a celebração de nível, com partículas em pleno voo |
+
 ## Sobre o "antes"
 
 Não há captura do estado anterior porque o código anterior não tinha as chaves

@@ -88,6 +88,10 @@ class AppColors {
         Species.otter => Cores.pelagemLontra,
         Species.tortoise => Cores.pelagemTartaruga,
         Species.owl => Cores.pelagemCoruja,
+        Species.axolotl => Cores.pelagemAxolote,
+        Species.penguin => Cores.pelagemPinguim,
+        Species.cat => Cores.pelagemGata,
+        Species.fox => Cores.pelagemRaposa,
       };
 
   /// O tom escolhido, com o índice preso ao tamanho da paleta da espécie.

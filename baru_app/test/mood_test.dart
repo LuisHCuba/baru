@@ -144,9 +144,28 @@ void main() {
       expect(responde(3), Species.tortoise);
     });
 
-    test('as quatro espécies são alcançáveis', () {
+    test('as quatro espécies do quiz são alcançáveis', () {
+      // O quiz decide **quem você é** entre as quatro de origem. As outras
+      // quatro se conquistam na trilha e nunca saem daqui.
       final alcancadas = {for (var i = 0; i < 4; i++) responde(i)};
-      expect(alcancadas, Species.values.toSet());
+      expect(alcancadas, {
+        Species.capybara,
+        Species.otter,
+        Species.tortoise,
+        Species.owl,
+      });
+    });
+
+    test('o quiz nunca devolve uma espécie que se conquista', () {
+      const daTrilha = {
+        Species.axolotl,
+        Species.penguin,
+        Species.cat,
+        Species.fox,
+      };
+      for (var i = 0; i < 4; i++) {
+        expect(daTrilha.contains(responde(i)), isFalse);
+      }
     });
 
     test('o resultado é o mesmo nos 4 idiomas', () {

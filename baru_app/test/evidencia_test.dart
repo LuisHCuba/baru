@@ -196,7 +196,7 @@ void main() {
     addTearDown(
       tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
     );
-    tester.view.physicalSize = const Size(900, 700);
+    tester.view.physicalSize = const Size(900, 1400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -449,7 +449,7 @@ void main() {
     addTearDown(
       tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
     );
-    tester.view.physicalSize = const Size(900, 460);
+    tester.view.physicalSize = const Size(900, 920);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);

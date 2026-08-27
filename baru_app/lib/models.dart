@@ -20,7 +20,12 @@ enum AppScreen {
   sobreposicao,
 }
 
-enum Species { capybara, otter, tortoise, owl }
+/// As espécies do Baru.
+///
+/// As quatro primeiras saem do quiz do onboarding; as quatro últimas se
+/// desbloqueiam na trilha. A ordem importa: é ela que dá a ordem na tela de
+/// escolha e a ordem dos nomes no catálogo.
+enum Species { capybara, otter, tortoise, owl, axolotl, penguin, cat, fox }
 
 enum Mood { radiant, content, neutral, sleepy, missingYou }
 
@@ -63,6 +68,10 @@ const petNames = {
   Species.otter: 'Rio',
   Species.tortoise: 'Toco',
   Species.owl: 'Nina',
+  Species.axolotl: 'Lume',
+  Species.penguin: 'Nino',
+  Species.cat: 'Mel',
+  Species.fox: 'Faísca',
 };
 
 const durations = [25, 50, 90, 45];

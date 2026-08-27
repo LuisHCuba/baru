@@ -85,10 +85,18 @@ void main() {
       }
     });
 
-    test('as três espécies extras são desbloqueadas pela trilha', () {
+    test('as sete espécies fora da sua se desbloqueiam pela trilha', () {
       final porMarco =
           trilha.map((m) => m.recompensa.especie).whereType<Species>().toSet();
-      expect(porMarco, {Species.otter, Species.tortoise, Species.owl});
+      expect(porMarco, {
+        Species.otter,
+        Species.tortoise,
+        Species.owl,
+        Species.axolotl,
+        Species.penguin,
+        Species.cat,
+        Species.fox,
+      });
     });
 
     test('conta nova tem o primeiro marco como próximo passo', () {

@@ -107,6 +107,46 @@ class Cores {
     Color(0xFFC2A585),
   ];
 
+  /// Axolote: rosa-claro a lilás, com as guelras mais vivas.
+  static const pelagemAxolote = [
+    Color(0xFFE39BA8),
+    Color(0xFFD98795),
+    Color(0xFFEEB3BD),
+    Color(0xFFC97C93),
+    Color(0xFFE8A9AE),
+    Color(0xFFF2C6CB),
+  ];
+
+  /// Pinguim: azul-ardósia a grafite.
+  static const pelagemPinguim = [
+    Color(0xFF4E6E7E),
+    Color(0xFF3E5A68),
+    Color(0xFF648697),
+    Color(0xFF44525C),
+    Color(0xFF5A7E90),
+    Color(0xFF7C9AA8),
+  ];
+
+  /// Gata: mel, cinza e branco-sujo.
+  static const pelagemGata = [
+    Color(0xFFC9964F),
+    Color(0xFFA97D3E),
+    Color(0xFFDCB176),
+    Color(0xFF8C8175),
+    Color(0xFFB9A896),
+    Color(0xFFE0CFB6),
+  ];
+
+  /// Raposa: laranja-queimado a ruivo.
+  static const pelagemRaposa = [
+    Color(0xFFC4663D),
+    Color(0xFFA85330),
+    Color(0xFFD8845C),
+    Color(0xFF96482C),
+    Color(0xFFCE7147),
+    Color(0xFFE29A76),
+  ];
+
   /// Compatibilidade: o valor antigo, usado só onde a espécie não é sabida.
   static const pelagem = pelagemCapivara;
 

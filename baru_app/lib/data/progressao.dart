@@ -212,7 +212,11 @@ const trilha = <Marco>[
     id: 'vinte_focos',
     tipo: TipoDeMarco.sessoes,
     alvo: 20,
-    recompensa: RecompensaDeMarco(folhas: 150, estagioDeHabitat: 4),
+    recompensa: RecompensaDeMarco(
+      folhas: 150,
+      estagioDeHabitat: 4,
+      especie: Species.axolotl,
+    ),
   ),
   Marco(
     id: 'nivel_10',
@@ -221,16 +225,26 @@ const trilha = <Marco>[
     recompensa: RecompensaDeMarco(folhas: 180, especie: Species.owl),
   ),
   Marco(
+    id: 'quinze_dias_abaixo',
+    tipo: TipoDeMarco.diasAbaixoDaMeta,
+    alvo: 15,
+    recompensa: RecompensaDeMarco(folhas: 220, especie: Species.penguin),
+  ),
+  Marco(
     id: 'trinta_dias',
     tipo: TipoDeMarco.sequencia,
     alvo: 30,
-    recompensa: RecompensaDeMarco(folhas: 300, estagioDeHabitat: 5),
+    recompensa: RecompensaDeMarco(
+      folhas: 300,
+      estagioDeHabitat: 5,
+      especie: Species.cat,
+    ),
   ),
   Marco(
     id: 'cem_focos',
     tipo: TipoDeMarco.sessoes,
     alvo: 100,
-    recompensa: RecompensaDeMarco(folhas: 500),
+    recompensa: RecompensaDeMarco(folhas: 500, especie: Species.fox),
   ),
 ];
 

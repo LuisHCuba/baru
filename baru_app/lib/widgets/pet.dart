@@ -757,6 +757,14 @@ class _PetPainter extends CustomPainter {
         _tartaruga(canvas);
       case Species.owl:
         _coruja(canvas);
+      case Species.axolotl:
+        _axolote(canvas);
+      case Species.penguin:
+        _pinguim(canvas);
+      case Species.cat:
+        _gata(canvas);
+      case Species.fox:
+        _raposa(canvas);
     }
     canvas.restore();
 
@@ -1373,6 +1381,463 @@ class _PetPainter extends CustomPainter {
 
     if (feliz) _bochecha(canvas, const Offset(-34, 17), const Offset(34, 17));
     _veste(canvas, 86, 70);
+    canvas.restore();
+  }
+
+  // ======================================================================
+  // AXOLOTE — guelras que balançam, a marca da espécie
+  // ======================================================================
+
+  void _axolote(Canvas canvas) {
+    final amp = pose.amplitude;
+    final rema = pose.boia * amp;
+    // As guelras têm ritmo próprio e abrem mais quando ele está na água.
+    final abana = (pose.cauda * amp) * (nadando ? 1.6 : 0.8);
+
+    _pata(canvas, Offset(-20, 49 + rema * 1.4), 16, 12, sombra, 0,
+        dedos: false);
+    _pata(canvas, Offset(20, 49 - rema * 1.4), 16, 12, sombra, 0,
+        dedos: false);
+
+    final corpo = _bolha(
+      Rect.fromCenter(center: const Offset(0, 20), width: 82, height: 71),
+      topo: 0.88,
+    );
+    canvas.drawPath(corpo, _p(pelo));
+
+    canvas.save();
+    canvas.clipPath(corpo);
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 31), width: 56, height: 55),
+        topo: 0.9,
+      ),
+      _p(claro),
+    );
+    canvas.restore();
+
+    // --- cabeça -----------------------------------------------------------
+    canvas.save();
+    canvas.translate(0, -28 + pose.respiro * amp * 0.7);
+    canvas.rotate(_cabecaGiro * 0.9);
+
+    // Guelras antes da cabeça: os três ramos de cada lado nascem atrás dela.
+    final corDaGuelra = Color.lerp(pelo, Cores.acento, 0.34)!;
+    for (final lado in [-1.0, 1.0]) {
+      final l = lado;
+      final a = abana * 3 * l;
+      canvas.drawPath(
+        Path()
+          ..moveTo(l * 30, -18)
+          ..cubicTo(l * 44, -31 + a, l * 56, -35 + a, l * 63, -30 + a)
+          ..cubicTo(l * 59, -21 + a, l * 49, -15, l * 39, -13)
+          ..cubicTo(l * 34, -13, l * 31, -15, l * 30, -18)
+          ..close(),
+        _p(corDaGuelra),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(l * 34, -2)
+          ..cubicTo(l * 49, -4 - a, l * 59, -1 - a, l * 62, 6 - a)
+          ..cubicTo(l * 56, 12 - a, l * 46, 12, l * 37, 8)
+          ..cubicTo(l * 34, 6, l * 33, 2, l * 34, -2)
+          ..close(),
+        _p(corDaGuelra),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(l * 31, 12)
+          ..cubicTo(l * 45, 15 + a, l * 54, 21 + a, l * 56, 28 + a)
+          ..cubicTo(l * 49, 32 + a, l * 39, 30, l * 32, 23)
+          ..cubicTo(l * 29, 19, l * 29, 15, l * 31, 12)
+          ..close(),
+        _p(corDaGuelra),
+      );
+    }
+
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 0.7), width: 86, height: 73),
+        base: 1.04,
+      ),
+      _p(pelo),
+    );
+
+    _boca(canvas, const Offset(0, 14), 22);
+    if (feliz) _bochecha(canvas, const Offset(-30, 6), const Offset(30, 6));
+
+    _olho(canvas, const Offset(-20, -6), 7.5);
+    _olho(canvas, const Offset(20, -6), 7.5);
+    _veste(canvas, 86, 73);
+
+    canvas.restore();
+  }
+
+  // ======================================================================
+  // PINGUIM — barriga clara, nadadeiras coladas, pés laranja
+  // ======================================================================
+
+  void _pinguim(Canvas canvas) {
+    final amp = pose.amplitude;
+    final asa = pose.respiro * amp;
+    final passo = pose.boia * amp;
+
+    // Pés laranja com três riscos de dedo, apoiados.
+    for (final lado in [-1.0, 1.0]) {
+      final desloca = lado * passo * 1.4;
+      canvas.save();
+      canvas.translate(lado * 17 + desloca, 50);
+      canvas.drawPath(
+        _bolha(
+          Rect.fromCenter(center: Offset.zero, width: 20, height: 13),
+          base: 0.86,
+        ),
+        _p(Cores.acento),
+      );
+      final dedo = _traco(Cores.acentoForte, 1.5);
+      for (final dx in [-4.4, 0.0, 4.4]) {
+        canvas.drawLine(Offset(dx, 3.2), Offset(dx, 6.3), dedo);
+      }
+      canvas.restore();
+    }
+
+    final corpo = _bolha(
+      Rect.fromCenter(center: const Offset(0, 12), width: 90, height: 91),
+      topo: 0.9,
+    );
+    canvas.drawPath(corpo, _p(pelo));
+
+    canvas.save();
+    canvas.clipPath(corpo);
+    // Barriga: quase branca, é ela que faz ler "pinguim".
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 17), width: 60, height: 82),
+        topo: 0.9,
+      ),
+      _p(Color.lerp(claro, Cores.superficie, 0.62)!),
+    );
+    canvas.restore();
+
+    // Nadadeiras: coladas no corpo, abrem de leve ao respirar.
+    for (final lado in [-1.0, 1.0]) {
+      final abre = asa * 3 * lado;
+      // Borda externa em ±44 num corpo de ±45: a nadadeira fica **dentro**
+      // do contorno. Passando dele, sobrava uma fresta do fundo entre as
+      // duas, que lia como risco branco no bicho.
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 30, -14)
+          ..cubicTo(
+            lado * (44 + abre), 0,
+            lado * (43 + abre), 24,
+            lado * 26, 36,
+          )
+          ..cubicTo(lado * 22, 14, lado * 23, -4, lado * 30, -14)
+          ..close(),
+        _p(sombraForte),
+      );
+    }
+
+    // --- cabeça -----------------------------------------------------------
+    canvas.save();
+    canvas.translate(0, -34 + pose.respiro * amp * 0.6);
+    canvas.rotate(_cabecaGiro * 0.9);
+
+    canvas.drawPath(
+      _bolha(Rect.fromCenter(center: Offset.zero, width: 72, height: 60)),
+      _p(pelo),
+    );
+
+    // Máscara clara do rosto.
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 8), width: 50, height: 32),
+        topo: 0.86,
+      ),
+      _p(Color.lerp(claro, Cores.superficie, 0.62)!),
+    );
+
+    if (feliz) _bochecha(canvas, const Offset(-26, 9), const Offset(26, 9));
+
+    _olho(canvas, const Offset(-15, -3), 7);
+    _olho(canvas, const Offset(15, -3), 7);
+
+    // Bico: um triângulo laranja, o único traço reto do bicho.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-6, 5)
+        ..lineTo(6, 5)
+        ..lineTo(0, 17)
+        ..close(),
+      _p(Cores.acento),
+    );
+    if (pose.bocejo > 0.3 || pose.carinho > 0.4) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(-4.5, 11)
+          ..lineTo(4.5, 11)
+          ..lineTo(0, 18.5)
+          ..close(),
+        _p(Color.lerp(Cores.acentoForte, Cores.tinta, 0.35)!),
+      );
+    }
+    _veste(canvas, 72, 60);
+
+    canvas.restore();
+  }
+
+  // ======================================================================
+  // GATA — orelhas triangulares, focinho em coração, bigodes longos
+  // ======================================================================
+
+  void _gata(Canvas canvas) {
+    final amp = pose.amplitude;
+    final balanca = pose.cauda * amp;
+
+    // Cauda: sobe e enrola, com ritmo próprio.
+    canvas.drawPath(
+      Path()
+        ..moveTo(26, 36)
+        ..cubicTo(
+          54 + balanca * 4, 30,
+          64 + balanca * 7, 10 + balanca * 5,
+          60 + balanca * 8, -14 + balanca * 7,
+        )
+        ..cubicTo(54, -4, 46, 14, 24, 30)
+        ..close(),
+      _p(sombraForte),
+    );
+
+    _pata(canvas, const Offset(-19, 49), 16, 12, sombra, pose.boia * amp);
+    _pata(canvas, const Offset(19, 49), 16, 12, sombra, -pose.boia * amp);
+
+    final corpo = _bolha(
+      Rect.fromCenter(center: const Offset(0, 20), width: 80, height: 70),
+      topo: 0.88,
+    );
+    canvas.drawPath(corpo, _p(pelo));
+
+    canvas.save();
+    canvas.clipPath(corpo);
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 31), width: 54, height: 53),
+        topo: 0.9,
+      ),
+      _p(claro),
+    );
+    canvas.restore();
+
+    // --- cabeça -----------------------------------------------------------
+    canvas.save();
+    canvas.translate(0, -28 + pose.respiro * amp * 0.7);
+    canvas.rotate(_cabecaGiro * 0.9);
+
+    // Orelhas triangulares, com a concha por dentro. Antes da cabeça: a base
+    // some sob o contorno.
+    for (final lado in [-1.0, 1.0]) {
+      final treme = pose.orelha * 0.6 * lado;
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 34, -14)
+          ..cubicTo(
+            lado * 40, -30,
+            lado * (36 + treme * 6), -42,
+            lado * (26 + treme * 8), -45,
+          )
+          ..cubicTo(lado * 20, -37, lado * 16, -28, lado * 14, -20)
+          ..cubicTo(lado * 20, -16, lado * 28, -13, lado * 34, -14)
+          ..close(),
+        _p(pelo),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 30, -19)
+          ..cubicTo(
+            lado * 33, -29,
+            lado * (31 + treme * 5), -36,
+            lado * (25 + treme * 6), -38,
+          )
+          ..cubicTo(lado * 21, -32, lado * 19, -26, lado * 18, -21)
+          ..cubicTo(lado * 22, -19, lado * 27, -18, lado * 30, -19)
+          ..close(),
+        _p(Color.lerp(sombra, Cores.acento, 0.30)!),
+      );
+    }
+
+    final cabeca = _bolha(
+      Rect.fromCenter(center: const Offset(0.7, 0.7), width: 82, height: 69),
+    );
+    canvas.drawPath(cabeca, _p(pelo));
+
+    // Listras da testa: o que faz ler "gata" e não "urso".
+    canvas.save();
+    canvas.clipPath(cabeca);
+    final listra = _traco(sombra.withValues(alpha: 0.55), 3);
+    for (final x in [-11.0, 0.0, 11.0]) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(x, -34)
+          ..cubicTo(x * 0.9, -29, x * 0.82, -24, x * 0.78, -20),
+        listra,
+      );
+    }
+    canvas.restore();
+
+    // Focinheira clara e larga.
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 15), width: 34, height: 20),
+        topo: 0.86,
+      ),
+      _p(claro),
+    );
+
+    _bigodes(canvas, const Offset(-19, 11));
+    _bigodes(canvas, const Offset(19, 11), lado: 1);
+
+    // Nariz em coração invertido — a marca do felino.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-4, 7.5)
+        ..cubicTo(-4, 5.8, 4, 5.8, 4, 7.5)
+        ..cubicTo(4, 10.5, 1, 12.5, 0, 12.5)
+        ..cubicTo(-1, 12.5, -4, 10.5, -4, 7.5)
+        ..close(),
+      _p(const Color(0xFFD67F74)),
+    );
+
+    _boca(canvas, const Offset(0, 17), 20);
+    if (feliz) _bochecha(canvas, const Offset(-30, 12), const Offset(30, 12));
+
+    _olho(canvas, const Offset(-19, -6), 7.5);
+    _olho(canvas, const Offset(19, -6), 7.5);
+    _veste(canvas, 82, 69);
+
+    canvas.restore();
+  }
+
+  // ======================================================================
+  // RAPOSA — orelhas grandes de ponta escura, cauda de ponta clara
+  // ======================================================================
+
+  void _raposa(Canvas canvas) {
+    final amp = pose.amplitude;
+    final balanca = pose.cauda * amp;
+
+    // Cauda grossa com a ponta clara — é ela que nomeia a raposa.
+    // Cauda em pluma: sai baixa, atrás do corpo, e engrossa até a ponta.
+    // Saindo estreita e para cima ela lia como braço levantado.
+    final pontaX = 74 + balanca * 6;
+    final pontaY = 2 + balanca * 7;
+    final cauda = Path()
+      ..moveTo(18, 44)
+      ..cubicTo(48, 50, 70 + balanca * 4, 34, pontaX, pontaY)
+      ..cubicTo(80, -12, 62, -16, 54, -2)
+      ..cubicTo(46, 14, 34, 26, 14, 30)
+      ..close();
+    canvas.drawPath(cauda, _p(sombraForte));
+    canvas.save();
+    canvas.clipPath(cauda);
+    // Ponta clara: é ela que nomeia a raposa. Um disco grande, senão some.
+    canvas.drawCircle(Offset(pontaX - 4, pontaY - 4), 17, _p(claro));
+    canvas.restore();
+
+    _pata(canvas, const Offset(-19, 49), 16, 12, sombraForte, pose.boia * amp);
+    _pata(canvas, const Offset(19, 49), 16, 12, sombraForte, -pose.boia * amp);
+
+    final corpo = _bolha(
+      Rect.fromCenter(center: const Offset(0, 20), width: 78, height: 70),
+      topo: 0.88,
+    );
+    canvas.drawPath(corpo, _p(pelo));
+
+    canvas.save();
+    canvas.clipPath(corpo);
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 27), width: 56, height: 55),
+        topo: 0.9,
+      ),
+      _p(claro),
+    );
+    canvas.restore();
+
+    // --- cabeça -----------------------------------------------------------
+    canvas.save();
+    canvas.translate(0, -28 + pose.respiro * amp * 0.7);
+    canvas.rotate(_cabecaGiro * 0.9);
+
+    // Orelhas grandes, em três camadas: pelo, concha clara e ponta escura.
+    for (final lado in [-1.0, 1.0]) {
+      final treme = pose.orelha * 0.6 * lado;
+      final t = treme * 7;
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 38, -10)
+          ..cubicTo(lado * 46, -28, lado * (42 + t), -44, lado * (30 + t), -48)
+          ..cubicTo(lado * 22, -38, lado * 16, -26, lado * 14, -16)
+          ..cubicTo(lado * 22, -12, lado * 32, -10, lado * 38, -10)
+          ..close(),
+        _p(pelo),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 32, -16)
+          ..cubicTo(lado * 36, -26, lado * (33 + t), -34, lado * (27 + t), -37)
+          ..cubicTo(lado * 23, -30, lado * 20, -24, lado * 19, -19)
+          ..cubicTo(lado * 24, -16, lado * 29, -15, lado * 32, -16)
+          ..close(),
+        _p(claro),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 37, -27)
+          ..cubicTo(lado * 41, -38, lado * (38 + t), -45, lado * (30 + t), -47)
+          ..cubicTo(lado * 26, -42, lado * 23, -36, lado * 21, -31)
+          ..cubicTo(lado * 26, -28, lado * 33, -26, lado * 37, -27)
+          ..close(),
+        _p(sombraForte),
+      );
+    }
+
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 3), width: 80, height: 66),
+      ),
+      _p(pelo),
+    );
+
+    // Focinho longo e claro, que separa raposa de gata.
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 17), width: 52, height: 26),
+        topo: 0.86,
+      ),
+      _p(claro),
+    );
+
+    // Nariz escuro na ponta.
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 9), width: 13, height: 10),
+        base: 1.1,
+      ),
+      _p(Color.lerp(sombraForte, Cores.tinta, 0.45)!),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(-2.4, 7.4), width: 5, height: 3),
+      _p(luz.withValues(alpha: 0.45)),
+    );
+
+    _boca(canvas, const Offset(0, 19), 20);
+    if (feliz) _bochecha(canvas, const Offset(-30, 14), const Offset(30, 14));
+
+    _olho(canvas, const Offset(-19, -4), 7.5);
+    _olho(canvas, const Offset(19, -4), 7.5);
+    _veste(canvas, 80, 66);
+
     canvas.restore();
   }
 

@@ -19,7 +19,7 @@ permissão com pré-visualização.
 | W-01 | **Widget de tela inicial** (Android AppWidget) | Precisa de `AppWidgetProvider`, `RemoteViews`, layouts XML e um provedor de dados que leia o snapshot fora do processo Flutter. É um turno inteiro sozinho. |
 | W-02 | **Widget de tela de bloqueio** | No Android, widget de bloqueio só existe de novo no **Android 15+** (`WIDGET_CATEGORY_LOCK_SCREEN` voltou em preview); entre o 5 e o 14 a API não existe. No iOS seria WidgetKit, e o app ainda não tem alvo iOS configurado. **Prometer isso para "o celular" hoje seria mentira.** O que dá para fazer nesta faixa é a notificação persistente, que já existe. |
 | W-03 | **Ícone do launcher** | O `ic_launcher` ainda é o padrão do Flutter. Fazer certo é gerar as densidades, o adaptativo (fore/background) e o monocromático do Android 13. |
-| W-04 | **As quatro espécies novas do `baru-pets.html`** (Lume, Nino, Kiwi, Rio, Tuca, Mel, Faísca) | Cada uma é um método de painter novo, entrada em `Species`, `check` no banco, desbloqueio na trilha e nome nos quatro idiomas. |
+| ~~W-04~~ | ~~As espécies do `baru-pets.html`~~ | **Feito em 2026-08-27.** Axolote, pinguim, gata e raposa — painter, paleta, nome em 4 idiomas, desbloqueio na trilha e migration 12. Baru, Rio, Tuca e Kiwi já eram a capivara, a lontra, a tartaruga e a coruja. |
 
 ---
 

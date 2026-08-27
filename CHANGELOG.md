@@ -3,6 +3,61 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — as oito espécies do `baru-pets.html`
+
+### O QUE MUDOU NA TELA
+
+**Quatro espécies novas**, tiradas do arquivo e reproduzidas no painter — o
+SVG usava `translate(100 85)`, exatamente a origem do `_PetPainter`, então a
+geometria traduziu direto:
+
+- **Lume, o axolote.** Três guelras de cada lado, com ritmo próprio: elas
+  abanam mais quando ele está na água.
+- **Nino, o pinguim.** Barriga quase branca, nadadeiras dobradas que abrem ao
+  respirar, pés laranja com três dedos, bico triangular — o único traço reto
+  do elenco.
+- **Mel, a gata.** Orelhas triangulares com concha, listras na testa, nariz em
+  coração invertido e bigodes longos dos dois lados.
+- **Faísca, a raposa.** Orelhas grandes de ponta escura em três camadas, cauda
+  em pluma com a ponta clara, focinho longo.
+
+Cada uma com **paleta própria** (rosa-lilás, azul-ardósia, mel-cinza,
+laranja-queimado) e nome nos quatro idiomas.
+
+**Todas se desbloqueiam na trilha**, não no quiz: quiz é quem você é, trilha é
+o que você conquistou.
+
+| Espécie | Marco |
+|---|---|
+| Axolote | 20 sessões de foco |
+| Pinguim | 15 dias abaixo da meta *(marco novo)* |
+| Gata | 30 dias seguidos presente |
+| Raposa | 100 sessões de foco |
+
+E as roupas servem nas oito: a peça é desenhada no sistema de coordenadas da
+cabeça de cada espécie e escalada por ele.
+
+### Corrigido no caminho
+
+- A nadadeira do pinguim passava do contorno do corpo e sobrava uma fresta do
+  fundo entre as duas — lia como risco branco no bicho.
+- A cauda da raposa saía estreita e para cima: lia como braço levantado.
+
+### Portões (execução real)
+
+- `flutter analyze`: No issues found
+- `flutter test`: 400+ passando
+- `especies_test.dart` compara os **pixels** das oito duas a duas: duas
+  espécies com o mesmo desenho seriam um `case` esquecido caindo no padrão.
+- Evidência: `folha-especies.png` (8 × 4 humores), `folha-roupas.png`
+  (8 × 5 peças), `especie-*.png`
+
+### Migration 12
+
+`baru_pets.species` tinha `check` com uma lista fechada de quatro. Cada
+espécie nova exigiria uma migração, então ele sai — quem tem o catálogo é o
+app, e `parseSpecies` já cai na capivara diante de um valor desconhecido.
+
 ## 2026-08-27 — "não foi possível sincronizar (pet, loja)": causa e conserto
 
 ### Corrigido

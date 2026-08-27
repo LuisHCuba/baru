@@ -68,6 +68,14 @@ da meta. Antes ele era somado ao tempo de tela mesmo tocando no bolso.
 | `trilha-andamento.png` | nível 4, cinco marcos conquistados, próximo passo com progresso |
 | `celebracao-nivel.png` | a celebração de nível, com partículas em pleno voo |
 
+
+## Missões e home
+
+| Arquivo | O que mostra |
+|---|---|
+| `missoes.png` | três diárias e duas semanais, com progresso x/y, recompensa em folhas e XP, prazo e o botão "Resgatar" |
+| `home.png` | a home inteira: saldo, sequência, habitat, humor, semana, uso, nível com XP e o resumo das missões |
+
 ## Sobre o "antes"
 
 Não há captura do estado anterior porque o código anterior não tinha as chaves

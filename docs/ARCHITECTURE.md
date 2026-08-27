@@ -79,6 +79,9 @@ continua em outro aparelho — e por isso fica fora do Supabase.
 
 ```
 lib/
+├── design/                tokens e sistema de movimento — **nenhum valor de
+│                          cor, espaço, raio, sombra, tipografia, duração ou
+│                          curva deve ser escrito fora daqui**
 ├── main.dart              bootstrap (env, repos, supabase, timezone)
 ├── auth_gate.dart         porteiro: sessão -> bootstrap -> app
 ├── app.dart               MaterialApp, AppScope, shell de 8 telas, snackbars
@@ -94,6 +97,9 @@ lib/
 │   ├── row_codec.dart     AppSnapshot <-> linhas das 13 tabelas
 │   ├── baru_env.dart      SUPABASE_URL / ANON_KEY / ENABLED
 │   ├── auth_errors.dart   erro do Supabase -> mensagem nos 4 idiomas
+│   ├── tempo_de_tela.dart contabilidade de intervalos e categorias de app
+│   ├── progressao.dart    XP, curva de nível e a trilha de marcos
+│   ├── missoes.dart       sorteio determinístico e avaliação de missões
 │   └── remote_result.dart resultado de pull/push
 ├── screens/               8 telas, todas StatelessWidget lendo AppScope
 ├── widgets/               design system + habitat + pet (CustomPainter)
@@ -134,9 +140,11 @@ problema no dia em que houver valor real em jogo (ver BACKLOG).
   `appendLocal()` e `saveOwnedLocal()` dos 5 repositórios nunca são chamados;
   só `pushRemote()` é. Os 5 compartilham o mesmo `SnapshotStore`.
 - **`AppState` com 800+ linhas** acumula domínio, plataforma e persistência.
-- **Fontes em runtime.** `google_fonts` baixa Nunito na primeira execução: um
-  app offline-first que depende de rede para a tipografia (B-14).
-- **Sem servidor autoritativo** para economia e trial (B-26).
+- **Navegação sem roteador.** `_Shell` faz `switch(screen)`: sem pilha, sem
+  botão voltar do Android, sem deep link, e corte seco entre telas. É a maior
+  dívida de forma que sobrou (§4B).
+- **Sem servidor autoritativo** para economia e trial.
+- **`AppState` passou de 1200 linhas.**
 
 ## Testes
 

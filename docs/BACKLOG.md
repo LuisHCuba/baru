@@ -1,8 +1,7 @@
 # Backlog — Baru
 
-Priorizado pela função objetivo do §3 do mandato: nada quebrado → segurança e
-integridade de dados → fluxo core end-to-end → corretude das regras de produto →
-cobertura de teste → robustez → performance → polimento → features novas.
+Priorizado pela função objetivo do mandato de produto: o app não mente → o app
+é sentido → o app enriquece → nada quebrado → retomável.
 
 Legenda de esforço: **P** ≤30 min · **M** 30–90 min · **G** > 90 min (quebrar).
 
@@ -12,66 +11,57 @@ Legenda de esforço: **P** ≤30 min · **M** 30–90 min · **G** > 90 min (que
 
 | # | Item | Valor | Esforço | Risco | Pronto quando |
 |---|---|---|---|---|---|
-| B-15 | Assinatura de release do Android | **Bloqueia publicação** | M | Alto | Keystore fora do repo, `key.properties`, build release assinado. Depende do humano: ver BL-05 |
-| B-14 | Nunito empacotada no app | Alto — app offline-first que depende de rede para a própria tipografia, e faz request ao Google no primeiro launch | M | Baixo | `.ttf` no `pubspec`; `GoogleFonts` só como fallback; primeiro launch sem rede com a fonte certa |
-| B-22 | Fuso horário e virada de dia | Médio — `DateTime.now()` local, sem tratamento de mudança de fuso ou horário de verão | M | Médio | Virada de dia correta ao cruzar fuso; teste com fuso fixo |
-| B-23 | `textScaler` limitado a 1.25× | Médio — acessibilidade travada por fidelidade ao design | M | Médio | Fontes grandes sem overflow nas 8 telas, ou o limite justificado em ADR |
-| B-19 | Chip "Livre" abre duração customizada | Médio — o rótulo promete escolha e entrega 45 min fixos | M | Baixo | Seletor real, ou rótulo honesto |
-| B-25 | Relatório do dia é sempre "hoje" | Médio — `repDate` usa `DateTime.now()`, mas o relatório da noite chega às 21h e pode ser aberto no dia seguinte | P | Baixo | A data do relatório é a do dado que ele mostra |
-| B-24 | `SessionRecord._legacyId` é colidível entre usuários | Baixo — teórico | P | Baixo | Ver análise abaixo antes de mexer |
-| B-26 | Economia autoritativa no servidor | Baixo hoje, **crítico no dia do IAP** | G | Alto | Folhas e trial validados fora do dispositivo |
-| B-27 | `AppState` com mais de 900 linhas | Baixo — dívida de forma, não de comportamento | G | Médio | Domínio, plataforma e persistência separados, sem mudar comportamento |
+| C-01 | **Rotas de verdade e transições** (§4B) | Alto — sem roteador, toda tela nova nasce sem histórico | G | Médio | Navegação declarativa com pilha, botão voltar do Android funcionando, deep link para as telas principais, e transição em vez de corte seco (irmãos deslizam, filho entra em profundidade, modal sobe) |
+| C-02 | Assinatura de release do Android | **Bloqueia publicação** | M | Alto | Keystore fora do repo, `key.properties`, build assinado (BL-05) |
+| C-03 | Estágios de habitat visíveis | Alto — o dado existe e a cena ignora | M | Baixo | `estagioDoHabitat` muda a cena: mais vegetação, companheiros visitantes, água mais viva |
+| C-04 | Lembretes com propósito (§6) | Alto — o app só fala quando a sessão roda | M | Baixo | Sequência em risco, missão quase concluída, marco ao alcance; cada um cancelado quando o motivo some; ajuste por categoria respeitado |
+| C-05 | Onboarding e paywall no design system | Médio — são as duas telas com valores soltos | M | Baixo | Nenhum valor de cor, espaço ou raio fora dos tokens; transições entre passos |
+| C-06 | Som | Médio — o §7 pede som curto na celebração | M | Médio | Conquista, resgate e fim de sessão com som; respeitando o modo silencioso |
+| C-07 | Relatório usa o histórico de sessões | Médio — 80 sessões guardadas e nunca lidas | M | Baixo | Série real da semana no relatório |
+| C-08 | Verificação em aparelho | **Alto** — nada deste turno rodou num telefone | M | — | Roteiro do BL-09 executado, mais as animações e a permissão de uso |
+| C-09 | `textScaler` travado em 1.25× | Médio — acessibilidade | M | Médio | Fonte ampliada sem quebrar layout, ou o limite justificado em ADR |
+| C-10 | Fuso horário e virada de dia | Médio | M | Médio | Virada correta ao cruzar fuso; teste com fuso fixo |
+| C-11 | `AppState` com mais de 1200 linhas | Baixo — forma, não comportamento | G | Médio | Domínio, plataforma e persistência separados, sem mudar comportamento |
+| C-12 | Economia autoritativa no servidor | Baixo hoje, **crítico no dia do IAP** | G | Alto | Folhas, XP e trial validados fora do dispositivo |
+| C-13 | `SessionRecord._legacyId` colidível | Baixo — teórico | P | Baixo | Ver a análise antes de mexer (abaixo) |
 
-### Nota sobre B-24
+### Nota sobre C-13
 
-`SessionRecord.fromJson` gera um uuid v5 determinístico a partir de
-`(data, duração, recompensa, concluída)` quando o registro não tem id — o que
-só acontece em snapshots gravados antes de o campo existir. Como
-`baru_sessions.id` é chave primária **global**, dois usuários com o mesmo id
-colidem: o upsert do segundo bate na policy de UPDATE do primeiro e volta 403.
+`SessionRecord.fromJson` gera um uuid v5 determinístico de
+`(data, duração, recompensa, concluída)` quando o registro não tem id — só em
+snapshots gravados antes de o campo existir. Como `baru_sessions.id` é chave
+primária global, dois usuários com o mesmo id colidem e o upsert do segundo
+volta 403. Exige dois usuários com sessão no mesmo microssegundo; o app não foi
+publicado, então snapshots legados basicamente não existem. Trocar por v4
+resolveria a colisão mas quebraria a estabilidade do id, duplicando linhas no
+remoto. A correção certa é dar escopo de usuário ao id — migração em tabela com
+dados.
 
-Descoberto pelo teste de integração, que reproduzia o cenário por usar ids
-fixos entre casos. Na prática exige dois usuários com sessão no mesmo
-microssegundo, mesma duração, mesma recompensa e mesmo resultado — e o app
-ainda não foi publicado, então snapshots legados basicamente não existem.
-Trocar por v4 resolveria a colisão mas quebraria a estabilidade do id entre
-duas leituras do mesmo JSON, criando linhas duplicadas no remoto. Deixado
-documentado de propósito: a correção certa é dar escopo de usuário ao id, e
-isso é migração numa tabela com dados.
-
-## Fora do MVP — não começar antes do core
+## Fora do MVP
 
 - IAP real (App Store / Play Billing) sobre `baru_subscriptions`.
-- iOS Screen Time via Family Controls (depende de entitlement — ver BL-06).
+- iOS Screen Time via Family Controls (entitlement — BL-06).
+- Serviço em primeiro plano no Android / Live Activity no iOS (ADR-011
+  explica por que o cronômetro do sistema cobre o caso principal).
 - Arte Rive no lugar dos `CustomPainter`.
-- Tela de histórico de foco. **Descartada por ora**: a tela de relatório do
-  design tem exatamente as chaves já implementadas (`repUsed`, `repGoal`,
-  `repSessions`, `repBonus`, `repPresent`, `repFreeze`), sem histórico nem
-  gráfico. As 80 sessões guardadas existem para o registro remoto e para quando
-  o produto pedir a tela — construir agora seria feature fora do MVP.
 
 ---
 
+## Concluído no turno de 2026-08-27
+
+| Fatia | Onde |
+|---|---|
+| Fundação: tokens, movimento e Nunito empacotada | `lib/design/`, `assets/fonts/` |
+| Companheiro vivo e habitat com hora do dia | `pet.dart`, `habitat.dart`, `pet_vivo_test`, `habitat_vivo_test` |
+| Tempo de tela verdadeiro + tela de detalhamento | `tempo_de_tela.dart`, `tempo_screen.dart`, ADR-009, migration 7 |
+| Nível, XP e trilha de marcos | `progressao.dart`, `trilha_screen.dart`, `celebracao.dart` |
+| Missões com anatomia completa que creditam | `missoes.dart`, `missoes_screen.dart`, ADR-010 |
+| Notificação viva da sessão | `notification_service.dart`, ADR-011 |
+| Home para de mentir sobre o nível | `home_screen.dart` |
+
 ## Concluído no turno de 2026-08-26
 
-| # | Item | Onde |
-|---|---|---|
-| B-01 | Documentação base | `docs/`, `README.md`, `CHANGELOG.md` |
-| B-02 | Migrations reconciliadas com o banco real | ADR-002, ADR-003, migration 6 |
-| B-03 | Crash de i18n em en/es/zh | `l10n.dart`, `test/l10n_test.dart` |
-| B-04 | Bônus de +15 por fechar abaixo da meta | ADR-005, `test/economy_test.dart` |
-| B-05 | Virada de semana e `todayIndex` | ADR-006, `test/calendar_test.dart` |
-| B-06 | Máscara de sync não é mais perdida em falha | ADR-007, `test/sync_test.dart` |
-| B-07 | Sessão sobrevive a background e kill | ADR-008, `test/session_test.dart` |
-| B-08 | Aviso 24h antes do fim do trial | `notification_service.dart`, `test/trial_test.dart` |
-| B-09 | Moldura de desktop fora do celular + retrato travado | `test/app_frame_test.dart` |
-| B-10 | Login no idioma do usuário | `auth_gate.dart`, `test/auth_lang_test.dart` |
-| B-11 | Push de sessões em lote | `supabase_gateway.dart` |
-| B-12 | `acquired_at` preservado | `supabase_gateway.dart` |
-| B-13 | Pull remoto em paralelo | `supabase_gateway.dart` |
-| B-16 | Mudança efêmera não dispara push | `state.dart`, `test/sync_test.dart` |
-| B-18 | `_ready` reage à expiração de sessão | `supabase_gateway.dart` |
-| B-20 | Seed prometido passa a existir | `supabase/seed.sql` |
-| B-21 | `SUPABASE_ENABLED` funciona pelo `.env` | `baru_env.dart` |
-| — | Cobertura da tabela de humor, quiz e formatação | `test/mood_test.dart` |
-| — | Round-trip real contra Supabase | `test/integration/` |
+Documentação viva, migrations reconciliadas, crash de i18n em en/es/zh, bônus
+da meta, calendário derivado da data, máscara de sync, sessão resiliente a
+background e kill, aviso de trial, moldura em landscape, login no idioma do
+usuário, push em lote, pull em paralelo, seed. Detalhe no CHANGELOG.

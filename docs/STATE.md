@@ -1,76 +1,93 @@
-# Estado — 2026-08-26, fim do turno noturno
+# Estado — 2026-08-27, fim do turno
 
-Branch: `night/2026-08-26`, integrada em `main` | Build: **verde**
+Branch: `night/2026-08-27`, integrada em `main` | Build: **verde**
 
-Portões, com resultado de execução real:
-
-| Portão | Resultado |
+| Portão | Resultado (execução real) |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | 151 passando, 1 pulado (integração) |
-| `flutter test test/integration` (stack local) | 5/5 |
-| `supabase db reset` em banco limpo | 6 migrations aplicadas |
+| `flutter test` | **289 passando, 1 pulado** (era 151 no início do turno) |
+| `flutter test test/integration` | 7/7 contra Supabase local |
+| `supabase db reset` em banco limpo | 7 migrations · 14 tabelas · 54 políticas · nenhuma sem RLS |
+| Evidência visual | 33 PNGs em `docs/evidence/2026-08-27/` |
+
+## Abra o app e você vê
+
+Frases que são verdade hoje e não eram ontem:
+
+- **O Baru respira, pisca e reage ao toque.** O habitat tem céu em gradiente,
+  colinas que derivam e reflexos andando na água.
+- **O habitat às 22h é diferente do das 9h** — céu índigo, lua com halo, água
+  escura.
+- **Comprar um item o faz cair na cena com mola**, e ele projeta sombra.
+- **"Seu tempo de tela"** mostra quanto conta para a meta, quanto foi no total,
+  a quebra por categoria e a lista por app. O Spotify aparece como Áudio, fora
+  da meta.
+- **Uma aba "Trilha"** com nível, XP, o próximo passo em destaque e doze marcos
+  ligados por uma linha.
+- **Subir de nível toma a tela** com partículas e háptico.
+- **Uma aba "Missões"** com progresso x/y, recompensa exata, prazo e um botão
+  "Resgatar" que faz o saldo de folhas subir animado.
+- **A sessão de foco aparece na barra de notificações** com contagem regressiva
+  e botão "Desistir".
 
 ## Pronto e funcionando
 
-- MVP das 8 telas em pt/en/es/zh com backend Supabase.
-- **Sessão de foco sobrevive a background e a kill** — era o caminho core mais
-  frágil do app. Relógio de parede, sessão persistida, retomada ao abrir.
-- **Bônus de +15 por fechar abaixo da meta** existe de fato; antes a UI
-  prometia e nada creditava.
-- **Aviso de 24h antes do fim do trial** agendado; antes só a copy prometia.
-- i18n consistente nos 4 idiomas, travado por teste de paridade. As 5 chaves
-  que só existiam em pt derrubavam o app em en/es/zh.
-- Calendário derivado da data: a semana zera na virada, `todayIndex` não
-  desanda, `daysAway` é fato de data.
-- Sincronização que não perde intenção: falha por domínio volta para a fila.
-- Schema reproduzível a partir do repositório e validado em banco limpo.
-- Projeto sob git com histórico, remote e documentação viva.
+- Cinco fatias verticais completas neste turno (dado → regra → persistência →
+  tela → animação → háptico → 4 idiomas → teste → evidência).
+- Design system em código: tokens de cor, espaço, raio, elevação e tipografia;
+  sistema de movimento com durações nomeadas e curvas com física.
+- Nunito empacotada: o app não baixa mais a própria fonte.
+- Tempo de tela por contabilidade de intervalos, não por soma bruta.
+- Progressão real: XP, níveis, doze marcos, espécies desbloqueáveis.
+- Missões com sorteio determinístico e resgate idempotente.
+- Backend: 14 tabelas com RLS, schema reproduzível do zero.
 
 ## Em andamento
 
-Nada pela metade. Todos os ciclos do turno fecharam com portões verdes.
+Nada pela metade. Todos os ciclos fecharam com portões verdes.
 
-**Próximo passo exato:** B-15 — assinatura de release do Android. O lado do
-agente é preparar o `signingConfig` lendo `android/key.properties`; a keystore
-em si é do humano (BL-05).
+**Próximo passo exato:** §4B — rotas de verdade. A navegação ainda é troca de
+tela por variável de estado: o botão voltar do Android não funciona, não há
+pilha nem deep link, e as transições entre telas são corte seco. A barra de
+destinos e a hierarquia já estão certas; falta o roteador.
 
-## Próximos 5 itens da fila
+## Próximos itens da fila
 
-1. B-15 — assinatura de release do Android (bloqueia publicação).
-2. B-14 — Nunito empacotada: hoje um app offline-first baixa a própria fonte.
-3. B-22 — fuso horário e virada de dia.
-4. B-23 — `textScaler` travado em 1.25× (acessibilidade).
-5. B-19 — chip "Livre" promete escolha e entrega 45 min fixos.
+1. **Rotas de verdade + transições** (§4B) — a maior dívida de forma que
+   sobrou. Sem isso toda tela nova nasce sem histórico.
+2. **B-15 assinatura de release do Android** — único bloqueio de publicação.
+3. **Estágios de habitat visíveis** — o dado existe (`estagioDoHabitat` sobe
+   com os marcos) mas a cena ainda não muda com ele.
+4. **Lembretes com propósito** (§6) — sequência em risco, missão quase
+   concluída, marco ao alcance.
+5. **Onboarding e paywall no novo design system** — as duas telas que ainda
+   usam os valores antigos.
 
 ## Riscos e dívidas conhecidas
 
-- **Economia autoritativa no cliente.** Sem valor real em jogo hoje; vira
-  problema no dia do IAP (B-26).
-- **Sem ledger de migrations no remoto** (BL-01): `supabase db push` tentaria
-  reaplicar tudo. As migrations agora aguentam, mas o rastro não existe.
-- **`AppState` com mais de 900 linhas** concentra domínio, plataforma e
-  persistência (B-27).
-- **Camada de repositório meio morta**: `pullRemote`, `saveLocal`,
-  `appendLocal`, `saveOwnedLocal` nunca são chamados.
-- **`_legacyId` colidível entre usuários** (B-24) — teórico, análise no backlog.
-- **Nada foi aplicado no Supabase remoto.** As migrations novas existem no
-  repositório e foram validadas localmente; aplicar é do humano.
+- **Navegação sem roteador** (acima).
+- **Nada foi verificado em aparelho.** Animações, notificação e permissão de
+  uso têm teste, mas ninguém rodou o app num telefone depois deste turno.
+- **A permissão de tempo de tela nunca rodou contra o Android real.** A
+  reconstrução de intervalos tem 25 casos sintéticos; a leitura dos eventos
+  crus depende de aparelho.
+- **Economia autoritativa no cliente** — vira problema no dia do IAP.
+- **`AppState` passou de 1200 linhas.** Concentra domínio, plataforma e
+  persistência.
+- **Nada foi aplicado no Supabase remoto.** A migration 7 existe no
+  repositório e foi validada localmente; aplicar é do humano.
 
 ## Bloqueios para o humano
 
 | # | O quê |
 |---|---|
 | BL-01 | Ledger de migrations ausente no projeto remoto |
-| BL-03 | Proteção contra senha vazada desligada no Dashboard |
-| BL-04 | Um dos dois usuários de teste está sem e-mail confirmado |
+| BL-03 | Proteção contra senha vazada desligada |
+| BL-04 | Um usuário de teste sem e-mail confirmado |
 | BL-05 | Keystore de release do Android |
 | BL-06 | Entitlement de Screen Time no iOS |
 | BL-07 | Produtos de IAP nas lojas |
-| BL-08 | Conta do `gh` com permissão de push (contornado no turno) |
-
-BL-02 (validar migrations em banco limpo) foi **resolvido** no turno.
-Detalhes em [BLOCKERS.md](BLOCKERS.md).
+| BL-09 | **Verificar a notificação da sessão num aparelho** (roteiro no arquivo) |
 
 ## Comandos para rodar e validar agora
 
@@ -82,12 +99,10 @@ flutter test
 flutter run
 ```
 
-Integração (precisa de Docker):
+Evidência visual e banco local:
 
 ```
-supabase start
-supabase db reset
-flutter test test/integration \
-  --dart-define=BARU_TEST_URL=http://127.0.0.1:54321 \
-  --dart-define=BARU_TEST_KEY=<publishable key que o supabase start imprime>
+flutter test test/evidencia_test.dart      # regenera os PNGs
+supabase start && supabase db reset        # migrations do zero
+flutter test test/integration --dart-define=BARU_TEST_URL=http://127.0.0.1:54321 --dart-define=BARU_TEST_KEY=<chave>
 ```

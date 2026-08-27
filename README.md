@@ -6,9 +6,15 @@ comportamento. Sem punição, sem culpa: o bicho nunca morre nem perde nada.
 
 Conceito: **habitat, não timer**.
 
+Você faz sessões de foco; o companheiro sobe de nível, a trilha avança e o
+habitat muda com a hora do dia. O tempo de tela é **contabilizado**, não
+somado: só conta a tela ligada e desbloqueada, por categoria de app, e você
+pode discordar da classificação.
+
 > Estado atual: MVP funcional em 4 idiomas com backend Supabase ligado.
 > Ainda **não publicável** — ver [docs/BLOCKERS.md](docs/BLOCKERS.md).
 > Retrato do agora: [docs/STATE.md](docs/STATE.md).
+> Como as telas estão hoje: [docs/evidence/](docs/evidence/).
 
 ## Stack
 
@@ -17,6 +23,8 @@ Conceito: **habitat, não timer**.
 - Backend: **Supabase** — Postgres 17, Auth email/senha, 13 tabelas com RLS
 - Persistência local: `shared_preferences` (um snapshot JSON)
 - i18n próprio em `lib/l10n.dart` — pt, en, es, zh
+- Design system e sistema de movimento em `lib/design/`
+- Nunito **empacotada** (nada é baixado em runtime)
 - Notificações locais, tempo de tela via `usage_stats` (Android)
 
 Detalhe das camadas: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -137,8 +145,10 @@ baru/
     │   ├── models.dart      enums, tabelas do design, fórmulas puras
     │   ├── l10n.dart        catálogo pt/en/es/zh
     │   ├── theme.dart       cores, raios, sombras
-    │   ├── data/            snapshot, store local, repositórios, Supabase
-    │   ├── screens/         8 telas
+    │   ├── design/          tokens e movimento — a fonte única de valores
+    │   ├── data/            snapshot, store, repositórios, Supabase,
+    │   │                    tempo de tela, progressão, missões
+    │   ├── screens/         11 telas
     │   ├── widgets/         design system, habitat, pet
     │   ├── services/        notificações, tempo de tela
     │   └── share/           captura do habitat em PNG

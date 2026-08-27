@@ -3,6 +3,74 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-08-27 — turno de produto
+
+### O QUE MUDOU NA TELA
+
+- O Baru **respira, pisca e dá uma quicada quando você toca nele**.
+- O habitat ganhou céu em gradiente, sol ou lua com halo, colinas que derivam
+  e reflexos andando na água.
+- **O habitat às 22h não é mais igual ao das 9h**: céu índigo, água escura,
+  lanterna acesa.
+- Comprar um item o faz **cair na cena com mola**, com sombra por baixo.
+- Tela nova **"Seu tempo de tela"**: quanto conta para a meta, quanto foi no
+  total, a quebra por categoria em barras coloridas e a lista por aplicativo
+  com nome legível. **O Spotify aparece como Áudio, fora da meta.**
+- Tocar num app abre a folha de reclassificação, e o número da meta muda na
+  hora.
+- Aba nova **"Trilha"**: nível, barra de XP, quanto falta, o próximo passo em
+  destaque e doze marcos ligados por uma linha.
+- **Subir de nível toma a tela** com partículas e háptico.
+- Aba nova **"Missões"**: progresso x de y, recompensa exata em folhas e XP,
+  prazo, e um botão "Resgatar" que faz **o saldo de folhas subir animado**.
+- A **sessão de foco aparece na barra de notificações**, com contagem
+  regressiva viva e botão "Desistir".
+- A home mostra o **nível de verdade** no lugar de "Habitat nível N", que era o
+  número de itens dividido por três.
+
+Portões: `flutter analyze` sem issues, `flutter test` 289 passando e 1 pulado,
+integração 7/7 contra Supabase local, 7 migrations aplicando em banco limpo,
+33 PNGs de evidência.
+
+### Adicionado
+- Design system em código (`lib/design/tokens.dart`) e sistema de movimento
+  (`lib/design/motion.dart`).
+- Nunito empacotada em `assets/fonts`; `google_fonts` sai das dependências.
+- Contabilidade de tempo de tela (`lib/data/tempo_de_tela.dart`): reconstrução
+  de intervalos por par de eventos, quatro categorias de produto, exclusões de
+  sistema, tabela de 57 apps e reclassificação pelo usuário (ADR-009).
+- Progressão (`lib/data/progressao.dart`): XP, curva de nível, doze marcos,
+  espécies desbloqueáveis. Todos os números de balanceamento num arquivo só.
+- Missões (`lib/data/missoes.dart`): três diárias e duas semanais, sorteio
+  determinístico e resgate idempotente (ADR-010).
+- Telas: `tempo_screen`, `trilha_screen`, `missoes_screen`.
+- Componentes canônicos: `ContadorAnimado`, `BarraAnimada`, `CartaoBaru`,
+  `Etiqueta`, `EstadoVazio`, `Esqueleto`, `Celebracao`.
+- Notificação viva da sessão com cronômetro do sistema (ADR-011).
+- Migration 7: `baru_app_categories` com RLS e CHECK.
+- Evidência visual gerada por teste (`test/evidencia_test.dart`).
+
+### Corrigido
+- **Spotify tocando no bolso contava como tempo de tela.** Contava também
+  launcher, system UI, teclado e o próprio Baru.
+- **O companheiro não se movia** — nenhum `AnimationController` no `PetView`.
+- **A cena não conhecia a hora do dia.**
+- **O toque no bicho não funcionava**: `deferToChild` sobre um `CustomPaint`
+  sem filho nunca recebe hit-test.
+- Com "reduzir movimento" ligado, o Flutter encurtava o controller para 5% e a
+  quicada do toque acabava antes de ser vista.
+- **"Habitat nível N" era o número de itens dividido por três.**
+- **As quests anunciavam "+10" e "+15" e não creditavam nada.**
+- Missão em andamento aparecia rotulada como "concluída".
+- O chip de sequência e o cartão de uso truncavam na home.
+
+### Alterado
+- A barra de destinos passa a ser **Habitat · Trilha · Missões · Ajustes**.
+  Loja e relatório viram telas de detalhe com botão de voltar.
+- `LeafBadge` usa contador animado: o saldo sobe em vez de saltar.
+- `usage` passa a ser o tempo **contabilizado** (dispersivo + neutro), não a
+  soma bruta de foreground.
+
 ## 2026-08-26 — turno noturno
 
 Portões ao fim do turno, executados: `flutter analyze` sem issues,

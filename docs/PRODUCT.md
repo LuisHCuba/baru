@@ -70,14 +70,60 @@ Nível do habitat = `1 + floor(itens/3)`.
 Contabiliza dias presentes, com 1 congelamento por semana. Faltar um dia não
 zera de forma punitiva — o congelamento absorve a falta.
 
-### 8. Permissão de uso
-Lê **apenas o total diário** de tempo de tela. Nunca quais apps, nunca conteúdo.
-Nada sai do aparelho além do agregado necessário.
+### 8. Permissão de uso e o que conta como tempo de tela
+
+Lê **apenas o agregado do aparelho**, nunca conteúdo. Nada sai do aparelho além
+do necessário.
+
+O tempo é **contabilizado**, não somado (ADR-009). Só conta o intervalo em que:
+a tela está ligada, o aparelho está desbloqueado e um app contável está em
+primeiro plano. Launcher, system UI, teclado, telas do sistema, discador em
+chamada e o próprio Baru nunca contam.
+
+Cada app entra numa categoria de produto:
+
+| Categoria | O que é | Entra na meta? |
+|---|---|---|
+| **dispersivo** | social, vídeo curto, jogo | sim |
+| **neutro** | mensagem, navegador, mapa | sim |
+| **produtivo** | leitura, estudo, trabalho | não |
+| **passivo** | áudio | não |
+
+Áudio com a tela apagada **nunca conta**. Com a tela ligada conta como passivo,
+e passivo não entra na meta. O usuário pode reclassificar qualquer app; a
+escolha persiste e sincroniza.
+
+Sem permissão o app **não estima nem inventa**: mostra estado vazio com um
+caminho de um toque para conceder.
 
 - Android: Usage Access (`PACKAGE_USAGE_STATS`).
 - iOS: Screen Time atrás de feature flag até o entitlement Family Controls
   existir. Ver [BLOCKERS.md](BLOCKERS.md).
 - Recusar é caminho suportado (ver §3).
+
+### 8B. Progressão: XP, nível e trilha
+
+O companheiro ganha XP por sessão concluída (12/30/60 conforme a duração), por
+dia fechado abaixo da meta (20), por missão (10 diária, 40 semanal) e por dia
+de sequência (5). **O nível nunca cai.**
+
+A **trilha** é a sequência ordenada e visível de doze marcos, do primeiro foco
+aos cem. Cada marco tem requisito claro, recompensa concreta e prévia. Marco
+conquistado nunca é retirado — a trilha lê a *melhor* sequência, não a atual.
+As espécies extras (lontra, tartaruga, coruja) se desbloqueiam por marco,
+**nunca por dinheiro**.
+
+Todos os números vivem em `lib/data/progressao.dart`.
+
+### 8C. Missões
+
+Três diárias e duas semanais, sorteadas de pools de forma **determinística** por
+conta e data (ADR-010) — o mesmo dia dá as mesmas missões em qualquer aparelho.
+
+Toda missão mostra, sem abrir nada: título em linguagem de ação, progresso
+numérico e em barra, recompensa exata em folhas e XP, prazo e estado. Resgate é
+idempotente. Expirar à meia-noite **não pune**. Missão que depende de permissão
+não concedida vira convite para conceder, nunca missão impossível.
 
 ### 9. Monetização
 Trial de 7 dias; plano anual (destacado como melhor valor) e mensal; restaurar

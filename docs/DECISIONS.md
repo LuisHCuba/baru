@@ -272,3 +272,61 @@ meia-noite, para o estado real ser estabelecido antes do recorte do dia. O
 número que o usuário via vai **diminuir** — e passa a ser auditável na tela
 nova, app por app. Sem permissão o app mostra estado vazio com um caminho de um
 toque, e não estima nada. Reverter: o commit é isolado.
+
+---
+
+## ADR-010 — Missões sorteadas de forma determinística, não sincronizadas (2026-08-27)
+
+**Contexto.** As missões do dia precisam ser iguais em qualquer aparelho do
+mesmo usuário. O caminho óbvio é sortear no servidor e sincronizar a escolha —
+o que exige tabela, escrita no login e um caso de erro novo (o que mostrar
+quando o sorteio ainda não chegou).
+
+**Decisão.** Sortear no cliente, de forma determinística, a partir de
+`(identificador da conta, data)`. Embaralhamento de Fisher-Yates com gerador
+estável. O mesmo dia dá as mesmas missões em qualquer aparelho, sem nenhuma
+sincronização.
+
+O que **é** sincronizado é o resgate, numa chave que inclui o período
+(`um_foco@2026-08-27`, `semana_dez_focos@w2026-08-24`). Resgatar ontem não
+resgata hoje, e a semanal segue a semana, não o dia.
+
+**Alternativas descartadas.** (a) Sorteio no servidor: mais infraestrutura para
+o mesmo resultado, e um estado de carregamento a mais numa tela que precisa
+abrir instantânea. (b) Sorteio aleatório local: o usuário veria missões
+diferentes em dois aparelhos no mesmo dia.
+
+**Consequências.** Mudar o pool de missões muda o sorteio de todos os dias
+futuros — e também dos passados, se alguém reabrir uma data antiga. Como
+missão expirada não é recuperável, isso não tem efeito prático. A semente é o
+e-mail da conta; em modo offline é a constante `local`, então dois usuários
+offline no mesmo aparelho veriam as mesmas missões — aceitável, já que offline
+não tem conta. Reverter: o commit é isolado.
+
+---
+
+## ADR-011 — Contagem da sessão desenhada pelo Android, não pelo app (2026-08-27)
+
+**Contexto.** O §6 pede notificação persistente com contagem regressiva ao
+vivo. A solução canônica é um serviço em primeiro plano no Android, que exige
+código nativo, uma permissão a mais e declaração de tipo de serviço — e não
+resolve o iOS, onde a Live Activity depende de entitlement.
+
+**Decisão.** Usar `usesChronometer` + `chronometerCountDown` do
+`flutter_local_notifications`, com `when` no instante de término. **O Android
+desenha a contagem**, a partir do timestamp: ela continua andando com o app em
+background ou morto, sem nenhum processo do Baru vivo. A conclusão é uma
+notificação **agendada**, não disparada na hora, pelo mesmo motivo.
+
+**Alternativas descartadas.** (a) Serviço em primeiro plano: peso alto,
+permissão extra, política de loja mais restrita, e nada disso no iOS.
+(b) Atualizar o texto da notificação a cada segundo pelo app: para junto com o
+app, que é exatamente o momento em que a contagem importa.
+
+**Consequências.** Não há barra de progresso rica nem controle de pausa na
+notificação — o cronômetro do sistema é texto. A ação "Desistir" funciona
+porque é um `AndroidNotificationAction`, não um controle de mídia. O aviso de
+conclusão usa alarme exato e **cai para inexato** quando a permissão é negada:
+alguns minutos de atraso são melhores que nada, e a conclusão em si é
+reconciliada pelo relógio quando o app abre (ADR-008). Verificação em aparelho
+está em BL-09. Reverter: o commit é isolado.

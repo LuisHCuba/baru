@@ -1,7 +1,8 @@
 # Modelo de dados — Baru (Supabase / Postgres 17)
 
-Verificado contra o banco real do projeto `Baru`
-(`slqpuppkapiewjqvedtj`, sa-east-1) — 13 tabelas, todas com RLS habilitada.
+Verificado contra banco limpo e contra o projeto remoto `Baru`
+(`slqpuppkapiewjqvedtj`, sa-east-1) — **14 tabelas**, todas com RLS
+habilitada, 54 políticas.
 
 Migrações: `baru_app/supabase/migrations/`.
 
@@ -88,12 +89,26 @@ O app mantém as **últimas 80** sessões no snapshot local.
 `trial_active`, `pay_plan` (check `annual|monthly`), `trial_started_at`,
 `updated_at`.
 
+### Categorias de app
+
+**`baru_app_categories`** — PK `(user_id, package_name)`
+`category` com check `dispersivo|neutro|produtivo|passivo`, `updated_at`.
+Índice `baru_app_categories_user_idx (user_id)`.
+
+Guarda as reclassificações que o usuário fez à mão; elas ganham da tabela
+embutida no app. Quem usa o YouTube para estudar precisa poder discordar, e a
+discordância tem de sobreviver a trocar de aparelho.
+
+O **detalhamento** de tempo de tela (por app, por categoria) **não** é
+persistido: é recalculado a cada leitura dos eventos do sistema. Só o agregado
+do dia vai para `baru_screen_time`.
+
 ## RLS
 
 Todas as 13 tabelas com `row level security` habilitada, **50 políticas**:
 
 - `baru_profiles` e `baru_sessions`: `select`, `insert`, `update` (3 cada).
-- As 11 tabelas de domínio: `select`, `insert`, `update`, `delete` (4 cada) —
+- As 12 tabelas de domínio: `select`, `insert`, `update`, `delete` (4 cada) —
   `delete` existe porque o push da loja remove itens que saíram do inventário.
 
 Padrão de toda política: papel `authenticated`, predicado `auth.uid() = user_id`

@@ -18,6 +18,7 @@ class ContaScreen extends StatefulWidget {
   const ContaScreen({super.key});
 
   static const chaveEmail = Key('conta-email');
+  static const chaveApagar = Key('conta-apagar');
 
   @override
   State<ContaScreen> createState() => _ContaScreenState();
@@ -211,26 +212,93 @@ class _ContaScreenState extends State<ContaScreen> {
                   ],
                 ),
               ),
-              if (temConta) ...[
-                const SizedBox(height: Espaco.md),
-                CartaoBaru(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Espaco.md,
-                  ),
-                  child: _Acao(
-                    icone: Icons.logout_rounded,
-                    rotulo: t.authSignOut,
-                    apagado: true,
-                    ativo: !_ocupado,
-                    aoTocar: app.signOut,
-                  ),
+              const SizedBox(height: Espaco.md),
+              CartaoBaru(
+                padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
+                child: Column(
+                  children: [
+                    if (temConta) ...[
+                      _Acao(
+                        icone: Icons.logout_rounded,
+                        rotulo: t.authSignOut,
+                        apagado: true,
+                        ativo: !_ocupado,
+                        aoTocar: app.signOut,
+                      ),
+                      Divider(height: 1, color: Cores.tintaA(0.07)),
+                    ],
+                    // Apagar os próprios dados existe em qualquer app que
+                    // guarda dado de gente. Aqui não existia: "refazer o
+                    // onboarding" zerava a tela e deixava sessões, folhas e
+                    // progresso onde estavam.
+                    _Acao(
+                      key: ContaScreen.chaveApagar,
+                      icone: Icons.delete_outline_rounded,
+                      rotulo: t.contaApagar,
+                      perigo: true,
+                      ativo: !_ocupado,
+                      aoTocar: () => _confirmaApagar(context, app),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+              const SizedBox(height: Espaco.xs),
+              Text(
+                t.contaApagarSub,
+                style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.45)),
+              ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  /// Apagar não pode ser um toque só.
+  Future<void> _confirmaApagar(BuildContext context, AppState app) async {
+    final t = app.t;
+    final confirmou = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Cores.superficie,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Raio.folha)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(Espaco.margemTela),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(t.contaApagar, style: estilo(Tipo.titulo)),
+              const SizedBox(height: Espaco.sm),
+              Text(
+                t.fill(t.contaApagarConfirma, {'n': app.displayName}),
+                style: estilo(Tipo.corpo, color: Cores.tintaA(0.65)),
+              ),
+              const SizedBox(height: Espaco.lg),
+              PrimaryButton(
+                label: t.contaApagarCancelar,
+                onTap: () => Navigator.of(sheetContext).pop(false),
+              ),
+              const SizedBox(height: Espaco.xs),
+              GhostButton(
+                label: t.contaApagarBotao,
+                destrutivo: true,
+                onTap: () => Navigator.of(sheetContext).pop(true),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (confirmou != true) return;
+
+    setState(() => _ocupado = true);
+    final erro = await app.apagaMeusDados();
+    if (!mounted) return;
+    setState(() => _ocupado = false);
+    _diz(erro ?? t.contaApagarOk, erro: erro != null);
   }
 
   Future<void> _pedeTexto(
@@ -317,11 +385,13 @@ class _ContaScreenState extends State<ContaScreen> {
 
 class _Acao extends StatelessWidget {
   const _Acao({
+    super.key,
     required this.icone,
     required this.rotulo,
     required this.aoTocar,
     this.ativo = true,
     this.apagado = false,
+    this.perigo = false,
   });
 
   final IconData icone;
@@ -330,9 +400,16 @@ class _Acao extends StatelessWidget {
   final bool ativo;
   final bool apagado;
 
+  /// Vermelho, e nunca por engano: o que apaga tem de parecer que apaga.
+  final bool perigo;
+
   @override
   Widget build(BuildContext context) {
-    final cor = apagado ? Cores.tintaA(0.5) : Cores.tinta;
+    final cor = perigo
+        ? Cores.dispersivo
+        : apagado
+            ? Cores.tintaA(0.5)
+            : Cores.tinta;
     return Semantics(
       button: true,
       enabled: ativo,

@@ -432,6 +432,51 @@ class AppState extends ChangeNotifier {
   static bool _emailValido(String e) =>
       RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(e.trim());
 
+  /// Apaga tudo: no aparelho e no servidor.
+  ///
+  /// Existe porque não existia. "Refazer o onboarding" zerava a tela e
+  /// deixava sessões, folhas e progresso onde estavam — e no navegador o
+  /// snapshot mora no `localStorage`, então limpar o banco não adiantava
+  /// nada: o app reenviava tudo no salvamento seguinte.
+  ///
+  /// A ordem importa. **Primeiro o local**, porque enquanto ele existir
+  /// qualquer gravação recoloca o dado no servidor.
+  ///
+  /// Devolve nulo se limpou; texto de erro se algo ficou.
+  Future<String?> apagaMeusDados() async {
+    // 1. Para de gravar. Um debounce em voo depois do apagamento reescreveria
+    //    tudo de volta.
+    _saveTimer?.cancel();
+    _timer?.cancel();
+
+    // 2. O aparelho.
+    await repos?.clearSnapshot();
+
+    // 3. O servidor.
+    final falharam = await BaruSupabase.instance.apagaTudoDoUsuario();
+
+    // 4. O estado em memória volta ao zero, senão o próximo `notifyListeners`
+    //    grava o que ainda está aqui dentro.
+    _zeraTudo();
+    _syncMask = 0;
+    notifyListeners();
+
+    if (falharam.isEmpty) return null;
+    if (falharam.length == 1 && falharam.first == 'sem_sessao') {
+      // Sem conta: o local foi apagado e é tudo o que havia.
+      return null;
+    }
+    return t.fill(t.contaApagarFalhou, {'q': falharam.join(', ')});
+  }
+
+  /// Volta ao estado de app recém-instalado.
+  void _zeraTudo() {
+    final idioma = lang;
+    _applySnapshot(AppSnapshot.zerado(lang: idioma));
+    perguntaAtual = 0;
+    _restauraPilha(AppScreen.onb);
+  }
+
   Future<void> signOut() async {
     if (!canSignOut) return;
     await BaruSupabase.instance.signOut();
@@ -500,6 +545,29 @@ class AppState extends ChangeNotifier {
   /// Quantas já foram respondidas — a barra de progresso do quiz.
   int get quizRespondidas =>
       quiz.where((p) => respostasDoQuiz.containsKey(p.id)).length;
+
+  /// Em qual pergunta o quiz está.
+  ///
+  /// Uma por tela: seis perguntas empilhadas numa rolagem só viram um
+  /// formulário, e formulário no onboarding é onde se desiste.
+  int perguntaAtual = 0;
+
+  PerguntaDoQuiz get perguntaDaVez =>
+      quiz[perguntaAtual.clamp(0, quiz.length - 1)];
+
+  bool get ehUltimaPergunta => perguntaAtual >= quiz.length - 1;
+
+  /// O quanto do quiz já foi andado, de 0 a 1.
+  double get fracaoDoQuiz =>
+      quiz.isEmpty ? 1 : quizRespondidas / quiz.length;
+
+  /// Volta uma pergunta. `false` quando já está na primeira.
+  bool voltaPergunta() {
+    if (perguntaAtual <= 0) return false;
+    perguntaAtual -= 1;
+    _notifyEfemero();
+    return true;
+  }
 
   bool get underGoal => usage < goal;
   bool get onGoal => usage == goal;
@@ -670,6 +738,18 @@ class AppState extends ChangeNotifier {
     // Agora o que se guarda é o id da opção, que não muda com o idioma.
     _markSync(_syncSettings);
     notifyListeners();
+  }
+
+  /// Responde e anda.
+  ///
+  /// Escolher já avança: um botão "continuar" depois de cada resposta é um
+  /// toque a mais em seis telas seguidas. Quem quiser mudar volta.
+  void respondeEAvanca(String pergunta, String opcao) {
+    pickQuiz(pergunta, opcao);
+    if (!ehUltimaPergunta) {
+      perguntaAtual += 1;
+      _notifyEfemero();
+    }
   }
 
   void pickQuiz(String pergunta, String opcao) {
@@ -1045,6 +1125,7 @@ class AppState extends ChangeNotifier {
   void restartOnboarding() {
     _restauraPilha(AppScreen.onb);
     onb = 0;
+    perguntaAtual = 0;
     respostasDoQuiz = {};
     q0 = null;
     q1 = null;

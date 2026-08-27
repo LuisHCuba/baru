@@ -5,10 +5,11 @@ Branch: `night/2026-08-27`, integrada em `main` | Build: **verde**
 | Portão | Resultado (execução real) |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | **349 passando, 1 pulado** (era 151 no início do dia) |
+| `flutter test` | **440 passando, 1 pulado** (era 151 no início do dia) |
 | `flutter test test/integration` | 7/7 contra Supabase local |
 | `supabase db reset` em banco limpo | **8 migrations · 15 tabelas · 58 políticas · nenhuma sem RLS** (a migration 9 ainda não foi rodada em banco limpo) |
-| Evidência visual | 40 PNGs em `docs/evidence/2026-08-27/` |
+| Evidência visual | 56 PNGs em `docs/evidence/2026-08-27/` |
+| `flutter build apk --release` | **app-release.apk, 51,5 MB** |
 
 ## Abra o app e você vê
 
@@ -21,6 +22,15 @@ Frases que são verdade hoje e não eram ontem:
   e "VOCÊ ESTÁ AQUI" no passo atual.
 - **Tela "Sua conta"**: e-mail, trocar e-mail, trocar senha, recuperar senha,
   plano e sair.
+- **Uma pergunta do quiz por tela**, com a barra andando a cada resposta;
+  escolher já avança, e dá para voltar sem perder o que foi respondido. No
+  fim se escolhe bicho, sexo, pelagem e nome na mesma tela.
+- **"Apagar meus dados"** em Sua conta: apaga aqui e no servidor, atrás de
+  uma folha de confirmação onde "Cancelar" é o botão cheio e "Apagar tudo"
+  se declara em vermelho — antes ele saía cinza, com cara de desabilitado.
+- **O APK de release compila.** Não compilava: `usage_stats` 1.3.1 fica num
+  `compileSdk` anterior à API 31 e o `verifyReleaseResources` quebrava em
+  `android:attr/lStar not found`.
 - **As telas entram com transição** e a barra de destinos é fixa.
 - **Dá para acariciar o Baru**: ele acompanha a mão, aperta os olhos, o pelo
   se levanta sob o dedo, sobem corações, e a mão ronrona.

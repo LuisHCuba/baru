@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:baru_app/data/tempo_de_tela.dart';
 import 'package:baru_app/data/app_snapshot.dart';
+import 'package:baru_app/data/quiz.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/screens/home_screen.dart';
@@ -49,6 +50,22 @@ Future<void> _salva(WidgetTester tester, Key chave, String nome) async {
       data!.buffer.asUint8List(),
     );
   });
+}
+
+/// Os pixels crus da borda, para comparar dois quadros.
+///
+/// Existe porque uma captura que sai idêntica à anterior é evidência de
+/// nada, e o PNG no disco não denuncia isso sozinho.
+Future<Uint8List> _pixels(WidgetTester tester, Key chave) async {
+  final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(chave));
+  late Uint8List bytes;
+  await tester.runAsync(() async {
+    final img = await boundary.toImage(pixelRatio: 1);
+    final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+    img.dispose();
+    bytes = data!.buffer.asUint8List();
+  });
+  return bytes;
 }
 
 AppState _estado({List<String> itens = const []}) {
@@ -505,30 +522,95 @@ void main() {
     addTearDown(
       tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
     );
-    tester.view.physicalSize = const Size(412, 1500);
+    tester.view.physicalSize = const Size(412, 1100);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    // Uma pergunta por tela: a captura mostra a terceira, com a barra já
+    // andada.
     final app = AppState()..onb = 2;
     addTearDown(app.dispose);
-    app.pickQuiz('elemento', 'fogo');
-    app.pickQuiz('clareza', 'madrugada');
-    app.pickQuiz('rouba_foco', 'videos');
+    app.respondeEAvanca('elemento', 'fogo');
+    app.respondeEAvanca('clareza', 'madrugada');
 
+    Future<void> mostra(String nome) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            backgroundColor: Cores.superficie,
+            body: RepaintBoundary(
+              key: const Key('captura-quiz'),
+              child: AppScope(state: app, child: const OnboardingScreen()),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(Tempo.componente);
+      await _salva(tester, const Key('captura-quiz'), nome);
+    }
+
+    await mostra('onboarding-quiz');
+
+    // E a revelação, onde se escolhe bicho, sexo, pelagem e nome.
+    for (final p in quiz) {
+      app.pickQuiz(p.id, p.opcoes.first.id);
+    }
+    app.nextOnb();
+    await mostra('onboarding-revelacao');
+  });
+
+  testWidgets('apagar os próprios dados pede confirmação', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(412, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final app = AppState();
+    addTearDown(app.dispose);
+
+    // A borda vai **em volta do `MaterialApp`**, não do `body`. A folha de
+    // confirmação sobe no `Overlay`, que fica acima do corpo: com a borda
+    // por dentro, a captura sairia idêntica à tela sem folha nenhuma — foi
+    // o que aconteceu na primeira tentativa, e o PNG tinha o mesmo tamanho
+    // em bytes do anterior.
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          backgroundColor: Cores.superficie,
-          body: RepaintBoundary(
-            key: const Key('captura-quiz'),
-            child: AppScope(state: app, child: const OnboardingScreen()),
+      RepaintBoundary(
+        key: const Key('captura-conta'),
+        child: MaterialApp(
+          home: Scaffold(
+            backgroundColor: Cores.superficie,
+            body: AppScope(state: app, child: const ContaScreen()),
           ),
         ),
       ),
     );
     await tester.pump();
-    await _salva(tester, const Key('captura-quiz'), 'onboarding-quiz');
+    await tester.pump(Tempo.componente);
+    final semFolha = await _pixels(tester, const Key('captura-conta'));
+
+    await tester.ensureVisible(find.byKey(ContaScreen.chaveApagar));
+    await tester.pump(Tempo.componente);
+    await tester.tap(find.byKey(ContaScreen.chaveApagar));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await _salva(tester, const Key('captura-conta'), 'conta-apagar-confirma');
+
+    // Sem isto a evidência seria a palavra "confirmei" com um PNG do lado.
+    final comFolha = await _pixels(tester, const Key('captura-conta'));
+    expect(
+      comFolha,
+      isNot(equals(semFolha)),
+      reason: 'a folha de confirmação não chegou a aparecer na captura',
+    );
+    expect(find.text(app.t.contaApagarBotao), findsOneWidget);
+    expect(find.text(app.t.contaApagarCancelar), findsOneWidget);
   });
 
   testWidgets('as quatro espécies', (tester) async {

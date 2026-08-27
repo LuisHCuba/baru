@@ -201,6 +201,47 @@ class AppSnapshot {
         'missoesResgatadas': missoesResgatadas,
       };
 
+  /// Um app recém-instalado.
+  ///
+  /// O idioma sobrevive de propósito: quem apagou os dados não precisa
+  /// reescolher a língua em que estava lendo o aviso.
+  factory AppSnapshot.zerado({String lang = 'pt'}) {
+    final hoje = DateTime.now();
+    return AppSnapshot(
+      screen: AppScreen.onb,
+      onb: 0,
+      lang: lang,
+      species: Species.capybara,
+      q0: null,
+      q1: null,
+      q2: null,
+      leaves: 0,
+      streak: 0,
+      usage: 0,
+      goal: 180,
+      avg: 240,
+      petName: '',
+      color: 0,
+      owned: const [],
+      dur: 25,
+      completedToday: 0,
+      abandonedToday: false,
+      daysAway: 0,
+      trial: false,
+      evening: true,
+      missed: true,
+      payPlan: PayPlan.annual,
+      usageAccess: false,
+      companionshipStarted: false,
+      week: List<WeekDayKind>.filled(7, WeekDayKind.empty),
+      todayIndex: weekdayIndex(hoje),
+      freezesLeft: 1,
+      trialStartedAt: null,
+      lastOpenDate: DateTime(hoje.year, hoje.month, hoje.day),
+      sessions: const [],
+    );
+  }
+
   factory AppSnapshot.fromJson(Map<String, dynamic> j) {
     return AppSnapshot(
       screen: parseScreen(j['screen'] as String?),

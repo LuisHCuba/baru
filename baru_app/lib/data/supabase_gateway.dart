@@ -170,6 +170,54 @@ class BaruSupabase {
     return resp;
   }
 
+  /// Todas as tabelas que guardam dado do usuário.
+  ///
+  /// A lista vive aqui, ao lado de quem escreve nelas: uma tabela nova que
+  /// entre no `push` e não entre aqui vira dado que o usuário não consegue
+  /// apagar.
+  static const tabelasDoUsuario = [
+    'baru_sessions',
+    'baru_inventory_items',
+    'baru_week_calendar',
+    'baru_daily_quests',
+    'baru_app_categories',
+    'baru_progression',
+    'baru_daily_progress',
+    'baru_streaks',
+    'baru_screen_time',
+    'baru_settings',
+    'baru_subscriptions',
+    'baru_onboarding_answers',
+    'baru_wallets',
+    'baru_pets',
+    'baru_profiles',
+  ];
+
+  /// Apaga tudo o que é do usuário no remoto.
+  ///
+  /// A RLS já garante o escopo — a política de `delete` é
+  /// `auth.uid() = user_id` —, então isto não consegue tocar em dado de
+  /// outra pessoa nem por engano.
+  ///
+  /// Devolve o nome das tabelas que falharam. Vazio quer dizer limpo.
+  Future<List<String>> apagaTudoDoUsuario() async {
+    final uid = _uid;
+    final client = _client;
+    if (!_ready || uid == null || client == null) {
+      return const ['sem_sessao'];
+    }
+    final falharam = <String>[];
+    for (final tabela in tabelasDoUsuario) {
+      try {
+        await client.from(tabela).delete().eq('user_id', uid);
+      } catch (e) {
+        debugPrint('Baru: nao apagou $tabela — $e');
+        falharam.add(tabela);
+      }
+    }
+    return falharam;
+  }
+
   Future<void> signOut() async {
     await _client?.auth.signOut();
     _ready = false;

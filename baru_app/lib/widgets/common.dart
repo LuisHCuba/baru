@@ -106,6 +106,7 @@ class GhostButton extends StatelessWidget {
     required this.onTap,
     this.height = 54,
     this.icon,
+    this.destrutivo = false,
   });
 
   final String label;
@@ -113,8 +114,17 @@ class GhostButton extends StatelessWidget {
   final double height;
   final IconData? icon;
 
+  /// Ação que não tem volta: apagar, remover, revogar.
+  ///
+  /// O cinza neutro do fantasma lê como desabilitado quando o botão do lado
+  /// é o verde cheio — na folha de "apagar meus dados", "Apagar tudo" saía
+  /// parecendo inerte. Aqui ele se declara em vermelho, e a primazia
+  /// continua sendo do caminho seguro.
+  final bool destrutivo;
+
   @override
   Widget build(BuildContext context) {
+    final tinta = destrutivo ? Cores.dispersivo : AppColors.ink;
     return _Hover(
       onTap: onTap,
       builder: (hover) {
@@ -122,8 +132,15 @@ class GhostButton extends StatelessWidget {
           duration: const Duration(milliseconds: 140),
           height: height,
           decoration: BoxDecoration(
-            color: AppColors.inkA(hover ? 0.10 : 0.06),
+            color: destrutivo
+                ? Cores.dispersivo.withValues(alpha: hover ? 0.16 : 0.10)
+                : AppColors.inkA(hover ? 0.10 : 0.06),
             borderRadius: BorderRadius.circular(AppRadii.button),
+            border: destrutivo
+                ? Border.all(
+                    color: Cores.dispersivo.withValues(alpha: 0.32),
+                  )
+                : null,
           ),
           alignment: Alignment.center,
           child: Semantics(
@@ -134,7 +151,7 @@ class GhostButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (icon != null) ...[
-                  AppIcon(icon!, size: 18),
+                  AppIcon(icon!, size: 18, color: tinta),
                   const SizedBox(width: 8),
                 ],
                 Flexible(
@@ -142,7 +159,8 @@ class GhostButton extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: nunito(size: 16, weight: FontWeight.w700),
+                    style: nunito(size: 16, weight: FontWeight.w700)
+                        .copyWith(color: tinta),
                   ),
                 ),
               ],
@@ -477,10 +495,22 @@ class TrackFill extends StatelessWidget {
 }
 
 class OnbDots extends StatelessWidget {
-  const OnbDots({super.key, required this.step, this.total = 6});
+  const OnbDots({
+    super.key,
+    required this.step,
+    this.total = 6,
+    this.fracaoDoAtual = 1,
+  });
 
   final int step;
   final int total;
+
+  /// O quanto do passo atual já foi andado, de 0 a 1.
+  ///
+  /// Existe porque o passo do quiz tem seis perguntas dentro dele: sem isto,
+  /// a barra ficava parada em seis telas seguidas e a pessoa não via que
+  /// estava avançando.
+  final double fracaoDoAtual;
 
   @override
   Widget build(BuildContext context) {
@@ -488,13 +518,31 @@ class OnbDots extends StatelessWidget {
       padding: const EdgeInsets.only(top: 12),
       child: Row(
         children: List.generate(total, (i) {
+          final cheio = i < step;
+          final atual = i == step;
           return Expanded(
             child: Container(
               height: 4,
               margin: EdgeInsets.only(right: i == total - 1 ? 0 : 6),
               decoration: BoxDecoration(
-                color: i <= step ? AppColors.green : AppColors.inkA(0.13),
+                color: AppColors.inkA(0.13),
                 borderRadius: BorderRadius.circular(AppRadii.pill),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: cheio
+                    ? 1
+                    : atual
+                        ? fracaoDoAtual.clamp(0.0, 1.0)
+                        : 0,
+                child: AnimatedContainer(
+                  duration: Tempo.componente,
+                  curve: Curvas.padrao,
+                  decoration: BoxDecoration(
+                    color: AppColors.green,
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                  ),
+                ),
               ),
             ),
           );

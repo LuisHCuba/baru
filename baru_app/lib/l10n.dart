@@ -81,6 +81,15 @@ class T {
   String get quizB => s('quizB');
   String get quizCta => s('quizCta');
   String get quizWait => s('quizWait');
+  String get quizVoltar => s('quizVoltar');
+  String get revealTrocar => s('revealTrocar');
+  String get contaApagar => s('contaApagar');
+  String get contaApagarSub => s('contaApagarSub');
+  String get contaApagarConfirma => s('contaApagarConfirma');
+  String get contaApagarBotao => s('contaApagarBotao');
+  String get contaApagarOk => s('contaApagarOk');
+  String get contaApagarFalhou => s('contaApagarFalhou');
+  String get contaApagarCancelar => s('contaApagarCancelar');
   String get revealKicker => s('revealKicker');
   String get coat => s('coat');
   String get revealCta => s('revealCta');
@@ -684,6 +693,15 @@ const _pt = <String, Object>{
   ],
   'quizCta': 'Ver seu animal',
   'quizWait': 'Faltam {n}',
+  'quizVoltar': 'Voltar uma',
+  'revealTrocar': 'Prefere outro?',
+  'contaApagar': 'Apagar meus dados',
+  'contaApagarSub': 'Some com tudo: sessões, folhas, habitat, trilha e respostas. Aqui e no servidor.',
+  'contaApagarConfirma': 'Isso não tem volta. Tudo o que você construiu com {n} vai embora, deste aparelho e da nuvem.',
+  'contaApagarBotao': 'Apagar tudo',
+  'contaApagarCancelar': 'Cancelar',
+  'contaApagarOk': 'Pronto. Não sobrou nada.',
+  'contaApagarFalhou': 'Não deu para apagar tudo ({q}). Tente de novo.',
   'revealKicker': 'Seu animal interior',
   'coat': 'Pelagem',
   'revealCta': 'Prazer em conhecer',
@@ -1122,6 +1140,15 @@ const _en = <String, Object>{
   ],
   'quizCta': 'See your animal',
   'quizWait': '{n} to go',
+  'quizVoltar': 'Back one',
+  'revealTrocar': 'Prefer another?',
+  'contaApagar': 'Delete my data',
+  'contaApagarSub': 'Wipes everything: sessions, leaves, habitat, trail and answers. Here and on the server.',
+  'contaApagarConfirma': 'There is no undo. Everything you built with {n} goes, from this device and from the cloud.',
+  'contaApagarBotao': 'Delete everything',
+  'contaApagarCancelar': 'Cancel',
+  'contaApagarOk': 'Done. Nothing left.',
+  'contaApagarFalhou': 'Could not delete everything ({q}). Try again.',
   'revealKicker': 'Your inner animal',
   'coat': 'Coat',
   'revealCta': 'Nice to meet you',
@@ -1557,6 +1584,15 @@ const _es = <String, Object>{
   ],
   'quizCta': 'Ver tu animal',
   'quizWait': 'Faltan {n}',
+  'quizVoltar': 'Volver una',
+  'revealTrocar': '¿Prefieres otro?',
+  'contaApagar': 'Borrar mis datos',
+  'contaApagarSub': 'Borra todo: sesiones, hojas, hábitat, camino y respuestas. Aquí y en el servidor.',
+  'contaApagarConfirma': 'Esto no tiene vuelta. Todo lo que construiste con {n} se va, de este dispositivo y de la nube.',
+  'contaApagarBotao': 'Borrar todo',
+  'contaApagarCancelar': 'Cancelar',
+  'contaApagarOk': 'Listo. No quedó nada.',
+  'contaApagarFalhou': 'No se pudo borrar todo ({q}). Inténtalo de nuevo.',
   'revealKicker': 'Tu animal interior',
   'coat': 'Pelaje',
   'revealCta': 'Un placer',
@@ -1988,6 +2024,15 @@ const _zh = <String, Object>{
   ],
   'quizCta': '看看你的动物',
   'quizWait': '还差 {n} 个',
+  'quizVoltar': '返回上一题',
+  'revealTrocar': '想换一个？',
+  'contaApagar': '删除我的数据',
+  'contaApagarSub': '清空全部：专注记录、叶子、栖息地、旅程和答案。本机和服务器都清。',
+  'contaApagarConfirma': '无法撤销。你和{n}一起建立的一切都会消失，本机和云端都是。',
+  'contaApagarBotao': '全部删除',
+  'contaApagarCancelar': '取消',
+  'contaApagarOk': '完成，什么都没剩下。',
+  'contaApagarFalhou': '没能全部删除（{q}）。请再试一次。',
   'revealKicker': '你的内在动物',
   'coat': '毛色',
   'revealCta': '很高兴认识你',

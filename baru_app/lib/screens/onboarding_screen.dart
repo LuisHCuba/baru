@@ -18,7 +18,12 @@ class OnboardingScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(26, 12, 26, 34),
       child: Column(
         children: [
-          OnbDots(step: app.onb),
+          OnbDots(
+            step: app.onb,
+            // No passo do quiz a barra anda pergunta a pergunta: parada por
+            // seis telas seguidas, ela sugeria que nada estava acontecendo.
+            fracaoDoAtual: app.onb == 2 ? app.fracaoDoQuiz : 1,
+          ),
           Expanded(child: _step(app)),
           const SizedBox(height: 8),
           _cta(app),
@@ -52,14 +57,16 @@ class OnboardingScreen extends StatelessWidget {
       return PrimaryButton(label: app.t.start, onTap: app.nextOnb);
     }
     if (app.onb == 2) {
-      return PrimaryButton(
-        label: app.quizDone
-            ? app.t.quizCta
-            : app.t.fill(app.t.quizWait, {
-                'n': quiz.length - app.quizRespondidas,
-              }),
-        onTap: app.quizDone ? app.nextOnb : null,
-        enabled: app.quizDone,
+      // Escolher já avança. O que sobra embaixo é o caminho de volta e, na
+      // última pergunta, o botão de fechar o quiz.
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (app.quizDone)
+            PrimaryButton(label: app.t.quizCta, onTap: app.nextOnb),
+          if (app.perguntaAtual > 0)
+            TextAction(label: app.t.quizVoltar, onTap: app.voltaPergunta),
+        ],
       );
     }
     if (app.onb == 3) {
@@ -184,52 +191,79 @@ class OnboardingScreen extends StatelessWidget {
     );
   }
 
+  /// Uma pergunta por tela.
+  ///
+  /// Seis perguntas empilhadas numa rolagem só viravam formulário — e
+  /// formulário no onboarding é onde se desiste. Aqui há uma pergunta grande,
+  /// quatro opções grandes, e escolher já leva para a seguinte.
   Widget _quiz(AppState app) {
-    return ListView(
-      padding: const EdgeInsets.only(top: 26),
+    final pergunta = app.perguntaDaVez;
+    final escolhida = app.respostasDoQuiz[pergunta.id];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const SizedBox(height: 26),
         Text(
-          app.t.quizT,
-          style: nunito(size: 25, weight: FontWeight.w800, height: 1.2, letterSpacing: -0.4),
+          '${app.perguntaAtual + 1}/${quiz.length}',
+          style: nunito(
+            size: 12.5,
+            weight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: AppColors.inkA(0.4),
+          ),
         ),
         const SizedBox(height: 10),
         Text(
-          app.t.quizB,
-          style: nunito(size: 14.5, height: 1.5, color: AppColors.inkA(0.65)),
+          app.t.perguntaDoQuiz(pergunta.id),
+          style: nunito(
+            size: 26,
+            weight: FontWeight.w800,
+            height: 1.2,
+            letterSpacing: -0.4,
+          ),
         ),
-        const SizedBox(height: 20),
-        for (final pergunta in quiz) ...[
-          SectionLabel(app.t.perguntaDoQuiz(pergunta.id)),
-          const SizedBox(height: 9),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+        const SizedBox(height: 22),
+        Expanded(
+          child: ListView(
             children: [
               for (final o in pergunta.opcoes)
-                SelectChip(
-                  label: app.t.opcaoDoQuiz(o.id),
-                  selected: app.respostasDoQuiz[pergunta.id] == o.id,
-                  onTap: () => app.pickQuiz(pergunta.id, o.id),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _OpcaoGrande(
+                    rotulo: app.t.opcaoDoQuiz(o.id),
+                    marcada: escolhida == o.id,
+                    aoTocar: () => app.respondeEAvanca(pergunta.id, o.id),
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 18),
-        ],
+        ),
       ],
     );
   }
 
+  /// A revelação, e o que se decide nela.
+  ///
+  /// O quiz aponta um bicho; aqui a pessoa confirma ou troca, e escolhe o
+  /// resto: sexo, pelagem e nome. Tudo o que define o companheiro num lugar
+  /// só, em vez de espalhado entre onboarding e ajustes.
   Widget _reveal(AppState app) {
     final sp = app.t.species(app.speciesKey);
     return ListView(
-      padding: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.only(top: 20),
       children: [
         SectionLabel(app.t.revealKicker, color: AppColors.green),
         const SizedBox(height: 10),
         Text(
           sp[0],
           textAlign: TextAlign.center,
-          style: nunito(size: 27, weight: FontWeight.w800, height: 1.15, letterSpacing: -0.5),
+          style: nunito(
+            size: 27,
+            weight: FontWeight.w800,
+            height: 1.15,
+            letterSpacing: -0.5,
+          ),
         ),
         const SizedBox(height: 9),
         Text(
@@ -244,24 +278,60 @@ class OnboardingScreen extends StatelessWidget {
             mood: Mood.radiant,
             activity: Activity.idle,
             coat: app.color,
+            roupas: app.roupasDoBicho,
+            roupaDeCabeca: app.roupaDeCabeca,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         PetNameField(
-          key: ValueKey(app.speciesKey),
+          key: ValueKey('${app.speciesKey}-${app.color}'),
           initial: app.displayName,
           onChanged: app.setName,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 22),
+        SectionLabel(app.t.setSexo),
+        const SizedBox(height: 9),
+        Row(
+          children: [
+            // Sem `Expanded` por fora: `expand: true` já põe o dele, e dois
+            // competindo pelo mesmo RenderObject é assert na hora.
+            for (final sexo in Sexo.values) ...[
+              if (sexo != Sexo.values.first) const SizedBox(width: 8),
+              SelectChip(
+                label: _rotuloDoSexo(app, sexo),
+                selected: app.sexo == sexo,
+                onTap: () => app.setSexo(sexo),
+                expand: true,
+                height: 48,
+                radius: 14,
+                size: 13,
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 22),
         CoatPicker(
           selected: app.color,
           onPick: app.setColor,
           label: app.t.coat,
           especie: app.species,
         ),
+        const SizedBox(height: 22),
+        SpeciesPicker(
+          selected: app.species,
+          onPick: app.pickSpecies,
+          label: app.t.revealTrocar,
+          speciesLabel: (s) => app.t.animalName(s.name),
+        ),
       ],
     );
   }
+
+  static String _rotuloDoSexo(AppState app, Sexo s) => switch (s) {
+        Sexo.naoDito => app.t.setSexoNao,
+        Sexo.macho => app.t.setSexoM,
+        Sexo.femea => app.t.setSexoF,
+      };
 
   Widget _goal(AppState app) {
     return ListView(
@@ -372,6 +442,70 @@ class OnboardingScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Uma opção do quiz: alvo grande, um por linha.
+///
+/// Chip pequeno num Wrap fazia quatro opções caberem em duas linhas e o dedo
+/// errar. Uma pergunta por tela deu espaço para o alvo certo.
+class _OpcaoGrande extends StatelessWidget {
+  const _OpcaoGrande({
+    required this.rotulo,
+    required this.marcada,
+    required this.aoTocar,
+  });
+
+  final String rotulo;
+  final bool marcada;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: marcada,
+      label: rotulo,
+      child: GestureDetector(
+        onTap: aoTocar,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: Tempo.microFeedback,
+          curve: Curvas.padrao,
+          height: 58,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          alignment: Alignment.centerLeft,
+          decoration: BoxDecoration(
+            color: marcada ? AppColors.green : AppColors.inkA(0.05),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: marcada ? AppColors.green : AppColors.inkA(0.08),
+              width: 2,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  rotulo,
+                  style: nunito(
+                    size: 16,
+                    weight: FontWeight.w700,
+                    color: marcada ? AppColors.cream : AppColors.ink,
+                  ),
+                ),
+              ),
+              if (marcada)
+                const AppIcon(
+                  Icons.check_rounded,
+                  size: 20,
+                  color: AppColors.cream,
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,4 +1,9 @@
+import '../data/tempo_de_tela.dart';
+
 /// Stub para web/desktop — sem APIs de tempo de tela.
+///
+/// Devolve `null`, não zero: "não sei" é diferente de "não usou". A tela mostra
+/// estado vazio honesto em vez de um número inventado.
 class UsageService {
   UsageService._();
 
@@ -11,5 +16,14 @@ class UsageService {
 
   Future<bool> requestUsageAccess() async => false;
 
-  Future<int?> todayScreenTimeMinutes() async => null;
+  Future<ResumoDeTela?> resumoDeHoje({
+    Map<String, CategoriaDeApp> ajustes = const {},
+    DateTime? agora,
+  }) async =>
+      null;
+
+  Future<int?> todayScreenTimeMinutes({
+    Map<String, CategoriaDeApp> ajustes = const {},
+  }) async =>
+      null;
 }

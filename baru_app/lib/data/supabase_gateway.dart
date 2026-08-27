@@ -229,6 +229,20 @@ class BaruSupabase {
     await client.from('baru_screen_time').upsert(
           _codec.screenTimeRow(userId: uid, s: snapshot),
         );
+
+    // Reclassificações de app. Some do remoto o que o usuário desfez.
+    final ajustes = snapshot.ajustesDeCategoria;
+    final apaga =
+        client.from('baru_app_categories').delete().eq('user_id', uid);
+    if (ajustes.isEmpty) {
+      await apaga;
+    } else {
+      final lista = ajustes.keys.map((p) => '"$p"').join(',');
+      await apaga.not('package_name', 'in', '($lista)');
+      await client.from('baru_app_categories').upsert(
+            _codec.appCategoryRows(userId: uid, s: snapshot),
+          );
+    }
   }
 
   Future<void> pushStreak(AppSnapshot snapshot) async {
@@ -325,9 +339,14 @@ class BaruSupabase {
             .select('day_index, kind')
             .eq('user_id', uid)
             .order('day_index'),
+        client
+            .from('baru_app_categories')
+            .select('package_name, category')
+            .eq('user_id', uid),
       ]);
       final inventory = _mapas(listas[0]);
       final week = _mapas(listas[1]);
+      final categorias = _mapas(listas[2]);
 
       final sessions = await _pullSessions(uid);
 
@@ -345,6 +364,7 @@ class BaruSupabase {
           inventory: inventory,
           week: week,
           sessions: sessions,
+          appCategories: categorias,
         ),
       );
     } catch (e) {

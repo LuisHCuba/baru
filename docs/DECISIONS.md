@@ -237,3 +237,38 @@ Ponto em aberto, registrado no backlog: como não há valor real em jogo (sem
 IAP), creditar uma sessão longa que venceu com o app fechado é generoso de
 propósito. No dia em que houver receita, isto vira validação de servidor.
 Reverter: o commit é isolado.
+
+---
+
+## ADR-009 — Tempo de tela é contabilidade, não soma (2026-08-27)
+
+**Contexto.** O app somava `totalTimeInForeground` de todo pacote devolvido por
+`queryAndAggregateUsageStats`. Isso conta launcher, system UI, teclado, o
+próprio Baru e — o caso que quebra a credibilidade inteira — Spotify tocando
+com o celular no bolso. A meta diária é comparada contra esse número; se o
+usuário não confia nele, não confia em nada no app.
+
+**Decisão.** Trocar a soma por **reconstrução de intervalos** a partir de
+`queryEvents`, os eventos crus do Android. Máquina de estados com três chaves —
+tela ligada, aparelho desbloqueado, app em primeiro plano — e um intervalo só
+corre quando as três valem. Exclusões fixas para launcher, system UI, teclado,
+telas do sistema, discador em chamada e o próprio Baru.
+
+Cada app entra numa categoria de produto: **dispersivo**, **neutro**,
+**produtivo** ou **passivo** (áudio). A meta compara apenas dispersivo + neutro.
+O usuário pode discordar e reclassificar; a escolha persiste e sincroniza
+(tabela `baru_app_categories`, migration 7).
+
+**Alternativas descartadas.** (a) Manter o agregado e subtrair uma lista de
+pacotes: não resolve o áudio com a tela apagada, que é o caso principal, porque
+o agregado não sabe o estado da tela. (b) Deixar o usuário definir a meta sobre
+o total: transfere para ele o trabalho de entender um número errado. (c) Pedir
+Digital Wellbeing: não há API pública.
+
+**Consequências.** O estado inicial da máquina é "tela apagada e bloqueado":
+sem evidência, não conta. Errar para menos é honesto; errar para mais é a
+mentira que estamos consertando. Por isso a consulta pede 12 horas antes da
+meia-noite, para o estado real ser estabelecido antes do recorte do dia. O
+número que o usuário via vai **diminuir** — e passa a ser auditável na tela
+nova, app por app. Sem permissão o app mostra estado vazio com um caminho de um
+toque, e não estima nada. Reverter: o commit é isolado.

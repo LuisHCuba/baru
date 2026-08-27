@@ -202,6 +202,23 @@ class T {
   String get syncFail => s('syncFail');
   String get bootstrapOffline => s('bootstrapOffline');
   String get bonusUnderGoal => s('bonusUnderGoal');
+  String get telaT => s('telaT');
+  String get telaSub => s('telaSub');
+  String get telaTotal => s('telaTotal');
+  String get telaContado => s('telaContado');
+  String get telaForaDaMeta => s('telaForaDaMeta');
+  String get telaVazioT => s('telaVazioT');
+  String get telaVazioB => s('telaVazioB');
+  String get telaSemPermissaoT => s('telaSemPermissaoT');
+  String get telaSemPermissaoB => s('telaSemPermissaoB');
+  String get telaPorApp => s('telaPorApp');
+  String get telaComoContamos => s('telaComoContamos');
+  String get catDispersivo => s('catDispersivo');
+  String get catNeutro => s('catNeutro');
+  String get catProdutivo => s('catProdutivo');
+  String get catPassivo => s('catPassivo');
+  String get telaMudarCategoria => s('telaMudarCategoria');
+  String get telaMudado => s('telaMudado');
 
 
   static const _weekdayLong = {
@@ -261,6 +278,23 @@ const _pt = <String, Object>{
   'syncFail': 'Não foi possível sincronizar. Seus dados ficam salvos neste aparelho.',
   'bootstrapOffline': 'Conta nova ou sem dados remotos — começando habitat vazio.',
   'bonusUnderGoal': 'Ontem você fechou abaixo da meta. +{k} folhas para o habitat.',
+  'telaT': 'Seu tempo de tela',
+  'telaSub': '{d} de {t} contam para a meta',
+  'telaTotal': 'na tela hoje',
+  'telaContado': 'conta para a meta',
+  'telaForaDaMeta': 'fora da meta',
+  'telaVazioT': 'Nada medido ainda hoje',
+  'telaVazioB': 'Assim que você usar o celular, o detalhamento aparece aqui.',
+  'telaSemPermissaoT': 'Sem acesso ao uso',
+  'telaSemPermissaoB': 'Sem a permissão o Baru não estima nem inventa número. Conceda para ver onde seu tempo foi.',
+  'telaPorApp': 'Por aplicativo',
+  'telaComoContamos': 'Só conta o tempo com a tela ligada e o aparelho desbloqueado. Música com a tela apagada não entra. Leitura e áudio ficam fora da meta.',
+  'catDispersivo': 'Dispersivo',
+  'catNeutro': 'Neutro',
+  'catProdutivo': 'Produtivo',
+  'catPassivo': 'Áudio',
+  'telaMudarCategoria': 'Mudar categoria',
+  'telaMudado': '{a} agora conta como {c}.',
   'langTitle': 'Em que idioma você quer falar com ele?',
   'langSub': 'Pode trocar depois nos ajustes.',
   'cont': 'Continuar',
@@ -498,6 +532,23 @@ const _en = <String, Object>{
   'syncFail': 'Could not sync. Your data stays saved on this device.',
   'bootstrapOffline': 'New account or no remote data — starting with an empty habitat.',
   'bonusUnderGoal': 'You finished yesterday under your goal. +{k} leaves for the habitat.',
+  'telaT': 'Your screen time',
+  'telaSub': '{d} of {t} count toward your goal',
+  'telaTotal': 'on screen today',
+  'telaContado': 'counts toward the goal',
+  'telaForaDaMeta': 'outside the goal',
+  'telaVazioT': 'Nothing measured yet today',
+  'telaVazioB': 'As soon as you use your phone, the breakdown shows up here.',
+  'telaSemPermissaoT': 'No usage access',
+  'telaSemPermissaoB': 'Without the permission Baru will not estimate or invent a number. Grant it to see where your time went.',
+  'telaPorApp': 'By app',
+  'telaComoContamos': 'Only time with the screen on and the phone unlocked counts. Music with the screen off does not. Reading and audio stay out of the goal.',
+  'catDispersivo': 'Distracting',
+  'catNeutro': 'Neutral',
+  'catProdutivo': 'Productive',
+  'catPassivo': 'Audio',
+  'telaMudarCategoria': 'Change category',
+  'telaMudado': '{a} now counts as {c}.',
   'langTitle': 'Which language should we speak?',
   'langSub': 'You can change it later in settings.',
   'cont': 'Continue',
@@ -732,6 +783,23 @@ const _es = <String, Object>{
   'syncFail': 'No se pudo sincronizar. Tus datos quedan guardados en este dispositivo.',
   'bootstrapOffline': 'Cuenta nueva o sin datos remotos: empezamos con un hábitat vacío.',
   'bonusUnderGoal': 'Ayer cerraste por debajo de tu meta. +{k} hojas para el hábitat.',
+  'telaT': 'Tu tiempo de pantalla',
+  'telaSub': '{d} de {t} cuentan para la meta',
+  'telaTotal': 'en pantalla hoy',
+  'telaContado': 'cuenta para la meta',
+  'telaForaDaMeta': 'fuera de la meta',
+  'telaVazioT': 'Nada medido aún hoy',
+  'telaVazioB': 'En cuanto uses el móvil, el desglose aparece aquí.',
+  'telaSemPermissaoT': 'Sin acceso al uso',
+  'telaSemPermissaoB': 'Sin el permiso Baru no estima ni inventa un número. Concédelo para ver a dónde fue tu tiempo.',
+  'telaPorApp': 'Por aplicación',
+  'telaComoContamos': 'Solo cuenta el tiempo con la pantalla encendida y el móvil desbloqueado. La música con la pantalla apagada no entra. Lectura y audio quedan fuera de la meta.',
+  'catDispersivo': 'Dispersivo',
+  'catNeutro': 'Neutro',
+  'catProdutivo': 'Productivo',
+  'catPassivo': 'Audio',
+  'telaMudarCategoria': 'Cambiar categoría',
+  'telaMudado': '{a} ahora cuenta como {c}.',
   'langTitle': '¿En qué idioma quieres hablarle?',
   'langSub': 'Puedes cambiarlo después en ajustes.',
   'cont': 'Continuar',
@@ -968,6 +1036,23 @@ const _zh = <String, Object>{
   'syncFail': '同步失败。你的数据已保存在本机。',
   'bootstrapOffline': '新账号或没有云端数据 — 从空的栖息地开始。',
   'bonusUnderGoal': '昨天你的用时低于目标。栖息地 +{k} 片叶子。',
+  'telaT': '你的屏幕时间',
+  'telaSub': '{t} 中有 {d} 计入目标',
+  'telaTotal': '今天的屏幕时间',
+  'telaContado': '计入目标',
+  'telaForaDaMeta': '不计入目标',
+  'telaVazioT': '今天还没有测量到',
+  'telaVazioB': '你开始使用手机后，明细就会出现在这里。',
+  'telaSemPermissaoT': '没有使用权限',
+  'telaSemPermissaoB': '没有权限，Baru 不会估算也不会编造数字。授权后即可看到时间去了哪里。',
+  'telaPorApp': '按应用',
+  'telaComoContamos': '只统计屏幕点亮且已解锁的时间。息屏听音乐不计入。阅读和音频不计入目标。',
+  'catDispersivo': '分心',
+  'catNeutro': '中性',
+  'catProdutivo': '高效',
+  'catPassivo': '音频',
+  'telaMudarCategoria': '更改类别',
+  'telaMudado': '{a} 现在按{c}计算。',
   'langTitle': '你想用哪种语言？',
   'langSub': '之后可以在设置里更改。',
   'cont': '继续',

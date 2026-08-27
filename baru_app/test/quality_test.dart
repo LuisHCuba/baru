@@ -70,6 +70,7 @@ void main() {
       AppScreen.shop,
       AppScreen.profile,
       AppScreen.paywall,
+      AppScreen.tempo,
     ]) {
       await pumpAt412(tester, screen);
       expect(tester.takeException(), isNull, reason: 'exceção em ${screen.name}');

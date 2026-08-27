@@ -185,6 +185,23 @@ class BaruRowCodec {
     };
   }
 
+  List<Map<String, dynamic>> appCategoryRows({
+    required String userId,
+    required AppSnapshot s,
+  }) {
+    final now = _nowIso();
+    return s.ajustesDeCategoria.entries
+        .map(
+          (e) => {
+            'user_id': userId,
+            'package_name': e.key,
+            'category': e.value,
+            'updated_at': now,
+          },
+        )
+        .toList();
+  }
+
   Map<String, dynamic> sessionRow({
     required String userId,
     required SessionRecord s,
@@ -213,6 +230,7 @@ class BaruRowCodec {
     List<Map<String, dynamic>> inventory = const [],
     List<Map<String, dynamic>> week = const [],
     List<SessionRecord> sessions = const [],
+    List<Map<String, dynamic>> appCategories = const [],
   }) {
     final weekKinds = _weekFromRows(week, streak?['today_index']);
     return AppSnapshot(
@@ -251,6 +269,10 @@ class BaruRowCodec {
           DateTime.tryParse('${subscription?['trial_started_at'] ?? ''}'),
       lastOpenDate: AppSnapshot.parseDay('${profile['last_open_date'] ?? ''}'),
       sessions: sessions,
+      ajustesDeCategoria: {
+        for (final r in appCategories)
+          '${r['package_name']}': '${r['category']}',
+      },
     );
   }
 

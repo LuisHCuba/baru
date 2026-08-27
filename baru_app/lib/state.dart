@@ -8,6 +8,7 @@ import 'data/app_snapshot.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
 import 'data/supabase_gateway.dart';
+import 'data/tempo_de_tela.dart';
 import 'l10n.dart';
 import 'models.dart';
 import 'services/notification_service.dart';
@@ -41,6 +42,13 @@ class AppState extends ChangeNotifier {
 
   /// Bônus de +15 folhas por fechar o dia abaixo da meta (contrato de produto §5).
   static const underGoalBonus = 15;
+
+  /// Detalhamento do tempo de tela de hoje. `null` = ainda não medido ou sem
+  /// permissão — a tela mostra estado vazio honesto, nunca um número chutado.
+  ResumoDeTela? resumoTela;
+
+  /// Reclassificações feitas à mão pelo usuário. Ganham da tabela embutida.
+  Map<String, CategoriaDeApp> ajustesDeCategoria = {};
 
   /// Bônus já creditados que ainda não viraram aviso na tela. Não vai para o
   /// snapshot: as folhas já estão em [leaves], isto é só o recado pendente.
@@ -183,6 +191,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// A faixa de tabs some em tela de detalhe e em modal.
   bool get showTabs =>
       screen == AppScreen.home ||
       screen == AppScreen.report ||
@@ -323,11 +332,17 @@ class AppState extends ChangeNotifier {
     }
 
     if (osUsage) {
-      final mins = await UsageService.instance.todayScreenTimeMinutes();
-      if (mins != null && mins != usage) {
-        usage = mins;
-        overrideMood = null;
-        _markSync(_syncSettings);
+      final resumo = await UsageService.instance.resumoDeHoje(
+        ajustes: ajustesDeCategoria,
+      );
+      if (resumo != null) {
+        resumoTela = resumo;
+        final mins = resumo.minutosContabilizados;
+        if (mins != usage) {
+          usage = mins;
+          overrideMood = null;
+          _markSync(_syncSettings);
+        }
         changed = true;
       }
     }
@@ -364,14 +379,45 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _refreshUsageFromOs({bool notify = true}) async {
-    final mins = await UsageService.instance.todayScreenTimeMinutes();
-    if (mins == null) return;
+    final resumo = await UsageService.instance.resumoDeHoje(
+      ajustes: ajustesDeCategoria,
+    );
+    if (resumo == null) return;
+    resumoTela = resumo;
+    final mins = resumo.minutosContabilizados;
     if (mins != usage) {
       usage = mins;
       overrideMood = null;
       _markSync(_syncSettings);
-      if (notify) notifyListeners();
     }
+    if (notify) notifyListeners();
+  }
+
+  /// O usuário discordou da categoria de um app.
+  ///
+  /// Recalcula na hora: o número da meta muda na frente dele, senão a
+  /// reclassificação parece não ter feito nada.
+  Future<void> reclassifica(String pacote, CategoriaDeApp categoria) async {
+    ajustesDeCategoria = {...ajustesDeCategoria, pacote: categoria};
+    final anterior = resumoTela;
+    if (anterior != null) {
+      // Recalcula localmente a partir do que já está em mãos, sem esperar o
+      // sistema: o toque tem de responder na hora.
+      final porCategoria = <CategoriaDeApp, Duration>{};
+      const contabilidade = ContabilidadeDeTela();
+      for (final e in anterior.porApp.entries) {
+        final c = contabilidade.categoriaDe(e.key, ajustesDeCategoria);
+        porCategoria[c] = (porCategoria[c] ?? Duration.zero) + e.value;
+      }
+      resumoTela = ResumoDeTela(
+        porApp: anterior.porApp,
+        porCategoria: porCategoria,
+      );
+      usage = resumoTela!.minutosContabilizados;
+      overrideMood = null;
+    }
+    _markSync(_syncSettings);
+    notifyListeners();
   }
 
   Future<void> _syncNotificationSchedules() async {
@@ -1036,6 +1082,9 @@ class AppState extends ChangeNotifier {
       sessionStartedAt: sessionStartedAt,
       sessionEndsAt: sessionEndsAt,
       sessionDur: sessionDur,
+      ajustesDeCategoria: {
+        for (final e in ajustesDeCategoria.entries) e.key: e.value.name,
+      },
     );
   }
 
@@ -1074,6 +1123,11 @@ class AppState extends ChangeNotifier {
     sessionStartedAt = s.sessionStartedAt;
     sessionEndsAt = s.sessionEndsAt;
     sessionDur = s.sessionDur;
+    ajustesDeCategoria = {
+      for (final e in s.ajustesDeCategoria.entries)
+        if (categoriaPorNome(e.value) != null)
+          e.key: categoriaPorNome(e.value)!,
+    };
   }
 
   void _schedulePersist() {

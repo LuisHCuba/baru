@@ -147,6 +147,7 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         SoftCard(
+          onTap: () => app.go(AppScreen.tempo),
           child: Column(
             children: [
               Row(
@@ -169,6 +170,8 @@ class HomeScreen extends StatelessWidget {
                       style: nunito(size: 13, weight: FontWeight.w600, color: AppColors.inkA(0.5)),
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  const Chevron(),
                 ],
               ),
               const SizedBox(height: 12),

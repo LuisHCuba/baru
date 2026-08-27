@@ -11,6 +11,7 @@ import 'screens/result_screen.dart';
 import 'screens/session_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/shop_screen.dart';
+import 'screens/tempo_screen.dart';
 import 'state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -164,6 +165,8 @@ class _Shell extends StatelessWidget {
         return const ShopScreen();
       case AppScreen.profile:
         return const SettingsScreen();
+      case AppScreen.tempo:
+        return TempoScreen(aoVoltar: () => app.go(AppScreen.report));
     }
   }
 }

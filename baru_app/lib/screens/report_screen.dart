@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -32,7 +33,10 @@ class ReportScreen extends StatelessWidget {
             ],
           ),
         ),
-        Container(
+        GestureDetector(
+          onTap: () => app.go(AppScreen.tempo),
+          behavior: HitTestBehavior.opaque,
+          child: Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             color: AppColors.inkA(0.045),
@@ -70,12 +74,20 @@ class ReportScreen extends StatelessWidget {
                 color: app.underGoal ? AppColors.green : AppColors.orange,
               ),
               const SizedBox(height: 16),
-              Text(
-                app.usageVerdict,
-                style: nunito(size: 13.5, weight: FontWeight.w600, height: 1.45, color: AppColors.green),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      app.usageVerdict,
+                      style: nunito(size: 13.5, weight: FontWeight.w600, height: 1.45, color: AppColors.green),
+                    ),
+                  ),
+                  const Chevron(),
+                ],
               ),
             ],
           ),
+        ),
         ),
         const SizedBox(height: 14),
         Container(

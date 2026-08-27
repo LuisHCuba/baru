@@ -39,6 +39,7 @@ class AppSnapshot {
     this.sessionStartedAt,
     this.sessionEndsAt,
     this.sessionDur = 0,
+    this.ajustesDeCategoria = const {},
   });
 
   final AppScreen screen;
@@ -79,6 +80,10 @@ class AppSnapshot {
   final DateTime? sessionEndsAt;
   final int sessionDur;
 
+  /// Reclassificações de app feitas pelo usuário: pacote -> nome da categoria.
+  /// Guardado como texto para o JSON e para as linhas do banco.
+  final Map<String, String> ajustesDeCategoria;
+
   Map<String, dynamic> toJson() => {
         'v': 1,
         'screen': screen.name,
@@ -115,6 +120,7 @@ class AppSnapshot {
         'sessionStartedAt': sessionStartedAt?.toIso8601String(),
         'sessionEndsAt': sessionEndsAt?.toIso8601String(),
         'sessionDur': sessionDur,
+        'ajustesDeCategoria': ajustesDeCategoria,
       };
 
   factory AppSnapshot.fromJson(Map<String, dynamic> j) {
@@ -158,6 +164,10 @@ class AppSnapshot {
           DateTime.tryParse(j['sessionStartedAt'] as String? ?? ''),
       sessionEndsAt: DateTime.tryParse(j['sessionEndsAt'] as String? ?? ''),
       sessionDur: (j['sessionDur'] as num?)?.toInt() ?? 0,
+      ajustesDeCategoria: (j['ajustesDeCategoria'] as Map?)?.map(
+            (k, v) => MapEntry('$k', '$v'),
+          ) ??
+          const {},
     );
   }
 
@@ -223,6 +233,7 @@ class AppSnapshot {
     DateTime? sessionStartedAt,
     DateTime? sessionEndsAt,
     int? sessionDur,
+    Map<String, String>? ajustesDeCategoria,
     bool clearQuiz = false,
     bool clearTrialStart = false,
     bool clearSession = false,
@@ -264,6 +275,7 @@ class AppSnapshot {
       sessionEndsAt:
           clearSession ? null : (sessionEndsAt ?? this.sessionEndsAt),
       sessionDur: clearSession ? 0 : (sessionDur ?? this.sessionDur),
+      ajustesDeCategoria: ajustesDeCategoria ?? this.ajustesDeCategoria,
     );
   }
 

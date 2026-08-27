@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/data/row_codec.dart';
+import 'package:baru_app/data/tempo_de_tela.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -137,6 +138,10 @@ AppSnapshot _snapshotRico() {
       WeekDayKind.empty,
       WeekDayKind.empty,
     ]
+    ..ajustesDeCategoria = {
+      'com.google.android.youtube': CategoriaDeApp.produtivo,
+      'com.whatsapp': CategoriaDeApp.dispersivo,
+    }
     ..sessions = [
       SessionRecord(
         id: const Uuid().v4(),
@@ -217,6 +222,11 @@ void main() {
     await _grava('baru_subscriptions',
         _codec.subscriptionRow(userId: uid, s: original), token: token);
     await _grava(
+      'baru_app_categories',
+      _codec.appCategoryRows(userId: uid, s: original),
+      token: token,
+    );
+    await _grava(
       'baru_sessions',
       original.sessions.map((e) => _codec.sessionRow(userId: uid, s: e)).toList(),
       token: token,
@@ -253,6 +263,10 @@ void main() {
       ))
           .map(_codec.sessionFromRow)
           .toList(),
+      appCategories: await _lista(
+        '/rest/v1/baru_app_categories?user_id=eq.$uid&select=package_name,category',
+        token: token,
+      ),
     );
   }
 
@@ -294,6 +308,30 @@ void main() {
     expect(
       AppSnapshot.dayString(volta.lastOpenDate),
       AppSnapshot.dayString(original.lastOpenDate),
+    );
+  });
+
+  test('as reclassificações de app voltam intactas', () async {
+    await escreveTudo();
+    final volta = await lerTudo();
+
+    expect(volta.ajustesDeCategoria['com.google.android.youtube'], 'produtivo');
+    expect(volta.ajustesDeCategoria['com.whatsapp'], 'dispersivo');
+    expect(volta.ajustesDeCategoria.length, 2, reason: 'nem a mais nem a menos');
+  });
+
+  test('o CHECK recusa categoria fora das quatro', () async {
+    await expectLater(
+      _grava(
+        'baru_app_categories',
+        {
+          'user_id': uid,
+          'package_name': 'com.exemplo',
+          'category': 'produtivissimo',
+        },
+        token: token,
+      ),
+      throwsA(isA<HttpException>()),
     );
   });
 
@@ -343,6 +381,7 @@ void main() {
       'baru_sessions',
       'baru_inventory_items',
       'baru_subscriptions',
+      'baru_app_categories',
     ]) {
       final visto = await _lista(
         '/rest/v1/$tabela?select=user_id',

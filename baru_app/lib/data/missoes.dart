@@ -6,6 +6,7 @@
 /// é dívida de confiança.
 library;
 
+import 'descanso_do_dia.dart';
 import 'progressao.dart';
 
 /// O que a missão mede.
@@ -269,6 +270,16 @@ class QuadroDeMissoes {
     return '${d.id}@$periodo';
   }
 
+  /// Uma chave `id@dia`, para o que é diário e não sai do pool.
+  ///
+  /// Existe para que haja um único lugar decidindo o formato da chave. Duas
+  /// gramáticas dentro do mesmo conjunto de resgates seria o tipo de
+  /// divergência que ninguém nota até um resgate deixar de ser idempotente.
+  static String chaveDoDia(String id, DateTime dia) => '$id@${_diaEm(dia)}';
+
+  /// A chave de resgate da missão do descanso.
+  static String chaveDoDescanso(DateTime dia) => chaveDoDia(Descanso.id, dia);
+
   static String _diaEm(DateTime d) =>
       '${d.year}-${_dois(d.month)}-${_dois(d.day)}';
 
@@ -364,4 +375,102 @@ class QuadroDeMissoes {
         return c.diasAbaixoNaSemana;
     }
   }
+}
+
+/// A missão do descanso — a principal do dia.
+///
+/// **Por que não é um valor de [TipoDeMissao].** As oito de lá são leituras
+/// de contador: o quadro sorteia, lê um número que o dia já produziu e
+/// desenha a barra. O descanso não é leitura — é um ciclo, com começo
+/// declarado, pausa, ruptura e recomeço, e a conta dele precisa do instante
+/// em que começou e de quanto de tela houve desde então. Entrar no `switch`
+/// de [QuadroDeMissoes.progressoDe] obrigaria [ContadoresDeMissao] a
+/// carregar relógio e o quadro a ter estado.
+///
+/// E, principalmente: ela é **fixa**. O sorteio determinístico (ADR-010)
+/// escolhe três de sete todo dia — a missão principal do dia não pode
+/// depender de sair no sorteio. Ela fica ao lado, sempre presente, com a
+/// mesma anatomia visível do §5: alvo, folhas, XP, prazo, estado e resgate
+/// idempotente.
+class DefinicaoDoDescanso {
+  const DefinicaoDoDescanso({
+    this.alvo = Descanso.alvo,
+    this.folhas = Descanso.folhas,
+    this.xp = Balanco.xpMissaoDiaria,
+  });
+
+  final Duration alvo;
+  final int folhas;
+  final int xp;
+
+  String get id => Descanso.id;
+  RitmoDaMissao get ritmo => RitmoDaMissao.diaria;
+  int get alvoEmMinutos => alvo.inMinutes;
+
+  /// Depende da permissão de tempo de tela.
+  ///
+  /// Sem ela o app não sabe se o telefone ficou parado ou se a pessoa passou
+  /// quarenta minutos no TikTok — e ADR-009 é explícito em não estimar. A
+  /// missão vira convite para conceder a permissão, como `abaixo_hoje`,
+  /// nunca uma barra que anda sozinha por falta de evidência.
+  bool get precisaDeUso => true;
+}
+
+/// A missão do descanso com progresso — o que a tela desenha.
+class MissaoDoDescanso {
+  const MissaoDoDescanso({
+    this.definicao = const DefinicaoDoDescanso(),
+    this.melhorDoDia = Duration.zero,
+    this.emCurso,
+    this.resgatada = false,
+    this.temPermissaoDeUso = false,
+  });
+
+  final DefinicaoDoDescanso definicao;
+
+  /// O melhor descanso já conseguido hoje. **Nunca diminui** — ver
+  /// [melhorDescanso].
+  final Duration melhorDoDia;
+
+  /// A tentativa em curso, se houver alguma. `null` = ninguém descansando.
+  final LeituraDoDescanso? emCurso;
+
+  final bool resgatada;
+  final bool temPermissaoDeUso;
+
+  String get id => definicao.id;
+  int get alvo => definicao.alvoEmMinutos;
+  int get folhas => definicao.folhas;
+  int get xp => definicao.xp;
+  RitmoDaMissao get ritmo => definicao.ritmo;
+
+  bool get disponivel => !definicao.precisaDeUso || temPermissaoDeUso;
+
+  /// O progresso mostrado é o melhor do dia, não o da tentativa atual.
+  ///
+  /// Se fosse o da tentativa, sair para o WhatsApp e voltar faria a barra
+  /// recuar — decaimento de progresso, que o contrato de produto §1 proíbe.
+  /// A perda continua visível ([LeituraDoDescanso.fuga] e a distância até o
+  /// alvo), só não é cobrada em cima do que já foi feito.
+  int get progresso => melhorDoDia.inMinutes.clamp(0, alvo);
+
+  bool get concluida => melhorDoDia >= definicao.alvo;
+
+  double get fracao => alvo <= 0 ? 1 : (progresso / alvo).clamp(0.0, 1.0);
+
+  /// Há alguém descansando agora?
+  bool get correndo => emCurso?.emAndamento ?? false;
+
+  EstadoDaMissao get estado {
+    if (!disponivel) return EstadoDaMissao.precisaPermissao;
+    if (resgatada) return EstadoDaMissao.resgatada;
+    if (concluida) return EstadoDaMissao.concluida;
+    return EstadoDaMissao.emProgresso;
+  }
+
+  bool get resgatavel => disponivel && concluida && !resgatada;
+
+  /// A chave que torna o resgate idempotente, com o dia dentro.
+  static String chaveDeResgate(DateTime dia) =>
+      QuadroDeMissoes.chaveDoDescanso(dia);
 }

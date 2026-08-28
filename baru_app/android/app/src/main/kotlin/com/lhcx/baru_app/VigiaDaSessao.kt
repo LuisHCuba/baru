@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import org.json.JSONObject
 
 /**
  * O vigia da sessao de foco.
@@ -32,9 +33,14 @@ import android.os.Looper
  * aparece por cima — uma vez, e so de novo passado o [DESCANSO_MS], porque
  * insistir a cada dois segundos e assedio, nao companhia.
  *
+ * **A fala varia com o app.** "O YouTube de novo?" nao e a mesma frase que
+ * "o TikTok de novo?", e so aqui se sabe qual app esta na frente no instante
+ * da aparicao. Ver [falaPara].
+ *
  * **O que ele nao faz.** Nao bloqueia nada, nao fecha nada, nao mede nada
- * alem do pacote da frente, e nao escreve texto: a fala chega pronta e
- * traduzida do Dart, como no [OverlayDoBaru].
+ * alem do pacote da frente, e **nao escreve texto**: as falas chegam prontas
+ * e traduzidas do Dart, como no [OverlayDoBaru]. Escolher entre elas nao e
+ * escrever.
  */
 class VigiaDaSessao : Service() {
 
@@ -64,6 +70,14 @@ class VigiaDaSessao : Service() {
 
         private const val CANAL = "baru_vigia"
         private const val ID_NOTIF = 4711
+
+        /**
+         * A chave da fala padrao dentro do dicionario que vem do Dart.
+         *
+         * Um sublinhado porque nenhum pacote Android se chama assim: nao ha
+         * como um app real colidir com ela.
+         */
+        private const val CHAVE_PADRAO = "_"
 
         /**
          * A janela consultada em `queryEvents`.
@@ -163,13 +177,45 @@ class VigiaDaSessao : Service() {
         startService(
             Intent(this, OverlayDoBaru::class.java).apply {
                 action = OverlayDoBaru.ACAO_MOSTRAR
-                putExtra(OverlayDoBaru.EXTRA_FALA, fala)
+                putExtra(OverlayDoBaru.EXTRA_FALA, falaPara(naFrente))
                 putExtra(OverlayDoBaru.EXTRA_PELO, pelo)
                 putExtra(OverlayDoBaru.EXTRA_ESPECIE, especie)
                 putExtra(OverlayDoBaru.EXTRA_ACAO_FECHAR, acaoFechar)
                 putExtra(OverlayDoBaru.EXTRA_ACAO_MAIS, acaoMais)
             },
         )
+    }
+
+    /**
+     * A fala para o app que esta na frente.
+     *
+     * **Nenhuma frase nasce aqui.** O Dart manda um dicionario pronto,
+     * traduzido no idioma da pessoa, e este metodo so escolhe a linha. Era
+     * essa a regra que estava sendo cumprida por acidente — antes so havia
+     * uma fala, entao nao havia escolha a fazer.
+     *
+     * O dicionario chega dentro do proprio [EXTRA_FALA] porque o caminho
+     * ate aqui passa pelo `MainActivity`, que copia extras nomeados um a um:
+     * um extra novo seria descartado em silencio. Formato: JSON de um nivel,
+     * `{"pacote": "fala"}`, com a fala padrao em `_`.
+     *
+     * Texto que nao e JSON continua valendo como fala unica — e o que
+     * acontece quando ninguem passou o mapa, e nao pode virar tela em
+     * branco.
+     */
+    private fun falaPara(pacote: String): String? {
+        val bruto = fala ?: return null
+        if (!bruto.startsWith("{")) return bruto
+        val dicionario = try {
+            JSONObject(bruto)
+        } catch (_: Exception) {
+            // Uma fala que por acaso comece com chave nao pode sumir.
+            return bruto
+        }
+        val doApp = dicionario.optString(pacote)
+        if (doApp.isNotEmpty()) return doApp
+        val padrao = dicionario.optString(CHAVE_PADRAO)
+        return if (padrao.isNotEmpty()) padrao else null
     }
 
     /**

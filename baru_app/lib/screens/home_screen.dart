@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../l10n_loja.dart';
 import '../models.dart';
 import '../state.dart';
 import 'trilha_screen.dart';
 import '../theme.dart';
+import '../widgets/raiz.dart';
 import '../widgets/common.dart';
 import '../widgets/habitat.dart';
 
@@ -53,10 +55,20 @@ class HomeScreen extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const AppIcon(
-                          Icons.local_fire_department_rounded,
-                          size: 14,
-                          color: AppColors.orange,
+                        // A raiz em miniatura, não a chama.
+                        //
+                        // Chama é vocabulário de outro app, e aqui o nome da
+                        // contagem virou "raiz". Ver o mesmo desenho no
+                        // topo da home e na tela da raiz é o que faz a
+                        // pessoa reconhecer que são a mesma coisa.
+                        SizedBox(
+                          width: 12,
+                          height: 18,
+                          child: RaizViva(
+                            dias: app.streak,
+                            cor: AppColors.orange,
+                            mostraTerra: false,
+                          ),
                         ),
                         const SizedBox(width: 7),
                         Flexible(
@@ -225,10 +237,13 @@ class HomeScreen extends StatelessWidget {
                           ? t.unlockDone
                           : t.fill(t.unlock, {
                               'x': (next.price - app.leaves).clamp(0, 9999),
-                              'i': t.nomeDoItem(
-                                next.id,
-                                shopItems.map((e) => e.id).toList(),
-                              ),
+                              // `nomeDoItemDaLoja` resolve por id e cai no
+                              // catálogo antigo sozinho. O `nomeDoItem` de
+                              // antes indexava por **posição** e devolvia o
+                              // id cru para os 14 itens novos — a home
+                              // diria "juncos" em vez de "Juncos da
+                              // margem".
+                              'i': t.nomeDoItemDaLoja(next.id),
                             }),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

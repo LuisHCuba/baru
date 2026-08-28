@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../data/missoes.dart';
+import '../l10n.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -20,6 +21,7 @@ class MissoesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    garanteTextosDaTelaDeMissoes();
     final app = AppScope.of(context);
     final t = app.t;
 
@@ -450,4 +452,40 @@ String tituloDaMissao(AppState app, Missao m) {
     case TipoDeMissao.diasAbaixoNaSemana:
       return t.fill(t.msSemanaAbaixo, {'n': m.alvo});
   }
+}
+
+
+/// Os textos que a **tela** de missões precisa para o descanso.
+///
+/// Ficam aqui, e não no catálogo principal, porque `lib/l10n.dart` é ponto
+/// de colisão entre frentes simultâneas — ver `T.registra`. Se o módulo do
+/// descanso declarar as mesmas chaves, as dele são as que valem: quem
+/// registra primeiro ganha, e o módulo dono do assunto registra antes.
+const textosDaTelaDeMissoes = <String, Map<String, String>>{
+  'pt': {
+    'msDescanso': 'Fique {n} min longe do telefone',
+    'comoDescanso': 'Esta se cumpre sem tocar em nada: deixe o telefone de '
+        'lado e o tempo corre sozinho.',
+  },
+  'en': {
+    'msDescanso': 'Stay {n} min away from the phone',
+    'comoDescanso': 'This one is done by not doing: put the phone down and '
+        'the time counts itself.',
+  },
+  'es': {
+    'msDescanso': 'Quédate {n} min lejos del teléfono',
+    'comoDescanso': 'Esta se cumple sin tocar nada: deja el teléfono y el '
+        'tiempo corre solo.',
+  },
+  'zh': {
+    'msDescanso': '远离手机 {n} 分钟',
+    'comoDescanso': '这一项靠“不做”完成：把手机放下，时间自己走。',
+  },
+};
+
+void garanteTextosDaTelaDeMissoes() => T.registra(textosDaTelaDeMissoes);
+
+extension TextosDaTelaDeMissoes on T {
+  String get msDescanso => s('msDescanso');
+  String get comoDescanso => s('comoDescanso');
 }

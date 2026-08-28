@@ -6,6 +6,8 @@ import 'package:uuid/uuid.dart';
 
 import 'data/app_snapshot.dart';
 import 'data/cofre.dart';
+import 'data/descanso_do_dia.dart';
+import 'data/descanso_retencao.dart';
 import 'data/auth_errors.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
@@ -15,6 +17,8 @@ import 'data/quiz.dart';
 import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
 import 'l10n.dart';
+import 'l10n_descanso.dart';
+import 'l10n_sobreposicao.dart';
 import 'theme.dart';
 import 'models.dart';
 import 'navegacao.dart';
@@ -23,6 +27,7 @@ import 'services/overlay_service.dart';
 import 'services/som_service.dart';
 import 'services/vigia_service.dart';
 import 'services/widget_service.dart';
+import 'widgets/raiz.dart';
 import 'services/usage_service.dart';
 
 DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -92,6 +97,64 @@ class AppState extends ChangeNotifier {
   Marco? get proximoMarco => progresso.proximoMarco;
   Set<Species> get especiesLiberadas => progresso.especiesLiberadas(species);
   int get estagioDoHabitat => progresso.estagioDoHabitat;
+  List<HabitatDaTrilha> get habitatsLiberados => progresso.habitatsLiberados;
+
+  // --- habitat da trilha -------------------------------------------------
+
+  /// Prefixo do habitat dentro de [equipados] e [owned].
+  ///
+  /// **Não há campo próprio no snapshot de propósito**: `AppSnapshot` é
+  /// território compartilhado e mexer nele agora colide com outra frente. O
+  /// par `owned` + `equipados` já carrega exatamente a semântica que falta —
+  /// "isto é da conta" e "isto está em uso" —, já é gravado no aparelho e já
+  /// sobe para `baru_inventory_items`, cujo `check` de ids fechados foi
+  /// removido na migration 11. O prefixo garante que nada colida com id de
+  /// item da loja, e `itemPorId` devolve nulo para ele, então cena, loja e
+  /// guarda-roupa ignoram a linha inteira.
+  static const _prefixoDeHabitat = 'habitat:';
+
+  /// O habitat escolhido à mão, se a pessoa escolheu algum.
+  String? get habitatEscolhido {
+    for (final id in equipados) {
+      if (id.startsWith(_prefixoDeHabitat)) {
+        return id.substring(_prefixoDeHabitat.length);
+      }
+    }
+    return null;
+  }
+
+  /// Onde o companheiro mora agora.
+  ///
+  /// Sem escolha, vale o mais alto já aberto: subir de marco **muda o lugar
+  /// sozinho**, que é como a arena do Clash Royale troca. Uma escolha
+  /// explícita ganha — mas só enquanto continuar liberada, para um snapshot
+  /// de outro aparelho (ou uma trilha que ainda não chegou lá) não conseguir
+  /// mostrar um cenário que esta conta não conquistou.
+  HabitatDaTrilha get habitatAtivo {
+    final escolhido = habitatEscolhido;
+    if (escolhido != null && progresso.habitatLiberado(escolhido)) {
+      return habitatPorId(escolhido)!;
+    }
+    return progresso.habitatDoTopo;
+  }
+
+  /// Muda de habitat. Silencioso quando o lugar ainda não foi aberto: a UI
+  /// não oferece o toque, e uma chamada fora de hora não pode virar cenário.
+  void escolheHabitat(String id) {
+    if (!progresso.habitatLiberado(id)) return;
+    final chave = '$_prefixoDeHabitat$id';
+    // Um habitat por vez, como o cenário da loja: guardar os antigos só
+    // encheria o inventário remoto de linha morta.
+    equipados = {...equipados}
+      ..removeWhere((e) => e.startsWith(_prefixoDeHabitat))
+      ..add(chave);
+    owned = [
+      ...owned.where((e) => !e.startsWith(_prefixoDeHabitat)),
+      chave,
+    ];
+    _markSync(_syncShop);
+    notifyListeners();
+  }
 
   /// Houve subida de nivel ainda nao comemorada?
   bool get subiuDeNivel => nivel > nivelCelebrado;
@@ -188,6 +251,36 @@ class AppState extends ChangeNotifier {
 
   /// A sessao mais longa de hoje, em minutos.
   int maiorSessaoHoje = 0;
+
+  // --- missão do descanso -------------------------------------------------
+  //
+  // O descanso não é um cronômetro. Com o app em segundo plano o Flutter não
+  // executa (ADR-014), e um contador que só andasse com a tela do Baru
+  // aberta mediria o contrário do que a missão pede. É uma subtração do que
+  // já se mede: relógio de parede, menos tempo de tela, menos o tempo dentro
+  // do próprio Baru.
+
+  /// Quando a tentativa em curso começou. `null` = ninguém descansando.
+  DateTime? descansoComecouEm;
+
+  /// O total de tela do dia no instante em que a tentativa começou.
+  int descansoTelaNoInicio = 0;
+
+  /// Quanto o Baru esteve em primeiro plano desde o começo da tentativa.
+  ///
+  /// O próprio Baru é excluído da contabilidade de tela, então este número
+  /// não existe em lugar nenhum além do ciclo de vida do app. Olhar o Baru
+  /// não rompe o descanso de propósito: se rompesse, conferir quanto falta
+  /// acabaria com o que se estava conferindo.
+  Duration descansoNoApp = Duration.zero;
+
+  /// O melhor descanso de hoje. Só sobe — progresso não decai.
+  Duration melhorDescansoHoje = Duration.zero;
+
+  DateTime? _voltouAoAppEm;
+
+  /// O presente de retorno já creditado, esperando virar recado na tela.
+  VoltaAoNinho? voltaPendente;
 
   /// Sessoes, minutos e dias abaixo da meta da semana corrente.
   int sessoesNaSemana = 0;
@@ -497,6 +590,125 @@ class AppState extends ChangeNotifier {
     perguntaAtual = 0;
     _restauraPilha(AppScreen.onb);
   }
+
+  Duration get _noAppAgora {
+    final desde = _voltouAoAppEm;
+    if (desde == null || descansoComecouEm == null) return descansoNoApp;
+    return descansoNoApp + DateTime.now().difference(desde);
+  }
+
+  LeituraDoDescanso? get leituraDoDescanso {
+    final inicio = descansoComecouEm;
+    final resumo = resumoTela;
+    // Sem medição não há leitura: o app não estima tempo de tela.
+    if (inicio == null || resumo == null) return null;
+    return leDescanso(
+      comecouEm: inicio,
+      agora: DateTime.now(),
+      minutosDeTelaNoInicio: descansoTelaNoInicio,
+      minutosDeTelaAgora: resumo.minutosTotais,
+      noProprioApp: _noAppAgora,
+    );
+  }
+
+  MissaoDoDescanso get missaoDoDescanso => MissaoDoDescanso(
+        melhorDoDia: melhorDescansoHoje,
+        emCurso: leituraDoDescanso,
+        resgatada: missoesResgatadas
+            .contains(MissaoDoDescanso.chaveDeResgate(lastOpenDate)),
+        temPermissaoDeUso: usageAccess,
+      );
+
+  void comecaODescanso() {
+    descansoComecouEm = DateTime.now();
+    descansoTelaNoInicio = resumoTela?.minutosTotais ?? 0;
+    descansoNoApp = Duration.zero;
+    _voltouAoAppEm = DateTime.now();
+    _markSync(_syncSession);
+    unawaited(_comecaAVigiarODescanso());
+    notifyListeners();
+  }
+
+  void desisteDoDescanso() {
+    final l = leituraDoDescanso;
+    if (l != null) melhorDescansoHoje = melhorDescanso(melhorDescansoHoje, l);
+    _fechaODescanso();
+    notifyListeners();
+  }
+
+  void _fechaODescanso() {
+    descansoComecouEm = null;
+    descansoNoApp = Duration.zero;
+    _markSync(_syncSession);
+    unawaited(VigiaService.instance.para());
+  }
+
+  /// Reconcilia o descanso com o relógio e com o medidor de tela.
+  ///
+  /// Chamada depois de `resumoTela` ser atualizado: é o único instante em
+  /// que a fuga se torna mensurável, e é o mesmo instante em que a pessoa
+  /// volta para ver o estrago.
+  void reconciliaODescanso() {
+    final l = leituraDoDescanso;
+    if (l == null) return;
+    melhorDescansoHoje = melhorDescanso(melhorDescansoHoje, l);
+    if (l.acabou) {
+      onUserMessage?.call(recadoDoDescanso(t, missaoDoDescanso));
+      _fechaODescanso();
+    }
+    _markSync(_syncSession);
+  }
+
+  void resgataODescanso() {
+    final m = missaoDoDescanso;
+    if (!m.resgatavel) return;
+    final chave = MissaoDoDescanso.chaveDeResgate(lastOpenDate);
+    if (missoesResgatadas.contains(chave)) return;
+    missoesResgatadas = {...missoesResgatadas, chave};
+    leaves += m.folhas;
+    ganhaXp(m.xp);
+    unawaited(SomService.instance.toca(SomDoBaru.resgate));
+    _markSync(_syncProgresso | _syncShop | _syncSession);
+    notifyListeners();
+  }
+
+  /// O companheiro por cima do app onde a pessoa foi parar.
+  ///
+  /// Fala de descanso, não de foco: são missões diferentes, e o texto de
+  /// uma no lugar da outra confunde quem está lendo de relance.
+  Future<void> _comecaAVigiarODescanso() async {
+    if (!await OverlayService.instance.temPermissao()) {
+      onUserMessage?.call(t.vigiaSemPermissao);
+      return;
+    }
+    await VigiaService.instance.comeca(
+      fala: t.descansoVigiaFala,
+      // Mesma fala por app do foco (S-03). Faz ainda mais falta aqui: no
+      // descanso, sair para outro app **é** o evento, e dizer sempre a
+      // mesma frase transformaria o companheiro em despertador.
+      falasPorPacote: falasPorPacote(t),
+      pelo: AppColors.pelagemDe(species, color).toARGB32(),
+      especie: species.name,
+      acaoFechar: t.sobreFechar,
+      acaoMais: t.sobreMais,
+      notifTitulo: t.fill(t.descansoVigiaTitulo, {'n': displayName}),
+      notifCorpo: t.descansoVigiaCorpo,
+    );
+  }
+
+  /// O Baru saiu de primeiro plano.
+  ///
+  /// É o que faz `descansoNoApp` existir: sem estas duas chamadas, ficar
+  /// olhando o bicho contaria como descanso.
+  void saiuDoApp() {
+    final desde = _voltouAoAppEm;
+    if (desde != null && descansoComecouEm != null) {
+      descansoNoApp += DateTime.now().difference(desde);
+    }
+    _voltouAoAppEm = null;
+  }
+
+  void voltouAoApp() => _voltouAoAppEm = DateTime.now();
 
   /// O cofre da credencial lembrada.
   ///
@@ -849,6 +1061,7 @@ class AppState extends ChangeNotifier {
       );
       if (resumo != null) {
         resumoTela = resumo;
+        reconciliaODescanso();
         final mins = resumo.minutosContabilizados;
         if (mins != usage) {
           usage = mins;
@@ -996,6 +1209,35 @@ class AppState extends ChangeNotifier {
       trialTitle: t.notifTrialTitle,
       trialBody: t.fill(t.notifTrialBody, {'n': displayName}),
     );
+
+    // Os lembretes de retenção: horário aprendido do comportamento, e não
+    // um horário fixo que ignora quem a pessoa é. O teto de dois por dia
+    // mora no plano — insistência que vira spam é desinstalação.
+    final habito = horarioDoHabito(
+      sessions.map((s) => s.at),
+      agora: DateTime.now(),
+    );
+    final risco = avaliaRaizEmRisco(
+      dias: streak,
+      presenteHoje: completedToday > 0,
+      congelamentos: freezesLeft,
+      proximoMarco: RaizViva.proximoMarco(streak),
+    );
+    await BaruNotifications.instance.sincronizaRetencao(
+      plano: planoDeLembretes(
+        habito: habito,
+        descansoFeitoHoje: missaoDoDescanso.concluida,
+        risco: risco,
+        relatorioLigado: evening,
+        horaDoRelatorio: eveningHour,
+      ),
+      textos: textosDosLembretes(
+        t,
+        nomeDoPet: displayName,
+        minutosDeDescanso: missaoDoDescanso.alvo,
+        risco: risco,
+      ),
+    );
   }
 
   /// Onboarding passo 6 — abre fluxo nativo; só avança se o SO conceder.
@@ -1065,6 +1307,9 @@ class AppState extends ChangeNotifier {
     marcosACelebrar = [];
     nivelCelebrado = 1;
     minutosDeFocoHoje = 0;
+    melhorDescansoHoje = Duration.zero;
+    descansoComecouEm = null;
+    descansoNoApp = Duration.zero;
     maiorSessaoHoje = 0;
     sessoesNaSemana = 0;
     minutosNaSemana = 0;
@@ -1253,8 +1498,13 @@ class AppState extends ChangeNotifier {
   bool estaEquipado(String id) => equipados.contains(id);
 
   /// Os objetos de cena que devem ser desenhados agora.
-  List<String> get objetosNaCena =>
-      owned.where((id) => equipados.contains(id)).toList();
+  ///
+  /// `itemPorId != null` filtra o habitat da trilha, que mora no mesmo par
+  /// `owned`/`equipados` mas não é item de catálogo. Sem isso a cena abria um
+  /// controlador de chegada para uma peça que não existe e nunca é desenhada.
+  List<String> get objetosNaCena => owned
+      .where((id) => equipados.contains(id) && itemPorId(id) != null)
+      .toList();
 
   /// O cenário em uso, se houver. Um por vez.
   ShopItemDef? get cenarioAtivo {
@@ -1378,6 +1628,12 @@ class AppState extends ChangeNotifier {
     }
     await VigiaService.instance.comeca(
       fala: t.vigiaFala,
+      // A fala muda com o app da frente (S-03). O dicionário nasce em Dart e
+      // viaja pronto: o lado nativo escolhe a linha, não escreve nenhuma.
+      // Sem este argumento o vigia cai na fala única e S-03 fica desligado —
+      // pedido registrado em BLOCKERS.md pela frente da sobreposição, e a
+      // linha mora aqui.
+      falasPorPacote: falasPorPacote(t),
       pelo: AppColors.pelagemDe(species, color).toARGB32(),
       especie: species.name,
       acaoFechar: t.sobreFechar,
@@ -1598,6 +1854,10 @@ class AppState extends ChangeNotifier {
 
   void setHabitat(String key) {
     owned = List<String>.from(habitats[key]!);
+    // E equipar também. O habitat desenha o que está **em uso**, não o que
+    // está no inventário: sem esta linha o preset "cheio" do painel de
+    // depuração comprava tudo e não punha nada em cena.
+    equipados = Set<String>.from(owned);
     _markSync(_syncShop);
     notifyListeners();
   }
@@ -1695,6 +1955,12 @@ class AppState extends ChangeNotifier {
     // missão de amanhã é outra.
     minutosDeFocoHoje = 0;
     maiorSessaoHoje = 0;
+    // A tentativa de descanso não atravessa a meia-noite: o contador de tela
+    // zera junto, e a subtração que mede o descanso passaria a descrever
+    // outra coisa.
+    melhorDescansoHoje = Duration.zero;
+    descansoComecouEm = null;
+    descansoNoApp = Duration.zero;
     resumoTela = null;
     if (iPara == 0) {
       // Semana nova, missões semanais novas.
@@ -1750,6 +2016,22 @@ class AppState extends ChangeNotifier {
     daysAway = today.difference(desde).inDays - 1;
     if (daysAway < 0) daysAway = 0;
 
+    // Quem sumiu volta para o pior dia possível: raiz zerada, nada a
+    // resgatar, o habitat parado onde estava. Cobrar o reencontro é o
+    // caminho mais curto entre uma recaída e uma desinstalação.
+    final volta = avaliaVolta(
+      diasFora: daysAway,
+      hoje: today,
+      jaCreditadas: missoesResgatadas,
+    );
+    if (volta != null && companionshipStarted) {
+      missoesResgatadas = {...missoesResgatadas, volta.chave};
+      leaves += volta.folhas;
+      if (volta.devolveCongelamento && freezesLeft < 1) freezesLeft = 1;
+      voltaPendente = volta;
+      _markSync(_syncProgresso | _syncShop);
+    }
+
     // Um dia novo começou com o app aberto ou foi aberto num dia novo: a
     // chegada merece cena. `steps > 0` é justamente "virou o dia".
     if (steps > 0 && companionshipStarted) chegadaACelebrar = true;
@@ -1785,9 +2067,17 @@ class AppState extends ChangeNotifier {
   /// árvore de widgets para receber um SnackBar; `BaruApp` chama isto no
   /// primeiro frame.
   void flushPendingNotices() {
-    if (pendingUnderGoalBonus <= 0) return;
-    pendingUnderGoalBonus = 0;
-    onUserMessage?.call(t.fill(t.bonusUnderGoal, {'k': underGoalBonus}));
+    // Dois recados podem estar pendentes, e um `return` cedo engolia o
+    // outro: o bônus da meta não pode calar o presente de retorno.
+    if (pendingUnderGoalBonus > 0) {
+      pendingUnderGoalBonus = 0;
+      onUserMessage?.call(t.fill(t.bonusUnderGoal, {'k': underGoalBonus}));
+    }
+    final v = voltaPendente;
+    if (v != null) {
+      voltaPendente = null;
+      onUserMessage?.call(recadoDaVolta(t, v));
+    }
   }
 
   void grantLeaves() {
@@ -1889,6 +2179,10 @@ class AppState extends ChangeNotifier {
       nivelCelebrado: nivelCelebrado,
       minutosDeFocoHoje: minutosDeFocoHoje,
       maiorSessaoHoje: maiorSessaoHoje,
+      descansoComecouEm: descansoComecouEm,
+      descansoTelaNoInicio: descansoTelaNoInicio,
+      descansoNoAppSegundos: descansoNoApp.inSeconds,
+      melhorDescansoMinutos: melhorDescansoHoje.inMinutes,
       sessoesNaSemana: sessoesNaSemana,
       minutosNaSemana: minutosNaSemana,
       diasAbaixoNaSemana: diasAbaixoNaSemana,
@@ -1897,6 +2191,14 @@ class AppState extends ChangeNotifier {
       respostasDoQuiz: respostasDoQuiz,
     );
   }
+
+  /// Restaura um snapshot. Só para o teste.
+  ///
+  /// O caminho de verdade passa pelo repositório e pelo arranque do app;
+  /// sem esta costura, "o descanso sobrevive ao app ser morto" só seria
+  /// verificável em aparelho.
+  @visibleForTesting
+  void applySnapshotParaTeste(AppSnapshot s) => _applySnapshot(s);
 
   void _applySnapshot(AppSnapshot s) {
     _restauraPilha(
@@ -1954,6 +2256,13 @@ class AppState extends ChangeNotifier {
     nivelCelebrado = s.nivelCelebrado;
     minutosDeFocoHoje = s.minutosDeFocoHoje;
     maiorSessaoHoje = s.maiorSessaoHoje;
+    descansoComecouEm = s.descansoComecouEm;
+    descansoTelaNoInicio = s.descansoTelaNoInicio;
+    descansoNoApp = Duration(seconds: s.descansoNoAppSegundos);
+    melhorDescansoHoje = Duration(minutes: s.melhorDescansoMinutos);
+    // Quem restaura já está com o app na frente: sem isto, o tempo entre a
+    // restauração e o próximo `voltouAoApp` contaria como descanso.
+    _voltouAoAppEm = descansoComecouEm == null ? null : DateTime.now();
     sessoesNaSemana = s.sessoesNaSemana;
     minutosNaSemana = s.minutosNaSemana;
     diasAbaixoNaSemana = s.diasAbaixoNaSemana;

@@ -103,8 +103,13 @@ void main() {
     // No caminho o progresso é o anel em volta do nó; o número exato vive no
     // detalhe. Cinco sessões está em 3/5.
     final marco = trilha.firstWhere((m) => m.id == 'cinco_focos');
+    // `hitTestable`: os nós do caminho são uma `Stack`, então todos existem na
+    // árvore desde o primeiro quadro e um `Finder` cru encerra a rolagem sem
+    // rolar nada — o toque seguinte cai fora da viewport. A trilha ficou mais
+    // longa e o cabeçalho ganhou o seletor de habitat; isto deixou de passar
+    // por sorte de altura.
     await tester.scrollUntilVisible(
-      find.text(tituloDoMarco(app, marco)),
+      find.text(tituloDoMarco(app, marco)).hitTestable(),
       160,
       scrollable: find.byType(Scrollable).first,
     );

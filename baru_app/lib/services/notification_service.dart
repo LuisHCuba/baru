@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../data/descanso_retencao.dart';
+
 /// Notificações locais: relatório da noite (21h) e "senti sua falta".
 class BaruNotifications {
   BaruNotifications._();
@@ -21,6 +23,14 @@ class BaruNotifications {
 
   /// O aviso de sessão concluída, agendado para o fim dela.
   static const sessaoFimId = 1005;
+
+  /// O chamado diário do descanso, no horário do hábito (RD-01).
+  static const descansoId = 1006;
+
+  /// A raiz em risco (RD-02). São **dois** ids porque o aviso é agendado
+  /// para hoje e para amanhã — ver [sincronizaRetencao].
+  static const raizHojeId = 1007;
+  static const raizAmanhaId = 1008;
 
   /// Canal separado: a sessão é persistente e silenciosa; os lembretes tocam.
   static const canalSessao = 'baru_sessao';
@@ -245,6 +255,169 @@ class BaruNotifications {
     await _plugin.cancel(id: sessaoId);
     await _plugin.cancel(id: sessaoFimId);
   }
+
+  /// Onde a próxima ocorrência de um lembrete cai.
+  ///
+  /// Separado do agendamento para o teste conferir a regra sem plataforma:
+  /// o defeito mora aqui, não na chamada. Um lembrete cujo horário já passou
+  /// hoje **não** dispara agora — notificação atrasada é a que ensina a
+  /// ignorar notificação.
+  @visibleForTesting
+  static DateTime proximaOcorrencia(LembreteDoDia l, DateTime agora) {
+    final hoje = DateTime(agora.year, agora.month, agora.day, l.hora, l.minuto);
+    if (l.pulaHoje || !hoje.isAfter(agora)) {
+      return hoje.add(const Duration(days: 1));
+    }
+    return hoje;
+  }
+
+  /// Põe de pé o dia de retenção: o chamado do hábito e a raiz em risco.
+  ///
+  /// O plano vem decidido de fora (`planoDeLembretes`) e os textos chegam
+  /// traduzidos: aqui só se agenda. Cancelar o que não está no plano é parte
+  /// do contrato — é assim que a raiz deixa de ser cobrada de quem já
+  /// apareceu hoje.
+  ///
+  /// **Por que o descanso repete e a raiz não.** O chamado do hábito diz
+  /// sempre a mesma coisa, então repetir todo dia no mesmo horário funciona
+  /// mesmo com o app sem abrir há uma semana — que é justamente quem
+  /// precisa dele. O aviso da raiz carrega um número que envelhece ("sua
+  /// raiz de 12 dias"); repetido, ele diria 12 para sempre. Por isso é
+  /// agendado um dia por vez e refeito a cada abertura.
+  ///
+  /// **Por que também amanhã.** Quem está prestes a quebrar a raiz é
+  /// exatamente quem não vai abrir o app amanhã. Um aviso que só existe
+  /// enquanto o app é aberto avisa quem não precisa. Os dois agendamentos
+  /// são desfeitos assim que a pessoa aparece.
+  Future<void> sincronizaRetencao({
+    required List<LembreteDoDia> plano,
+    required Map<TipoDeLembrete, TextoDeLembrete> textos,
+    DateTime? agora,
+  }) async {
+    if (kIsWeb || !_ready) return;
+
+    if (!await hasPermission()) {
+      await _cancelaRetencao();
+      return;
+    }
+
+    final quandoAgora = agora ?? DateTime.now();
+
+    LembreteDoDia? doTipo(TipoDeLembrete tipo) {
+      for (final l in plano) {
+        if (l.tipo == tipo) return l;
+      }
+      return null;
+    }
+
+    await _agendaDescanso(doTipo(TipoDeLembrete.descanso), textos, quandoAgora);
+    await _agendaRaiz(doTipo(TipoDeLembrete.raizEmRisco), textos, quandoAgora);
+  }
+
+  Future<void> _cancelaRetencao() async {
+    await _plugin.cancel(id: descansoId);
+    await _plugin.cancel(id: raizHojeId);
+    await _plugin.cancel(id: raizAmanhaId);
+  }
+
+  Future<void> _agendaDescanso(
+    LembreteDoDia? lembrete,
+    Map<TipoDeLembrete, TextoDeLembrete> textos,
+    DateTime agora,
+  ) async {
+    final texto = textos[TipoDeLembrete.descanso];
+    if (lembrete == null || texto == null) {
+      await _plugin.cancel(id: descansoId);
+      return;
+    }
+
+    final quando = proximaOcorrencia(lembrete, agora);
+    await _plugin.zonedSchedule(
+      id: descansoId,
+      title: texto.titulo,
+      body: texto.corpo,
+      scheduledDate: tz.TZDateTime(
+        tz.local,
+        quando.year,
+        quando.month,
+        quando.day,
+        quando.hour,
+        quando.minute,
+      ),
+      notificationDetails: _detalhesDeLembrete('Hora do descanso'),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  Future<void> _agendaRaiz(
+    LembreteDoDia? lembrete,
+    Map<TipoDeLembrete, TextoDeLembrete> textos,
+    DateTime agora,
+  ) async {
+    final texto = textos[TipoDeLembrete.raizEmRisco];
+    if (lembrete == null || texto == null) {
+      await _plugin.cancel(id: raizHojeId);
+      await _plugin.cancel(id: raizAmanhaId);
+      return;
+    }
+
+    final detalhes = _detalhesDeLembrete('Raiz em risco');
+    final hoje = DateTime(
+      agora.year,
+      agora.month,
+      agora.day,
+      lembrete.hora,
+      lembrete.minuto,
+    );
+
+    if (hoje.isAfter(agora)) {
+      await _agendaEm(raizHojeId, hoje, texto, detalhes);
+    } else {
+      // A hora do aviso já passou. Mandar agora seria chegar depois do
+      // ponto em que ainda dava para fazer alguma coisa.
+      await _plugin.cancel(id: raizHojeId);
+    }
+
+    await _agendaEm(
+      raizAmanhaId,
+      hoje.add(const Duration(days: 1)),
+      texto,
+      detalhes,
+    );
+  }
+
+  Future<void> _agendaEm(
+    int id,
+    DateTime quando,
+    TextoDeLembrete texto,
+    NotificationDetails detalhes,
+  ) async {
+    await _plugin.zonedSchedule(
+      id: id,
+      title: texto.titulo,
+      body: texto.corpo,
+      scheduledDate: tz.TZDateTime(
+        tz.local,
+        quando.year,
+        quando.month,
+        quando.day,
+        quando.hour,
+        quando.minute,
+      ),
+      notificationDetails: detalhes,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  NotificationDetails _detalhesDeLembrete(String descricao) => NotificationDetails(
+        android: AndroidNotificationDetails(
+          canalLembretes,
+          'Lembretes Baru',
+          channelDescription: descricao,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      );
 
   Future<void> syncSchedules({
     required bool evening,

@@ -56,6 +56,10 @@ class AppSnapshot {
     this.nivelCelebrado = 1,
     this.minutosDeFocoHoje = 0,
     this.maiorSessaoHoje = 0,
+    this.descansoComecouEm,
+    this.descansoTelaNoInicio = 0,
+    this.descansoNoAppSegundos = 0,
+    this.melhorDescansoMinutos = 0,
     this.sessoesNaSemana = 0,
     this.minutosNaSemana = 0,
     this.diasAbaixoNaSemana = 0,
@@ -137,6 +141,20 @@ class AppSnapshot {
   // --- missões ------------------------------------------------------------
   final int minutosDeFocoHoje;
   final int maiorSessaoHoje;
+
+  /// A tentativa de descanso em curso.
+  ///
+  /// Persiste de verdade porque o Android mata app em segundo plano por
+  /// rotina — e é exatamente isso que acontece durante um descanso que está
+  /// dando certo. Sem gravar, a tentativa morreria junto com o processo, que
+  /// é o defeito que o ADR-014 já pagou uma vez.
+  final DateTime? descansoComecouEm;
+  final int descansoTelaNoInicio;
+  final int descansoNoAppSegundos;
+
+  /// O melhor descanso do dia. Local por natureza: zera toda meia-noite, e
+  /// não faz sentido no servidor.
+  final int melhorDescansoMinutos;
   final int sessoesNaSemana;
   final int minutosNaSemana;
   final int diasAbaixoNaSemana;
@@ -195,6 +213,10 @@ class AppSnapshot {
         'nivelCelebrado': nivelCelebrado,
         'minutosDeFocoHoje': minutosDeFocoHoje,
         'maiorSessaoHoje': maiorSessaoHoje,
+        'descansoComecouEm': descansoComecouEm?.toIso8601String(),
+        'descansoTelaNoInicio': descansoTelaNoInicio,
+        'descansoNoAppSegundos': descansoNoAppSegundos,
+        'melhorDescansoMinutos': melhorDescansoMinutos,
         'sessoesNaSemana': sessoesNaSemana,
         'minutosNaSemana': minutosNaSemana,
         'diasAbaixoNaSemana': diasAbaixoNaSemana,
@@ -309,6 +331,13 @@ class AppSnapshot {
       nivelCelebrado: (j['nivelCelebrado'] as num?)?.toInt() ?? 1,
       minutosDeFocoHoje: (j['minutosDeFocoHoje'] as num?)?.toInt() ?? 0,
       maiorSessaoHoje: (j['maiorSessaoHoje'] as num?)?.toInt() ?? 0,
+      descansoComecouEm: DateTime.tryParse('${j['descansoComecouEm'] ?? ''}'),
+      descansoTelaNoInicio:
+          (j['descansoTelaNoInicio'] as num?)?.toInt() ?? 0,
+      descansoNoAppSegundos:
+          (j['descansoNoAppSegundos'] as num?)?.toInt() ?? 0,
+      melhorDescansoMinutos:
+          (j['melhorDescansoMinutos'] as num?)?.toInt() ?? 0,
       sessoesNaSemana: (j['sessoesNaSemana'] as num?)?.toInt() ?? 0,
       minutosNaSemana: (j['minutosNaSemana'] as num?)?.toInt() ?? 0,
       diasAbaixoNaSemana: (j['diasAbaixoNaSemana'] as num?)?.toInt() ?? 0,
@@ -371,6 +400,12 @@ class AppSnapshot {
       // Do dia e da semana: o remoto não guarda nada disso.
       minutosDeFocoHoje: local.minutosDeFocoHoje,
       maiorSessaoHoje: local.maiorSessaoHoje,
+      // Local sempre ganha: o descanso é do aparelho que está na mão, e o
+      // remoto nem sabe que existe.
+      descansoComecouEm: local.descansoComecouEm,
+      descansoTelaNoInicio: local.descansoTelaNoInicio,
+      descansoNoAppSegundos: local.descansoNoAppSegundos,
+      melhorDescansoMinutos: local.melhorDescansoMinutos,
       sessoesNaSemana: local.sessoesNaSemana,
       minutosNaSemana: local.minutosNaSemana,
       diasAbaixoNaSemana: local.diasAbaixoNaSemana,
@@ -457,6 +492,10 @@ class AppSnapshot {
     int? nivelCelebrado,
     int? minutosDeFocoHoje,
     int? maiorSessaoHoje,
+    DateTime? descansoComecouEm,
+    int? descansoTelaNoInicio,
+    int? descansoNoAppSegundos,
+    int? melhorDescansoMinutos,
     int? sessoesNaSemana,
     int? minutosNaSemana,
     int? diasAbaixoNaSemana,
@@ -519,6 +558,13 @@ class AppSnapshot {
       nivelCelebrado: nivelCelebrado ?? this.nivelCelebrado,
       minutosDeFocoHoje: minutosDeFocoHoje ?? this.minutosDeFocoHoje,
       maiorSessaoHoje: maiorSessaoHoje ?? this.maiorSessaoHoje,
+      descansoComecouEm: descansoComecouEm ?? this.descansoComecouEm,
+      descansoTelaNoInicio:
+          descansoTelaNoInicio ?? this.descansoTelaNoInicio,
+      descansoNoAppSegundos:
+          descansoNoAppSegundos ?? this.descansoNoAppSegundos,
+      melhorDescansoMinutos:
+          melhorDescansoMinutos ?? this.melhorDescansoMinutos,
       sessoesNaSemana: sessoesNaSemana ?? this.sessoesNaSemana,
       minutosNaSemana: minutosNaSemana ?? this.minutosNaSemana,
       diasAbaixoNaSemana: diasAbaixoNaSemana ?? this.diasAbaixoNaSemana,

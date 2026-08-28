@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/carteira.dart';
 import '../l10n.dart';
+import '../l10n_loja.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -131,8 +132,11 @@ class FolhasScreen extends StatelessWidget {
 
   /// O nome do item vem do catálogo por **posição**, então o id tem de ser
   /// resolvido para o índice de `shopItems`.
-  static String _nomeDoItem(T t, String id) =>
-      t.nomeDoItem(id, shopItems.map((e) => e.id).toList());
+  /// Resolve por id, não por posição.
+  ///
+  /// A lista posicional tinha os nomes dos 17 itens antigos; com 31 no
+  /// catálogo, os novos voltavam como id cru na tela.
+  static String _nomeDoItem(T t, String id) => t.nomeDoItemDaLoja(id);
 }
 
 class _Saldo extends StatelessWidget {

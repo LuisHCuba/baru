@@ -169,7 +169,12 @@ void main() {
         ..leaves = 120
         ..owned = ['lily', 'rock'];
       s.applyCalendar(DateTime(2026, 10, 8));
-      expect(s.leaves, 120);
+      // O que este teste protege é que faltar não **tira** nada. Voltar
+      // agora paga um presente de retorno (RD-03), então o número exato
+      // deixou de ser a asserção certa: fixá-lo faria o teste falhar por
+      // uma recompensa nova em vez de por uma punição, que é o defeito de
+      // verdade.
+      expect(s.leaves, greaterThanOrEqualTo(120));
       expect(s.owned, ['lily', 'rock']);
     });
   });

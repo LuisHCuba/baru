@@ -231,11 +231,10 @@ class _PintorDaToca extends CustomPainter {
 
     // O tremor some rápido: `sin` de meia onda, não um balanço que fica.
     final tremor = math.sin(pancada * math.pi) * 4;
+    final larguraDoMonte = size.width * 0.62;
     canvas.save();
     canvas.translate(0, tremor);
 
-    // O monte de terra.
-    final larguraDoMonte = size.width * 0.62;
     final monte = Path()
       ..moveTo(centro.dx - larguraDoMonte / 2, centro.dy + 26)
       ..quadraticBezierTo(
@@ -253,8 +252,15 @@ class _PintorDaToca extends CustomPainter {
       ..close();
     canvas.drawPath(monte, p..color = _terraClara);
 
-    // O buraco cresce com o que já foi cavado, e escancara na abertura.
-    final raio = (10 + 44 * escavado) * (1 + 0.45 * abertura);
+    // O buraco cresce com o que já foi cavado, e escancara na abertura —
+    // **até a borda do monte**. Sem o teto ele passava da terra e virava um
+    // borrão escuro solto na tela: buraco só lê como buraco enquanto tem
+    // chão em volta.
+    final teto = larguraDoMonte * 0.36;
+    final raio = math.min(
+      teto,
+      (10 + 44 * escavado) * (1 + 0.45 * abertura),
+    );
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(centro.dx, centro.dy - 2),

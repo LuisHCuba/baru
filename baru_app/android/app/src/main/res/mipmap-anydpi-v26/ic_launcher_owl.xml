@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Gerado por test/gera_icone_test.dart. Nao edite a mao. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_fundo" />
+    <background android:drawable="@mipmap/ic_fundo_owl" />
     <foreground android:drawable="@mipmap/ic_frente_owl" />
     <monochrome android:drawable="@mipmap/ic_frente_owl" />
 </adaptive-icon>

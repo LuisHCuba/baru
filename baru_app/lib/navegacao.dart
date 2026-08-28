@@ -314,7 +314,15 @@ class BaruRouteParser extends RouteInformationParser<AppScreen> {
 
   @override
   Future<AppScreen> parseRouteInformation(RouteInformation routeInformation) async {
-    return RotaDaTela.deCaminho(routeInformation.uri.path) ?? AppScreen.home;
+    final uri = routeInformation.uri;
+    // `baru://sequencia` tem a tela no **host**, não no caminho: um esquema
+    // próprio não põe barra depois dos dois-pontos. É o que o widget da
+    // tela inicial manda, e sem isto todo toque abriria a home.
+    if (uri.path.isEmpty || uri.path == '/') {
+      final porHost = RotaDaTela.deCaminho('/${uri.host}');
+      if (porHost != null) return porHost;
+    }
+    return RotaDaTela.deCaminho(uri.path) ?? AppScreen.home;
   }
 
   @override

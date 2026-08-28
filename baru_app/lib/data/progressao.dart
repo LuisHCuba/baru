@@ -154,6 +154,91 @@ class Marco {
   final RecompensaDeMarco recompensa;
 }
 
+/// Um lugar onde o companheiro mora — a "arena" do Baru.
+///
+/// O habitat não tinha relação nenhuma com a trilha: subir marco não abria
+/// cenário nenhum, e `estagioDeHabitat` era um número que ninguém lia. Agora
+/// cada estágio é um lugar com nome, e a trilha é o que abre a porta.
+///
+/// Só o id e o estágio moram aqui. Cor e terreno são desenho e vivem em
+/// `widgets/habitat.dart`: esta camada não conhece `Color`, e misturar as
+/// duas obrigaria a importar Flutter dentro do balanceamento.
+class HabitatDaTrilha {
+  const HabitatDaTrilha({required this.id, required this.estagio});
+
+  final String id;
+
+  /// Ordem na escada. 1 é o de partida, e nunca se perde.
+  final int estagio;
+}
+
+/// A escada de habitats, na ordem em que se abre.
+///
+/// O estágio bate com `RecompensaDeMarco.estagioDeHabitat`: o marco diz o
+/// número, esta lista diz que lugar é aquele.
+const habitatsDaTrilha = <HabitatDaTrilha>[
+  HabitatDaTrilha(id: 'lagoa', estagio: 1),
+  HabitatDaTrilha(id: 'igarape', estagio: 2),
+  HabitatDaTrilha(id: 'manguezal', estagio: 3),
+  HabitatDaTrilha(id: 'serra', estagio: 4),
+  HabitatDaTrilha(id: 'praia', estagio: 5),
+  HabitatDaTrilha(id: 'ilha', estagio: 6),
+];
+
+/// O habitat de um estágio. O primeiro é o piso: estágio desconhecido cai
+/// nele em vez de devolver nulo e obrigar toda a UI a tratar cena vazia.
+HabitatDaTrilha habitatDoEstagio(int estagio) {
+  for (final h in habitatsDaTrilha) {
+    if (h.estagio == estagio) return h;
+  }
+  return habitatsDaTrilha.first;
+}
+
+HabitatDaTrilha? habitatPorId(String? id) {
+  if (id == null) return null;
+  for (final h in habitatsDaTrilha) {
+    if (h.id == id) return h;
+  }
+  return null;
+}
+
+/// Em que passo da trilha um habitat se abre — 1 para o de partida.
+///
+/// A tela do habitat travado precisa dizer *quando* ele abre, e a única
+/// resposta honesta é a posição do marco que o entrega.
+int passoQueAbreOHabitat(HabitatDaTrilha h) {
+  if (h.estagio <= 1) return 1;
+  for (var i = 0; i < trilha.length; i++) {
+    if (trilha[i].recompensa.estagioDeHabitat == h.estagio) return i + 1;
+  }
+  return trilha.length;
+}
+
+/// Onde um marco está na trilha, contando de 1. Zero se não estiver nela.
+int passoDoMarco(Marco m) {
+  for (var i = 0; i < trilha.length; i++) {
+    if (trilha[i].id == m.id) return i + 1;
+  }
+  return 0;
+}
+
+/// Como um degrau se apresenta na trilha.
+///
+/// Existe porque a tela mostrava só dois estados — feito ou não feito — e
+/// desenhava todo "não feito" com anel de progresso. Quem estava no passo 3
+/// via os passos 8, 11 e 13 com barra pela metade, como se estivessem
+/// carregando. Um caminho tem uma frente só.
+enum EstadoNaTrilha {
+  /// Alcançado. Nunca volta atrás, mesmo fora de ordem.
+  conquistado,
+
+  /// A frente da trilha: o primeiro degrau em aberto.
+  atual,
+
+  /// Ainda não é a vez dele.
+  travado,
+}
+
 /// A trilha: a sequência ordenada e visível que responde "por que eu volto
 /// amanhã".
 ///
@@ -171,6 +256,12 @@ const trilha = <Marco>[
     tipo: TipoDeMarco.diasAbaixoDaMeta,
     alvo: 1,
     recompensa: RecompensaDeMarco(folhas: 25),
+  ),
+  Marco(
+    id: 'tres_focos',
+    tipo: TipoDeMarco.sessoes,
+    alvo: 3,
+    recompensa: RecompensaDeMarco(folhas: 30),
   ),
   Marco(
     id: 'nivel_3',
@@ -191,29 +282,59 @@ const trilha = <Marco>[
     recompensa: RecompensaDeMarco(folhas: 60, especie: Species.otter),
   ),
   Marco(
+    id: 'tres_dias_abaixo',
+    tipo: TipoDeMarco.diasAbaixoDaMeta,
+    alvo: 3,
+    recompensa: RecompensaDeMarco(folhas: 70),
+  ),
+  Marco(
+    id: 'nivel_5',
+    tipo: TipoDeMarco.nivel,
+    alvo: 5,
+    recompensa: RecompensaDeMarco(folhas: 80),
+  ),
+  Marco(
     id: 'semana_inteira',
     tipo: TipoDeMarco.sequencia,
     alvo: 7,
     recompensa: RecompensaDeMarco(folhas: 90, estagioDeHabitat: 3),
   ),
   Marco(
+    id: 'dez_focos',
+    tipo: TipoDeMarco.sessoes,
+    alvo: 10,
+    recompensa: RecompensaDeMarco(folhas: 100),
+  ),
+  Marco(
     id: 'nivel_6',
     tipo: TipoDeMarco.nivel,
     alvo: 6,
-    recompensa: RecompensaDeMarco(folhas: 100),
+    recompensa: RecompensaDeMarco(folhas: 110),
   ),
   Marco(
     id: 'cinco_dias_abaixo',
     tipo: TipoDeMarco.diasAbaixoDaMeta,
     alvo: 5,
-    recompensa: RecompensaDeMarco(folhas: 110, especie: Species.tortoise),
+    recompensa: RecompensaDeMarco(folhas: 120, especie: Species.tortoise),
+  ),
+  Marco(
+    id: 'nivel_8',
+    tipo: TipoDeMarco.nivel,
+    alvo: 8,
+    recompensa: RecompensaDeMarco(folhas: 140),
+  ),
+  Marco(
+    id: 'duas_semanas',
+    tipo: TipoDeMarco.sequencia,
+    alvo: 14,
+    recompensa: RecompensaDeMarco(folhas: 160),
   ),
   Marco(
     id: 'vinte_focos',
     tipo: TipoDeMarco.sessoes,
     alvo: 20,
     recompensa: RecompensaDeMarco(
-      folhas: 150,
+      folhas: 180,
       estagioDeHabitat: 4,
       especie: Species.axolotl,
     ),
@@ -222,7 +343,7 @@ const trilha = <Marco>[
     id: 'nivel_10',
     tipo: TipoDeMarco.nivel,
     alvo: 10,
-    recompensa: RecompensaDeMarco(folhas: 180, especie: Species.owl),
+    recompensa: RecompensaDeMarco(folhas: 200, especie: Species.owl),
   ),
   Marco(
     id: 'quinze_dias_abaixo',
@@ -231,20 +352,42 @@ const trilha = <Marco>[
     recompensa: RecompensaDeMarco(folhas: 220, especie: Species.penguin),
   ),
   Marco(
+    id: 'cinquenta_focos',
+    tipo: TipoDeMarco.sessoes,
+    alvo: 50,
+    recompensa: RecompensaDeMarco(folhas: 260),
+  ),
+  Marco(
+    id: 'nivel_15',
+    tipo: TipoDeMarco.nivel,
+    alvo: 15,
+    recompensa: RecompensaDeMarco(folhas: 300),
+  ),
+  Marco(
     id: 'trinta_dias',
     tipo: TipoDeMarco.sequencia,
     alvo: 30,
     recompensa: RecompensaDeMarco(
-      folhas: 300,
+      folhas: 340,
       estagioDeHabitat: 5,
       especie: Species.cat,
     ),
   ),
   Marco(
+    id: 'trinta_dias_abaixo',
+    tipo: TipoDeMarco.diasAbaixoDaMeta,
+    alvo: 30,
+    recompensa: RecompensaDeMarco(folhas: 400),
+  ),
+  Marco(
     id: 'cem_focos',
     tipo: TipoDeMarco.sessoes,
     alvo: 100,
-    recompensa: RecompensaDeMarco(folhas: 500, especie: Species.fox),
+    recompensa: RecompensaDeMarco(
+      folhas: 500,
+      estagioDeHabitat: 6,
+      especie: Species.fox,
+    ),
   ),
 ];
 
@@ -331,6 +474,45 @@ class ProgressoDaTrilha {
     return melhor;
   }
 
+  /// Como o degrau se apresenta na trilha.
+  ///
+  /// Alcançado ganha de posição: quem fechou um marco lá embaixo antes da
+  /// hora fica com o ✓ dele. O que não pode acontecer — e acontecia — é um
+  /// degrau que ninguém alcançou aparecer com anel de progresso pela metade,
+  /// como se estivesse a caminho de sozinho.
+  EstadoNaTrilha estadoDe(Marco m) {
+    if (alcancou(m)) return EstadoNaTrilha.conquistado;
+    if (proximoMarco?.id == m.id) return EstadoNaTrilha.atual;
+    return EstadoNaTrilha.travado;
+  }
+
+  /// Em que passo a pessoa está, contando de 1.
+  ///
+  /// É a resposta literal a "em que momento eu tô, em que passo": a posição
+  /// do primeiro degrau em aberto. Com a trilha inteira feita, vale o total.
+  int get passoAtual {
+    final p = proximoMarco;
+    return p == null ? trilha.length : passoDoMarco(p);
+  }
+
+  int get totalDePassos => trilha.length;
+
+  /// Quanto falta para o marco, na unidade dele. Zero quando já é seu.
+  ///
+  /// Nível é a exceção: "faltam 2 níveis" não diz o que fazer hoje, e o que
+  /// a pessoa junta de fato é XP. Ver [xpQueFaltaPara].
+  int quantoFalta(Marco m) {
+    final falta = m.alvo - valorDe(m.tipo);
+    return falta < 0 ? 0 : falta;
+  }
+
+  /// XP que falta para um marco de nível. Zero para os outros tipos.
+  int xpQueFaltaPara(Marco m) {
+    if (m.tipo != TipoDeMarco.nivel) return 0;
+    final falta = Balanco.xpAcumuladoPara(m.alvo) - xp;
+    return falta < 0 ? 0 : falta;
+  }
+
   /// Quantos marcos já foram conquistados.
   int get conquistados => trilha.where(alcancou).length;
 
@@ -355,4 +537,17 @@ class ProgressoDaTrilha {
     }
     return estagio;
   }
+
+  /// Os lugares que a trilha já abriu, do primeiro ao último.
+  List<HabitatDaTrilha> get habitatsLiberados =>
+      habitatsDaTrilha.where((h) => h.estagio <= estagioDoHabitat).toList();
+
+  bool habitatLiberado(String id) {
+    final h = habitatPorId(id);
+    return h != null && h.estagio <= estagioDoHabitat;
+  }
+
+  /// O habitat mais alto já aberto — para onde a pessoa se muda sozinha
+  /// quando sobe de marco, do jeito que a arena do Clash Royale troca.
+  HabitatDaTrilha get habitatDoTopo => habitatDoEstagio(estagioDoHabitat);
 }

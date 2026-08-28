@@ -446,3 +446,33 @@ painter. Gerando, a fonte é uma só.
 quem responde agora são os aliases. Oito PNGs a mais por densidade (~80 KB
 no total). `DONT_KILL_APP` na troca, senão o Android encerra o processo
 enquanto a pessoa está escolhendo o bicho.
+
+## ADR-016 — Persistencia, nunca bloqueio (2026-08-28)
+
+**Contexto.** A missao diaria principal e o descanso: ficar longe do
+telefone por um tempo. A pergunta era se o app deveria impedir a pessoa de
+sair para outro app durante a missao.
+
+**Decisao do dono do produto:** nada de bloqueio. So persistencia.
+
+**Por que e a decisao certa, e nao so a decisao dele.** O Android nao
+permite que um app bloqueie outro — nao existe API para isso. O unico
+caminho que chega perto e `AccessibilityService`, que existe para leitores
+de tela e pode ler tudo o que aparece na tela de qualquer app. A Play exige
+justificativa em video para publicar com ela e recusa a maioria dos usos que
+nao sejam acessibilidade de verdade. Um app de habitos que pede
+`AccessibilityService` arrisca a propria publicacao e pede a pessoa uma
+permissao desproporcional ao que entrega.
+
+Alem da regra da loja: um app que trava o telefone de alguem nao e
+companhia, e cadeado. O produto se chama Baru porque e um bicho que espera
+— e um bicho que espera nao tranca a porta.
+
+**O que persistencia quer dizer aqui.** O companheiro aparece por cima do
+app onde a pessoa esta (ADR-014), o progresso da missao para de correr
+enquanto ela esta fora, e a perda fica visivel. O atrito e emocional e
+informativo, nunca tecnico.
+
+**Consequencias.** Nenhuma permissao nova. Nada que arrisque a revisao da
+Play. Quem quiser escapar escapa — e essa e a diferenca entre um app que a
+pessoa mantem instalado e um que ela desinstala com raiva.

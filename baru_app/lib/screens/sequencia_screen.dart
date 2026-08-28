@@ -4,8 +4,10 @@ import '../data/progressao.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../share/habitat_share.dart';
+import '../widgets/cartao_da_raiz.dart';
 import '../widgets/raiz.dart';
-import '../widgets/componentes.dart';
+import '../widgets/common.dart';
 
 /// Sua sequência.
 ///
@@ -42,6 +44,11 @@ class SequenciaScreen extends StatelessWidget {
             ),
             children: [
               _Chama(app: app),
+              const SizedBox(height: Espaco.xs),
+              // Compartilhar mora aqui e não no cabeçalho: a pessoa quer
+              // mostrar **depois** de ver o que construiu, e um botão no
+              // topo pede antes de haver motivo.
+              _BotaoDeCompartilhar(app: app),
               const SizedBox(height: Espaco.md),
               CartaoBaru(
                 child: Column(
@@ -243,6 +250,74 @@ class _Ponto extends StatelessWidget {
       child: icone == null
           ? null
           : Icon(icone, size: 15, color: Cores.superficie),
+    );
+  }
+}
+
+
+/// Compartilhar a raiz.
+///
+/// Gera um cartão próprio em vez de capturar a tela: print leva junto barra
+/// de status, hora e bateria, e o que a pessoa quer mostrar é o que ela
+/// construiu. O cartão é montado fora da tela, num `Offstage`, porque ele
+/// tem proporção de retrato e apareceria deformado no meio da lista.
+class _BotaoDeCompartilhar extends StatefulWidget {
+  const _BotaoDeCompartilhar({required this.app});
+
+  final AppState app;
+
+  @override
+  State<_BotaoDeCompartilhar> createState() => _BotaoDeCompartilharState();
+}
+
+class _BotaoDeCompartilharState extends State<_BotaoDeCompartilhar> {
+  final _borda = GlobalKey();
+  bool _ocupado = false;
+
+  Future<void> _compartilha() async {
+    if (_ocupado) return;
+    setState(() => _ocupado = true);
+    final t = widget.app.t;
+    final ok = await HabitatShare.share(
+      boundaryKey: _borda,
+      text: t.fill(t.raizCartaoRodape, {'a': widget.app.displayName}),
+    );
+    if (!mounted) return;
+    setState(() => _ocupado = false);
+    if (!ok) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(t.shareFail)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final app = widget.app;
+    if (app.streak <= 0) {
+      // Raiz que ainda não existe não se mostra. Oferecer o botão no dia
+      // zero seria convidar a pessoa a exibir um número que ela ainda não
+      // tem.
+      return const SizedBox.shrink();
+    }
+    return Stack(
+      children: [
+        // Fora da tela, mas montado: `RepaintBoundary` só rasteriza o que
+        // foi realmente desenhado, e `Visibility(visible: false)` não
+        // desenha.
+        Positioned(
+          left: -CartaoDaRaiz.largura * 2,
+          child: CartaoDaRaiz(
+            dias: app.streak,
+            nomeDoPet: app.displayName,
+            lang: app.lang,
+          ),
+        ),
+        TextAction(
+          key: const Key('raiz-compartilhar'),
+          label: _ocupado ? app.t.authLoading : app.t.raizCompartilhar,
+          onTap: _compartilha,
+        ),
+      ],
     );
   }
 }

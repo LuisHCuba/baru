@@ -182,7 +182,18 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
-        </activity>
+                    <!-- Deep link do widget da tela inicial.
+                 `baru://sequencia`, `baru://tempo`: o `RemoteViews` do
+                 launcher nao consegue empurrar estado para o app, entao o
+                 destino viaja como endereco. O `BaruRouteParser` le a tela
+                 do **host**, porque esquema proprio nao tem barra. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="baru" />
+            </intent-filter>
+</activity>
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

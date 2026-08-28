@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:baru_app/models.dart';
 import 'package:baru_app/theme.dart';
+import 'package:baru_app/widgets/icone_arte.dart';
 import 'package:baru_app/widgets/pet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -126,6 +127,49 @@ Future<void> _escreve(WidgetTester tester, Species sp) async {
   }
 }
 
+/// A camada de fundo do ícone adaptativo.
+///
+/// Era uma cor chapada, e o ícone lia como placeholder — "simplório demais"
+/// foi a palavra. Agora é desenhada: luz vinda de cima, folhagem atrás e
+/// vinheta na borda, para o corte da máscara parecer intenção.
+///
+/// Full bleed de propósito: o launcher corta o que quiser, e é para isso que
+/// a camada de fundo existe.
+Future<void> _escreveFundo(WidgetTester tester, Species sp) async {
+  for (final e in _adaptativo.entries) {
+    final lado = e.value;
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Center(
+          child: RepaintBoundary(
+            key: const Key('fundo'),
+            child: FundoDoIcone(
+              lado: lado.toDouble(),
+              semente: sp.index + 1,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+
+    final boundary = tester.renderObject<RenderRepaintBoundary>(
+      find.byKey(const Key('fundo')),
+    );
+    await tester.runAsync(() async {
+      final img = await boundary.toImage(pixelRatio: 1);
+      final data = await img.toByteData(format: ui.ImageByteFormat.png);
+      img.dispose();
+      final dir = Directory('$_res/mipmap-${e.key}')
+        ..createSync(recursive: true);
+      File('${dir.path}/ic_fundo_${sp.name}.png')
+          .writeAsBytesSync(data!.buffer.asUint8List());
+    });
+  }
+}
+
 /// A camada de frente do ícone adaptativo: só o bicho, fundo transparente.
 Future<void> _escreveFrente(WidgetTester tester, Species sp) async {
   for (final e in _adaptativo.entries) {
@@ -145,22 +189,36 @@ Future<void> _escreveFrente(WidgetTester tester, Species sp) async {
                 child: SizedBox(
                   width: lado * _zonaSegura,
                   height: lado * _zonaSegura,
-                  child: FittedBox(
-                    fit: BoxFit.contain,
-                    child: SizedBox(
-                      width: 200,
-                      height: 170,
-                      child: PetView(
-                        species: sp,
-                        mood: Mood.radiant,
-                        activity: Activity.idle,
-                        coat: 0,
-                        interativo: false,
-                        width: 200,
-                        height: 170,
-                        scale: 1.15,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // A sombra primeiro: sem ela o bicho flutua, e flutuar
+                      // é o que faz um ícone parecer recortado e colado.
+                      Align(
+                        alignment: const Alignment(0, 0.92),
+                        child: SombraDoIcone(largura: lado * _zonaSegura * 0.74),
                       ),
-                    ),
+                      FittedBox(
+                        fit: BoxFit.contain,
+                        // `scale` alto com caixa apertada: a `PetView`
+                        // deixa margem interna, e no primeiro desenho o
+                        // bicho ocupava um terço do círculo.
+                        child: SizedBox(
+                          width: 200,
+                          height: 160,
+                          child: PetView(
+                            species: sp,
+                            mood: Mood.radiant,
+                            activity: Activity.idle,
+                            coat: 0,
+                            interativo: false,
+                            width: 200,
+                            height: 160,
+                            scale: 1.62,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -196,7 +254,7 @@ void _escreveXml(Species sp) {
     '<?xml version="1.0" encoding="utf-8"?>',
     '<!-- Gerado por test/gera_icone_test.dart. Nao edite a mao. -->',
     '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">',
-    '    <background android:drawable="@color/ic_fundo" />',
+    '    <background android:drawable="@mipmap/ic_fundo_${sp.name}" />',
     '    <foreground android:drawable="@mipmap/ic_frente_${sp.name}" />',
     // `monochrome` faz o ícone acompanhar o tema do sistema no Android 13+,
     // onde o launcher pinta a silhueta com a cor do papel de parede.
@@ -219,6 +277,7 @@ void main() {
 
     for (final sp in Species.values) {
       await _escreve(tester, sp);
+      await _escreveFundo(tester, sp);
       await _escreveFrente(tester, sp);
       _escreveXml(sp);
     }

@@ -1,4 +1,5 @@
 import 'package:baru_app/data/row_codec.dart';
+import 'package:baru_app/l10n_loja.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,18 +20,21 @@ AppState _rico({int folhas = 5000}) {
 void main() {
   group('o catálogo', () {
     test('todo item tem nome nos quatro idiomas, e nenhum sobra', () {
+      // Os nomes vêm de dois lugares desde que a loja passou de dezessete
+      // itens: `l10n.dart` guarda os antigos numa lista **por posição**, e
+      // `l10n_loja.dart` guarda os novos **por id**. `nomeDoItemDaLoja`
+      // costura os dois, e é ele que a tela usa.
+      garanteTextosDaLoja();
       for (final lang in ['pt', 'en', 'es', 'zh']) {
         final s = AppState()..lang = lang;
         expect(
-          s.t.itemNames.length,
           shopItems.length,
-          reason: 'a lista de nomes é indexada pela ordem de shopItems ($lang)',
+          greaterThanOrEqualTo(s.t.itemNames.length),
+          reason: 'a lista posicional cobre um prefixo de shopItems; item '
+              'novo entra no fim e resolve por id ($lang)',
         );
         for (final item in shopItems) {
-          final nome = s.t.nomeDoItem(
-            item.id,
-            shopItems.map((e) => e.id).toList(),
-          );
+          final nome = s.t.nomeDoItemDaLoja(item.id);
           expect(nome, isNotEmpty, reason: '${item.id}/$lang');
           expect(nome, isNot(item.id), reason: '${item.id}/$lang sem tradução');
         }

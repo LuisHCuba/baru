@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetPlugin
 import java.io.File
@@ -58,20 +59,33 @@ class BaruWidget : AppWidgetProvider() {
             val pct = if (meta > 0) (uso * 100 / meta).coerceIn(0, 100) else 0
             v.setProgressBar(R.id.baru_meta, 100, pct, false)
 
-            // Tocar abre o app. Um widget que nao leva a lugar nenhum e um
-            // adesivo.
-            v.setOnClickPendingIntent(
-                R.id.baru_raiz_widget,
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    Intent(context, MainActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    },
-                    PendingIntent.FLAG_IMMUTABLE,
-                ),
-            )
+            // Cada pedaco leva ao seu lugar. Um widget que so abre a home
+            // e um atalho com desenho bonito; o valor esta em cortar
+            // caminho para onde a pessoa ja queria ir.
+            //
+            // `data` diferente por destino de proposito: `PendingIntent`
+            // com o mesmo request code e o mesmo Intent e **reaproveitado**
+            // pelo Android, e os tres cliques abririam a mesma tela.
+            fun abre(destino: String, vista: Int, codigo: Int) {
+                v.setOnClickPendingIntent(
+                    vista,
+                    PendingIntent.getActivity(
+                        context,
+                        codigo,
+                        Intent(context, MainActivity::class.java).apply {
+                            action = Intent.ACTION_VIEW
+                            data = Uri.parse("baru://$destino")
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        },
+                        PendingIntent.FLAG_IMMUTABLE,
+                    ),
+                )
+            }
+
+            abre("home", R.id.baru_raiz_widget, 0)
+            abre("sequencia", R.id.baru_raiz, 1)
+            abre("tempo", R.id.baru_meta, 2)
 
             manager.updateAppWidget(id, v)
         }

@@ -134,146 +134,324 @@ class ExclusoesDeContagem {
   }
 }
 
+/// A família de um app, para o companheiro ter o que dizer.
+///
+/// Não é a categoria: a categoria decide o que entra na meta, a família
+/// decide **a frase**. "O YouTube de novo?" e "mais um vídeo e você volta,
+/// né?" são falas diferentes porque vídeo longo e vídeo curto prendem a
+/// pessoa de jeitos diferentes — e era esse o pedido: a fala varia com o
+/// app, não é a mesma frase com o nome trocado.
+///
+/// Quem não tem família cai na fala genérica. Uma família a mais aqui custa
+/// uma frase nova em quatro idiomas, então só entra quando a diferença é
+/// real.
+enum FamiliaDeApp {
+  /// Rolagem infinita de vídeo curto: TikTok, Kwai.
+  videoCurto,
+
+  /// "Só mais um vídeo": YouTube.
+  videoLongo,
+
+  /// Feed e perfil: Instagram, Facebook, X.
+  social,
+
+  /// Fio atrás de fio: Reddit, Quora.
+  forum,
+
+  /// Episódio atrás de episódio: Netflix, Twitch.
+  streaming,
+
+  /// Partida atrás de partida.
+  jogo,
+
+  /// Vitrine sem fim: Shopee, Temu.
+  compras,
+
+  /// Conversa. Entra pela fala, não pela meta — mensagem continua neutro no
+  /// contrato de produto (§8).
+  mensagem,
+}
+
+/// Um app que a tabela embutida conhece.
+///
+/// Nome, categoria e família num registro só. Antes eram dois mapas
+/// paralelos (categoria e nome) e a terceira dimensão viraria um terceiro:
+/// três listas para manter em sincronia à mão é onde nasce o app que tem
+/// categoria e não tem nome.
+class AppConhecido {
+  const AppConhecido(this.nome, this.categoria, [this.familia]);
+
+  final String nome;
+  final CategoriaDeApp categoria;
+
+  /// `null` quando o companheiro não tem nada de específico a dizer sobre
+  /// ele — banco, câmera, relógio. Aí vale a fala genérica.
+  final FamiliaDeApp? familia;
+}
+
 /// Classificação embutida dos apps mais comuns.
 ///
 /// O que não estiver aqui entra como [CategoriaDeApp.neutro] — o padrão que
 /// menos mente: não acusa o usuário de dispersão que não mediu, nem lhe dá
 /// crédito de produtividade que não conferiu.
+///
+/// **Os identificadores de pacote não foram conferidos num aparelho.** Um id
+/// errado não quebra nada: o app simplesmente não casa, cai no padrão neutro
+/// e recebe o nome derivado do último segmento. Errar aqui custa uma
+/// classificação a menos, nunca um número errado.
 class ClassificacaoPadrao {
   const ClassificacaoPadrao();
 
-  static const _mapa = <String, CategoriaDeApp>{
-    // --- dispersivo -------------------------------------------------------
-    'com.instagram.android': CategoriaDeApp.dispersivo,
-    'com.zhiliaoapp.musically': CategoriaDeApp.dispersivo, // TikTok
-    'com.ss.android.ugc.trill': CategoriaDeApp.dispersivo,
-    'com.facebook.katana': CategoriaDeApp.dispersivo,
-    'com.facebook.lite': CategoriaDeApp.dispersivo,
-    'com.twitter.android': CategoriaDeApp.dispersivo,
-    'com.x.android': CategoriaDeApp.dispersivo,
-    'com.google.android.youtube': CategoriaDeApp.dispersivo,
-    'com.snapchat.android': CategoriaDeApp.dispersivo,
-    'com.reddit.frontpage': CategoriaDeApp.dispersivo,
-    'com.pinterest': CategoriaDeApp.dispersivo,
-    'com.netflix.mediaclient': CategoriaDeApp.dispersivo,
-    'tv.twitch.android.app': CategoriaDeApp.dispersivo,
-    'com.kwai.video': CategoriaDeApp.dispersivo,
-    'com.linkedin.android': CategoriaDeApp.dispersivo,
-    'com.shopee.br': CategoriaDeApp.dispersivo,
-    'com.mercadolibre': CategoriaDeApp.dispersivo,
-    'com.einnovation.temu': CategoriaDeApp.dispersivo,
+  static const _catalogo = <String, AppConhecido>{
+    // --- vídeo curto ------------------------------------------------------
+    'com.zhiliaoapp.musically': AppConhecido(
+        'TikTok', CategoriaDeApp.dispersivo, FamiliaDeApp.videoCurto),
+    'com.ss.android.ugc.trill': AppConhecido(
+        'TikTok', CategoriaDeApp.dispersivo, FamiliaDeApp.videoCurto),
+    'com.ss.android.ugc.aweme': AppConhecido(
+        'Douyin', CategoriaDeApp.dispersivo, FamiliaDeApp.videoCurto),
+    'com.kwai.video':
+        AppConhecido('Kwai', CategoriaDeApp.dispersivo, FamiliaDeApp.videoCurto),
+    'com.smile.gifmaker': AppConhecido(
+        'Kuaishou', CategoriaDeApp.dispersivo, FamiliaDeApp.videoCurto),
+
+    // --- vídeo longo ------------------------------------------------------
+    'com.google.android.youtube': AppConhecido(
+        'YouTube', CategoriaDeApp.dispersivo, FamiliaDeApp.videoLongo),
+
+    // --- social -----------------------------------------------------------
+    'com.instagram.android': AppConhecido(
+        'Instagram', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.instagram.lite': AppConhecido(
+        'Instagram Lite', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.instagram.barcelona': AppConhecido(
+        'Threads', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.facebook.katana': AppConhecido(
+        'Facebook', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.facebook.lite': AppConhecido(
+        'Facebook Lite', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.twitter.android':
+        AppConhecido('X', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.x.android':
+        AppConhecido('X', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.snapchat.android': AppConhecido(
+        'Snapchat', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.pinterest': AppConhecido(
+        'Pinterest', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.linkedin.android': AppConhecido(
+        'LinkedIn', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+    'com.tumblr':
+        AppConhecido('Tumblr', CategoriaDeApp.dispersivo, FamiliaDeApp.social),
+
+    // --- fórum ------------------------------------------------------------
+    'com.reddit.frontpage':
+        AppConhecido('Reddit', CategoriaDeApp.dispersivo, FamiliaDeApp.forum),
+    'com.quora.android':
+        AppConhecido('Quora', CategoriaDeApp.dispersivo, FamiliaDeApp.forum),
+
+    // --- streaming --------------------------------------------------------
+    'com.netflix.mediaclient': AppConhecido(
+        'Netflix', CategoriaDeApp.dispersivo, FamiliaDeApp.streaming),
+    'tv.twitch.android.app': AppConhecido(
+        'Twitch', CategoriaDeApp.dispersivo, FamiliaDeApp.streaming),
+    'com.disney.disneyplus': AppConhecido(
+        'Disney+', CategoriaDeApp.dispersivo, FamiliaDeApp.streaming),
+    'com.amazon.avod.thirdpartyclient': AppConhecido(
+        'Prime Video', CategoriaDeApp.dispersivo, FamiliaDeApp.streaming),
+    'com.hbo.hbonow':
+        AppConhecido('Max', CategoriaDeApp.dispersivo, FamiliaDeApp.streaming),
+    'com.globo.globotv': AppConhecido(
+        'Globoplay', CategoriaDeApp.dispersivo, FamiliaDeApp.streaming),
+    'com.crunchyroll.crunchyroid': AppConhecido(
+        'Crunchyroll', CategoriaDeApp.dispersivo, FamiliaDeApp.streaming),
+    'com.google.android.videos': AppConhecido(
+        'Google TV', CategoriaDeApp.dispersivo, FamiliaDeApp.streaming),
+
+    // --- jogos ------------------------------------------------------------
+    'com.dts.freefireth':
+        AppConhecido('Free Fire', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.dts.freefiremax': AppConhecido(
+        'Free Fire MAX', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.roblox.client':
+        AppConhecido('Roblox', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.supercell.clashroyale': AppConhecido(
+        'Clash Royale', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.supercell.clashofclans': AppConhecido(
+        'Clash of Clans', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.supercell.brawlstars': AppConhecido(
+        'Brawl Stars', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.king.candycrushsaga': AppConhecido(
+        'Candy Crush', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.mojang.minecraftpe': AppConhecido(
+        'Minecraft', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.activision.callofduty.shooter': AppConhecido(
+        'Call of Duty Mobile', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.tencent.ig': AppConhecido(
+        'PUBG Mobile', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.mobile.legends': AppConhecido(
+        'Mobile Legends', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.miniclip.eightballpool': AppConhecido(
+        '8 Ball Pool', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.ea.gp.fifamobile': AppConhecido(
+        'EA FC Mobile', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.riotgames.league.wildrift': AppConhecido(
+        'Wild Rift', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.innersloth.spacemafia': AppConhecido(
+        'Among Us', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.playrix.homescapes': AppConhecido(
+        'Homescapes', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.playrix.gardenscapes': AppConhecido(
+        'Gardenscapes', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.nianticlabs.pokemongo': AppConhecido(
+        'Pokémon GO', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+    'com.epicgames.fortnite': AppConhecido(
+        'Fortnite', CategoriaDeApp.dispersivo, FamiliaDeApp.jogo),
+
+    // --- compras ----------------------------------------------------------
+    'com.shopee.br':
+        AppConhecido('Shopee', CategoriaDeApp.dispersivo, FamiliaDeApp.compras),
+    'com.mercadolibre': AppConhecido(
+        'Mercado Livre', CategoriaDeApp.dispersivo, FamiliaDeApp.compras),
+    'com.einnovation.temu':
+        AppConhecido('Temu', CategoriaDeApp.dispersivo, FamiliaDeApp.compras),
+    'com.alibaba.aliexpresshd': AppConhecido(
+        'AliExpress', CategoriaDeApp.dispersivo, FamiliaDeApp.compras),
+    'com.zzkko':
+        AppConhecido('SHEIN', CategoriaDeApp.dispersivo, FamiliaDeApp.compras),
+    'com.amazon.mShop.android.shopping': AppConhecido(
+        'Amazon', CategoriaDeApp.dispersivo, FamiliaDeApp.compras),
+
+    // --- mensagem ---------------------------------------------------------
+    // Neutro na meta — o contrato de produto §8 põe mensagem em neutro, e
+    // mudar isso exige ADR, não um turno de sobreposição. Mas com fala
+    // própria: o pedido citava Telegram, e quem sai do foco para responder
+    // alguém merece uma frase que não o trate como disperso.
+    'com.whatsapp':
+        AppConhecido('WhatsApp', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'com.whatsapp.w4b': AppConhecido(
+        'WhatsApp Business', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'org.telegram.messenger':
+        AppConhecido('Telegram', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'org.thunderdog.challegram': AppConhecido(
+        'Telegram X', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'com.facebook.orca':
+        AppConhecido('Messenger', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'com.discord':
+        AppConhecido('Discord', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'com.google.android.apps.messaging': AppConhecido(
+        'Mensagens', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'com.samsung.android.messaging': AppConhecido(
+        'Mensagens Samsung', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'com.viber.voip':
+        AppConhecido('Viber', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'jp.naver.line.android':
+        AppConhecido('LINE', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
+    'com.tencent.mm':
+        AppConhecido('WeChat', CategoriaDeApp.neutro, FamiliaDeApp.mensagem),
 
     // --- neutro -----------------------------------------------------------
-    'com.whatsapp': CategoriaDeApp.neutro,
-    'com.whatsapp.w4b': CategoriaDeApp.neutro,
-    'org.telegram.messenger': CategoriaDeApp.neutro,
-    'com.facebook.orca': CategoriaDeApp.neutro,
-    'com.google.android.gm': CategoriaDeApp.neutro,
-    'com.android.chrome': CategoriaDeApp.neutro,
-    'org.mozilla.firefox': CategoriaDeApp.neutro,
-    'com.google.android.apps.maps': CategoriaDeApp.neutro,
-    'com.google.android.calendar': CategoriaDeApp.neutro,
-    'com.google.android.deskclock': CategoriaDeApp.neutro,
-    'com.android.camera': CategoriaDeApp.neutro,
-    'com.google.android.apps.photos': CategoriaDeApp.neutro,
-    'com.nu.production': CategoriaDeApp.neutro,
-    'com.itau': CategoriaDeApp.neutro,
-    'br.com.bb.android': CategoriaDeApp.neutro,
-    'com.ubercab': CategoriaDeApp.neutro,
-    'com.ifood.ifood': CategoriaDeApp.neutro,
+    'com.google.android.gm': AppConhecido('Gmail', CategoriaDeApp.neutro),
+    'com.android.chrome': AppConhecido('Chrome', CategoriaDeApp.neutro),
+    'org.mozilla.firefox': AppConhecido('Firefox', CategoriaDeApp.neutro),
+    'com.microsoft.emmx': AppConhecido('Edge', CategoriaDeApp.neutro),
+    'com.opera.browser': AppConhecido('Opera', CategoriaDeApp.neutro),
+    'com.brave.browser': AppConhecido('Brave', CategoriaDeApp.neutro),
+    'com.sec.android.app.sbrowser':
+        AppConhecido('Samsung Internet', CategoriaDeApp.neutro),
+    'com.google.android.googlequicksearchbox':
+        AppConhecido('Google', CategoriaDeApp.neutro),
+    'com.google.android.apps.maps': AppConhecido('Maps', CategoriaDeApp.neutro),
+    'com.waze': AppConhecido('Waze', CategoriaDeApp.neutro),
+    'com.google.android.calendar':
+        AppConhecido('Agenda', CategoriaDeApp.neutro),
+    'com.google.android.deskclock':
+        AppConhecido('Relógio', CategoriaDeApp.neutro),
+    'com.android.camera': AppConhecido('Câmera', CategoriaDeApp.neutro),
+    'com.google.android.apps.photos':
+        AppConhecido('Fotos', CategoriaDeApp.neutro),
+    'com.google.android.apps.translate':
+        AppConhecido('Tradutor', CategoriaDeApp.neutro),
+    'com.android.vending': AppConhecido('Play Store', CategoriaDeApp.neutro),
+    'com.nu.production': AppConhecido('Nubank', CategoriaDeApp.neutro),
+    'com.itau': AppConhecido('Itaú', CategoriaDeApp.neutro),
+    'br.com.bb.android':
+        AppConhecido('Banco do Brasil', CategoriaDeApp.neutro),
+    'com.bradesco': AppConhecido('Bradesco', CategoriaDeApp.neutro),
+    'com.picpay': AppConhecido('PicPay', CategoriaDeApp.neutro),
+    'com.mercadopago.wallet':
+        AppConhecido('Mercado Pago', CategoriaDeApp.neutro),
+    'com.ubercab': AppConhecido('Uber', CategoriaDeApp.neutro),
+    'com.ubercab.eats': AppConhecido('Uber Eats', CategoriaDeApp.neutro),
+    'com.ifood.ifood': AppConhecido('iFood', CategoriaDeApp.neutro),
 
     // --- produtivo --------------------------------------------------------
-    'com.amazon.kindle': CategoriaDeApp.produtivo,
-    'com.google.android.apps.docs.editors.docs': CategoriaDeApp.produtivo,
-    'com.google.android.apps.docs': CategoriaDeApp.produtivo,
-    'notion.id': CategoriaDeApp.produtivo,
-    'md.obsidian': CategoriaDeApp.produtivo,
-    'com.duolingo': CategoriaDeApp.produtivo,
-    'com.anydo': CategoriaDeApp.produtivo,
-    'com.todoist': CategoriaDeApp.produtivo,
-    'com.microsoft.teams': CategoriaDeApp.produtivo,
-    'com.Slack': CategoriaDeApp.produtivo,
-    'com.microsoft.office.outlook': CategoriaDeApp.produtivo,
+    'com.amazon.kindle': AppConhecido('Kindle', CategoriaDeApp.produtivo),
+    'com.google.android.apps.docs.editors.docs':
+        AppConhecido('Google Docs', CategoriaDeApp.produtivo),
+    'com.google.android.apps.docs.editors.sheets':
+        AppConhecido('Google Planilhas', CategoriaDeApp.produtivo),
+    'com.google.android.apps.docs':
+        AppConhecido('Google Drive', CategoriaDeApp.produtivo),
+    'com.google.android.keep':
+        AppConhecido('Google Keep', CategoriaDeApp.produtivo),
+    'notion.id': AppConhecido('Notion', CategoriaDeApp.produtivo),
+    'md.obsidian': AppConhecido('Obsidian', CategoriaDeApp.produtivo),
+    'com.evernote': AppConhecido('Evernote', CategoriaDeApp.produtivo),
+    'com.duolingo': AppConhecido('Duolingo', CategoriaDeApp.produtivo),
+    'com.anydo': AppConhecido('Any.do', CategoriaDeApp.produtivo),
+    'com.todoist': AppConhecido('Todoist', CategoriaDeApp.produtivo),
+    'com.microsoft.teams': AppConhecido('Teams', CategoriaDeApp.produtivo),
+    'com.Slack': AppConhecido('Slack', CategoriaDeApp.produtivo),
+    'com.microsoft.office.outlook':
+        AppConhecido('Outlook', CategoriaDeApp.produtivo),
+    'com.microsoft.office.word': AppConhecido('Word', CategoriaDeApp.produtivo),
+    'com.microsoft.office.excel':
+        AppConhecido('Excel', CategoriaDeApp.produtivo),
+    'us.zoom.videomeetings': AppConhecido('Zoom', CategoriaDeApp.produtivo),
+    'com.google.android.apps.tachyon':
+        AppConhecido('Google Meet', CategoriaDeApp.produtivo),
+    'com.google.android.apps.classroom':
+        AppConhecido('Google Sala de Aula', CategoriaDeApp.produtivo),
+    'com.khanacademy.android':
+        AppConhecido('Khan Academy', CategoriaDeApp.produtivo),
+    'com.coursera.android': AppConhecido('Coursera', CategoriaDeApp.produtivo),
+    'com.udemy.android': AppConhecido('Udemy', CategoriaDeApp.produtivo),
+    'com.dropbox.android': AppConhecido('Dropbox', CategoriaDeApp.produtivo),
+    'com.adobe.reader':
+        AppConhecido('Adobe Acrobat', CategoriaDeApp.produtivo),
+    'com.github.android': AppConhecido('GitHub', CategoriaDeApp.produtivo),
 
     // --- passivo (áudio) --------------------------------------------------
-    'com.spotify.music': CategoriaDeApp.passivo,
-    'com.google.android.apps.youtube.music': CategoriaDeApp.passivo,
-    'deezer.android.app': CategoriaDeApp.passivo,
-    'com.aspiro.tidal': CategoriaDeApp.passivo,
-    'com.soundcloud.android': CategoriaDeApp.passivo,
-    'com.audible.application': CategoriaDeApp.passivo,
-    'com.google.android.apps.podcasts': CategoriaDeApp.passivo,
-    'fm.castbox.audiobook.radio.podcast': CategoriaDeApp.passivo,
-    'com.apple.android.music': CategoriaDeApp.passivo,
+    'com.spotify.music': AppConhecido('Spotify', CategoriaDeApp.passivo),
+    'com.spotify.lite': AppConhecido('Spotify Lite', CategoriaDeApp.passivo),
+    'com.google.android.apps.youtube.music':
+        AppConhecido('YouTube Music', CategoriaDeApp.passivo),
+    'deezer.android.app': AppConhecido('Deezer', CategoriaDeApp.passivo),
+    'com.aspiro.tidal': AppConhecido('Tidal', CategoriaDeApp.passivo),
+    'com.soundcloud.android':
+        AppConhecido('SoundCloud', CategoriaDeApp.passivo),
+    'com.audible.application': AppConhecido('Audible', CategoriaDeApp.passivo),
+    'com.google.android.apps.podcasts':
+        AppConhecido('Podcasts', CategoriaDeApp.passivo),
+    'fm.castbox.audiobook.radio.podcast':
+        AppConhecido('Castbox', CategoriaDeApp.passivo),
+    'com.apple.android.music':
+        AppConhecido('Apple Music', CategoriaDeApp.passivo),
+    'com.amazon.mp3': AppConhecido('Amazon Music', CategoriaDeApp.passivo),
+    'com.pandora.android': AppConhecido('Pandora', CategoriaDeApp.passivo),
+    'tunein.player': AppConhecido('TuneIn', CategoriaDeApp.passivo),
   };
 
   CategoriaDeApp de(String pacote) =>
-      _mapa[pacote] ?? CategoriaDeApp.neutro;
+      _catalogo[pacote]?.categoria ?? CategoriaDeApp.neutro;
 
-  /// Nomes que a tela mostra. `com.zhiliaoapp.musically` não diz nada a
-  /// ninguém; "TikTok" diz.
-  static const _nomes = <String, String>{
-    'com.instagram.android': 'Instagram',
-    'com.zhiliaoapp.musically': 'TikTok',
-    'com.ss.android.ugc.trill': 'TikTok',
-    'com.facebook.katana': 'Facebook',
-    'com.facebook.lite': 'Facebook Lite',
-    'com.twitter.android': 'X',
-    'com.x.android': 'X',
-    'com.google.android.youtube': 'YouTube',
-    'com.snapchat.android': 'Snapchat',
-    'com.reddit.frontpage': 'Reddit',
-    'com.pinterest': 'Pinterest',
-    'com.netflix.mediaclient': 'Netflix',
-    'tv.twitch.android.app': 'Twitch',
-    'com.kwai.video': 'Kwai',
-    'com.linkedin.android': 'LinkedIn',
-    'com.shopee.br': 'Shopee',
-    'com.mercadolibre': 'Mercado Livre',
-    'com.einnovation.temu': 'Temu',
-    'com.whatsapp': 'WhatsApp',
-    'com.whatsapp.w4b': 'WhatsApp Business',
-    'org.telegram.messenger': 'Telegram',
-    'com.facebook.orca': 'Messenger',
-    'com.google.android.gm': 'Gmail',
-    'com.android.chrome': 'Chrome',
-    'org.mozilla.firefox': 'Firefox',
-    'com.google.android.apps.maps': 'Maps',
-    'com.google.android.calendar': 'Agenda',
-    'com.google.android.deskclock': 'Relógio',
-    'com.android.camera': 'Câmera',
-    'com.google.android.apps.photos': 'Fotos',
-    'com.nu.production': 'Nubank',
-    'com.itau': 'Itaú',
-    'br.com.bb.android': 'Banco do Brasil',
-    'com.ubercab': 'Uber',
-    'com.ifood.ifood': 'iFood',
-    'com.amazon.kindle': 'Kindle',
-    'com.google.android.apps.docs.editors.docs': 'Google Docs',
-    'com.google.android.apps.docs': 'Google Drive',
-    'notion.id': 'Notion',
-    'md.obsidian': 'Obsidian',
-    'com.duolingo': 'Duolingo',
-    'com.anydo': 'Any.do',
-    'com.todoist': 'Todoist',
-    'com.microsoft.teams': 'Teams',
-    'com.Slack': 'Slack',
-    'com.microsoft.office.outlook': 'Outlook',
-    'com.spotify.music': 'Spotify',
-    'com.google.android.apps.youtube.music': 'YouTube Music',
-    'deezer.android.app': 'Deezer',
-    'com.aspiro.tidal': 'Tidal',
-    'com.soundcloud.android': 'SoundCloud',
-    'com.audible.application': 'Audible',
-    'com.google.android.apps.podcasts': 'Podcasts',
-    'fm.castbox.audiobook.radio.podcast': 'Castbox',
-    'com.apple.android.music': 'Apple Music',
-  };
+  /// A família do app, ou `null` quando ele não tem fala própria.
+  FamiliaDeApp? familia(String pacote) => _catalogo[pacote]?.familia;
 
   /// Nome legível de um pacote. Desconhecido vira o último segmento com a
   /// primeira letra maiúscula — feio, mas honesto e melhor que o pacote cru.
   String nome(String pacote) {
-    final conhecido = _nomes[pacote];
+    final conhecido = _catalogo[pacote]?.nome;
     if (conhecido != null) return conhecido;
     final partes = pacote.split('.');
     final ultimo = partes.isEmpty ? pacote : partes.last;
@@ -282,9 +460,29 @@ class ClassificacaoPadrao {
   }
 
   /// Quantos apps a tabela embutida conhece.
-  static int get conhecidos => _mapa.length;
+  static int get conhecidos => _catalogo.length;
 
-  static Map<String, CategoriaDeApp> get tabela => Map.unmodifiable(_mapa);
+  static final Map<String, CategoriaDeApp> tabela = Map.unmodifiable(
+    _catalogo.map((p, a) => MapEntry(p, a.categoria)),
+  );
+
+  /// Os pacotes com fala própria. É a partir daqui que se monta o mapa
+  /// pacote→fala que viaja para o vigia.
+  static final List<String> comFala = _ordenadosPorNome(
+    _catalogo.keys.where((p) => _catalogo[p]!.familia != null),
+  );
+
+  /// O catálogo inteiro, ordenado pelo nome que a pessoa lê — ela procura
+  /// "TikTok", não `com.zhiliaoapp.musically`.
+  ///
+  /// A tela de permissões lista isto para a pessoa poder discordar da
+  /// classificação de um app que ela **ainda não abriu hoje**. Sem isso, só
+  /// dava para reclassificar o que já tinha aparecido no relatório do dia.
+  static final List<String> porNome = _ordenadosPorNome(_catalogo.keys);
+
+  static List<String> _ordenadosPorNome(Iterable<String> pacotes) =>
+      pacotes.toList()
+        ..sort((a, b) => _catalogo[a]!.nome.compareTo(_catalogo[b]!.nome));
 }
 
 /// Reconstrói os intervalos contáveis a partir dos eventos crus.

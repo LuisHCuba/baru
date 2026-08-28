@@ -132,8 +132,12 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     // segura de rasterizar, com as animações da tela já paradas.
     if (s != AppLifecycleState.resumed) {
       WidgetService.instance.atualiza(state.estadoDoWidget);
+      // Fecha a conta do tempo dentro do Baru. Sem isto, olhar o bicho
+      // contaria como descanso — e a missão é justamente ficar longe.
+      state.saiuDoApp();
     }
     if (s == AppLifecycleState.resumed) {
+      state.voltouAoApp();
       // Antes do calendário: uma sessão que terminou ontem tem de contar como
       // presença de ontem, e é o avanço de calendário que fecha aquele dia.
       state.reconcileSession();
@@ -261,6 +265,8 @@ class _Casca extends StatelessWidget {
         subtitulo: t.fill(t.celebNivelSub, {'a': app.displayName}),
         icone: Icons.local_florist_rounded,
         cor: Cores.primaria,
+        // Nível é recompensa: sai da toca, cavada.
+        precisaCavar: true,
         aoFechar: app.celebrou,
       );
     }
@@ -280,6 +286,9 @@ class _Casca extends StatelessWidget {
       titulo: t.celebMarco,
       subtitulo: tituloDoMarco(app, marco),
       cor: Cores.acento,
+      // Marco da trilha também é recompensa. A saudação da chegada, logo
+      // acima, não é — e por isso continua chegando sozinha.
+      precisaCavar: true,
       aoFechar: app.celebrou,
     );
   }

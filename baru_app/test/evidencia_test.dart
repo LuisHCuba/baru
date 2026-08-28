@@ -77,6 +77,13 @@ Future<Uint8List> _pixels(WidgetTester tester, Key chave) async {
 AppState _estado({List<String> itens = const []}) {
   final s = AppState()..startCompanionship();
   s.owned = List<String>.from(itens);
+  // `equipados` também, e não só `owned`.
+  //
+  // Ter deixou de ser o mesmo que estar usando (migration 11), e o habitat
+  // desenha o que está **equipado**. Sem esta linha `habitat-cheio.png`
+  // saía byte a byte igual a `habitat-vazio.png` — evidência que afirma o
+  // contrário do que mostra é pior que evidência nenhuma.
+  s.equipados = Set<String>.from(itens);
   return s;
 }
 

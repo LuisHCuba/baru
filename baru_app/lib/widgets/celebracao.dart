@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../services/som_service.dart';
 
 import '../theme.dart';
+import 'toca.dart';
 
 /// Celebração de conquista: nível novo ou marco da trilha.
 ///
@@ -22,6 +23,7 @@ class Celebracao extends StatefulWidget {
     required this.aoFechar,
     this.icone = Icons.auto_awesome_rounded,
     this.cor = Cores.acento,
+    this.precisaCavar = false,
   });
 
   final String titulo;
@@ -30,7 +32,17 @@ class Celebracao extends StatefulWidget {
   final IconData icone;
   final Color cor;
 
+  /// A conquista sai da toca, e não aparece sozinha.
+  ///
+  /// Recompensa que chega pronta não é sentida: é o gesto que transforma
+  /// "ganhei" em "eu tirei dali". Ligado em nível e marco da trilha, que
+  /// **são** recompensas; desligado na saudação da chegada, que é um "bom
+  /// te ver" e não um prêmio — fazer alguém cavar para receber um
+  /// cumprimento seria pedágio.
+  final bool precisaCavar;
+
   static const chave = Key('celebracao');
+  static const chaveDaToca = Key('celebracao-toca');
 
   @override
   State<Celebracao> createState() => _CelebracaoState();
@@ -56,9 +68,17 @@ class _CelebracaoState extends State<Celebracao>
     );
   });
 
+  /// Já foi cavada (ou nunca precisou ser).
+  late bool _aberta = !widget.precisaCavar;
+
   @override
   void initState() {
     super.initState();
+    if (widget.precisaCavar) return;
+    _explode();
+  }
+
+  void _explode() {
     HapticFeedback.heavyImpact();
     // O som acompanha o háptico: os dois marcam o mesmo instante.
     unawaited(SomService.instance.toca(SomDoBaru.conquista));
@@ -73,6 +93,45 @@ class _CelebracaoState extends State<Celebracao>
     });
   }
 
+  /// A cena de cavar, antes da conquista aparecer.
+  ///
+  /// Sem `onTap` de fechar no véu: quem está cavando não pode perder o
+  /// prêmio por encostar fora do buraco.
+  Widget _aToca() {
+    return Positioned.fill(
+      key: Celebracao.chave,
+      child: ColoredBox(
+        color: Cores.tintaA(0.82),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(Espaco.margemTela),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.titulo,
+                  textAlign: TextAlign.center,
+                  style: estilo(Tipo.titulo, color: Cores.superficie),
+                ),
+                Toca(
+                  key: Celebracao.chaveDaToca,
+                  rotuloDoPremio: widget.subtitulo,
+                  icone: widget.icone,
+                  cor: widget.cor,
+                  aoAbrir: () {
+                    if (!mounted) return;
+                    setState(() => _aberta = true);
+                    _explode();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _c.dispose();
@@ -81,6 +140,7 @@ class _CelebracaoState extends State<Celebracao>
 
   @override
   Widget build(BuildContext context) {
+    if (!_aberta) return _aToca();
     final amplitude = Movimento.amplitude(context, 1);
     return Positioned.fill(
       key: Celebracao.chave,

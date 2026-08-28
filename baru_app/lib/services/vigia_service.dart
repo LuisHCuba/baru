@@ -12,6 +12,8 @@
 /// continua sendo o domínio, e a fala chega ao lado nativo já traduzida.
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -107,11 +109,43 @@ class VigiaService {
     _armado = true;
   }
 
+  /// A chave da fala padrão dentro do dicionário que vai para o vigia.
+  ///
+  /// Um sublinhado porque nenhum pacote Android se chama assim: não há como
+  /// um app real colidir com ela.
+  static const chaveDaFalaPadrao = '_';
+
+  /// Empacota a fala padrão e as falas por app numa string só.
+  ///
+  /// **Por que uma string e não um argumento novo.** O caminho até o vigia
+  /// passa pelo `MainActivity`, que copia extras nomeados um a um para o
+  /// `Intent` do serviço. Um argumento que ele não conhece é descartado em
+  /// silêncio — o mapa nunca chegaria. O campo `fala` já atravessa esse
+  /// caminho inteiro, então é ele que carrega o dicionário.
+  ///
+  /// Fica legível dos dois lados: JSON de um nível, `{"pacote": "fala"}`,
+  /// com a fala padrão em [chaveDaFalaPadrao]. Sem falas por app o formato
+  /// não muda — vai a string crua, como sempre foi, e o lado nativo não
+  /// precisa saber que este recurso existe.
+  ///
+  /// O que **não** acontece aqui: escrever texto. Toda frase já chega
+  /// traduzida do catálogo; isto é envelope, não conteúdo.
+  @visibleForTesting
+  static String empacotaFalas(String padrao, Map<String, String> porPacote) {
+    if (porPacote.isEmpty) return padrao;
+    return jsonEncode({chaveDaFalaPadrao: padrao, ...porPacote});
+  }
+
   /// Começa a vigiar. Idempotente.
   ///
   /// Chamar duas vezes não empilha dois serviços — e não chamar de novo a
   /// cada retomada do app evita reiniciar o descanso entre aparições, que é
   /// o que impede o companheiro de virar assédio.
+  ///
+  /// [falasPorPacote] é o dicionário pacote→fala já traduzido. Ele existe
+  /// porque "o YouTube de novo?" e "o TikTok de novo?" são falas diferentes,
+  /// e só o lado nativo sabe qual app está na frente no instante em que o
+  /// companheiro aparece. Vazio: todo mundo ouve [fala].
   Future<bool> comeca({
     required String fala,
     required int pelo,
@@ -120,11 +154,12 @@ class VigiaService {
     required String acaoMais,
     required String notifTitulo,
     required String notifCorpo,
+    Map<String, String> falasPorPacote = const {},
   }) async {
     if (!_armado || kIsWeb || _vigiando) return _vigiando;
     try {
       final ok = await canal.invokeMethod<bool>('vigiaComeca', {
-        'fala': fala,
+        'fala': empacotaFalas(fala, falasPorPacote),
         'pelo': pelo,
         'especie': especie,
         'acaoFechar': acaoFechar,

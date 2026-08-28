@@ -7,6 +7,142 @@ import '../state.dart';
 import '../theme.dart';
 import 'pet.dart';
 
+/// O desenho de um habitat da trilha: que terra é aquela.
+///
+/// Separado de [LuzDaCena] porque as duas coisas respondem a perguntas
+/// diferentes e mudam por motivos diferentes. A luz é **quando** — 22h
+/// escurece a água em qualquer lugar. O habitat é **onde** — o igarapé é
+/// fechado e escuro às duas da tarde também. Se o habitat trocasse a cor
+/// crua, a noite sumiria dentro dele; por isso ele entra como *tinta* por
+/// cima da luz, com [forca] dizendo o quanto puxa.
+class CenarioDoHabitat {
+  const CenarioDoHabitat({
+    required this.id,
+    required this.agua,
+    required this.aguaFunda,
+    required this.colina,
+    required this.areia,
+    this.forca = 0.62,
+    this.linhaDagua = 118,
+    this.colinaTras = 130,
+    this.colinaFrente = 140,
+    this.pico = 0,
+    this.faixaDeAreia = 1,
+  });
+
+  final String id;
+
+  final Color agua;
+  final Color aguaFunda;
+  final Color colina;
+  final Color areia;
+
+  /// Quanto o lugar puxa a cor da luz para a dele, de 0 a 1.
+  final double forca;
+
+  /// Altura da lâmina d'água, em unidades do design, medida do fundo.
+  final double linhaDagua;
+
+  /// Altura das duas colinas, em unidades do design.
+  final double colinaTras;
+  final double colinaFrente;
+
+  /// 0 = duna redonda; 1 = pico de serra.
+  ///
+  /// Uma silhueta só para os dois, interpolada — dois desenhos separados
+  /// sairiam do lugar um em relação ao outro na primeira vez que alguém
+  /// mexesse na deriva. Ver [silhuetaDeColina].
+  final double pico;
+
+  /// Multiplicador da faixa de areia. Praia tem margem larga; serra quase não
+  /// tem.
+  final double faixaDeAreia;
+
+  Color aguaCom(Color luz) => Color.lerp(luz, agua, forca) ?? agua;
+  Color aguaFundaCom(Color luz) =>
+      Color.lerp(luz, aguaFunda, forca) ?? aguaFunda;
+  Color colinaCom(Color luz) => Color.lerp(luz, colina, forca) ?? colina;
+  Color areiaCom(Color luz) => Color.lerp(luz, areia, forca) ?? areia;
+
+  /// O desenho de cada habitat da trilha.
+  ///
+  /// A `lagoa` tem [forca] zero de propósito: é a cena que já existia, e o
+  /// primeiro dia de quem instala o app não pode mudar de aparência por causa
+  /// de uma refatoração.
+  static const porId = <String, CenarioDoHabitat>{
+    'lagoa': CenarioDoHabitat(
+      id: 'lagoa',
+      agua: Color(0xFFC9DCC0),
+      aguaFunda: Color(0xFFAECBA3),
+      colina: Color(0xFFC5D8B6),
+      areia: Color(0xFFE9D6B6),
+      forca: 0,
+    ),
+    'igarape': CenarioDoHabitat(
+      id: 'igarape',
+      agua: Color(0xFF7FA07A),
+      aguaFunda: Color(0xFF5A7A5C),
+      colina: Color(0xFF8AAC72),
+      areia: Color(0xFFC7B994),
+      linhaDagua: 112,
+      colinaTras: 152,
+      colinaFrente: 164,
+      pico: 0.18,
+      faixaDeAreia: 0.7,
+    ),
+    'manguezal': CenarioDoHabitat(
+      id: 'manguezal',
+      agua: Color(0xFF9C9A6A),
+      aguaFunda: Color(0xFF7A7852),
+      colina: Color(0xFF7E9469),
+      areia: Color(0xFFC0AF84),
+      linhaDagua: 128,
+      colinaTras: 118,
+      colinaFrente: 126,
+      faixaDeAreia: 1.5,
+    ),
+    'serra': CenarioDoHabitat(
+      id: 'serra',
+      agua: Color(0xFF8FB4C4),
+      aguaFunda: Color(0xFF67909F),
+      colina: Color(0xFF97A49E),
+      areia: Color(0xFFBFB4A3),
+      linhaDagua: 94,
+      colinaTras: 182,
+      colinaFrente: 196,
+      pico: 0.86,
+      faixaDeAreia: 0.5,
+    ),
+    'praia': CenarioDoHabitat(
+      id: 'praia',
+      agua: Color(0xFF7FC7C4),
+      aguaFunda: Color(0xFF4A9CA1),
+      colina: Color(0xFFCCC5A4),
+      areia: Color(0xFFF0DEB8),
+      linhaDagua: 132,
+      colinaTras: 92,
+      colinaFrente: 100,
+      faixaDeAreia: 1.9,
+    ),
+    'ilha': CenarioDoHabitat(
+      id: 'ilha',
+      agua: Color(0xFF5FB0C9),
+      aguaFunda: Color(0xFF37809E),
+      colina: Color(0xFF7DA968),
+      areia: Color(0xFFF2E1C1),
+      linhaDagua: 142,
+      colinaTras: 108,
+      colinaFrente: 86,
+      pico: 0.38,
+      faixaDeAreia: 1.4,
+    ),
+  };
+
+  /// O desenho de um habitat. Cai na lagoa quando o id não é conhecido — um
+  /// snapshot de versão futura não pode deixar a cena em branco.
+  static CenarioDoHabitat de(String? id) => porId[id] ?? porId['lagoa']!;
+}
+
 /// Paleta da cena para um momento do dia.
 ///
 /// A luz é o que faz o habitat parecer um lugar e não um fundo: às 22h a água
@@ -158,10 +294,26 @@ class LuzDaCena {
 class HabitatScene extends StatefulWidget {
   const HabitatScene({
     super.key,
-    this.height = 296,
+    this.height = alturaPadrao,
     this.animado = true,
     this.agora,
   });
+
+  /// Altura da cena na home.
+  ///
+  /// Eram 296 px, herdados do HTML de referência. O bicho é o produto e
+  /// dividia a primeira dobra com meia dúzia de cartões; a cena cresceu 26%
+  /// para ele caber grande. A home rola, então nada foi empurrado para fora —
+  /// só desceu.
+  static const alturaPadrao = 372.0;
+
+  /// Quanto o companheiro ocupa da cena.
+  ///
+  /// Era 0,82 fixo, e fixo estava errado por dois motivos: não acompanhava a
+  /// cena quando ela mudava de tamanho, e não encolhia em tela estreita. Agora
+  /// multiplica a escala da cena — o bicho é sempre a mesma fração do quadro,
+  /// e passou de 0,82 para 1,34 (+63% de lado, mais que o dobro de área).
+  static const presencaDoPet = 1.34;
 
   final double height;
 
@@ -318,6 +470,9 @@ class _HabitatSceneState extends State<HabitatScene>
     // Cenário comprado ganha da hora do dia — é isso que se compra.
     final luz = LuzDaCena.doCenario(app.cenarioAtivo?.id) ??
         LuzDaCena.de(periodoDe(widget.agora ?? DateTime.now()));
+    // O lugar vem da trilha; a luz, da hora e da loja. As duas se somam em
+    // vez de disputar: o igarapé continua sendo igarapé às 22h.
+    final cenario = CenarioDoHabitat.de(app.habitatAtivo.id);
     _sincronizaChegadas(app.objetosNaCena);
 
     final possuidos =
@@ -338,7 +493,19 @@ class _HabitatSceneState extends State<HabitatScene>
           child: LayoutBuilder(
             builder: (context, c) {
               final sx = c.maxWidth / HabitatScene.design.width;
-              final sy = widget.height / HabitatScene.design.height;
+              // A altura vem da medida real, não de `widget.height`.
+              // A folha de compartilhamento encaixa a cena num
+              // `SizedBox(296)`: o `Container` acata a restrição apertada do
+              // pai e fica em 296, enquanto `widget.height` continuaria
+              // dizendo 372 — céu, água e bicho sairiam do lugar na
+              // miniatura e no PNG compartilhado.
+              final alturaReal =
+                  c.maxHeight.isFinite ? c.maxHeight : widget.height;
+              final sy = alturaReal / HabitatScene.design.height;
+              // O bicho acompanha o menor dos dois: cresce com a cena e
+              // encolhe em tela estreita, sem nunca encostar na borda.
+              final escalaDoPet =
+                  HabitatScene.presencaDoPet * math.min(sx, sy);
               return AnimatedBuilder(
                 animation: Listenable.merge([_deriva, ..._chegadas.values]),
                 builder: (context, _) {
@@ -351,6 +518,7 @@ class _HabitatSceneState extends State<HabitatScene>
                           sx: sx,
                           sy: sy,
                           luz: luz,
+                          cenario: cenario,
                           fase: fase,
                         ),
                       ),
@@ -360,13 +528,19 @@ class _HabitatSceneState extends State<HabitatScene>
                       // O companheiro ocupa o lugar da cena que combina com
                       // o que está fazendo: dentro d'água ao nadar, na
                       // margem ao pastar, na areia ao cochilar.
+                      //
+                      // A sombra sobe com a escala do bicho, não com a da
+                      // cena: os pés dele ficam a ~26 unidades do chão da
+                      // caixa de 150 px, e é a escala que decide onde isso
+                      // cai. Presa ao `sy`, a sombra ficaria no tornozelo.
                       Positioned(
                         left: 0,
                         right: 0,
-                        bottom: (_alturaDoPet(app.activity) + 21) * sy,
+                        bottom: _alturaDoPet(app.activity) * sy +
+                            26 * escalaDoPet,
                         child: Center(
                           child: Container(
-                            width: 116 * sx,
+                            width: 141 * escalaDoPet,
                             height: 13 * sy,
                             decoration: BoxDecoration(
                               color: Cores.tintaA(
@@ -387,7 +561,7 @@ class _HabitatSceneState extends State<HabitatScene>
                             mood: app.mood,
                             activity: app.activity,
                             coat: app.color,
-                            scale: 0.82,
+                            scale: escalaDoPet,
                             alignment: Alignment.bottomCenter,
                             interativo: widget.animado,
                             aoCarinho: () => _premia(app),
@@ -405,7 +579,9 @@ class _HabitatSceneState extends State<HabitatScene>
                         Positioned(
                           left: 0,
                           right: 0,
-                          bottom: (_alturaDoPet(app.activity) + 96) * sy,
+                          // Acima da cabeça, e a cabeça sobe com a escala.
+                          bottom: _alturaDoPet(app.activity) * sy +
+                              118 * escalaDoPet,
                           child: IgnorePointer(
                             child: _PremioSubindo(
                               anima: _premio,
@@ -474,24 +650,80 @@ class _HabitatSceneState extends State<HabitatScene>
   }
 }
 
+/// A silhueta de uma colina, de duna a pico.
+///
+/// Antes as colinas eram `RRect` com raio no topo, e `pico` só encolhia esse
+/// raio — o que dá bloco de canto arredondado, não montanha. A serra saía
+/// parecendo prédio.
+///
+/// Uma curva só serve os dois extremos: com [pico] em 0 os controles ficam a
+/// 0,5523·r do ápice, que é a aproximação canônica de um arco de círculo — o
+/// mesmo domo do `RRect` de antes, com o mesmo trecho reto de flanco. Com
+/// [pico] em 1 os controles colapsam no ápice e a curva vira duas retas.
+Path silhuetaDeColina({
+  required double esquerda,
+  required double base,
+  required double largura,
+  required double altura,
+  required double pico,
+}) {
+  final meio = esquerda + largura / 2;
+  final direita = esquerda + largura;
+  final topo = base - altura;
+  final raio = largura / 2;
+
+  // Onde o flanco reto termina. Na duna é o que sobra abaixo da meia-lua; no
+  // pico é quase nada, para a subida começar cedo.
+  final retaDeDuna = (altura - raio).clamp(0.0, altura);
+  final reta = retaDeDuna + (altura * 0.18 - retaDeDuna) * pico;
+  final ombro = base - reta;
+  final puxa = 0.5523 * (1 - pico);
+
+  return Path()
+    ..moveTo(esquerda, base)
+    ..lineTo(esquerda, ombro)
+    ..cubicTo(
+      esquerda,
+      ombro - (ombro - topo) * puxa,
+      meio - raio * puxa,
+      topo,
+      meio,
+      topo,
+    )
+    ..cubicTo(
+      meio + raio * puxa,
+      topo,
+      direita,
+      ombro - (ombro - topo) * puxa,
+      direita,
+      ombro,
+    )
+    ..lineTo(direita, base)
+    ..close();
+}
+
 /// Céu, astro, colinas, areia e água — cada camada com a sua deriva.
 class _FundoDaCena extends CustomPainter {
   const _FundoDaCena({
     required this.sx,
     required this.sy,
     required this.luz,
+    required this.cenario,
     required this.fase,
   });
 
   final double sx;
   final double sy;
   final LuzDaCena luz;
+  final CenarioDoHabitat cenario;
   final double fase;
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
+    final corDaColina = cenario.colinaCom(luz.colina);
+    final corDaAreia = cenario.areiaCom(luz.areia);
 
     // --- céu: gradiente, não cor chapada -----------------------------------
     canvas.drawRect(
@@ -514,25 +746,36 @@ class _FundoDaCena extends CustomPainter {
     final derivaLonge = (fase - 0.5) * 6 * sx;
     final derivaPerto = (fase - 0.5) * 11 * sx;
 
-    canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        Rect.fromLTWH(-34 * sx + derivaLonge, 104 * sy, 224 * sx, 130 * sy),
-        topLeft: Radius.circular(112 * sx),
-        topRight: Radius.circular(112 * sx),
+    // O pé das colinas é medido a partir da lâmina d'água, não do topo do
+    // quadro: é a relação que importa — elas afundam ~55 unidades na água, e
+    // é isso que precisa continuar valendo quando o habitat sobe ou desce a
+    // linha d'água.
+    final aguaTopo = h - cenario.linhaDagua * sy;
+    final baseTras = aguaTopo + 56 * sy;
+    final baseFrente = aguaTopo + 54 * sy;
+
+    canvas.drawPath(
+      silhuetaDeColina(
+        esquerda: -34 * sx + derivaLonge,
+        base: baseTras,
+        largura: 224 * sx,
+        altura: cenario.colinaTras * sy,
+        pico: cenario.pico,
       ),
-      Paint()..color = luz.colina.withValues(alpha: 0.85),
+      Paint()..color = corDaColina.withValues(alpha: 0.85),
     );
-    canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        Rect.fromLTWH(w - 162 * sx + derivaPerto, 92 * sy, 206 * sx, 140 * sy),
-        topLeft: Radius.circular(104 * sx),
-        topRight: Radius.circular(104 * sx),
+    canvas.drawPath(
+      silhuetaDeColina(
+        esquerda: w - 162 * sx + derivaPerto,
+        base: baseFrente,
+        largura: 206 * sx,
+        altura: cenario.colinaFrente * sy,
+        pico: cenario.pico,
       ),
-      Paint()..color = luz.colina.withValues(alpha: 0.62),
+      Paint()..color = corDaColina.withValues(alpha: 0.62),
     );
 
     // --- água: gradiente de profundidade -----------------------------------
-    final aguaTopo = h - 118 * sy;
     final agua = Rect.fromLTWH(0, aguaTopo, w, h - aguaTopo);
     canvas.drawRect(
       agua,
@@ -540,28 +783,34 @@ class _FundoDaCena extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [luz.agua, luz.aguaFunda],
+          colors: [
+            cenario.aguaCom(luz.agua),
+            cenario.aguaFundaCom(luz.aguaFunda),
+          ],
         ).createShader(agua),
     );
 
     // --- margem de areia: uma curva por cima da água, não uma tarja reta ---
     // Pintada depois da água de propósito: antes, a água cobria a curva e só
     // sobrava uma linha horizontal dura separando os dois.
+    final faixa = cenario.faixaDeAreia;
     final margem = Path()
-      ..moveTo(0, aguaTopo + 10 * sy)
+      ..moveTo(0, aguaTopo + 10 * faixa * sy)
       ..cubicTo(
-        w * 0.26, aguaTopo - 16 * sy,
-        w * 0.62, aguaTopo + 14 * sy,
-        w, aguaTopo - 10 * sy,
+        w * 0.26, aguaTopo - 16 * faixa * sy,
+        w * 0.62, aguaTopo + 14 * faixa * sy,
+        w, aguaTopo - 10 * faixa * sy,
       )
       ..lineTo(w, 0)
       ..lineTo(0, 0)
       ..close();
     canvas.save();
-    canvas.clipRect(Rect.fromLTWH(0, aguaTopo - 34 * sy, w, 52 * sy));
+    canvas.clipRect(
+      Rect.fromLTWH(0, aguaTopo - 34 * faixa * sy, w, 52 * faixa * sy),
+    );
     canvas.drawPath(
       margem,
-      Paint()..color = luz.areia.withValues(alpha: 0.72),
+      Paint()..color = corDaAreia.withValues(alpha: 0.72),
     );
     canvas.restore();
 
@@ -585,7 +834,61 @@ class _FundoDaCena extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FundoDaCena old) =>
-      old.fase != fase || old.luz != luz || old.sx != sx || old.sy != sy;
+      old.fase != fase ||
+      old.luz != luz ||
+      old.cenario.id != cenario.id ||
+      old.sx != sx ||
+      old.sy != sy;
+}
+
+/// A cena, em miniatura e sem bicho — o cartão de um habitat na trilha.
+///
+/// Desenha com **o mesmo painter** da cena grande de propósito: uma prévia
+/// pintada à mão viraria mentira na primeira vez que alguém ajustasse a
+/// colina, e o usuário escolheria um lugar diferente do que vai receber.
+class MiniaturaDoHabitat extends StatelessWidget {
+  const MiniaturaDoHabitat({
+    super.key,
+    required this.habitatId,
+    this.largura,
+    this.altura = 64,
+    this.agora,
+  });
+
+  final String habitatId;
+
+  /// Nulo ocupa a largura disponível. Existe porque a prévia dentro da folha
+  /// de detalhe é de borda a borda, e fixar 372 px ali estouraria a tela em
+  /// qualquer aparelho mais estreito que o frame de referência.
+  final double? largura;
+
+  final double altura;
+
+  /// Injetável para a captura de evidência não depender da hora do relógio.
+  final DateTime? agora;
+
+  Widget _pinta(double w) => SizedBox(
+        width: w,
+        height: altura,
+        child: CustomPaint(
+          painter: _FundoDaCena(
+            sx: w / HabitatScene.design.width,
+            sy: altura / HabitatScene.design.height,
+            luz: LuzDaCena.de(periodoDe(agora ?? DateTime.now())),
+            cenario: CenarioDoHabitat.de(habitatId),
+            // Miniatura não deriva: meia dúzia delas repintando junto com a
+            // cena grande seria trabalho de GPU por nada.
+            fase: 0.5,
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final w = largura;
+    if (w != null) return _pinta(w);
+    return LayoutBuilder(builder: (context, c) => _pinta(c.maxWidth));
+  }
 }
 
 /// Vinheta e luz ambiente por cima de tudo — é o que dá profundidade.

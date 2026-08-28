@@ -353,3 +353,55 @@ vezes por minuto e rasterizar é caro.
 
 O item 2 é o que mais provavelmente falha primeiro: se o caminho do PNG não
 chegar, ou o launcher não puder ler o arquivo, sai o fundo sem bicho.
+
+## BL-15 — Permissões e fala por app: o que só o aparelho responde
+
+**O que foi feito.** O onboarding passou a pedir as **quatro** permissões,
+uma por tela, cada uma dizendo o que faz e o que deixa de funcionar sem ela:
+acesso ao uso, desenhar sobre outros apps, notificações e alarme exato.
+Ajustes › Sobre outros apps virou a tela de permissões que se revisita, com
+o estado de cada uma e um botão de pedir de novo. O catálogo de apps foi de
+55 para 126 entradas e ficou visível e editável ali mesmo. A fala do
+companheiro passou a variar com o app da frente.
+
+**Por que isso mudou.** No aparelho do dono do produto o acesso ao uso
+estava concedido e `SYSTEM_ALERT_WINDOW` estava **negada** — e o app não
+avisava. O companheiro nunca aparecia sobre o TikTok, o que é
+indistinguível de estar quebrado. Uma permissão que ninguém enumera é uma
+permissão que ninguém percebe faltando.
+
+**O que os testes cobrem.** Que as quatro são pedidas uma a uma; que cada
+uma diz o custo da recusa; que recusar continua sendo caminho suportado e
+tem como pedir de novo depois; que o catálogo é editável; que a fala do
+YouTube não é a do TikTok; e que o dicionário pacote→fala atravessa o canal
+já traduzido. `flutter test` não roda Kotlin.
+
+**O que só o aparelho responde:**
+
+1. A tela do sistema de "desenhar sobre outros apps" abre a partir do
+   cartão, e voltar dela marca a permissão como concedida.
+2. O diálogo de notificações do Android 13+ aparece no passo 3.
+3. `Permission.scheduleExactAlarm` responde o que se espera na faixa de API
+   do aparelho (antes do Android 12 a permissão nem existe).
+4. `VigiaDaSessao.falaPara` decodifica o dicionário JSON: no TikTok sai a
+   fala do TikTok, no YouTube a do YouTube, e num app fora do dicionário sai
+   a fala padrão. É Kotlin, e Kotlin não roda em `flutter test`.
+5. Os identificadores de pacote do catálogo casam com os apps instalados.
+   **Nenhum foi conferido num aparelho.** Um id errado não quebra nada — o
+   app cai em neutro e ganha o nome derivado do último segmento —, mas custa
+   uma classificação e uma fala.
+
+**Uma linha que falta, e que não é minha para escrever.** A fala por app só
+sai do lugar quando `AppState._comecaAVigiar` (em `lib/state.dart`, fora da
+minha área neste turno) passar o dicionário adiante:
+
+```dart
+await VigiaService.instance.comeca(
+  fala: t.vigiaFala,
+  // ...
+  falasPorPacote: falasPorPacote(t), // de lib/l10n_sobreposicao.dart
+);
+```
+
+Sem esse argumento o parâmetro fica no padrão vazio e o vigia manda a fala
+única de sempre — nada regride, mas S-03 fica desligado.

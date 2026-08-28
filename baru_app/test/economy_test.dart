@@ -1,5 +1,6 @@
 import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/models.dart';
+import 'package:baru_app/data/descanso_retencao.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -87,9 +88,20 @@ void main() {
       );
       s.applyCalendar(DateTime.now());
       final marco = trilha.firstWhere((m) => m.id == 'primeiro_dia_abaixo');
+      // O presente de retorno (RD-03) entra aqui também: doze dias fora
+      // atravessam a régua dele. Somá-lo mantém a asserção sobre o que este
+      // teste existe para proteger — o bônus da meta é pago **uma vez**, e
+      // não um por dia de ausência.
+      final volta = avaliaVolta(
+        diasFora: 11,
+        hoje: dateOnly(DateTime.now()),
+        jaCreditadas: const {},
+      );
       expect(
         s.leaves,
-        AppState.underGoalBonus + marco.recompensa.folhas,
+        AppState.underGoalBonus +
+            marco.recompensa.folhas +
+            (volta?.folhas ?? 0),
         reason: 'dias sem o app têm usage sintético em 0 — pagar por eles '
             'seria inventar medição; só o primeiro conta, e ele destrava o '
             'marco da trilha uma única vez',
@@ -227,12 +239,31 @@ void main() {
     });
 
     test('os preços dos objetos de cena são os do contrato', () {
-      // A loja ganhou roupas e cenários; a curva dos objetos de cena não
-      // pode ter mudado junto.
+      // A loja ganhou roupas, cenários e uma segunda leva de objetos de
+      // cena; a curva dos **oito do contrato** não pode ter mudado junto.
+      // Por isso a lista é fixada por id e não pela ordem de `itensDeCena`,
+      // que agora tem mais gente dentro.
+      const doContrato = [
+        'lily',
+        'bamboo',
+        'rock',
+        'dock',
+        'lantern',
+        'tree',
+        'boat',
+        'bridge',
+      ];
       expect(
-        itensDeCena.map((i) => i.price).toList(),
+        [for (final id in doContrato) itemPorId(id)!.price],
         [40, 70, 110, 150, 190, 240, 300, 400],
       );
+
+      // E as pontas da curva continuam sendo as do contrato: nenhum item
+      // novo pode ser mais barato que a primeira compra da vida do usuário
+      // nem mais caro que a ponte, que é o prêmio do fim.
+      final precos = itensDeCena.map((i) => i.price);
+      expect(precos.reduce((a, b) => a < b ? a : b), 40);
+      expect(precos.reduce((a, b) => a > b ? a : b), 400);
     });
 
     test('roupa é mais barata que objeto de cena, e cenário é mais caro', () {

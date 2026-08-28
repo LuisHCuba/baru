@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Canto arredondado igual ao do resto do sistema. Sem isto o widget sai
+     como um retangulo duro no meio da tela inicial. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FFF6EFE2" />
+    <corners android:radius="20dp" />
+</shape>

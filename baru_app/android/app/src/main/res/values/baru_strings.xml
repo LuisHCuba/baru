@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Aparece na galeria de widgets do sistema, antes de o app abrir:
+         e o unico texto do produto que nao pode vir do Dart. -->
+    <string name="baru_widget_desc">Seu companheiro na tela inicial</string>
+</resources>

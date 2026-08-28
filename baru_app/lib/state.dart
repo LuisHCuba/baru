@@ -22,6 +22,7 @@ import 'services/notification_service.dart';
 import 'services/overlay_service.dart';
 import 'services/som_service.dart';
 import 'services/vigia_service.dart';
+import 'services/widget_service.dart';
 import 'services/usage_service.dart';
 
 DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -2063,6 +2064,25 @@ class AppState extends ChangeNotifier {
       _persisting = false;
     }
   }
+
+  /// O que o widget da tela inicial mostra agora.
+  ///
+  /// Montar aqui e mandar **lá fora** é de propósito. A primeira versão
+  /// chamava o `WidgetService` de dentro do `notifyListeners`; rasterizar
+  /// monta um `RenderView` próprio e roda um quadro, e fazer isso no meio
+  /// das animações da tela derrubava o relógio dos `AnimationController`.
+  ///
+  /// Além do defeito, era a hora errada: o widget existe para quando o app
+  /// **não** está na frente. Quem manda é o ciclo de vida.
+  EstadoDoWidget get estadoDoWidget => EstadoDoWidget(
+        especie: species,
+        humor: mood,
+        pelagem: color,
+        nome: displayName,
+        raiz: streak,
+        usoDoDia: usage,
+        meta: goal,
+      );
 
   @override
   void notifyListeners() {

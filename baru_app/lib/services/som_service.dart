@@ -35,7 +35,17 @@ enum SomDoBaru {
   toque,
 
   /// Afago completo.
-  carinho;
+  carinho,
+
+  /// A mão raspando a terra da toca. Toca a cada gesto de cavar.
+  cavar,
+
+  /// O prêmio saindo de dentro da toca.
+  ///
+  /// Separado do [resgate]: aquele é o "recebi", este é o "achei". O
+  /// momento de abrir precisa de som próprio, senão a cena inteira acontece
+  /// em silêncio e vira animação decorativa.
+  premio;
 
   String get arquivo => 'sons/$name.wav';
 }
@@ -74,20 +84,56 @@ class SomService {
   bool ligado = true;
 
   /// Dois sons no mesmo instante viram ruído: o segundo espera.
+  ///
+  /// **Por som, não entre sons.** Era global, e isso quebrava sequências
+  /// desenhadas de propósito: na toca, o `cavar` da pancada engolia o
+  /// `premio` da abertura, e a cena que mais importa acontecia em silêncio.
+  /// Repetir o **mesmo** som rápido é que vira ruído; sons diferentes em
+  /// sequência são o desenho.
   static const _intervaloMinimo = Duration(milliseconds: 400);
+
+  /// Quem é percussivo e feito para repetir.
+  ///
+  /// Cavar são três pancadas em um segundo: com o intervalo cheio, a
+  /// segunda e a terceira sumiriam e o gesto ficaria mudo no meio.
+  ///
+  /// **Só estes.** A primeira versão desta correção trocou a regra para
+  /// "por som" em todo o catálogo, e isso mudou coisas que ninguém pediu —
+  /// tocar no bicho e completar um afago passaram a soar juntos. O limite
+  /// global continua sendo a regra; a exceção é a lista.
+  static const _percussivos = {SomDoBaru.cavar};
+
+  static const _intervaloCurto = Duration(milliseconds: 90);
   DateTime? _ultimo;
 
   /// Relógio injetável — o teste não pode depender do relógio de parede.
   @visibleForTesting
   DateTime Function() agora = DateTime.now;
 
+  final _ultimoDe = <SomDoBaru, DateTime>{};
+
+  /// Esquece quando cada som tocou pela última vez.
+  ///
+  /// O serviço é singleton: sem isto, o limitador de um teste bloqueia o
+  /// som do teste seguinte, e a suíte passa ou falha conforme a ordem.
+  @visibleForTesting
+  void esqueceOsUltimos() {
+    _ultimo = null;
+    _ultimoDe.clear();
+  }
+
   /// Deve tocar agora?
   ///
   /// Separado de [toca] de propósito: é aqui que mora toda a decisão, e é
   /// isto que o teste consegue exercitar sem plugin de áudio.
   @visibleForTesting
-  bool valeTocar(DateTime quando) {
+  bool valeTocar(DateTime quando, [SomDoBaru? som]) {
     if (!ligado) return false;
+    if (som != null && _percussivos.contains(som)) {
+      final anterior = _ultimoDe[som];
+      return anterior == null ||
+          quando.difference(anterior) >= _intervaloCurto;
+    }
     final anterior = _ultimo;
     if (anterior != null && quando.difference(anterior) < _intervaloMinimo) {
       return false;
@@ -97,8 +143,11 @@ class SomService {
 
   Future<void> toca(SomDoBaru som) async {
     final quando = agora();
-    if (!valeTocar(quando)) return;
-    _ultimo = quando;
+    if (!valeTocar(quando, som)) return;
+    _ultimoDe[som] = quando;
+    // Um som percussivo não empurra o relógio global: senão três pancadas
+    // de cavar deixariam o som seguinte — o do prêmio — mudo.
+    if (!_percussivos.contains(som)) _ultimo = quando;
     espiao?.add(som);
 
     try {

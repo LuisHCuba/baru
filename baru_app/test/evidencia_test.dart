@@ -16,6 +16,7 @@ import 'package:baru_app/data/biometria.dart';
 import 'package:baru_app/data/cofre.dart';
 import 'package:baru_app/screens/auth_screen.dart';
 import 'package:baru_app/widgets/folha_restrita.dart';
+import 'package:baru_app/widgets/raiz.dart';
 import 'package:baru_app/screens/conta_screen.dart';
 import 'package:baru_app/screens/folhas_screen.dart';
 import 'package:baru_app/screens/sequencia_screen.dart';
@@ -564,6 +565,46 @@ void main() {
     }
     app.nextOnb();
     await mostra('onboarding-revelacao');
+  });
+
+  testWidgets('a raiz crescendo', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(760, 260);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    // Lado a lado: é a comparação que prova que ela cresce, e não a
+    // afirmação de que cresce.
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: RepaintBoundary(
+          key: const Key('captura-raiz'),
+          child: ColoredBox(
+            color: Cores.superficie,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (final d in [0, 3, 7, 30, 100, 365])
+                  SizedBox(
+                    width: 110,
+                    height: 240,
+                    child: RaizViva(dias: d, cor: Cores.acentoForte),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(Tempo.componente);
+    await _salva(tester, const Key('captura-raiz'), 'raiz-crescendo');
   });
 
   testWidgets('o Android bloqueando a permissão de uso', (tester) async {

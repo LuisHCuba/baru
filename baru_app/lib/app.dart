@@ -7,6 +7,7 @@ import 'data/repositories.dart';
 import 'services/notification_service.dart';
 import 'services/som_service.dart';
 import 'services/vigia_service.dart';
+import 'services/widget_service.dart';
 import 'models.dart';
 import 'navegacao.dart';
 import 'widgets/folha_restrita.dart';
@@ -72,6 +73,7 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     // testado sem nenhum.
     VigiaService.instance.arma();
     IconeService.instance.arma();
+    WidgetService.instance.arma();
     state.initPlatformServices();
     // Recusa vinda do sistema abre o passo a passo, não um aviso que manda
     // a pessoa para a tela onde o botão está travado.
@@ -125,6 +127,12 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState s) {
+    // Sair do app é a hora exata de o widget ficar em dia: é agora que ele
+    // passa a ser a única cara do Baru na tela da pessoa. E é a hora
+    // segura de rasterizar, com as animações da tela já paradas.
+    if (s != AppLifecycleState.resumed) {
+      WidgetService.instance.atualiza(state.estadoDoWidget);
+    }
     if (s == AppLifecycleState.resumed) {
       // Antes do calendário: uma sessão que terminou ontem tem de contar como
       // presença de ontem, e é o avanço de calendário que fecha aquele dia.
@@ -139,6 +147,7 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    WidgetService.instance.cancela();
     unawaited(SomService.instance.dispose());
     _rotas.dispose();
     state.dispose();

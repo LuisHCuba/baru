@@ -328,3 +328,28 @@ trabalho de novo no iOS, onde é WidgetKit e Swift.
 
 Não cabia junto do vigia neste turno. **É o próximo pedaço grande**, e é
 independente de tudo o que está aqui.
+
+## BL-14 — Widget de tela inicial: verificação em aparelho
+
+**O que foi feito.** `BaruWidget` (`AppWidgetProvider`) mais o layout, e um
+`WidgetService` no Dart que rasteriza o bicho num PNG e grava nome, raiz,
+uso e meta. `RemoteViews` roda no processo do launcher e não executa
+`CustomPainter`, então o bicho do widget **não pode ser** o mesmo objeto que
+o da tela — é uma imagem gerada pelo mesmo painter.
+
+**O que os testes cobrem.** A regra que faz a classe existir: só rasteriza
+quando a imagem muda de verdade. Mudar só a raiz grava o texto novo e **não**
+redesenha; mudar humor ou espécie redesenha. O estado do app notifica muitas
+vezes por minuto e rasterizar é caro.
+
+**O que só o aparelho responde:**
+
+1. O widget aparece na galeria do sistema com a descrição certa.
+2. Colocado na tela, mostra o bicho — não um retângulo vazio.
+3. Redimensionar de 2x2 para 4x2 não corta o rodapé.
+4. Tocar abre o app.
+5. Mudar o humor no app atualiza o widget sem reabrir a tela inicial.
+6. A imagem não fica borrada em tela de alta densidade.
+
+O item 2 é o que mais provavelmente falha primeiro: se o caminho do PNG não
+chegar, ou o launcher não puder ler o arquivo, sai o fundo sem bicho.

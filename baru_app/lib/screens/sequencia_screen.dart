@@ -4,6 +4,7 @@ import '../data/progressao.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../widgets/raiz.dart';
 import '../widgets/componentes.dart';
 
 /// Sua sequência.
@@ -179,10 +180,20 @@ class _Chama extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.local_fire_department_rounded,
-                size: 34,
-                color: Cores.acento,
+              // A raiz desenhada, não um ícone de fogo.
+              //
+              // "12 dias" é um placar, e placar se perde sem doer. Uma raiz
+              // que a pessoa viu engrossar ao longo de doze dias é uma
+              // coisa que ela construiu — e ninguém joga fora o que
+              // construiu. A chama, além disso, é vocabulário de outro app.
+              SizedBox(
+                width: 74,
+                height: 96,
+                child: RaizViva(
+                  dias: app.streak,
+                  cor: Cores.acentoForte,
+                  corDaTerra: Cores.acentoA(0.10),
+                ),
               ),
               const SizedBox(width: Espaco.sm),
               ContadorAnimado(

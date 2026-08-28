@@ -6,6 +6,7 @@ import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/toca.dart';
 
 /// Missões diárias e semanais.
 ///
@@ -196,10 +197,7 @@ class CartaoDeMissao extends StatelessWidget {
       // Missão que só se lê é lembrete — e a queixa era justamente não
       // saber o que fazer.
       onTap: missao.resgatavel
-          ? () {
-              HapticFeedback.mediumImpact();
-              app.resgataMissao(missao);
-            }
+          ? () => abreATocaDe(context, app, missao)
           : estado == EstadoDaMissao.resgatada
               ? null
               : () {
@@ -330,6 +328,59 @@ class _Recompensa extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Abre a toca da missão.
+///
+/// Resgatar era um toque e um número que mudava. Recompensa que chega
+/// sozinha não é sentida — é o gesto que transforma "ganhei" em "eu tirei
+/// dali". A folha só fecha depois de a terra abrir, e o crédito acontece
+/// ali, não no toque.
+Future<void> abreATocaDe(
+  BuildContext context,
+  AppState app,
+  Missao missao,
+) {
+  final t = app.t;
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Cores.superficie,
+    // Sem arrastar para fechar: a pessoa está cavando, e um arrasto para
+    // baixo derrubaria a folha no meio do gesto.
+    enableDrag: false,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(Raio.folha)),
+    ),
+    builder: (folha) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(Espaco.margemTela),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(t.tocaTitulo, style: estilo(Tipo.titulo)),
+            const SizedBox(height: Espaco.xxs),
+            Text(
+              t.tocaAjuda,
+              textAlign: TextAlign.center,
+              style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+            ),
+            const SizedBox(height: Espaco.sm),
+            Toca(
+              rotuloDoPremio: t.fill(t.missaoGanhou, {'n': missao.folhas}),
+              aoAbrir: () {
+                app.resgataMissao(missao);
+                // Um respiro para a cena ser vista antes de a folha sair.
+                Future.delayed(const Duration(milliseconds: 900), () {
+                  if (folha.mounted) Navigator.of(folha).pop();
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// O "como" da missão: o que fazer, e onde.

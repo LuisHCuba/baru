@@ -433,6 +433,8 @@ class T {
   String get msSemanaMinutos => s('msSemanaMinutos');
   String get msSemanaAbaixo => s('msSemanaAbaixo');
   String get missaoGanhou => s('missaoGanhou');
+  String get tocaTitulo => s('tocaTitulo');
+  String get tocaAjuda => s('tocaAjuda');
   // O "como" de cada missão: o que fazer e onde.
   String get comoFoco => s('comoFoco');
   String get comoFocoLongo => s('comoFocoLongo');
@@ -676,6 +678,8 @@ const _pt = <String, Object>{
   'msSemanaMinutos': '{n} min de foco nesta semana',
   'msSemanaAbaixo': '{n} dias abaixo da meta nesta semana',
   'missaoGanhou': '+{n} folhas',
+  'tocaTitulo': 'Tem algo enterrado aqui',
+  'tocaAjuda': 'Toque na terra para cavar.',
   'comoFoco': 'Toque em Focar na tela inicial e fique com o Baru até o fim.',
   'comoFocoLongo': 'Uma sessão só, mais longa: escolha a duração maior ao começar o foco.',
   'comoMinutos': 'Vale a soma do dia. Várias sessões curtas contam igual a uma longa.',
@@ -1152,6 +1156,8 @@ const _en = <String, Object>{
   'msSemanaMinutos': '{n} min of focus this week',
   'msSemanaAbaixo': '{n} days under your goal this week',
   'missaoGanhou': '+{n} leaves',
+  'tocaTitulo': 'There\'s something buried here',
+  'tocaAjuda': 'Tap the soil to dig.',
   'comoFoco': 'Tap Focus on the home screen and stay with Baru to the end.',
   'comoFocoLongo': 'A single longer session: pick the longer duration when you start.',
   'comoMinutos': 'It\'s the day\'s total. Several short sessions count the same as one long one.',
@@ -1625,6 +1631,8 @@ const _es = <String, Object>{
   'msSemanaMinutos': '{n} min de enfoque esta semana',
   'msSemanaAbaixo': '{n} días bajo tu meta esta semana',
   'missaoGanhou': '+{n} hojas',
+  'tocaTitulo': 'Hay algo enterrado aquí',
+  'tocaAjuda': 'Toca la tierra para cavar.',
   'comoFoco': 'Toca Enfocar en la pantalla inicial y quédate con Baru hasta el final.',
   'comoFocoLongo': 'Una sola sesión más larga: elige la duración mayor al empezar.',
   'comoMinutos': 'Cuenta la suma del día. Varias sesiones cortas valen igual que una larga.',
@@ -2100,6 +2108,8 @@ const _zh = <String, Object>{
   'msSemanaMinutos': '本周 {n} 分钟专注',
   'msSemanaAbaixo': '本周 {n} 天低于目标',
   'missaoGanhou': '+{n} 片叶子',
+  'tocaTitulo': '这里埋着什么',
+  'tocaAjuda': '点土堆开始挖。',
   'comoFoco': '在主页点“专注”，陪着 Baru 到结束。',
   'comoFocoLongo': '只要一次更长的专注：开始时选更长的时长。',
   'comoMinutos': '算的是一天的总和。几次短专注和一次长的一样。',

@@ -1,11 +1,17 @@
-# Deploy da landing page. O site é estático: o "build" só injeta a chave
-# publicável do Supabase, que vive numa variável de ambiente do Netlify
-# (Site settings -> Environment variables -> SUPABASE_ANON_KEY) para não
-# entrar no repositório. Sem a variável o build passa e o formulário da
-# lista de espera fica escondido.
+# Deploy da landing page.
+#
+# O projeto no Netlify tem base directory = "landing", e no toml `publish` e
+# `command` são resolvidos **a partir da base**. Declarar a base aqui deixa o
+# deploy reprodutível pelo repositório em vez de depender do painel — e foi o
+# que quebrou o build 38ded66, que assumia a raiz e virou "landing/landing".
+#
+# O site é estático: o "build" só injeta a chave publicável do Supabase, que
+# vive nas Environment variables do Netlify para não entrar no repositório.
+# Sem a variável o build passa e o formulário da lista fica escondido.
 [build]
-  publish = "landing"
-  command = "node landing/injeta-config.js"
+  base = "landing"
+  publish = "."
+  command = "node injeta-config.js"
 
 [[headers]]
   for = "/assets/*"

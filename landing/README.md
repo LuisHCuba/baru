@@ -73,6 +73,9 @@ houver uma evidência mais nova.
 
 ## Decisões de conteúdo
 
+- A página é **tema claro único, de propósito**: referência comercial à la
+  Duolingo (fundo branco, verde vivo, botões com borda inferior, bordas
+  claras). O aconchego de tons quentes/escuros fica para dentro do app.
 - Todo número na página vem de `docs/PRODUCT.md`, que é o contrato de
   produto. Se uma regra mudar lá, muda aqui.
 - Todas as imagens são capturas reais da árvore de widgets. Nenhuma arte de

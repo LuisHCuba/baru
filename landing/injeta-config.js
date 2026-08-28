@@ -17,6 +17,28 @@ const path = require('node:path');
 const ARQUIVO = path.join(__dirname, 'index.html');
 const ALVO = 'anonKey: ""';
 
+/* Nomes aceitos para a chave, em ordem. Existe mais de um porque o painel
+   do Supabase hoje chama de "publishable key" e o nome da variavel varia
+   conforme quem a cria — errar o nome fazia o build passar em silencio
+   com o formulario escondido. */
+const NOMES_CHAVE = [
+  'SUPABASE_ANON_KEY',
+  'SUPABASE_PUBLISHABLE_KEY',
+  'SUPABASE_PUBLISHABLE_DEFAULT_KEY',
+  'SUPABASE_KEY',
+  'VITE_SUPABASE_ANON_KEY',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+];
+const NOMES_URL = ['SUPABASE_URL', 'VITE_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL'];
+
+function doAmbiente(nomes) {
+  for (const nome of nomes) {
+    const valor = (process.env[nome] || '').trim();
+    if (valor) return { nome, valor };
+  }
+  return null;
+}
+
 /** Recusa chave secreta. Publicar uma service_role é vazamento total. */
 function ehSegura(chave) {
   if (chave.startsWith('sb_secret_')) return { ok: false, motivo: 'e uma chave secreta (sb_secret_)' };
@@ -40,16 +62,21 @@ function ehSegura(chave) {
   return { ok: false, motivo: 'nao parece uma chave do Supabase' };
 }
 
-const chave = (process.env.SUPABASE_ANON_KEY || '').trim();
+const achado = doAmbiente(NOMES_CHAVE);
 
-if (!chave) {
+if (!achado) {
   console.log(
-    'SUPABASE_ANON_KEY nao definida.\n' +
+    'Nenhuma chave do Supabase no ambiente.\n' +
+    'Procurei por: ' + NOMES_CHAVE.join(', ') + '.\n' +
     'O site publica normalmente, mas o formulario da lista de espera fica\n' +
-    'escondido. Defina a variavel em Site settings -> Environment variables.'
+    'escondido. Defina a variavel em Site settings -> Environment variables\n' +
+    'e dispare um deploy novo (mudar a variavel sozinha nao reconstroi).'
   );
   process.exit(0);
 }
+
+const chave = achado.valor;
+console.log(`Chave encontrada em ${achado.nome}.`);
 
 const veredito = ehSegura(chave);
 if (!veredito.ok) {
@@ -70,5 +97,16 @@ if (!html.includes(ALVO)) {
   process.exit(1);
 }
 
-fs.writeFileSync(ARQUIVO, html.replace(ALVO, `anonKey: ${JSON.stringify(chave)}`));
+let saida = html.replace(ALVO, `anonKey: ${JSON.stringify(chave)}`);
+
+/* A URL tambem pode vir do ambiente. O padrao no arquivo e o projeto do
+   .env.example, entao isto so importa se um dia o projeto mudar. */
+const urlAmbiente = doAmbiente(NOMES_URL);
+if (urlAmbiente) {
+  const url = urlAmbiente.valor.replace(/\/+$/, '');
+  saida = saida.replace(/url: "[^"]*"/, `url: ${JSON.stringify(url)}`);
+  console.log(`URL sobrescrita por ${urlAmbiente.nome}: ${url}`);
+}
+
+fs.writeFileSync(ARQUIVO, saida);
 console.log('Chave injetada. Formulario da lista de espera ativo.');

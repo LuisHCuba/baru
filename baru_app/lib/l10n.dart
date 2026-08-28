@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'models.dart';
 
 class T {
@@ -6,7 +8,42 @@ class T {
   final String lang;
   final Map<String, Object> _m;
 
-  String s(String key) => _m[key] as String;
+  /// Catálogos que módulos registram por conta própria.
+  ///
+  /// Existe porque este arquivo tem quatro mapas gigantes e é o ponto de
+  /// colisão de qualquer trabalho em paralelo: duas frentes mexendo aqui
+  /// batem de frente no mesmo lugar. Um módulo novo declara os seus textos
+  /// no arquivo dele e chama [registra] — o `s` consulta os extras quando
+  /// não acha a chave no catálogo principal.
+  ///
+  /// A ordem importa: o catálogo principal ganha. Um módulo não pode
+  /// sequestrar uma chave que já existe.
+  static final _extras = <Map<String, Map<String, String>>>[];
+
+  /// Registra um catálogo de módulo: `{idioma: {chave: texto}}`.
+  ///
+  /// Idempotente por identidade — chamar duas vezes com o mesmo mapa não
+  /// duplica.
+  static void registra(Map<String, Map<String, String>> textos) {
+    if (_extras.contains(textos)) return;
+    _extras.add(textos);
+  }
+
+  /// Só para o teste: esquece o que foi registrado.
+  @visibleForTesting
+  static void esqueceOsExtras() => _extras.clear();
+
+  String s(String key) {
+    final principal = _m[key];
+    if (principal is String) return principal;
+    for (final extra in _extras) {
+      final achado = (extra[lang] ?? extra['pt'])?[key];
+      if (achado != null) return achado;
+    }
+    // Devolver a chave em vez de estourar: texto faltando é defeito de
+    // tradução, não motivo para a tela não abrir.
+    return key;
+  }
 
   String fill(String tpl, Map<String, Object> vals) {
     return tpl.replaceAllMapped(RegExp(r'\{(\w+)\}'), (m) {

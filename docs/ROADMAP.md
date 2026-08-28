@@ -32,6 +32,10 @@ Legenda: `[ ]` não começou · `[~]` em andamento · `[x]` entregue e provado
   fundo (cor), uma por espécie.
 - [x] **I-04** — Ícone monocromático: a silhueta acompanha o tema do
   sistema no Android 13+.
+- [ ] **I-05** — **O ícone está simplório.** Bicho chapado sobre cor chapada.
+  Falta profundidade: fundo com gradiente e folhagem, sombra sob o bicho,
+  bicho maior dentro da zona segura, contorno que aguente a máscara
+  circular. Tem de parecer ícone de app publicado, não placeholder.
 
 ## 3. Widgets
 
@@ -45,6 +49,13 @@ Legenda: `[ ]` não começou · `[~]` em andamento · `[x]` entregue e provado
 > PNG gerado em tempo de execução pelo app e gravado em disco, com o provider
 > apontando para o arquivo — o mesmo caminho do gerador de ícone
 > (`test/gera_icone_test.dart`), agora em runtime.
+
+## 3.5 Presença do bicho
+
+- [ ] **PB-01** — **O pet está pequeno na tela.** Ele é o produto; hoje ocupa
+  pouco da home. Aumentar de verdade, não 10%.
+- [ ] **PB-02** — Presença viciante: mais reações, mais vida, mais motivo
+  para voltar e olhar.
 
 ## 4. A raiz, desenhada
 

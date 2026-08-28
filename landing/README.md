@@ -44,21 +44,52 @@ python3 landing/build_artifact.py --corpo   # sem <html>/<head>, para embutir
 
 ## Ligar a lista de espera
 
-Por padrão **não há formulário**: a página mostra "em breve" nas lojas. Um
-campo que engole o e-mail de alguém sem destino é pior que nenhum campo.
+O formulário grava em `public.baru_waitlist` no Supabase. Dois passos:
 
-Para ligar, preencha **um** dos dois no topo do `<script>` em `index.html`:
+**1. Aplique a migração** (uma vez, por um humano com acesso ao projeto):
 
-```js
-var LISTA_ESPERA = { endpoint: "", email: "" };
+```
+cd baru_app
+supabase db push
 ```
 
-| Campo | O que faz |
-|---|---|
-| `endpoint` | URL que aceita `POST` com JSON `{email}` — Formspree, uma Edge Function do Supabase, seu backend. O formulário envia e confirma na própria página. |
-| `email` | Endereço de contato. O formulário abre o cliente de e-mail com a mensagem pronta. |
+Ou cole `baru_app/supabase/migrations/20260828100000_baru_waitlist.sql` no
+SQL Editor.
 
-Com `endpoint` preenchido, ele ganha precedência.
+**2. Cole a chave anon** no topo do `<script>` em `index.html`:
+
+```js
+var LISTA_ESPERA = {
+  url: "https://slqpuppkapiewjqvedtj.supabase.co",
+  anonKey: "",      // <- Dashboard -> Settings -> API -> publishable/anon
+  idioma: "pt"
+};
+```
+
+Com `anonKey` vazia o formulário não aparece e a página mostra só o "em
+breve" das lojas — um campo que engole o e-mail de alguém sem destino é
+pior que campo nenhum.
+
+### Por que a chave pode ficar no HTML
+
+A chave anon é feita para viver no cliente; ela já viaja dentro do app
+mobile. Quem protege a lista é o banco, não o segredo da chave:
+
+| Camada | O que faz |
+|---|---|
+| RLS ligada, **zero policies** | `anon` e `authenticated` não leem, não inserem e não apagam a tabela por PostgREST |
+| `baru_waitlist_entrar`, SECURITY DEFINER | única porta de entrada; só insere |
+| Resposta constante | e-mail novo e e-mail repetido devolvem o mesmo `ok`, então ninguém descobre quem já se cadastrou |
+| Freio por IP | 5 cadastros por hora vindos do mesmo `x-forwarded-for` |
+| Isca no formulário | campo escondido que só robô preenche |
+
+Para **ler** a lista, use o dashboard do Supabase (Table Editor) ou a
+`service_role` — nunca a chave anon.
+
+O comportamento foi verificado num Postgres 16 local com os papéis `anon` e
+`authenticated`: inserção pela função funciona, `select`/`insert`/`delete`
+diretos são negados, e-mail repetido não vaza, e a sexta tentativa do mesmo
+IP em uma hora é barrada.
 
 ## Atualizar as capturas
 

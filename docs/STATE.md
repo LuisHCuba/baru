@@ -35,6 +35,39 @@ Frases que são verdade hoje e não eram ontem:
   template do Flutter declara `INTERNET` só em `debug/` e `profile/`, e o
   release funde apenas o `main`. O app instalava, abria e toda chamada de
   rede morria em "erro de internet". Há teste lendo o manifesto.
+- **Sair do app durante o foco chama o Baru de volta.** Antes não fazia
+  nada: com o app em segundo plano o Flutter **não executa**, e o único
+  gatilho estava no `didChangeAppLifecycleState`, que só dispara quando a
+  pessoa volta. Agora um serviço em primeiro plano pergunta a cada 2 s quem
+  está na frente e traz o companheiro por cima, com um minuto de descanso
+  entre aparições.
+- **O ícone do app é o Baru**, gerado pelo mesmo `CustomPainter` que desenha
+  o bicho na tela, e troca quando você troca de espécie. Verificado no
+  aparelho: o Android resolve o LAUNCHER para `IconeCapybara`.
+- **Faltar "desenhar sobre outros apps" deixou de ser silêncio.** Sem essa
+  permissão o vigia via a pessoa sair e não conseguia aparecer, sem dizer
+  nada — indistinguível de "o app não funciona".
+- **O botão voltar do aparelho funciona nas abas.** Fechava o app. A causa
+  não era o `app.voltar()` — era antes: o Flutter avisa o Android com
+  `canHandlePop = navigatorCanPop || routeBlocksPop`, e numa aba a pilha tem
+  uma página só. Com `targetSdk 36` o *predictive back* vem ligado por
+  padrão e o sistema encerrava a activity sem chamar o Dart. A página de
+  baixo agora declara que segura o voltar.
+- **Arrastar no bicho faz carinho, não rola a tela.** O `pan` só reivindica
+  a arena depois de `kPanSlop`, o dobro do que a rolagem usa: ela sempre
+  ganhava o dedo primeiro.
+- **A permissão travada pelo Android tem passo a passo.** Do Android 13 em
+  diante o `PACKAGE_USAGE_STATS` fica bloqueado para app instalado por
+  arquivo — o sistema fala em risco a dados pessoais. O aviso antigo mandava
+  para a tela onde o botão está travado; agora há os quatro toques que
+  destravam e um atalho para começar.
+- **A ofensiva virou "raiz"**, nos quatro idiomas: dia presente aprofunda a
+  raiz, e é ela que segura o hábito quando a vontade falta.
+- **As missões dizem o que fazer e levam onde se faz.** Cada cartão ganhou
+  uma linha de "como", e tocar numa missão por fazer abre a tela da ação.
+- **A chegada do dia ganha cena.** Abrir o app no primeiro dia novo mostra a
+  mesma celebração de conquista, com som e háptico — uma vez por dia, nunca
+  a cada volta do background.
 - **"Lembrar meus dados" no login**, cifrado no Keystore — e a volta abre
   com "Que bom te ver de novo" e o botão de digital, não com formulário
   vazio. O desbloqueio usa digital, rosto **ou** o PIN do aparelho, então

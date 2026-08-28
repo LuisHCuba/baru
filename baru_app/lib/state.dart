@@ -21,6 +21,7 @@ import 'navegacao.dart';
 import 'services/notification_service.dart';
 import 'services/overlay_service.dart';
 import 'services/som_service.dart';
+import 'services/vigia_service.dart';
 import 'services/usage_service.dart';
 
 DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -94,8 +95,19 @@ class AppState extends ChangeNotifier {
   /// Houve subida de nivel ainda nao comemorada?
   bool get subiuDeNivel => nivel > nivelCelebrado;
 
+  /// A chegada do dia ainda não foi comemorada.
+  ///
+  /// Abrir o app é o gesto que o Baru mais espera, e ele passava em
+  /// silêncio. Uma vez por dia — não a cada volta do background, senão vira
+  /// interrupção — a chegada ganha a mesma cena de conquista que já existe.
+  bool chegadaACelebrar = false;
+
   /// Existe alguma conquista esperando celebração?
-  bool get temCelebracaoPendente => subiuDeNivel || marcosACelebrar.isNotEmpty;
+  ///
+  /// A ordem importa: conquista real vem antes da saudação. Quem subiu de
+  /// nível quer ver o nível, não "bom te ver".
+  bool get temCelebracaoPendente =>
+      subiuDeNivel || marcosACelebrar.isNotEmpty || chegadaACelebrar;
 
   /// A celebração entrou em cena. O som acompanha a animação, não o clique de
   /// fechar — quem fecha já viu a conquista.
@@ -114,6 +126,11 @@ class AppState extends ChangeNotifier {
     }
     if (marcosACelebrar.isNotEmpty) {
       marcosACelebrar = marcosACelebrar.sublist(1);
+      notifyListeners();
+      return;
+    }
+    if (chegadaACelebrar) {
+      chegadaACelebrar = false;
       notifyListeners();
     }
   }
@@ -807,6 +824,9 @@ class AppState extends ChangeNotifier {
   Future<void> initPlatformServices() async {
     if (kIsWeb) return;
     await BaruNotifications.instance.init();
+    // Quem já tinha o app antes dos ícones por espécie nunca passou por
+    // `pickSpecies`: sem isto ficaria com a capivara para sempre.
+    unawaited(IconeService.instance.usa(species.name));
     await syncPermissionsFromOs(notify: false);
   }
 
@@ -868,6 +888,14 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  /// A recusa foi do sistema, não da pessoa.
+  ///
+  /// No Android o `PACKAGE_USAGE_STATS` fica travado quando o app veio de
+  /// um arquivo, fora da loja: a chave nem liga. Mandar "ative nas
+  /// configurações" seria mandar para a tela onde o botão está bloqueado.
+  /// Quem escuta isto abre o passo a passo.
+  void Function()? aoBloqueioDoSistema;
+
   void _finishUsagePermissionFlow(bool osUsage) {
     if (_pendingOnbUsageAdvance) {
       _pendingOnbUsageAdvance = false;
@@ -875,7 +903,7 @@ class AppState extends ChangeNotifier {
         onUserMessage?.call(t.permUsageGranted);
         nextOnb();
       } else {
-        onUserMessage?.call(t.permUsageDenied);
+        _avisaRecusa();
       }
       return;
     }
@@ -884,9 +912,29 @@ class AppState extends ChangeNotifier {
       if (osUsage) {
         onUserMessage?.call(t.permUsageGranted);
       } else {
-        onUserMessage?.call(t.permUsageDenied);
+        _avisaRecusa();
       }
     }
+  }
+
+  /// Simula a volta da tela do sistema, para o teste.
+  ///
+  /// O caminho de verdade passa por `MethodChannel` e pelo ciclo de vida do
+  /// Android; sem esta costura a regra "recusa abre o passo a passo" só
+  /// seria verificável em aparelho.
+  @visibleForTesting
+  void pedeAcessoDeUsoParaTeste({required bool concedido}) {
+    _usageTogglePending = true;
+    _finishUsagePermissionFlow(concedido);
+  }
+
+  void _avisaRecusa() {
+    final abre = aoBloqueioDoSistema;
+    if (abre != null) {
+      abre();
+      return;
+    }
+    onUserMessage?.call(t.permUsageDenied);
   }
 
   Future<void> _refreshUsageFromOs({bool notify = true}) async {
@@ -1052,6 +1100,9 @@ class AppState extends ChangeNotifier {
     if (wasDefault) {
       petName = petNames[s]!;
     }
+    // O ícone da gaveta acompanha: um app de companhia cujo ícone é outro
+    // bicho não é o companheiro de ninguém.
+    unawaited(IconeService.instance.usa(s.name));
     _markSync(_syncPet);
     notifyListeners();
   }
@@ -1308,6 +1359,31 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     _iniciaTicker();
     unawaited(_anunciaSessao());
+    unawaited(_comecaAVigiar());
+  }
+
+  /// Põe de pé quem chama a pessoa de volta quando ela sai do app.
+  ///
+  /// Sem isto, sair do Baru durante o foco não fazia nada: o Flutter não
+  /// executa em segundo plano, e o único gatilho do companheiro só disparava
+  /// quando a pessoa **voltava** — tarde demais para servir.
+  Future<void> _comecaAVigiar() async {
+    // Sem "desenhar sobre outros apps" o vigia sobe, vê que a pessoa saiu, e
+    // não consegue aparecer — em silêncio. Silêncio aqui é indistinguível de
+    // "o app não funciona", que foi exatamente o relato.
+    if (!await OverlayService.instance.temPermissao()) {
+      onUserMessage?.call(t.vigiaSemPermissao);
+      return;
+    }
+    await VigiaService.instance.comeca(
+      fala: t.vigiaFala,
+      pelo: AppColors.pelagemDe(species, color).toARGB32(),
+      especie: species.name,
+      acaoFechar: t.sobreFechar,
+      acaoMais: t.sobreMais,
+      notifTitulo: t.fill(t.notifSessaoTitulo, {'n': displayName}),
+      notifCorpo: t.notifSessaoCorpo,
+    );
   }
 
   /// Põe a sessão na barra de notificações e agenda o aviso de conclusão.
@@ -1409,6 +1485,7 @@ class AppState extends ChangeNotifier {
     // O aviso agendado já cumpriu (ou vai cumprir) o papel; o que sai é a
     // notificação fixa. Agendamento sem motivo tem de sumir.
     unawaited(BaruNotifications.instance.encerraSessao());
+    unawaited(VigiaService.instance.para());
     notifyListeners();
   }
 
@@ -1426,6 +1503,11 @@ class AppState extends ChangeNotifier {
       return;
     }
     _iniciaTicker();
+    // O app pode ter sido morto e reaberto no meio da sessão. Se o serviço
+    // ainda estiver de pé, começar de novo não faz nada — ele só refaz o
+    // `startForeground`. Se tiver morrido junto com o processo, é isto que
+    // o traz de volta.
+    unawaited(_comecaAVigiar());
     super.notifyListeners();
   }
 
@@ -1482,6 +1564,7 @@ class AppState extends ChangeNotifier {
     _logSession(completed: false, gained: 0, minutos: minutos);
     _markSync(_syncSession);
     unawaited(BaruNotifications.instance.encerraSessao());
+    unawaited(VigiaService.instance.para());
     notifyListeners();
   }
 
@@ -1521,6 +1604,7 @@ class AppState extends ChangeNotifier {
   void setSpecies(Species s) {
     species = s;
     petName = '';
+    unawaited(IconeService.instance.usa(s.name));
     _markSync(_syncPet);
     notifyListeners();
   }
@@ -1664,6 +1748,10 @@ class AppState extends ChangeNotifier {
     // "Dias sem abrir" é um fato da data, não um contador que se acumula.
     daysAway = today.difference(desde).inDays - 1;
     if (daysAway < 0) daysAway = 0;
+
+    // Um dia novo começou com o app aberto ou foi aberto num dia novo: a
+    // chegada merece cena. `steps > 0` é justamente "virou o dia".
+    if (steps > 0 && companionshipStarted) chegadaACelebrar = true;
 
     lastOpenDate = today;
     if (persist && steps > 0) {

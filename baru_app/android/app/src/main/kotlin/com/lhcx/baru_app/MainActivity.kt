@@ -1,6 +1,9 @@
 package com.lhcx.baru_app
 
+import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -20,6 +23,41 @@ class MainActivity : FlutterFragmentActivity() {
 
     private companion object {
         const val CANAL = "baru/overlay"
+
+        /** Tem de bater com os `activity-alias` do manifesto. */
+        val ESPECIES = listOf(
+            "capybara", "otter", "tortoise", "owl",
+            "axolotl", "penguin", "cat", "fox",
+        )
+    }
+
+    /**
+     * Liga o alias da especie e desliga os outros.
+     *
+     * `DONT_KILL_APP` porque sem ele o Android encerra o processo no meio
+     * da troca — a pessoa esta escolhendo o bicho e o app fecha na cara
+     * dela.
+     */
+    private fun trocaIcone(especie: String): Boolean {
+        val nome = ESPECIES.firstOrNull { it.equals(especie, true) }
+            ?: return false
+        val pm = packageManager
+        val ligar = ComponentName(this, "$packageName.Icone${nome.replaceFirstChar { it.uppercase() }}")
+
+        pm.setComponentEnabledSetting(
+            ligar,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP,
+        )
+        for (outra in ESPECIES) {
+            if (outra == nome) continue
+            pm.setComponentEnabledSetting(
+                ComponentName(this, "$packageName.Icone${outra.replaceFirstChar { it.uppercase() }}"),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP,
+            )
+        }
+        return true
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -81,6 +119,69 @@ class MainActivity : FlutterFragmentActivity() {
                         },
                     )
                     result.success(null)
+                }
+
+                // O vigia da sessao. Comeca quando o foco comeca, para
+                // quando ele acaba, e e a unica coisa do Baru que roda com
+                // o app fechado.
+                "vigiaComeca" -> {
+                    ContextCompat.startForegroundService(
+                        this,
+                        Intent(this, VigiaDaSessao::class.java).apply {
+                            action = VigiaDaSessao.ACAO_COMECA
+                            putExtra(
+                                VigiaDaSessao.EXTRA_FALA,
+                                call.argument<String>("fala"),
+                            )
+                            putExtra(
+                                VigiaDaSessao.EXTRA_PELO,
+                                call.argument<Int>("pelo")
+                                    ?: 0xFFB07A4E.toInt(),
+                            )
+                            putExtra(
+                                VigiaDaSessao.EXTRA_ESPECIE,
+                                call.argument<String>("especie"),
+                            )
+                            putExtra(
+                                VigiaDaSessao.EXTRA_ACAO_FECHAR,
+                                call.argument<String>("acaoFechar"),
+                            )
+                            putExtra(
+                                VigiaDaSessao.EXTRA_ACAO_MAIS,
+                                call.argument<String>("acaoMais"),
+                            )
+                            putExtra(
+                                VigiaDaSessao.EXTRA_NOTIF_TITULO,
+                                call.argument<String>("notifTitulo"),
+                            )
+                            putExtra(
+                                VigiaDaSessao.EXTRA_NOTIF_CORPO,
+                                call.argument<String>("notifCorpo"),
+                            )
+                        },
+                    )
+                    result.success(true)
+                }
+
+                "vigiaPara" -> {
+                    startService(
+                        Intent(this, VigiaDaSessao::class.java).apply {
+                            action = VigiaDaSessao.ACAO_PARA
+                        },
+                    )
+                    result.success(null)
+                }
+
+                // O icone da gaveta passa a ser o bicho da pessoa.
+                //
+                // O Android nao deixa trocar o icone de um app: o que se
+                // troca e qual componente responde por LAUNCHER. Por isso os
+                // `activity-alias`, um por especie, e por isso o novo e
+                // ligado **antes** de o antigo ser desligado — na ordem
+                // inversa o app some da gaveta no intervalo.
+                "trocaIcone" -> {
+                    val alvo = call.argument<String>("especie").orEmpty()
+                    result.success(trocaIcone(alvo))
                 }
 
                 else -> result.notImplemented()

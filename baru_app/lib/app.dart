@@ -6,8 +6,10 @@ import 'data/app_snapshot.dart';
 import 'data/repositories.dart';
 import 'services/notification_service.dart';
 import 'services/som_service.dart';
+import 'services/vigia_service.dart';
 import 'models.dart';
 import 'navegacao.dart';
+import 'widgets/folha_restrita.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/paywall_screen.dart';
@@ -66,7 +68,14 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     SomService.instance
       ..arma()
       ..ligado = state.som;
+    // Mesma razão do som: `MethodChannel` exige binding, e o domínio é
+    // testado sem nenhum.
+    VigiaService.instance.arma();
+    IconeService.instance.arma();
     state.initPlatformServices();
+    // Recusa vinda do sistema abre o passo a passo, não um aviso que manda
+    // a pessoa para a tela onde o botão está travado.
+    state.aoBloqueioDoSistema = _mostraComoLiberar;
     // "Desistir" na notificação da sessão age no app, não só some da barra.
     BaruNotifications.instance.aoDesistirPelaBarra = () {
       if (state.sessionEndsAt != null) state.abandon();
@@ -93,6 +102,15 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  void _mostraComoLiberar() {
+    final ctx = _scaffoldKey.currentState?.context;
+    if (ctx == null || !ctx.mounted) {
+      _onUserMessage(state.t.permUsageDenied);
+      return;
+    }
+    unawaited(FolhaRestrita.mostra(ctx, state.lang));
   }
 
   void _onUserMessage(String message) {
@@ -234,6 +252,17 @@ class _Casca extends StatelessWidget {
         subtitulo: t.fill(t.celebNivelSub, {'a': app.displayName}),
         icone: Icons.local_florist_rounded,
         cor: Cores.primaria,
+        aoFechar: app.celebrou,
+      );
+    }
+    if (app.marcosACelebrar.isEmpty) {
+      // A saudação da chegada. Vem por último de propósito: conquista real
+      // ganha a cena antes de "bom te ver".
+      return Celebracao(
+        titulo: t.celebChegada,
+        subtitulo: t.fill(t.celebChegadaSub, {'a': app.displayName}),
+        icone: Icons.favorite_rounded,
+        cor: Cores.acento,
         aoFechar: app.celebrou,
       );
     }

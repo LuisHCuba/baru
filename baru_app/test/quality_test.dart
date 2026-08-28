@@ -1,3 +1,4 @@
+import 'package:baru_app/l10n.dart';
 import 'package:baru_app/app.dart';
 import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/design/motion.dart';
@@ -87,7 +88,7 @@ void main() {
   testWidgets('ajustes mostra perfil e permissão de uso', (tester) async {
     await pumpAt412(tester, AppScreen.profile);
     expect(find.text('Você é uma capivara.'), findsOneWidget);
-    expect(find.text('1 dia presente'), findsWidgets);
+    expect(find.text(T('pt').streakOne), findsWidgets);
 
     // A espécie agora é uma linha com o valor atual, não quatro botões
     // sempre abertos: era esse empilhamento que fazia a tela ser uma
@@ -160,7 +161,7 @@ void main() {
 
   testWidgets('home anuncia tabs e streak no singular', (tester) async {
     await pumpAt412(tester, AppScreen.home);
-    expect(find.text('1 dia presente'), findsWidgets);
+    expect(find.text(T('pt').streakOne), findsWidgets);
     expect(find.text('Habitat'), findsWidgets);
     expect(find.text('Missões'), findsOneWidget);
     await tester.scrollUntilVisible(

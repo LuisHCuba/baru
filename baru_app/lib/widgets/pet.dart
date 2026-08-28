@@ -22,6 +22,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 
 import '../models.dart';
@@ -503,15 +504,65 @@ class _PetViewState extends State<PetView>
     if (!widget.interativo) return corpo;
     // `opaque`, não `deferToChild`: um CustomPaint sem filho não responde a
     // hit-test, então deferir ao filho deixaria o toque no bicho sem efeito.
-    return GestureDetector(
-      onTapDown: _reageAoToque,
-      onPanStart: _comecaAfago,
-      onPanUpdate: _afaga,
-      onPanEnd: (_) => _terminaAfago(),
-      onPanCancel: _terminaAfago,
+    return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
+      gestures: {
+        TapGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+          TapGestureRecognizer.new,
+          (r) => r.onTapDown = _reageAoToque,
+        ),
+        _AfagoVenceARolagem:
+            GestureRecognizerFactoryWithHandlers<_AfagoVenceARolagem>(
+          _AfagoVenceARolagem.new,
+          (r) => r
+            ..onStart = _comecaAfago
+            ..onUpdate = _afaga
+            ..onEnd = ((_) => _terminaAfago())
+            ..onCancel = _terminaAfago,
+        ),
+      },
       child: corpo,
     );
+  }
+}
+
+/// O arrasto do afago, que não desiste para a rolagem.
+///
+/// O bicho mora dentro de uma lista rolável. Na arena de gestos, o
+/// `VerticalDragGestureRecognizer` do `Scrollable` ganha do `pan` por
+/// padrão: o dedo que ia fazer carinho descia a tela, e acariciar o Baru na
+/// home era quase impossível.
+///
+/// Recusar a derrota resolve. `rejectGesture` normalmente encerra o
+/// reconhecedor; aqui ele aceita, e o toque fica com quem está por cima —
+/// que é o bicho. A rolagem continua inteira em qualquer outro ponto da
+/// tela; só não rouba o dedo de dentro do habitat.
+class _AfagoVenceARolagem extends PanGestureRecognizer {
+  /// Menor que o `kTouchSlop` de 18 que a rolagem usa, e menor ainda que o
+  /// `kPanSlop` de 36 do `pan` padrão. É o número que decide a arena: quem
+  /// reivindica primeiro leva.
+  static const _limiar = 6.0;
+
+  Offset? _origem;
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    // Reivindicar já no toque roubaria o tap — e tocar no bicho tem
+    // resposta própria. Por isso guarda a origem e espera o dedo andar.
+    _origem = event.position;
+    super.addAllowedPointer(event);
+  }
+
+  @override
+  void handleEvent(PointerEvent event) {
+    final origem = _origem;
+    if (origem != null &&
+        event is PointerMoveEvent &&
+        (event.position - origem).distance > _limiar) {
+      resolve(GestureDisposition.accepted);
+    }
+    super.handleEvent(event);
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/data/repositories.dart';
 import 'package:baru_app/models.dart';
+import 'package:baru_app/l10n.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -80,10 +81,13 @@ void main() {
 
   test('streak no singular e freeze no plural', () {
     final s = AppState();
+    // Ancorado na chave, não na frase: a contagem passou a se chamar
+    // "raiz", e um teste preso ao texto quebra a cada ajuste de copy sem
+    // que nada de comportamento tenha mudado.
     s.streak = 1;
-    expect(s.streakText, '1 dia presente');
+    expect(s.streakText, T('pt').streakOne);
     s.streak = 4;
-    expect(s.streakText, '4 dias presente');
+    expect(s.streakText, T('pt').fill(T('pt').streak, {'n': 4}));
     expect(s.t.freezeNote(1), contains('1'));
     expect(s.t.freezeNote(2), contains('2'));
     expect(s.t.freezeNote(2), isNot(contains('congelamento nesta')));

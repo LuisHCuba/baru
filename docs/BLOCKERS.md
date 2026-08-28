@@ -234,3 +234,97 @@ Ajustes → Apps → Baru → Alarmes e lembretes.
 Activity no iOS. O primeiro exige código nativo e uma permissão a mais; o
 segundo exige entitlement da Apple (ver BL-06). A contagem via cronômetro do
 sistema cobre o caso principal sem nenhum dos dois.
+
+## BL-11 — Pagamento: precisa de contas que só você abre
+
+**O que está travado.** A tela de plano existe e fala em "7 dias grátis",
+mas não há cobrança por trás. Nada disso é código: são contas, cadastros e
+identificadores que dependem de CNPJ/CPF, dados bancários e das fichas nas
+lojas.
+
+**Recomendação, e o porquê.**
+
+*Celular.* A Google Play **exige** o faturamento dela para bens digitais
+vendidos dentro do app. Pix, Stripe ou Mercado Pago por dentro do app tiram
+o app da loja — não é preferência, é política. Sobram duas formas de falar
+com o Play Billing:
+
+- `in_app_purchase`, o plugin oficial: de graça, e sobra para nós validar
+  recibo, guardar direito de acesso, tratar renovação, cancelamento,
+  reembolso e período de carência, e sincronizar entre Android e iOS.
+- **RevenueCat** (`purchases_flutter`): embrulha Play Billing e StoreKit,
+  valida recibo do lado dele, entrega "esta conta tem acesso" pronto, e
+  manda webhook. Grátis até ~US$ 2,5 mil por mês de receita; 1% depois.
+
+Para um app com uma pessoa construindo, RevenueCat paga o 1% no primeiro mês
+em que não for preciso depurar um recibo. **É a recomendação.**
+
+*Web.* O app roda no navegador, e ali a regra da Play não vale. Stripe
+resolve; Mercado Pago resolve **com Pix**, que no Brasil muda conversão.
+
+*Onde mora o direito de acesso.* No Supabase, escrito pelo webhook do
+RevenueCat/Stripe — nunca decidido pelo aparelho. Aparelho que decide se tem
+plano é aparelho que se convence do contrário.
+
+**Para destravar, preciso de você:**
+
+1. Conta de desenvolvedor Google Play (US$ 25, uma vez) e a ficha do app
+   criada — sem ela não existe produto nem id de assinatura.
+2. Os planos definidos: quantos, preço, período, e se o teste de 7 dias é da
+   loja ou nosso.
+3. Conta RevenueCat ligada à Play, e a chave pública.
+4. Se quiser cobrar na web: conta Stripe ou Mercado Pago.
+
+Com (1) a (3) na mão, a integração no app é direta e testável com as compras
+de teste da própria Play.
+
+## BL-12 — O vigia da sessão precisa de teste em aparelho
+
+**O que foi feito.** Um serviço em primeiro plano (`VigiaDaSessao.kt`) que,
+enquanto a sessão de foco corre, pergunta a cada 2 s qual app está na frente
+e chama o companheiro por cima quando não é o Baru — com um minuto de
+descanso entre aparições.
+
+**Por que isso mudou.** O ADR-011 tinha descartado serviço em primeiro plano
+por peso. Estava errado: sem ele, sair do app durante o foco não fazia
+absolutamente nada, porque com o app em segundo plano **o Flutter não
+executa** e o único gatilho morava no `didChangeAppLifecycleState` — que só
+dispara quando a pessoa volta. Ver ADR-014.
+
+**O que os testes cobrem.** O contrato Dart↔plataforma: quando o vigia é
+chamado, quando é desligado, o que vai junto, e que parar vale mesmo quando
+o Dart renasceu sem lembrar que começou. O `MethodChannel` é dublê.
+
+**O que só o aparelho responde:**
+
+1. A notificação fixa aparece ao começar a sessão e some ao terminar.
+2. Sair para outro app durante a sessão faz o Baru aparecer por cima.
+3. Ele **não** aparece indo para a tela inicial ou o teclado.
+4. Não repete antes de um minuto.
+5. Fechar o app pelo gerenciador de tarefas não deixa a notificação presa.
+6. O consumo de bateria numa sessão de 50 min é aceitável.
+
+O item 2 depende do acesso ao uso concedido **e** de "desenhar sobre outros
+apps". Sem o primeiro, o vigia sobe e não vê nada; sem o segundo, vê e não
+aparece.
+
+## BL-13 — Widgets de tela inicial: não entregues
+
+**O que foi pedido.** Widget na tela inicial mostrando o Baru.
+
+**O que existe hoje.** Nada. O BACKLOG lista W-01 (widget de tela inicial),
+W-02 (tela de bloqueio) e W-03 (ícone). O W-03 saiu neste turno; W-01 e W-02
+não.
+
+**O tamanho real.** Um widget do Android é `AppWidgetProvider` +
+`RemoteViews` — e `RemoteViews` **não desenha `CustomPainter`**. O Baru do
+widget teria de ser um PNG renderizado pelo app e gravado em disco a cada
+mudança de humor, com o provider apontando para o arquivo. É o mesmo
+caminho do gerador de ícone (`test/gera_icone_test.dart`), agora em tempo de
+execução.
+
+Some com: layout XML por tamanho, atualização por `WorkManager`, e o mesmo
+trabalho de novo no iOS, onde é WidgetKit e Swift.
+
+Não cabia junto do vigia neste turno. **É o próximo pedaço grande**, e é
+independente de tudo o que está aqui.

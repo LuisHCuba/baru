@@ -378,3 +378,71 @@ teste.
 sempre funcionou — e só aparecia no aparelho de quem instalava o APK. O
 teste move essa descoberta para a suíte. Nenhum efeito em runtime além da
 permissão, que é normal e não pede diálogo.
+
+## ADR-014 — Serviço em primeiro plano vigiando a sessão (2026-08-28)
+
+**Contexto.** O ADR-011 descartou serviço em primeiro plano: "peso alto,
+permissão extra, política de loja mais restrita, e nada disso no iOS".
+Escolheu o cronômetro do sistema na notificação, que resolve a **contagem**
+com o app fechado.
+
+Só que a contagem nunca foi o ponto. O relato foi direto: sessão de 25
+minutos iniciada, app fechado, TikTok aberto — e nada. Nem aviso, nem
+chamada de volta. O ADR-011 resolveu o problema errado.
+
+**A causa.** Com o app em segundo plano, **o Flutter não executa**. Todo o
+gatilho do companheiro morava em `_talvezApareceSobreOsApps`, chamado por
+`syncPermissionsFromOs`, chamado por `didChangeAppLifecycleState` — que só
+dispara quando a pessoa **volta**. Chegava sempre tarde demais. E o gatilho
+era "estourou a meta do dia", não "saiu durante o foco": duas condições
+diferentes.
+
+**Decisão.** `VigiaDaSessao`, um `Service` com `startForeground`, de pé
+apenas enquanto a sessão corre. A cada 2 s pergunta ao `UsageStatsManager`
+qual pacote está na frente; se não for o Baru nem sistema/launcher/teclado,
+manda o `OverlayDoBaru` aparecer. Um minuto de descanso entre aparições.
+
+`foregroundServiceType="specialUse"`: nenhum tipo da lista descreve isto —
+não é mídia, não é localização, não é chamada. A `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`
+explica em texto, que é o que a revisão da Play lê.
+
+**Alternativas descartadas.** (a) `WorkManager`: mínimo de 15 minutos entre
+execuções — inútil para "você acabou de sair". (b) `AccessibilityService`:
+vê o app da frente sem polling, mas é a permissão mais invasiva do Android e
+a Play exige justificativa em vídeo; para este uso seria desproporcional.
+(c) Continuar sem nada: é o que havia, e não funciona.
+
+**Consequências.** Uma notificação fixa em `IMPORTANCE_LOW` durante a
+sessão — que é honesto: algo está rodando, e a pessoa tem de poder ver. O
+polling a cada 2 s custa bateria, limitado à duração da sessão. Depende de
+duas permissões que já existiam (acesso ao uso e desenhar sobre outros
+apps); sem elas o vigia sobe e não faz nada, em silêncio, sem quebrar a
+sessão. O iOS continua sem equivalente — não há API para saber o app da
+frente, e não vai haver. Verificação em aparelho em BL-12.
+
+## ADR-015 — O ícone do app é o bicho, por espécie e não por humor (2026-08-28)
+
+**Contexto.** O APK saía com o ícone padrão do Flutter, na gaveta e na barra
+de notificações. O pedido foi que fosse o pet escolhido, mudando também com
+o humor.
+
+**Decisão.** Um `activity-alias` por espécie, cada um com seu `mipmap`, e
+exatamente um ligado por vez; `pickSpecies` troca. Os PNGs são gerados pelo
+**mesmo `CustomPainter` que desenha o bicho no app**, por
+`test/gera_icone_test.dart` (`flutter test --tags icone`).
+
+**Espécie sim, humor não.** Trocar o componente de LAUNCHER faz muitos
+launchers removerem e recolocarem o atalho, e em alguns ele some da tela
+inicial. Uma troca quando a pessoa escolhe o bicho é aceitável. Uma a cada
+mudança de humor faria o ícone piscar o dia inteiro, e o humor muda várias
+vezes por dia. O humor aparece onde custa zero: habitat, notificação e
+overlay.
+
+**Por que gerar em vez de desenhar.** Um ícone feito à mão num editor seria
+um segundo desenho do Baru, que envelheceria em silêncio a cada ajuste no
+painter. Gerando, a fonte é uma só.
+
+**Consequências.** A `MainActivity` perdeu o `intent-filter` de LAUNCHER —
+quem responde agora são os aliases. Oito PNGs a mais por densidade (~80 KB
+no total). `DONT_KILL_APP` na troca, senão o Android encerra o processo
+enquanto a pessoa está escolhendo o bicho.

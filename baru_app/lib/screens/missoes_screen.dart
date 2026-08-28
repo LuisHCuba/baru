@@ -192,12 +192,20 @@ class CartaoDeMissao extends StatelessWidget {
           ? Cores.tintaA(0.04)
           : Cores.superficieElevada,
       elevado: estado != EstadoDaMissao.resgatada,
+      // Resgatar quando há o que resgatar; senão, levar ao lugar de fazer.
+      // Missão que só se lê é lembrete — e a queixa era justamente não
+      // saber o que fazer.
       onTap: missao.resgatavel
           ? () {
               HapticFeedback.mediumImpact();
               app.resgataMissao(missao);
             }
-          : null,
+          : estado == EstadoDaMissao.resgatada
+              ? null
+              : () {
+                  HapticFeedback.selectionClick();
+                  app.go(destinoDaMissao(missao));
+                },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -219,6 +227,13 @@ class CartaoDeMissao extends StatelessWidget {
               _Recompensa(missao: missao, apagada: estado == EstadoDaMissao.resgatada),
             ],
           ),
+          if (estado != EstadoDaMissao.resgatada) ...[
+            const SizedBox(height: 2),
+            Text(
+              comoDaMissao(app, missao),
+              style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.5)),
+            ),
+          ],
           const SizedBox(height: Espaco.xs),
           Row(
             children: [
@@ -314,6 +329,52 @@ class _Recompensa extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// O "como" da missão: o que fazer, e onde.
+///
+/// O título diz o alvo — "Faça 2 sessões de foco" —, mas quem abre a tela
+/// pela primeira vez não sabe onde se faz uma sessão. Sem esta linha a
+/// missão vira placar, não tarefa.
+String comoDaMissao(AppState app, Missao m) {
+  final t = app.t;
+  switch (m.definicao.tipo) {
+    // Uma frase por tipo, e não a mesma três vezes: três cartões de foco
+    // repetindo o mesmo texto viram ruído, e a linha lê como enchimento.
+    case TipoDeMissao.sessoesHoje:
+      return t.comoFoco;
+    case TipoDeMissao.sessaoLonga:
+      return t.comoFocoLongo;
+    case TipoDeMissao.minutosHoje:
+      return t.comoMinutos;
+    case TipoDeMissao.abaixoDaMeta:
+      return t.comoTela;
+    case TipoDeMissao.dispersivoAbaixoDe:
+      return t.comoApps;
+    case TipoDeMissao.sessoesNaSemana:
+    case TipoDeMissao.minutosNaSemana:
+    case TipoDeMissao.diasAbaixoNaSemana:
+      return t.comoSemana;
+  }
+}
+
+/// Para onde o cartão leva quando ainda há o que fazer.
+///
+/// Missão que só se lê é lembrete; missão que se toca e leva ao lugar de
+/// fazer é tarefa.
+AppScreen destinoDaMissao(Missao m) {
+  switch (m.definicao.tipo) {
+    case TipoDeMissao.abaixoDaMeta:
+    case TipoDeMissao.dispersivoAbaixoDe:
+    case TipoDeMissao.diasAbaixoNaSemana:
+      return AppScreen.tempo;
+    case TipoDeMissao.sessoesHoje:
+    case TipoDeMissao.sessaoLonga:
+    case TipoDeMissao.minutosHoje:
+    case TipoDeMissao.sessoesNaSemana:
+    case TipoDeMissao.minutosNaSemana:
+      return AppScreen.home;
   }
 }
 

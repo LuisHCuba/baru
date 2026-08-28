@@ -93,11 +93,31 @@ extension RotaDaTela on AppScreen {
 /// Uma página da pilha. A transição sai do tipo da rota, não do chamador —
 /// assim a mesma tela nunca entra de dois jeitos diferentes.
 class PaginaBaru extends Page<void> {
-  const PaginaBaru({required this.tela, required this.filho})
-      : super(key: const ValueKey(0));
+  const PaginaBaru({
+    required this.tela,
+    required this.filho,
+    this.seguraOVoltarDoSistema = false,
+  }) : super(key: const ValueKey(0));
 
   final AppScreen tela;
   final Widget filho;
+
+  /// Esta página diz ao Android que **o app** trata o voltar.
+  ///
+  /// Sem isso o app fechava numa aba. O Flutter avisa o Android com
+  /// `canHandlePop = navigatorCanPop || routeBlocksPop`; numa aba a pilha
+  /// tem uma página só, `canPop()` é falso, e com `targetSdk 36` o
+  /// *predictive back* está ligado por padrão — o sistema encerra a
+  /// activity sem nunca entregar o evento ao Dart. Numa tela de detalhe há
+  /// duas páginas e por isso ali sempre funcionou.
+  ///
+  /// Um `PopScope(canPop: false)` deixa `routeBlocksPop` verdadeiro, o
+  /// Android passa a entregar, e o evento cai no `popRoute` de sempre — a
+  /// lógica de `app.voltar()` continua intacta.
+  ///
+  /// Só na página **de baixo**. Na de cima, `doNotPop` faria o
+  /// `maybePop` recusar e nenhuma tela de detalhe voltaria mais.
+  final bool seguraOVoltarDoSistema;
 
   @override
   LocalKey get key => ValueKey(tela);
@@ -121,7 +141,11 @@ class PaginaBaru extends Page<void> {
       // pinta nada.
       pageBuilder: (_, __, ___) => ColoredBox(
         color: tela == AppScreen.session ? Cores.foco : Cores.superficie,
-        child: filho,
+        child: seguraOVoltarDoSistema
+            // Sem `onPopInvokedWithResult`: quem decide é o `popRoute` do
+            // delegate. Aqui só se declara que há quem trate.
+            ? PopScope(canPop: false, child: filho)
+            : filho,
       ),
       transitionsBuilder: (context, entra, sai, child) =>
           _transicao(context, tela.tipo, entra, sai, child),
@@ -241,8 +265,12 @@ class BaruRouterDelegate extends RouterDelegate<AppScreen>
     return Navigator(
       key: navigatorKey,
       pages: [
-        for (final tela in app.pilha)
-          PaginaBaru(tela: tela, filho: paginaDe(tela)),
+        for (final (i, tela) in app.pilha.indexed)
+          PaginaBaru(
+            tela: tela,
+            filho: paginaDe(tela),
+            seguraOVoltarDoSistema: i == 0,
+          ),
       ],
       onDidRemovePage: (pagina) {
         final tela = (pagina as PaginaBaru).tela;

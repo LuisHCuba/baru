@@ -15,6 +15,7 @@ import 'package:baru_app/l10n.dart';
 import 'package:baru_app/data/biometria.dart';
 import 'package:baru_app/data/cofre.dart';
 import 'package:baru_app/screens/auth_screen.dart';
+import 'package:baru_app/widgets/folha_restrita.dart';
 import 'package:baru_app/screens/conta_screen.dart';
 import 'package:baru_app/screens/folhas_screen.dart';
 import 'package:baru_app/screens/sequencia_screen.dart';
@@ -563,6 +564,66 @@ void main() {
     }
     app.nextOnb();
     await mostra('onboarding-revelacao');
+  });
+
+  testWidgets('o Android bloqueando a permissão de uso', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(412, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: Cores.superficie,
+          body: RepaintBoundary(
+            key: const Key('captura-restrita'),
+            child: const FolhaRestrita(lang: 'pt'),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(Tempo.componente);
+    await _salva(tester, const Key('captura-restrita'), 'permissao-restrita');
+  });
+
+  testWidgets('as missões dizendo o que fazer', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(412, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final app = _estado()..onb = 9;
+    addTearDown(app.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: Cores.superficie,
+          body: RepaintBoundary(
+            key: const Key('captura-missoes'),
+            child: AppScope(state: app, child: const MissoesScreen()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await _salva(tester, const Key('captura-missoes'), 'missoes-com-o-como');
+
+    // A linha do "como" tem de estar na captura, não só no código.
+    expect(find.text(comoDaMissao(app, app.missoes.first)), findsWidgets);
   });
 
   testWidgets('lembrar o login e entrar pela digital', (tester) async {

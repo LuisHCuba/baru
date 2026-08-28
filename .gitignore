@@ -11,3 +11,6 @@ key.properties
 .claude/
 .DS_Store
 Thumbs.db
+
+# Landing: arquivo único gerado por build_artifact.py
+landing/dist/

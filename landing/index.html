@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baru: Focus Capybara</title>
+<meta name="description" content="Baru é um app de foco e tempo de tela onde o companheiro nunca morre, nunca cobra e nunca te culpa. Habitat, não timer.">
+<meta property="og:title" content="Baru: Focus Capybara">
+<meta property="og:description" content="Habitat, não timer. Um app de foco sem punição, com tempo de tela contabilizado com honestidade.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Literata:opsz,wght@7..72,400;7..72,600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* ------------------------------------------------------------------ *
+ * Tokens. As cores vêm do contrato de produto (docs/PRODUCT.md §11).
+ * A página atravessa o dia: cada faixa é uma hora, do amanhecer à noite.
+ * ------------------------------------------------------------------ */
+:root{
+  color-scheme: light;
+
+  --ink:#3E2F23;
+  --ink-medio:rgba(62,47,35,.68);
+  --ink-fraco:rgba(62,47,35,.46);
+  --linha:rgba(62,47,35,.13);
+
+  --verde:#5C8A4E;
+  --verde-escuro:#486D3D;
+  --verde-claro:#6E9C5E;
+  --laranja:#EF8354;
+  --madeira:#A0764C;
+  --pedra:#A79A8C;
+
+  --faixa-amanhecer:#EDE3D2;
+  --faixa-dia:#F4ECDD;
+  --faixa-tarde:#E7DAC5;
+  --faixa-noite:#2B2739;
+
+  --cartao:#FAF1E3;
+  --cartao-borda:rgba(62,47,35,.10);
+  --cartao-sombra:0 1px 2px rgba(62,47,35,.05), 0 12px 32px -18px rgba(62,47,35,.35);
+
+  --botao-bg:#486D3D;
+  --botao-bg-hover:#5C8A4E;
+  --botao-ink:#FAF1E3;
+
+  /* a faixa da noite é escura nos dois temas */
+  --noite-ink:#F3EBDF;
+  --noite-medio:rgba(243,235,223,.66);
+  --noite-linha:rgba(243,235,223,.18);
+  --noite-cartao:rgba(250,241,227,.06);
+  --noite-botao-bg:#6E9C5E;
+  --noite-botao-hover:#84B173;
+  --noite-botao-ink:#1E1811;
+  --noite-verde:#9BC489;
+  --noite-laranja:#F0966C;
+
+  --largura:1120px;
+  --prosa:62ch;
+  --raio:20px;
+  --raio-p:12px;
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --ink:#F1E8DC;
+    --ink-medio:rgba(241,232,220,.70);
+    --ink-fraco:rgba(241,232,220,.46);
+    --linha:rgba(241,232,220,.14);
+
+    --verde:#7FAE6E;
+    --verde-escuro:#9BC489;
+    --verde-claro:#93C081;
+    --laranja:#F3956A;
+    --madeira:#C79A6C;
+    --pedra:#B4A899;
+
+    --faixa-amanhecer:#241D18;
+    --faixa-dia:#2A221B;
+    --faixa-tarde:#241F2B;
+    --faixa-noite:#17141F;
+
+    --cartao:#312820;
+    --cartao-borda:rgba(241,232,220,.12);
+    --cartao-sombra:0 1px 2px rgba(0,0,0,.30), 0 16px 40px -22px rgba(0,0,0,.75);
+
+    --botao-bg:#7FAE6E;
+    --botao-bg-hover:#93C081;
+    --botao-ink:#1E1811;
+  }
+}
+
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ink:#F1E8DC;
+  --ink-medio:rgba(241,232,220,.70);
+  --ink-fraco:rgba(241,232,220,.46);
+  --linha:rgba(241,232,220,.14);
+
+  --verde:#7FAE6E;
+  --verde-escuro:#9BC489;
+  --verde-claro:#93C081;
+  --laranja:#F3956A;
+  --madeira:#C79A6C;
+  --pedra:#B4A899;
+
+  --faixa-amanhecer:#241D18;
+  --faixa-dia:#2A221B;
+  --faixa-tarde:#241F2B;
+  --faixa-noite:#17141F;
+
+  --cartao:#312820;
+  --cartao-borda:rgba(241,232,220,.12);
+  --cartao-sombra:0 1px 2px rgba(0,0,0,.30), 0 16px 40px -22px rgba(0,0,0,.75);
+
+  --botao-bg:#7FAE6E;
+  --botao-bg-hover:#93C081;
+  --botao-ink:#1E1811;
+}
+
+/* ------------------------------------------------------------------ */
+
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--faixa-amanhecer);
+  color:var(--ink);
+  font:400 17px/1.62 Literata, Georgia, "Times New Roman", serif;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+h1,h2,h3,h4{font-family:Nunito, ui-rounded, "Segoe UI", system-ui, sans-serif;margin:0;text-wrap:balance;letter-spacing:-.02em}
+h1{font-weight:800;font-size:clamp(44px,7.4vw,86px);line-height:1.02}
+h2{font-weight:800;font-size:clamp(30px,4.2vw,50px);line-height:1.08}
+h3{font-weight:700;font-size:20px;line-height:1.25}
+p{margin:0}
+a{color:var(--verde-escuro)}
+a:focus-visible, button:focus-visible, input:focus-visible{
+  outline:2.5px solid var(--laranja); outline-offset:3px; border-radius:6px;
+}
+
+.hora{
+  font:500 11.5px/1 "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--ink-fraco);
+  display:flex; align-items:center; gap:10px;
+}
+.hora::after{content:"";height:1px;flex:1;max-width:140px;background:var(--linha)}
+.faixa--noite .hora{color:var(--noite-medio)}
+.faixa--noite .hora::after{background:var(--noite-linha)}
+
+.faixa{padding:clamp(64px,9vw,124px) 24px;position:relative}
+.faixa--amanhecer{background:var(--faixa-amanhecer)}
+.faixa--dia{background:var(--faixa-dia)}
+.faixa--tarde{background:var(--faixa-tarde)}
+.faixa--noite{background:var(--faixa-noite);color:var(--noite-ink)}
+.faixa--noite h1,.faixa--noite h2,.faixa--noite h3{color:var(--noite-ink)}
+.dentro{max-width:var(--largura);margin:0 auto}
+.prosa{max-width:var(--prosa)}
+.medio{color:var(--ink-medio)}
+.faixa--noite .medio{color:var(--noite-medio)}
+
+/* ---------- hero ---------- */
+.hero{padding-top:clamp(36px,6vw,64px);overflow:hidden}
+.marca{
+  display:flex;align-items:baseline;gap:11px;
+  font:800 21px/1 Nunito, system-ui, sans-serif;letter-spacing:-.01em;
+}
+.marca span{
+  font:500 11px/1 "IBM Plex Mono", monospace;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-fraco);
+}
+.hero-grade{
+  display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+  gap:clamp(32px,5vw,72px);align-items:center;margin-top:clamp(40px,7vw,84px);
+}
+.hero h1{margin-bottom:22px}
+.hero h1 em{font-style:normal;color:var(--verde-escuro)}
+.hero-lead{font-size:clamp(18px,1.9vw,21px);line-height:1.58;color:var(--ink-medio)}
+.acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.botao{
+  display:inline-flex;align-items:center;gap:9px;
+  font:700 16px/1 Nunito, system-ui, sans-serif;
+  padding:16px 24px;border-radius:14px;border:1.5px solid transparent;
+  text-decoration:none;cursor:pointer;
+  transition:background .18s ease, transform .18s ease, border-color .18s ease;
+}
+.botao--primario{background:var(--botao-bg);color:var(--botao-ink)}
+.botao--primario:hover{background:var(--botao-bg-hover);transform:translateY(-1px)}
+.botao--vazado{background:transparent;color:var(--ink);border-color:var(--linha)}
+.botao--vazado:hover{border-color:var(--ink-medio);transform:translateY(-1px)}
+.faixa--noite .botao--primario{background:var(--noite-botao-bg);color:var(--noite-botao-ink)}
+.faixa--noite .botao--primario:hover{background:var(--noite-botao-hover)}
+.faixa--noite .botao--vazado{color:var(--noite-ink);border-color:var(--noite-linha)}
+.faixa--noite .botao--vazado:hover{border-color:var(--noite-medio)}
+
+.ficha{
+  margin-top:28px;display:flex;flex-wrap:wrap;gap:8px 18px;
+  font:500 12px/1.5 "IBM Plex Mono", monospace;color:var(--ink-fraco);
+}
+.ficha b{font-weight:500;color:var(--ink-medio)}
+
+/* palco do hero: o habitat atrás, o aparelho na frente */
+.palco{position:relative;display:flex;justify-content:center;isolation:isolate}
+.palco-cena{
+  position:absolute;inset:auto -14% 8% -14%;z-index:0;
+  border-radius:28px;overflow:hidden;opacity:.9;
+  filter:saturate(1.02);
+  box-shadow:0 40px 80px -50px rgba(62,47,35,.6);
+}
+.palco-cena::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(to bottom, transparent 40%, var(--faixa-amanhecer) 96%);
+}
+.palco .aparelho{position:relative;z-index:1}
+
+/* ---------- aparelho ---------- */
+.aparelho{
+  width:min(300px,74vw);padding:9px;border-radius:38px;
+  background:var(--cartao);border:1px solid var(--cartao-borda);
+  box-shadow:var(--cartao-sombra);
+}
+.aparelho-tela{
+  position:relative;border-radius:30px;overflow:hidden;
+  background:var(--cartao);aspect-ratio:620/1342;
+}
+.aparelho-tela img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+.aparelho-topo{
+  position:absolute;top:9px;left:50%;transform:translateX(-50%);
+  width:78px;height:5px;border-radius:99px;background:var(--linha);z-index:2;
+}
+
+/* ---------- cartões ---------- */
+.cartoes{display:grid;gap:16px;margin-top:44px}
+.cartoes--3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cartoes--4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cartao{
+  background:var(--cartao);border:1px solid var(--cartao-borda);
+  border-radius:var(--raio);padding:26px 24px 28px;
+}
+.cartao h3{margin-bottom:9px}
+.cartao p{font-size:15.5px;line-height:1.58;color:var(--ink-medio)}
+.faixa--noite .cartao{background:var(--noite-cartao);border-color:var(--noite-linha)}
+.faixa--noite .cartao p{color:var(--noite-medio)}
+
+/* ---------- citação do contrato ---------- */
+.contrato{
+  margin-top:44px;padding:30px 34px;border-left:4px solid var(--verde);
+  background:var(--cartao);border-radius:0 var(--raio) var(--raio) 0;
+}
+.contrato q{
+  display:block;font:600 clamp(20px,2.4vw,27px)/1.35 Literata, Georgia, serif;
+  quotes:"“" "”";
+}
+.contrato cite{
+  display:block;margin-top:14px;font-style:normal;
+  font:500 11.5px/1 "IBM Plex Mono", monospace;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-fraco);
+}
+
+/* ---------- cabeçalho de seção ---------- */
+.cabeca{display:flex;flex-direction:column;gap:18px}
+.cabeca h2{max-width:16ch}
+.cabeca p{max-width:var(--prosa);font-size:18px;color:var(--ink-medio)}
+
+/* ---------- duas colunas com aparelho ---------- */
+.dupla{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.82fr);
+  gap:clamp(32px,5vw,72px);align-items:center;margin-top:52px;
+}
+.dupla--invertida{grid-template-columns:minmax(0,.82fr) minmax(0,1fr)}
+.dupla--invertida .dupla-fig{order:-1}
+.dupla-fig{display:flex;justify-content:center}
+
+/* ---------- tabela de dados ---------- */
+.tabela{width:100%;border-collapse:collapse;margin-top:26px;font-variant-numeric:tabular-nums}
+.tabela caption{
+  text-align:left;padding-bottom:12px;
+  font:500 11.5px/1 "IBM Plex Mono", monospace;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-fraco);
+}
+.tabela th,.tabela td{
+  text-align:left;padding:13px 14px 13px 0;border-bottom:1px solid var(--linha);
+  font-size:15.5px;
+}
+.tabela th{
+  font:700 13px/1.3 Nunito, system-ui, sans-serif;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--ink-fraco);
+}
+.tabela td:last-child,.tabela th:last-child{text-align:right;padding-right:0}
+.tabela .num{font-family:"IBM Plex Mono", monospace;font-weight:500;font-size:14.5px}
+.sim{color:var(--laranja);font-weight:600}
+.nao{color:var(--verde-escuro);font-weight:600}
+
+/* ---------- humores ---------- */
+.humores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:48px;counter-reset:h}
+.humor{
+  background:var(--cartao);border:1px solid var(--cartao-borda);border-radius:var(--raio);
+  overflow:hidden;display:flex;flex-direction:column;
+}
+.humor-arte{background:rgba(110,156,94,.16);padding:6px 6px 0}
+.humor-arte img{border-radius:14px}
+.humor-txt{padding:20px 22px 24px}
+.humor-txt b{
+  display:block;font:700 12px/1 "IBM Plex Mono", monospace;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fraco);margin-bottom:8px;
+}
+.humor-txt b::before{counter-increment:h;content:counter(h) " · "}
+.humor-txt h3{margin-bottom:7px}
+.humor-txt p{font-size:14.5px;line-height:1.55;color:var(--ink-medio)}
+
+/* ---------- seletor (hora do dia / abas do app) ---------- */
+.seletor{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px}
+.seletor button{
+  font:600 14px/1 Nunito, system-ui, sans-serif;
+  padding:11px 17px;border-radius:11px;cursor:pointer;
+  background:transparent;color:var(--ink-medio);
+  border:1.5px solid var(--linha);
+  transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.seletor button:hover{border-color:var(--ink-medio);color:var(--ink)}
+.seletor button[aria-selected="true"]{
+  background:var(--ink);color:var(--faixa-dia);border-color:var(--ink);
+}
+.seletor button small{
+  display:block;margin-top:4px;
+  font:500 10.5px/1 "IBM Plex Mono", monospace;letter-spacing:.08em;opacity:.62;
+}
+
+.pilha{position:relative;margin-top:32px;border-radius:24px;overflow:hidden;box-shadow:var(--cartao-sombra)}
+.pilha img{width:100%;transition:opacity .5s ease}
+.pilha img+img{position:absolute;inset:0;height:100%;object-fit:cover}
+.pilha img[data-ativo="nao"]{opacity:0}
+.legenda{
+  margin-top:16px;font-size:15px;color:var(--ink-medio);
+  display:flex;align-items:baseline;gap:12px;
+}
+.legenda b{
+  font:500 11.5px/1.4 "IBM Plex Mono", monospace;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-fraco);flex:none;
+}
+
+/* pilha de telas do aparelho */
+.aparelho-tela img[data-ativo="nao"]{opacity:0}
+.aparelho-tela img{transition:opacity .45s ease}
+
+/* ---------- privacidade ---------- */
+.linhas{list-style:none;padding:0;margin:40px 0 0;display:grid;gap:2px}
+.linhas li{
+  display:grid;grid-template-columns:minmax(0,20ch) minmax(0,1fr);gap:24px;
+  padding:20px 0;border-top:1px solid var(--linha);align-items:baseline;
+}
+.linhas li:last-child{border-bottom:1px solid var(--linha)}
+.linhas dt, .linhas .chave{
+  font:700 15px/1.35 Nunito, system-ui, sans-serif;
+}
+.linhas p{color:var(--ink-medio);font-size:16px}
+.faixa--noite .linhas li{border-color:var(--noite-linha)}
+.faixa--noite .linhas p{color:var(--noite-medio)}
+
+.idiomas{display:flex;flex-wrap:wrap;gap:9px;margin-top:32px}
+.idioma{
+  font:600 14px/1 Nunito, system-ui, sans-serif;padding:11px 16px;border-radius:11px;
+  background:rgba(92,138,78,.14);color:var(--verde-escuro);
+}
+.idioma span{font-family:"IBM Plex Mono", monospace;font-weight:500;font-size:12px;opacity:.7;margin-left:7px}
+
+/* ---------- fechamento ---------- */
+.fecho{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.86fr);gap:clamp(32px,5vw,72px);align-items:start}
+.fecho h2{font-size:clamp(32px,4.6vw,56px)}
+.estado{
+  display:inline-flex;align-items:center;gap:10px;margin-bottom:24px;
+  font:500 11.5px/1 "IBM Plex Mono", monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--noite-medio);
+}
+.estado::before{
+  content:"";width:8px;height:8px;border-radius:99px;background:var(--noite-laranja);
+  box-shadow:0 0 0 4px rgba(240,150,108,.2);
+}
+.lista-form{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;max-width:520px}
+.lista-form input{
+  flex:1 1 240px;padding:16px 18px;border-radius:14px;
+  border:1.5px solid var(--noite-linha);background:rgba(250,241,227,.05);
+  color:var(--noite-ink);font:400 16px/1 Literata, Georgia, serif;
+}
+.lista-form input::placeholder{color:rgba(243,235,223,.42)}
+.lojas{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px}
+.loja{
+  padding:14px 20px;border-radius:14px;border:1.5px solid var(--noite-linha);
+  font:600 14.5px/1.2 Nunito, system-ui, sans-serif;color:var(--noite-ink);
+}
+.loja small{display:block;font:500 10.5px/1 "IBM Plex Mono", monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--noite-medio);margin-bottom:5px}
+.recado{margin-top:16px;font-size:14.5px;color:var(--noite-medio);max-width:44ch}
+.miudo{
+  margin-top:56px;padding-top:26px;border-top:1px solid var(--noite-linha);
+  display:flex;flex-wrap:wrap;gap:14px 34px;justify-content:space-between;
+  font-size:13.5px;color:var(--noite-medio);
+}
+.miudo p{max-width:56ch}
+
+/* especies em fila */
+.elenco{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:26px;max-width:400px}
+.bicho{
+  background:var(--noite-cartao);border:1px solid var(--noite-linha);border-radius:16px;
+  padding:8px 8px 14px;text-align:center;
+}
+.bicho img{border-radius:10px;margin-bottom:8px}
+.bicho b{display:block;font:700 14px/1.2 Nunito, system-ui, sans-serif}
+.bicho small{font:500 10.5px/1.4 "IBM Plex Mono", monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--noite-medio)}
+
+/* ---------- movimento ---------- */
+.revela{opacity:0;transform:translateY(18px);transition:opacity .7s ease, transform .7s cubic-bezier(.22,.8,.3,1)}
+.revela.visivel{opacity:1;transform:none}
+@keyframes respira{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.012)}}
+.respira{animation:respira 5.2s ease-in-out infinite}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .revela{opacity:1;transform:none;transition:none}
+  .respira{animation:none}
+  *{transition-duration:.01ms !important}
+}
+
+/* ---------- responsivo ---------- */
+@media (max-width:920px){
+  .hero-grade,.dupla,.dupla--invertida,.fecho{grid-template-columns:minmax(0,1fr)}
+  .dupla--invertida .dupla-fig{order:0}
+  .cartoes--3,.cartoes--4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .humores{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .palco-cena{inset:auto -6% 10% -6%}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .faixa{padding-left:20px;padding-right:20px}
+  .cartoes--3,.cartoes--4,.humores{grid-template-columns:minmax(0,1fr)}
+  .linhas li{grid-template-columns:minmax(0,1fr);gap:8px}
+  .palco-cena{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 06:20 · amanhecer ================= -->
+<header class="faixa faixa--amanhecer hero">
+  <div class="dentro">
+    <div class="marca">Baru <span>Focus Capybara</span></div>
+
+    <div class="hero-grade">
+      <div>
+        <p class="hora">06:20 · o dia começa</p>
+        <h1 style="margin-top:26px">Habitat,<br><em>não timer.</em></h1>
+        <p class="hero-lead prosa">
+          Um app de foco e tempo de tela com um companheiro que reage a você.
+          Ele nunca morre, nunca cobra e nunca te culpa. Você faz suas sessões;
+          a cena responde. O número do seu tempo de tela é contabilizado com
+          honestidade — e você pode discordar dele.
+        </p>
+        <div class="acoes">
+          <a class="botao botao--primario" href="#lista">Entrar na lista de espera</a>
+          <a class="botao botao--vazado" href="#numero">Ver por dentro</a>
+        </div>
+        <p class="ficha">
+          <span><b>iOS e Android</b></span>
+          <span><b>pt · en · es · zh</b></span>
+          <span><b>MVP em teste fechado</b></span>
+        </p>
+      </div>
+
+      <div class="palco">
+        <div class="palco-cena" aria-hidden="true">
+          <img src="assets/habitat-amanhecer.webp" width="744" height="592" alt="">
+        </div>
+        <div class="aparelho respira">
+          <div class="aparelho-tela">
+            <span class="aparelho-topo"></span>
+            <img src="assets/home.webp" width="620" height="1342"
+                 alt="Tela inicial do Baru: saldo de folhas, sequência de dias, o habitat com a capivara na água e o resumo do dia.">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 09:40 · sem punição ================= -->
+<section class="faixa faixa--amanhecer revela">
+  <div class="dentro">
+    <div class="cabeca">
+      <p class="hora">09:40 · a regra que não se quebra</p>
+      <h2>Nada morre quando você falha.</h2>
+      <p>
+        Quase todo app de foco funciona com uma ameaça: perca a sessão e algo
+        seu é destruído. Baru não tem ameaça nenhuma. Não existe punição,
+        decaimento de progresso, perda de moeda ou frase acusatória em lugar
+        algum do produto — isso é regra escrita, não boa intenção.
+      </p>
+    </div>
+
+    <div class="cartoes cartoes--3">
+      <article class="cartao">
+        <h3>O bicho nunca morre</h3>
+        <p>Ele não adoece, não fica com fome e não some. No pior dia da sua semana ele continua ali, respirando, esperando você voltar.</p>
+      </article>
+      <article class="cartao">
+        <h3>Desistir custa zero</h3>
+        <p>Abandonar uma sessão significa sair sem a recompensa daquela sessão. Nada além disso é retirado de você.</p>
+      </article>
+      <article class="cartao">
+        <h3>Dizer “não” é um caminho</h3>
+        <p>Recusar a permissão de uso não degrada o app. Sem ela, o humor vem só das suas sessões de foco, e nenhum número é inventado.</p>
+      </article>
+    </div>
+
+    <blockquote class="contrato">
+      <q>Abandonar uma sessão = sem recompensa, nada mais.</q>
+      <cite>contrato de produto · regra 1 · sem punição</cite>
+    </blockquote>
+  </div>
+</section>
+
+<!-- ================= 12:40 · o número ================= -->
+<section class="faixa faixa--dia revela" id="numero">
+  <div class="dentro">
+    <div class="cabeca">
+      <p class="hora">12:40 · o número</p>
+      <h2>Seu tempo de tela é contabilizado, não somado.</h2>
+      <p>
+        Somar o tempo que cada app passou aberto produz um número gordo e
+        injusto: ele inclui o podcast no bolso, o teclado, a tela de bloqueio e
+        o próprio app de foco. Baru conta só o intervalo em que a tela está
+        ligada, o aparelho está desbloqueado e um app que conta está na frente.
+      </p>
+    </div>
+
+    <div class="dupla">
+      <div>
+        <table class="tabela">
+          <caption>o que entra na sua meta</caption>
+          <thead>
+            <tr><th scope="col">Categoria</th><th scope="col">O que é</th><th scope="col">Meta</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dispersivo</td><td class="medio">social, vídeo curto, jogo</td><td class="sim">entra</td></tr>
+            <tr><td>Neutro</td><td class="medio">mensagem, navegador, mapa</td><td class="sim">entra</td></tr>
+            <tr><td>Produtivo</td><td class="medio">leitura, estudo, trabalho</td><td class="nao">fora</td></tr>
+            <tr><td>Passivo</td><td class="medio">áudio</td><td class="nao">fora</td></tr>
+          </tbody>
+        </table>
+
+        <p class="medio" style="margin-top:26px">
+          Música com a tela apagada nunca conta. Launcher, teclado, telas do
+          sistema, o discador durante uma chamada e o próprio Baru nunca contam.
+          E se você discordar da categoria de um app, troque: a sua classificação
+          vale mais que a nossa, fica salva e vai junto para os outros aparelhos.
+        </p>
+
+        <p class="legenda" style="margin-top:26px">
+          <b>a meta</b>
+          <span>Sua média informada menos 25%, arredondada para o múltiplo de 15 minutos mais próximo. Nada de “zere seu celular”.</span>
+        </p>
+      </div>
+
+      <div class="dupla-fig">
+        <div class="aparelho">
+          <div class="aparelho-tela">
+            <span class="aparelho-topo"></span>
+            <img src="assets/tempo-com-dados.webp" width="620" height="1342"
+                 alt="Tela “Seu tempo de tela”: 1h52 conta para a meta, quebra por categoria e lista por app — Instagram como dispersivo, Spotify como áudio, WhatsApp como neutro, Kindle como produtivo.">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 15:10 · o humor ================= -->
+<section class="faixa faixa--dia revela">
+  <div class="dentro">
+    <div class="cabeca">
+      <p class="hora">15:10 · o estado</p>
+      <h2>O humor dele não é um número. É uma cena.</h2>
+      <p>
+        Você não abre um painel para saber como foi seu dia: você olha o bicho.
+        A cena carrega o estado e uma única frase diz em palavras. São cinco
+        humores, em ordem estrita de precedência — o primeiro que se aplica é o
+        que você vê.
+      </p>
+    </div>
+
+    <div class="humores">
+      <article class="humor">
+        <div class="humor-arte"><img src="assets/pet-idle.webp" width="400" height="300" alt="A capivara parada na margem, olhando para frente."></div>
+        <div class="humor-txt">
+          <b>precedência</b>
+          <h3>Sentindo sua falta</h3>
+          <p>Você desistiu de uma sessão hoje, ou faz dois dias que não aparece. Ele espera. Só isso.</p>
+        </div>
+      </article>
+      <article class="humor">
+        <div class="humor-arte"><img src="assets/pet-swim.webp" width="400" height="300" alt="A capivara nadando, com ondas ao redor."></div>
+        <div class="humor-txt">
+          <b>precedência</b>
+          <h3>Radiante</h3>
+          <p>Abaixo da meta e pelo menos uma sessão completa. O melhor tipo de dia — e ele vai para a água.</p>
+        </div>
+      </article>
+      <article class="humor">
+        <div class="humor-arte"><img src="assets/pet-graze.webp" width="400" height="300" alt="A capivara pastando na margem."></div>
+        <div class="humor-txt">
+          <b>precedência</b>
+          <h3>Contente</h3>
+          <p>Uma das duas coisas aconteceu: você ficou abaixo da meta ou fechou uma sessão. Já vale.</p>
+        </div>
+      </article>
+      <article class="humor">
+        <div class="humor-arte"><img src="assets/pet-nap.webp" width="400" height="300" alt="A capivara deitada na areia, cochilando."></div>
+        <div class="humor-txt">
+          <b>precedência</b>
+          <h3>Neutro, depois sonolento</h3>
+          <p>Passou da meta e o dia foi longo. Ele cochila. Nenhuma frase te cobra por isso.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 17:50 · a hora ================= -->
+<section class="faixa faixa--tarde revela">
+  <div class="dentro">
+    <div class="cabeca">
+      <p class="hora">17:50 · a hora</p>
+      <h2>O habitat às 22h não é o das 9h.</h2>
+      <p>
+        A cena conhece o relógio. O céu troca de gradiente, o sol desce e vira
+        lua com halo, as colinas perdem a cor e a água escurece. Nada disso é
+        enfeite: é o que faz voltar ao app às onze da noite parecer outra coisa.
+      </p>
+    </div>
+
+    <div class="seletor" role="tablist" aria-label="Hora do dia no habitat">
+      <button role="tab" id="aba-06" aria-controls="cena-06" aria-selected="true">Amanhecer<small>06:00</small></button>
+      <button role="tab" id="aba-18" aria-controls="cena-18" aria-selected="false">Entardecer<small>18:00</small></button>
+      <button role="tab" id="aba-22" aria-controls="cena-22" aria-selected="false">Noite<small>22:00</small></button>
+    </div>
+
+    <div class="pilha" data-pilha="hora" style="max-width:820px">
+      <img id="cena-06" role="tabpanel" aria-labelledby="aba-06" data-ativo="sim" src="assets/habitat-amanhecer.webp" width="744" height="592" alt="Habitat às 6h: céu quente, sol baixo no horizonte, água clara.">
+      <img id="cena-18" role="tabpanel" aria-labelledby="aba-18" data-ativo="nao" src="assets/habitat-entardecer.webp" width="744" height="592" alt="Habitat às 18h: luz laranja, sol no horizonte.">
+      <img id="cena-22" role="tabpanel" aria-labelledby="aba-22" data-ativo="nao" src="assets/habitat-noite.webp" width="744" height="592" alt="Habitat às 22h: céu índigo, lua com halo, água escura.">
+    </div>
+    <p class="legenda" style="max-width:820px">
+      <b>capturas reais</b>
+      <span data-legenda="hora">Seis da manhã. Céu quente, sol baixo, água clara — e a mesma capivara de sempre no meio da cena.</span>
+    </p>
+  </div>
+</section>
+
+<!-- ================= 19:30 · o caminho ================= -->
+<section class="faixa faixa--tarde revela">
+  <div class="dentro">
+    <div class="cabeca">
+      <p class="hora">19:30 · o caminho</p>
+      <h2>Doze marcos, do primeiro foco aos cem.</h2>
+      <p>
+        A trilha é visível desde o primeiro dia: cada marco tem requisito claro,
+        recompensa concreta e prévia do que vem. Marco conquistado nunca é
+        retirado, e as outras espécies se desbloqueiam por marco — nunca por
+        dinheiro.
+      </p>
+    </div>
+
+    <div class="dupla dupla--invertida">
+      <div class="dupla-fig">
+        <div class="aparelho">
+          <div class="aparelho-tela" data-pilha="tela">
+            <span class="aparelho-topo"></span>
+            <img id="tela-trilha" data-ativo="sim" src="assets/trilha-andamento.webp" width="620" height="1342" alt="Aba Trilha: nível 4, cinco marcos conquistados e o próximo passo em destaque, ligados por um caminho.">
+            <img id="tela-missoes" data-ativo="nao" src="assets/missoes.webp" width="620" height="1342" alt="Aba Missões: três diárias e duas semanais, com progresso, recompensa em folhas e XP, prazo e botão Resgatar.">
+            <img id="tela-loja" data-ativo="nao" src="assets/tela-loja.webp" width="620" height="1342" alt="Loja: itens do habitat com preço em folhas.">
+            <img id="tela-raiz" data-ativo="nao" src="assets/tela-sequencia.webp" width="620" height="1342" alt="Tela da sequência: raiz atual, melhor sequência, congelamentos e a semana.">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="seletor" role="tablist" aria-label="Telas do app" style="margin-top:0">
+          <button role="tab" aria-controls="tela-trilha" aria-selected="true">Trilha</button>
+          <button role="tab" aria-controls="tela-missoes" aria-selected="false">Missões</button>
+          <button role="tab" aria-controls="tela-loja" aria-selected="false">Loja</button>
+          <button role="tab" aria-controls="tela-raiz" aria-selected="false">Raiz</button>
+        </div>
+
+        <p class="legenda" style="margin-top:24px">
+          <b>o que você vê</b>
+          <span data-legenda="tela">O caminho com nós grandes, linha sólida no trecho já feito, tracejada no que falta e “você está aqui” no passo atual.</span>
+        </p>
+
+        <table class="tabela">
+          <caption>a economia das folhas</caption>
+          <tbody>
+            <tr><td>Sessão de 25 minutos</td><td class="num">10 folhas</td></tr>
+            <tr><td>Sessão de 50 minutos</td><td class="num">25 folhas</td></tr>
+            <tr><td>Sessão de 90 minutos</td><td class="num">50 folhas</td></tr>
+            <tr><td>Sessão livre</td><td class="num">½ folha por minuto</td></tr>
+            <tr><td>Fechar o dia abaixo da meta</td><td class="num">+15 folhas</td></tr>
+          </tbody>
+        </table>
+
+        <p class="medio" style="margin-top:22px;font-size:15.5px">
+          Folha se gasta na loja, e comprar é a única coisa que muda a cena: o
+          item cai no habitat com mola e passa a projetar sombra. Três missões
+          diárias e duas semanais, sorteadas do mesmo jeito em qualquer aparelho
+          seu. Missão que expira à meia-noite não pune ninguém.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 21:00 · privacidade ================= -->
+<section class="faixa faixa--tarde revela">
+  <div class="dentro">
+    <div class="cabeca">
+      <p class="hora">21:00 · o que sai do aparelho</p>
+      <h2>Baru lê o agregado. Nunca o conteúdo.</h2>
+      <p>
+        Um app que mede tempo de tela pede uma permissão grande e merece
+        explicar o que faz com ela. Aqui está, sem letra miúda.
+      </p>
+    </div>
+
+    <div class="dupla dupla--invertida" style="align-items:start">
+      <div class="dupla-fig" style="position:sticky;top:40px">
+        <figure style="margin:0">
+          <div class="aparelho">
+            <div class="aparelho-tela">
+              <span class="aparelho-topo"></span>
+              <img src="assets/tempo-sem-permissao.webp" width="620" height="1342"
+                   alt="Tela de tempo de tela sem a permissão concedida: nenhum número, uma explicação curta e um botão para conceder.">
+            </div>
+          </div>
+          <figcaption class="legenda" style="justify-content:center">
+            <b>sem permissão</b>
+            <span>Nenhum número inventado. Um convite, e o app segue funcionando.</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <ul class="linhas" style="margin-top:0">
+      <li>
+        <span class="chave">O que ele lê</span>
+        <p>Quanto tempo cada aplicativo ficou em primeiro plano com a tela ligada. É o número que o próprio sistema operacional já mantém.</p>
+      </li>
+      <li>
+        <span class="chave">O que ele nunca lê</span>
+        <p>Mensagens, telas, digitação, conteúdo, histórico de navegação. Nada disso passa perto do app.</p>
+      </li>
+      <li>
+        <span class="chave">Se você recusar</span>
+        <p>O app não estima nem inventa nada. Mostra um estado vazio honesto, com um caminho de um toque para conceder depois — ou nunca.</p>
+      </li>
+      <li>
+        <span class="chave">Seus dados</span>
+        <p>Ficam primeiro no aparelho e sincronizam com a sua conta. “Apagar meus dados” apaga aqui e no servidor, e fica em Ajustes → Sua conta.</p>
+      </li>
+      </ul>
+    </div>
+
+    <div style="margin-top:56px">
+      <p class="hora" style="margin-bottom:18px">quatro idiomas de primeira classe</p>
+      <p class="prosa medio">
+        A escolha do idioma é o primeiro passo do onboarding e vive nos ajustes.
+        Nenhum dos quatro é tradução de segunda: toda frase nova nasce nos quatro
+        ao mesmo tempo, e um teste quebra o build se faltar uma.
+      </p>
+      <div class="idiomas">
+        <span class="idioma">Português <span>pt</span></span>
+        <span class="idioma">English <span>en</span></span>
+        <span class="idioma">Español <span>es</span></span>
+        <span class="idioma">中文 <span>zh</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 22:30 · noite ================= -->
+<section class="faixa faixa--noite revela" id="lista">
+  <div class="dentro">
+    <div class="fecho">
+      <div>
+        <p class="hora">22:30 · boa noite</p>
+        <p class="estado" style="margin-top:26px">MVP em teste fechado</p>
+        <h2>Quer o Baru no seu bolso?</h2>
+        <p class="medio" style="margin-top:20px;max-width:46ch;font-size:18px">
+          Ainda estamos fechando a última milha antes das lojas. Deixe seu
+          e-mail e você é avisado quando o teste aberto começar — uma mensagem,
+          sem newsletter.
+        </p>
+
+        <form class="lista-form" id="form-lista" hidden>
+          <label for="email-lista" style="position:absolute;left:-9999px">Seu e-mail</label>
+          <input id="email-lista" type="email" name="email" required placeholder="voce@email.com" autocomplete="email">
+          <button class="botao botao--primario" type="submit">Avise-me</button>
+        </form>
+        <p class="recado" id="recado-lista" role="status"></p>
+
+        <div class="lojas" id="lojas-em-breve">
+          <span class="loja"><small>em breve</small>App Store</span>
+          <span class="loja"><small>em breve</small>Google Play</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="hora">o elenco</p>
+        <div class="elenco">
+          <div class="bicho"><img src="assets/especie-capybara.webp" width="400" height="300" alt="Capivara"><b>Baru</b><small>capivara</small></div>
+          <div class="bicho"><img src="assets/especie-otter.webp" width="400" height="300" alt="Lontra"><b>Rio</b><small>lontra</small></div>
+          <div class="bicho"><img src="assets/especie-tortoise.webp" width="400" height="300" alt="Tartaruga"><b>Toco</b><small>tartaruga</small></div>
+          <div class="bicho"><img src="assets/especie-owl.webp" width="400" height="300" alt="Coruja"><b>Nina</b><small>coruja</small></div>
+        </div>
+        <p class="recado" style="margin-top:20px">
+          Um quiz de três perguntas escolhe o seu no onboarding. Dá para trocar
+          depois, e o nome é seu para escrever.
+        </p>
+      </div>
+    </div>
+
+    <div class="miudo">
+      <p>
+        Baru · app de foco e redução de tempo de tela para iOS e Android.
+        Sete dias de teste grátis; depois, plano mensal ou anual, com aviso
+        24 horas antes de o teste acabar.
+      </p>
+      <p>
+        A medição de tempo de tela está disponível no Android. No iOS ela
+        depende de um entitlement da Apple ainda em avaliação — o restante do
+        app funciona igual nas duas plataformas.
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * Lista de espera.
+ * Preencha UM dos dois campos abaixo para o formulário aparecer:
+ *   endpoint — URL que aceita POST JSON {email} (Formspree, Supabase
+ *              Edge Function, seu próprio backend);
+ *   email    — endereço de contato; o formulário vira um e-mail pronto.
+ * Com os dois vazios a página não mostra formulário nenhum: melhor
+ * “em breve nas lojas” do que um campo que engole o e-mail de alguém.
+ * ------------------------------------------------------------------ */
+var LISTA_ESPERA = { endpoint: "", email: "" };
+
+(function () {
+  "use strict";
+
+  var form = document.getElementById("form-lista");
+  var recado = document.getElementById("recado-lista");
+  var lojas = document.getElementById("lojas-em-breve");
+
+  if (LISTA_ESPERA.endpoint || LISTA_ESPERA.email) {
+    form.hidden = false;
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = document.getElementById("email-lista").value.trim();
+      if (!email) return;
+
+      if (!LISTA_ESPERA.endpoint) {
+        window.location.href =
+          "mailto:" + LISTA_ESPERA.email +
+          "?subject=" + encodeURIComponent("Lista de espera do Baru") +
+          "&body=" + encodeURIComponent("Quero ser avisado: " + email);
+        return;
+      }
+
+      recado.textContent = "Enviando…";
+      fetch(LISTA_ESPERA.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email: email })
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          form.hidden = true;
+          recado.textContent = "Pronto. Avisamos você quando o teste aberto começar.";
+        })
+        .catch(function () {
+          recado.textContent = "Não conseguimos registrar agora. Tente de novo em alguns minutos.";
+        });
+    });
+    if (lojas) lojas.style.marginTop = "22px";
+  }
+
+  /* ---- seletores: hora do dia e telas do app ---- */
+  var legendas = {
+    "cena-06": "Seis da manhã. Céu quente, sol baixo, água clara — e a mesma capivara de sempre no meio da cena.",
+    "cena-18": "Seis da tarde. A luz vira laranja e o sol encosta no horizonte.",
+    "cena-22": "Dez da noite. Céu índigo, lua com halo, água escura — e o mesmo bicho, no mesmo lugar.",
+    "tela-trilha": "O caminho com nós grandes, linha sólida no trecho já feito, tracejada no que falta e “você está aqui” no passo atual.",
+    "tela-missoes": "Cada missão diz o que fazer, quanto falta, quanto paga em folhas e XP, e leva à tela onde a ação acontece.",
+    "tela-loja": "Itens de posição fixa no habitat, pagos em folhas. Comprar é a única ação que muda a cena — e o item cai lá com mola.",
+    "tela-raiz": "Sequência atual, melhor sequência, congelamentos e a semana. Faltar um dia não zera nada de forma punitiva."
+  };
+
+  function ligar(lista) {
+    var abas = Array.prototype.slice.call(lista.querySelectorAll('[role="tab"]'));
+    var pilhaId = lista.getAttribute("aria-label") === "Telas do app" ? "tela" : "hora";
+    var legenda = document.querySelector('[data-legenda="' + pilhaId + '"]');
+
+    function escolher(aba) {
+      abas.forEach(function (b) { b.setAttribute("aria-selected", String(b === aba)); });
+      var alvoId = aba.getAttribute("aria-controls");
+      var alvo = document.getElementById(alvoId);
+      if (!alvo) return;
+      Array.prototype.forEach.call(alvo.parentNode.children, function (n) {
+        if (n.tagName === "IMG") n.setAttribute("data-ativo", n === alvo ? "sim" : "nao");
+      });
+      if (legenda && legendas[alvoId]) legenda.textContent = legendas[alvoId];
+    }
+
+    abas.forEach(function (aba, i) {
+      aba.addEventListener("click", function () { escolher(aba); });
+      aba.addEventListener("keydown", function (e) {
+        var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        var proxima = abas[(i + d + abas.length) % abas.length];
+        proxima.focus();
+        escolher(proxima);
+      });
+    });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[role="tablist"]'), ligar);
+
+  /* ---- revelação ao rolar ---- */
+  var reduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var alvos = document.querySelectorAll(".revela");
+  if (reduzido || !("IntersectionObserver" in window)) {
+    Array.prototype.forEach.call(alvos, function (n) { n.classList.add("visivel"); });
+  } else {
+    var obs = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("visivel"); obs.unobserve(en.target); }
+      });
+    }, { rootMargin: "0px 0px -12% 0px", threshold: 0.06 });
+    Array.prototype.forEach.call(alvos, function (n) { obs.observe(n); });
+  }
+})();
+</script>
+</body>
+</html>

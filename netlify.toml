@@ -1,0 +1,18 @@
+# Deploy da landing page. O site é estático: o "build" só injeta a chave
+# publicável do Supabase, que vive numa variável de ambiente do Netlify
+# (Site settings -> Environment variables -> SUPABASE_ANON_KEY) para não
+# entrar no repositório. Sem a variável o build passa e o formulário da
+# lista de espera fica escondido.
+[build]
+  publish = "landing"
+  command = "node landing/injeta-config.js"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

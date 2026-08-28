@@ -56,21 +56,30 @@ supabase db push
 Ou cole `baru_app/supabase/migrations/20260828100000_baru_waitlist.sql` no
 SQL Editor.
 
-**2. Cole a chave anon** no topo do `<script>` em `index.html`:
+**2. Defina a chave anon como variável de ambiente no Netlify**, em
+Site settings → Environment variables:
 
-```js
-var LISTA_ESPERA = {
-  url: "https://slqpuppkapiewjqvedtj.supabase.co",
-  anonKey: "",      // <- Dashboard -> Settings -> API -> publishable/anon
-  idioma: "pt"
-};
+```
+SUPABASE_ANON_KEY = <a chave publishable/anon do Dashboard → Settings → API>
 ```
 
-Com `anonKey` vazia o formulário não aparece e a página mostra só o "em
-breve" das lojas — um campo que engole o e-mail de alguém sem destino é
-pior que campo nenhum.
+Depois é só um novo deploy. O `netlify.toml` na raiz roda
+`node landing/injeta-config.js`, que troca o `anonKey: ""` do `index.html`
+pela chave — assim ela nunca entra no repositório.
 
-### Por que a chave pode ficar no HTML
+O script recusa o build se você colar por engano a `service_role` ou uma
+`sb_secret_`: publicar essa chave seria acesso total ao banco. Sem a
+variável definida, o build passa normalmente e o formulário só fica
+escondido.
+
+Para rodar o mesmo passo localmente:
+
+```
+SUPABASE_ANON_KEY=... node landing/injeta-config.js
+python3 -m http.server -d landing 8000
+```
+
+### Por que a chave pode ir para o HTML publicado
 
 A chave anon é feita para viver no cliente; ela já viaja dentro do app
 mobile. Quem protege a lista é o banco, não o segredo da chave:

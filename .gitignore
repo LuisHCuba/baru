@@ -11,3 +11,6 @@ key.properties
 .claude/
 .DS_Store
 Thumbs.db
+
+# SVGs soltos, nao referenciados no pubspec: os bichos sao CustomPainter.
+baru_app/assets/pets/

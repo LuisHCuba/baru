@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baru: Focus Capybara</title>
+<meta name="description" content="Um bichinho que cresce quando você foca. Tempo de tela contado com honestidade, zero punição. iOS e Android, em 4 idiomas.">
+<meta property="og:title" content="Baru: Focus Capybara">
+<meta property="og:description" content="Larga o celular que ele cresce. Foco sem culpa, com um habitat vivo no seu bolso.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;1000&display=swap">
+<style>
+/* ==================================================================
+   Baru — landing. Tema claro único e deliberado, à la Duolingo:
+   fundo branco, verde vivo, botões com borda inferior, bordas claras
+   e muito respiro. O aconchego escuro fica para dentro do app.
+   ================================================================== */
+:root{
+  color-scheme: light;
+
+  --branco:#FFFFFF;
+  --claro:#F7F4EC;          /* faixa alternada, um creme quase branco */
+  --borda:#E8E1D4;
+  --ink:#3D332A;            /* títulos */
+  --texto:#6E6156;          /* corpo */
+  --suave:#77695C;          /* legendas — 5,3:1 no branco, 4,83:1 no creme */
+
+  --verde:#428130;          /* ação — branco em cima dá 4,76:1 */
+  --verde-borda:#33661F;    /* a borda inferior 3D */
+  --verde-texto:#36722D;    /* 5,15:1 sobre a tinta, 5,83:1 sobre branco */
+  --verde-tinta:#EAF4E4;
+
+  --laranja:#EF8354;
+  --laranja-borda:#D96636;
+  --laranja-tinta:#FDEEE2;
+  --azul:#5B8FC7;
+  --azul-tinta:#EAF1F9;
+  --roxo:#9C7EC9;
+
+  /* céu do palco — é a cena do app, não muda */
+  --ceu-a:#F7D9AE; --ceu-b:#F2E4C9; --colina:#C8DABB; --chao:#A8C79C;
+
+  --raio:20px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--branco);color:var(--texto);
+  font:400 17px/1.6 Nunito, ui-rounded, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+img{max-width:100%;height:auto;display:block}
+h1,h2,h3{margin:0;letter-spacing:-.02em;text-wrap:balance;color:var(--ink)}
+h1{font-weight:1000;font-size:clamp(38px,8vw,66px);line-height:1.04}
+h2{font-weight:1000;font-size:clamp(28px,4.6vw,44px);line-height:1.1}
+h3{font-weight:800;font-size:19px;line-height:1.25}
+p{margin:0}
+a{color:var(--verde-texto)}
+button{font:inherit;color:inherit}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--azul);outline-offset:3px;border-radius:8px}
+
+.dentro{max-width:1080px;margin:0 auto;padding:0 20px}
+.faixa{padding:clamp(56px,8vw,104px) 0}
+.faixa--tom{background:var(--claro)}
+.selo{
+  display:inline-flex;align-items:center;gap:8px;
+  font:800 12px/1 Nunito;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--verde-texto);background:var(--verde-tinta);
+  padding:9px 14px;border-radius:99px;
+}
+.olho{
+  font:800 13px/1 Nunito;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--verde-texto);margin-bottom:14px;
+}
+.lead{font-size:clamp(16.5px,2vw,19px);color:var(--texto);max-width:60ch}
+.lead b,.lead strong{color:var(--ink)}
+
+/* ---------- botões (relevo Duolingo: borda inferior sólida) ---------- */
+.botao{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font:800 15px/1 Nunito;letter-spacing:.08em;text-transform:uppercase;
+  padding:17px 28px;border-radius:16px;border:0;cursor:pointer;text-decoration:none;
+  transition:filter .12s ease,transform .06s ease,box-shadow .06s ease;
+}
+.botao--cta{background:var(--verde);color:#fff;box-shadow:0 4px 0 var(--verde-borda)}
+.botao--cta:hover{filter:brightness(1.06)}
+.botao--cta:active{transform:translateY(4px);box-shadow:0 0 0 var(--verde-borda)}
+.botao--calmo{
+  background:var(--branco);color:var(--verde-texto);
+  border:2px solid var(--borda);box-shadow:0 4px 0 var(--borda);
+}
+.botao--calmo:hover{background:var(--claro)}
+.botao--calmo:active{transform:translateY(4px);box-shadow:0 0 0 var(--borda)}
+.botao--mini{padding:12px 18px;font-size:13px;border-radius:12px}
+
+/* ---------- topo fixo ---------- */
+.topo{
+  position:sticky;top:0;z-index:60;background:rgba(255,255,255,.93);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:2px solid var(--borda);
+}
+.topo-linha{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;max-width:1080px;margin:0 auto}
+.topo-marca{display:flex;align-items:center;gap:9px;font:1000 22px/1 Nunito;color:var(--verde-texto);text-decoration:none;letter-spacing:-.02em}
+.topo-marca i{
+  width:13px;height:13px;border-radius:0 60% 0 60%;background:var(--verde);
+  transform:rotate(-18deg);display:inline-block;
+}
+
+/* ---------- hero ---------- */
+.hero{overflow:visible}
+.hero-grade{display:grid;gap:clamp(36px,5vw,60px);align-items:center;padding-top:clamp(10px,2vw,28px)}
+.hero h1{margin:20px 0 18px}
+.hero h1 em{font-style:normal;color:var(--verde-texto)}
+.acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.provas{
+  list-style:none;display:flex;flex-wrap:wrap;gap:8px 20px;margin:26px 0 0;padding:0;
+  font:700 14px/1.5 Nunito;color:var(--texto);
+}
+.provas li{display:flex;align-items:center;gap:7px}
+.provas li::before{
+  content:"";width:8px;height:8px;border-radius:0 60% 0 60%;
+  background:var(--verde);transform:rotate(-18deg);flex:none;
+}
+
+/* ---------- palco (a cena interativa) ----------
+   Camadas, de trás para a frente: céu (0) · folhas caindo (1) ·
+   colina e água (2) · bicho (3) · corações (4) · balão e dica (5).
+   Antes as folhas tinham z-index 1 e o balão nenhum: folha passava
+   por cima do texto.                                              */
+.palco{position:relative}
+.cena{
+  position:relative;border-radius:24px;overflow:hidden;isolation:isolate;
+  aspect-ratio:10/8.6;max-height:500px;width:100%;
+  background:linear-gradient(180deg,var(--ceu-a) 0%,var(--ceu-b) 62%);
+  border:2px solid var(--borda);
+  cursor:pointer;user-select:none;-webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.cena-sol{
+  position:absolute;top:9%;right:10%;width:17%;aspect-ratio:1;border-radius:50%;z-index:0;
+  background:radial-gradient(circle,#F2B25E 0 42%,rgba(239,160,90,.42) 58%,transparent 72%);
+}
+/* uma colina só, larga e suave: as duas de antes se encontravam no meio
+   e abriam um V atrás da cabeça do bicho */
+.cena-colina{
+  position:absolute;z-index:2;left:-20%;right:-20%;bottom:26%;height:34%;
+  border-radius:50% 50% 0 0 / 100% 100% 0 0;background:var(--colina);
+}
+.cena-agua{
+  position:absolute;z-index:2;left:0;right:0;bottom:0;height:29%;
+  background:linear-gradient(180deg,var(--chao) 0%,#9BBE8F 100%);
+}
+.cena-agua::before{
+  content:"";position:absolute;left:12%;top:38%;width:22%;height:5px;
+  border-radius:99px;background:rgba(255,255,255,.5);
+}
+.cena-agua::after{
+  content:"";position:absolute;right:16%;top:64%;width:16%;height:5px;
+  border-radius:99px;background:rgba(255,255,255,.42);
+}
+.cena-bicho{
+  position:absolute;z-index:3;left:50%;bottom:15%;
+  width:min(50%,190px);transform:translateX(-50%);transform-origin:50% 100%;
+  filter:drop-shadow(0 8px 6px rgba(62,47,35,.16));
+  animation:flutua 4.6s ease-in-out infinite;
+}
+@keyframes flutua{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+.cena-bicho.pulo{animation:pulo .5s cubic-bezier(.34,1.56,.5,1)}
+@keyframes pulo{
+  0%{transform:translateX(-50%) scale(1,1)}
+  28%{transform:translateX(-50%) scale(1.12,.86)}
+  60%{transform:translateX(-50%) translateY(-16px) scale(.94,1.08)}
+  100%{transform:translateX(-50%) scale(1,1)}
+}
+.cena-balao{
+  position:absolute;z-index:5;left:14px;top:14px;max-width:74%;
+  display:flex;flex-direction:column;gap:2px;
+  background:rgba(255,255,255,.96);border:2px solid var(--borda);
+  border-radius:16px;padding:12px 16px;pointer-events:none;
+}
+.cena-balao b{font:800 16px/1.3 Nunito;color:var(--ink)}
+.cena-balao span{font:600 12.5px/1.45 Nunito;color:var(--texto)}
+.cena-dica{
+  position:absolute;z-index:5;left:14px;bottom:12px;
+  font:800 11px/1 Nunito;letter-spacing:.1em;text-transform:uppercase;
+  color:#fff;background:rgba(61,51,42,.5);border-radius:99px;padding:8px 13px;
+  pointer-events:none;transition:opacity .4s ease;
+}
+.coracao{
+  position:absolute;pointer-events:none;z-index:4;width:18px;height:18px;
+  animation:sobe 1.15s ease-out forwards;
+}
+.coracao::before{
+  content:"";position:absolute;inset:0;background:var(--laranja);
+  clip-path:path("M9 17C3 12 0 8.5 0 5.2 0 2.3 2.2 0 4.9 0 6.6 0 8.1.9 9 2.3 9.9.9 11.4 0 13.1 0 15.8 0 18 2.3 18 5.2c0 3.3-3 6.8-9 11.8Z");
+}
+@keyframes sobe{
+  0%{transform:translateY(0) scale(.4);opacity:0}
+  18%{opacity:1;transform:translateY(-14px) scale(1)}
+  100%{transform:translateY(-84px) scale(.8) rotate(12deg);opacity:0}
+}
+.folha-cai{
+  position:absolute;top:-24px;width:13px;height:13px;z-index:1;
+  border-radius:0 60% 0 60%;background:var(--verde);opacity:.32;
+  animation:cai linear infinite;
+}
+@keyframes cai{
+  0%{transform:translateY(-4vh) rotate(0) translateX(0)}
+  50%{transform:translateY(30vh) rotate(160deg) translateX(26px)}
+  100%{transform:translateY(62vh) rotate(320deg) translateX(-12px)}
+}
+
+/* chips de espécie */
+.chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+.chip{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:10px 4px 8px;border-radius:16px;cursor:pointer;
+  background:var(--branco);border:2px solid var(--borda);
+  box-shadow:0 3px 0 var(--borda);
+  transition:transform .12s ease,border-color .12s ease,background .12s ease,box-shadow .12s ease;
+}
+.chip img{width:44px;height:42px;object-fit:contain}
+.chip b{font:800 12.5px/1 Nunito;color:var(--ink)}
+.chip small{font:700 10px/1 Nunito;letter-spacing:.06em;text-transform:uppercase;color:var(--suave)}
+.chip:hover{transform:translateY(-2px)}
+.chip:active{transform:translateY(3px);box-shadow:0 0 0 var(--borda)}
+.chip[aria-pressed="true"]{border-color:var(--verde);background:var(--verde-tinta);box-shadow:0 3px 0 var(--verde-borda)}
+
+/* ---------- números ---------- */
+.numeros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 16px}
+.numero b{font:1000 clamp(40px,6vw,60px)/1 Nunito;color:var(--verde-texto);display:block;letter-spacing:-.03em}
+.numero span{font:700 14px/1.45 Nunito;color:var(--texto)}
+
+/* ---------- humores ---------- */
+.humores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:40px}
+.humor{
+  background:var(--branco);border:2px solid var(--borda);border-radius:var(--raio);
+  padding:20px 18px 22px;text-align:center;transition:transform .15s ease;
+}
+.humor:hover{transform:translateY(-4px)}
+.humor img{width:104px;height:100px;object-fit:contain;margin:0 auto 10px}
+.humor b{display:block;font:800 16.5px/1.3 Nunito;color:var(--ink);margin-bottom:5px}
+.humor p{font:600 14px/1.5 Nunito;color:var(--texto)}
+
+/* ---------- passos ---------- */
+.passos{display:grid;gap:18px;margin-top:44px}
+.passo{
+  background:var(--branco);border:2px solid var(--borda);border-radius:24px;
+  padding:26px 22px 0;display:flex;flex-direction:column;gap:12px;overflow:hidden;
+}
+.passo-n{
+  width:40px;height:40px;border-radius:13px;color:#fff;
+  display:grid;place-items:center;font:1000 18px/1 Nunito;
+}
+.passo:nth-child(1) .passo-n{background:var(--verde);box-shadow:0 3px 0 var(--verde-borda)}
+.passo:nth-child(2) .passo-n{background:var(--laranja);box-shadow:0 3px 0 var(--laranja-borda)}
+.passo:nth-child(3) .passo-n{background:var(--azul);box-shadow:0 3px 0 #43719F}
+.passo p{font:600 15px/1.55 Nunito;color:var(--texto)}
+.passo-tela{
+  margin:14px auto 0;width:min(230px,80%);border-radius:22px 22px 0 0;overflow:hidden;
+  border:2px solid var(--borda);border-bottom:0;
+}
+.passo-tela img{aspect-ratio:620/900;object-fit:cover;object-position:top}
+
+/* ---------- dia e noite ---------- */
+.ciclo{position:relative;border-radius:24px;overflow:hidden;border:2px solid var(--borda);margin-top:36px}
+.ciclo img{width:100%;aspect-ratio:744/592;object-fit:cover;transition:opacity .9s ease}
+.ciclo img+img{position:absolute;inset:0}
+.ciclo img[data-ativo="nao"]{opacity:0}
+.ciclo-pontos{display:flex;gap:8px;justify-content:center;margin-top:18px}
+.ciclo-pontos button{
+  border:0;background:var(--borda);width:34px;height:9px;border-radius:99px;cursor:pointer;
+  transition:background .2s ease;
+}
+.ciclo-pontos button[aria-selected="true"]{background:var(--verde)}
+.ciclo-rotulo{
+  position:absolute;left:14px;bottom:14px;
+  font:800 12px/1 Nunito;letter-spacing:.1em;text-transform:uppercase;
+  color:#fff;background:rgba(61,51,42,.55);border-radius:99px;padding:9px 14px;
+}
+
+/* ---------- jogo limpo ---------- */
+.limpo{display:grid;gap:clamp(30px,4vw,56px);margin-top:40px;align-items:start}
+.tabela{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tabela th,.tabela td{text-align:left;padding:12px 10px 12px 0;border-bottom:2px solid var(--borda);font:600 15px/1.4 Nunito;color:var(--texto)}
+.tabela td b{color:var(--ink)}
+.tabela th{font:800 12px/1.3 Nunito;text-transform:uppercase;letter-spacing:.08em;color:var(--suave)}
+.tabela td:last-child,.tabela th:last-child{text-align:right;padding-right:0}
+.tag{font:800 12px/1 Nunito;padding:6px 11px;border-radius:99px}
+.tag--sim{background:var(--laranja-tinta);color:#A94718}
+.tag--nao{background:var(--verde-tinta);color:var(--verde-texto)}
+.garantias{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:14px}
+.garantias li{display:flex;gap:12px;font:600 15px/1.55 Nunito;color:var(--texto)}
+.garantias i{
+  flex:none;width:26px;height:26px;border-radius:9px;background:var(--verde-tinta);
+  display:grid;place-items:center;font-style:normal;color:var(--verde-texto);font-weight:1000;font-size:14px;
+}
+.garantias b{color:var(--ink)}
+.aparelho{
+  width:min(280px,88%);margin:0 auto;padding:8px;border-radius:36px;
+  background:var(--branco);border:2px solid var(--borda);box-shadow:0 4px 0 var(--borda);
+}
+.aparelho-tela{border-radius:28px;overflow:hidden;aspect-ratio:620/1342}
+.aparelho-tela img{width:100%;height:100% !important;object-fit:cover;object-position:top}
+.aparelho-legenda{margin-top:14px;text-align:center;font:600 13.5px/1.5 Nunito;color:var(--suave)}
+
+/* ---------- teste (a única faixa de cor cheia) ---------- */
+.teste{
+  background:var(--verde);border-radius:28px;color:#fff;
+  padding:clamp(34px,6vw,60px) clamp(22px,5vw,60px);
+  display:grid;gap:20px;position:relative;overflow:hidden;
+  box-shadow:0 6px 0 var(--verde-borda);
+}
+.teste::after{
+  content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;
+  border-radius:0 62% 0 62%;background:rgba(255,255,255,.12);transform:rotate(-18deg);
+}
+.teste .olho{color:#FFFFFF;margin:0}
+.teste h2{color:#fff;position:relative}
+.teste p{color:#FFFFFF;font:600 16px/1.6 Nunito;max-width:56ch;position:relative}
+.teste p b{color:#fff}
+.teste .acoes{margin-top:2px;position:relative}
+.teste .botao--cta{background:#fff;color:#2F6527;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.teste .botao--cta:active{transform:translateY(4px);box-shadow:0 0 0 rgba(0,0,0,.18)}
+
+/* ---------- fechamento ---------- */
+.fim{background:var(--claro)}
+.fim-grade{display:grid;gap:clamp(32px,5vw,60px);align-items:center}
+.fim-palco{
+  background:var(--branco);border:2px solid var(--borda);border-radius:24px;
+  padding:30px 20px 24px;text-align:center;
+}
+.fim-palco img{width:min(200px,52%);margin:0 auto;filter:drop-shadow(0 10px 8px rgba(62,47,35,.15))}
+.fim-legenda{margin-top:12px;font:700 15px/1.5 Nunito;color:var(--texto)}
+.lista-form{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;max-width:520px}
+.lista-form input{
+  flex:1 1 220px;padding:16px 18px;border-radius:16px;
+  border:2px solid var(--borda);background:var(--branco);
+  color:var(--ink);font:600 16px/1 Nunito;
+}
+.lista-form input::placeholder{color:var(--suave)}
+.recado{margin-top:14px;font:600 14px/1.5 Nunito;color:var(--texto);max-width:46ch}
+.lojas{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.loja{
+  padding:13px 20px;border-radius:14px;background:var(--branco);
+  border:2px solid var(--borda);box-shadow:0 3px 0 var(--borda);
+  font:800 14px/1.2 Nunito;color:var(--ink);
+}
+.loja small{display:block;font:800 9.5px/1 Nunito;letter-spacing:.14em;text-transform:uppercase;color:var(--suave);margin-bottom:4px}
+.miudo{
+  margin-top:clamp(48px,7vw,72px);padding-top:26px;border-top:2px solid var(--borda);
+  display:grid;gap:14px;font:600 13px/1.6 Nunito;color:var(--suave);
+}
+
+/* ---------- movimento e revelação ---------- */
+.revela{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s cubic-bezier(.22,.8,.3,1)}
+.revela.visivel{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .revela{opacity:1;transform:none;transition:none}
+  .cena-bicho,.folha-cai{animation:none !important}
+  *{transition-duration:.01ms !important}
+}
+
+/* ---------- telas maiores ---------- */
+@media (min-width:720px){
+  .hero-grade{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+  .numeros{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .humores{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .passos{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .limpo{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
+  .fim-grade{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
+  .miudo{grid-template-columns:1fr 1fr;gap:14px 40px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topo" aria-label="Topo">
+  <div class="topo-linha">
+    <a class="topo-marca" href="#"><i></i>Baru</a>
+    <a class="botao botao--cta botao--mini" href="#lista">Entrar na lista</a>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="faixa hero">
+  <div class="dentro hero-grade">
+    <div>
+      <span class="selo">Foco sem culpa · iOS + Android</span>
+      <h1>Larga o celular<br>que ele <em>cresce</em>.</h1>
+      <p class="lead">
+        Baru é um bichinho que vive das suas sessões de foco. Cada minuto longe
+        da tela vira folhas, itens e um habitat que muda com a hora do dia.
+        E se você falhar? Ele só sente sua falta — <strong>nunca morre, nunca
+        te culpa</strong>.
+      </p>
+      <div class="acoes">
+        <a class="botao botao--cta" href="#lista">Quero ser avisado</a>
+        <a class="botao botao--calmo" href="#como">Como funciona</a>
+      </div>
+      <ul class="provas">
+        <li>7 dias grátis</li>
+        <li>8 companheiros</li>
+        <li>4 idiomas</li>
+      </ul>
+    </div>
+
+    <div class="palco">
+      <div class="cena" id="cena" role="button" tabindex="0"
+           aria-label="Faça carinho no bicho: toque ou aperte Enter">
+        <div class="cena-sol" aria-hidden="true"></div>
+        <div class="cena-colina" aria-hidden="true"></div>
+        <div class="cena-agua" aria-hidden="true"></div>
+        <div class="cena-balao">
+          <b id="balao-titulo">Baru está radiante.</b>
+          <span id="balao-sub">Abaixo da meta e uma sessão na água. O melhor tipo de dia.</span>
+        </div>
+        <img class="cena-bicho" id="bicho" src="assets/pet-capybara-radiant.webp"
+             width="311" height="297" fetchpriority="high"
+             alt="Baru, a capivara, radiante, com brilhos ao redor.">
+        <span class="cena-dica" id="dica">toque para fazer carinho</span>
+      </div>
+      <div class="chips" id="chips" aria-label="Escolha o companheiro"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= NÚMEROS ================= -->
+<section class="faixa faixa--tom revela" style="padding-top:clamp(36px,5vw,56px);padding-bottom:clamp(36px,5vw,56px)">
+  <div class="dentro numeros">
+    <div class="numero"><b>8</b><span>companheiros com<br>personalidade própria</span></div>
+    <div class="numero"><b>4</b><span>idiomas de primeira classe:<br>pt · en · es · zh</span></div>
+    <div class="numero"><b>12</b><span>marcos na trilha —<br>nenhum é retirado depois</span></div>
+    <div class="numero"><b>0</b><span>punições. É regra escrita<br>do produto, não promessa</span></div>
+  </div>
+</section>
+
+<!-- ================= HUMORES ================= -->
+<section class="faixa revela">
+  <div class="dentro">
+    <p class="olho">Como ele acorda</p>
+    <h2>Cinco humores.<br>Zero chantagem.</h2>
+    <p class="lead" style="margin-top:16px">
+      O humor vem do seu dia real — tempo de tela e sessões de foco — e a cena
+      diz tudo sem painel nenhum. Cinco estados, em ordem estrita de
+      precedência; o neutro divide a soneca com o sonolento. No pior caso
+      possível, ele sente sua falta. Só isso.
+      <span style="color:var(--suave)">(Trocou de bicho ali em cima? Aqui acompanha.)</span>
+    </p>
+
+    <div class="humores">
+      <article class="humor">
+        <img data-humor="radiant" src="assets/pet-capybara-radiant.webp" width="311" height="297" alt="">
+        <b id="hum-radiant">Baru está radiante.</b>
+        <p id="sub-radiant">Abaixo da meta e uma sessão na água. O melhor tipo de dia.</p>
+      </article>
+      <article class="humor">
+        <img data-humor="content" src="assets/pet-capybara-content.webp" width="311" height="297" alt="">
+        <b id="hum-content">Baru está contente.</b>
+        <p id="sub-content">Um dia decente. Uma sessão a mais e ele estaria radiante.</p>
+      </article>
+      <article class="humor">
+        <img data-humor="sleepy" src="assets/pet-capybara-sleepy.webp" width="311" height="297" alt="">
+        <b id="hum-sleepy">Baru está com sono.</b>
+        <p id="sub-sleepy">Dia longo de tela. Amanhã ele topa nadar.</p>
+      </article>
+      <article class="humor">
+        <img data-humor="missing" src="assets/pet-capybara-missing.webp" width="311" height="297" alt="">
+        <b id="hum-missing">Baru sentiu sua falta.</b>
+        <p id="sub-missing">Ele te esperou. Nada foi perdido enquanto você esteve fora.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMO FUNCIONA ================= -->
+<section class="faixa faixa--tom revela" id="como">
+  <div class="dentro">
+    <p class="olho">Como funciona</p>
+    <h2>Três hábitos, um mundinho.</h2>
+
+    <div class="passos">
+      <article class="passo">
+        <span class="passo-n">1</span>
+        <h3>Foque</h3>
+        <p>Sessões de 25, 50 ou 90 minutos rendem folhas e XP. Desistir no meio
+        não tira nada — só não rende.</p>
+        <div class="passo-tela"><img loading="lazy" src="assets/home.webp" width="620" height="900" alt="Home do app: saldo de folhas, sequência e o habitat com a capivara."></div>
+      </article>
+      <article class="passo">
+        <span class="passo-n">2</span>
+        <h3>Encare seu número</h3>
+        <p>Tempo de tela contado com honestidade, por categoria. Você pode
+        discordar da classificação de qualquer app — sua palavra vence.</p>
+        <div class="passo-tela"><img loading="lazy" src="assets/tempo-com-dados.webp" width="620" height="900" alt="Tela de tempo de tela: 1h52 contam para a meta, com a quebra por categoria."></div>
+      </article>
+      <article class="passo">
+        <span class="passo-n">3</span>
+        <h3>Gaste com ele</h3>
+        <p>Folhas viram itens que caem na cena com mola. A trilha guarda doze
+        marcos — e marco conquistado nunca é retirado.</p>
+        <div class="passo-tela"><img loading="lazy" src="assets/trilha-andamento.webp" width="620" height="900" alt="A trilha: nível 4, cinco marcos conquistados e o próximo passo em destaque."></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DIA E NOITE ================= -->
+<section class="faixa revela">
+  <div class="dentro" style="max-width:860px">
+    <p class="olho">O habitat vive</p>
+    <h2>Às 22h a lua sobe.<br>De verdade.</h2>
+    <p class="lead" style="margin-top:16px">
+      A cena conhece o relógio do seu aparelho: o céu troca de cor, o sol vira
+      lua e a água escurece. Abrir o app de noite é outro lugar.
+    </p>
+
+    <div class="ciclo" id="ciclo">
+      <img src="assets/habitat-amanhecer.webp" width="744" height="592" data-ativo="sim" alt="O habitat às 6h: céu quente, sol baixo, água clara.">
+      <img src="assets/habitat-entardecer.webp" width="744" height="592" data-ativo="nao" loading="lazy" alt="O habitat às 18h: luz laranja, sol no horizonte.">
+      <img src="assets/habitat-noite.webp" width="744" height="592" data-ativo="nao" loading="lazy" alt="O habitat às 22h: céu índigo, lua com halo, água escura.">
+      <span class="ciclo-rotulo" id="ciclo-rotulo">06:00 · amanhecer</span>
+    </div>
+    <div class="ciclo-pontos" role="tablist" aria-label="Hora do dia">
+      <button role="tab" aria-selected="true" data-cena="0" aria-label="Amanhecer"></button>
+      <button role="tab" aria-selected="false" data-cena="1" aria-label="Entardecer"></button>
+      <button role="tab" aria-selected="false" data-cena="2" aria-label="Noite"></button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= JOGO LIMPO ================= -->
+<section class="faixa faixa--tom revela">
+  <div class="dentro">
+    <p class="olho">Sem letra miúda</p>
+    <h2>O contador de tela<br>que joga limpo.</h2>
+
+    <div class="limpo">
+      <div>
+        <p class="lead">
+          Somar tudo produz um número gordo e injusto. Baru só conta o intervalo
+          em que a tela está ligada, o aparelho desbloqueado e um app que conta
+          está na frente — o podcast no bolso nunca entra.
+        </p>
+
+        <table class="tabela" style="margin-top:24px">
+          <thead><tr><th scope="col">Categoria</th><th scope="col">Exemplos</th><th scope="col">Meta</th></tr></thead>
+          <tbody>
+            <tr><td><b>Dispersivo</b></td><td style="color:var(--ink-2)">social, vídeo curto, jogo</td><td><span class="tag tag--sim">entra</span></td></tr>
+            <tr><td><b>Neutro</b></td><td style="color:var(--ink-2)">mensagem, navegador, mapa</td><td><span class="tag tag--sim">entra</span></td></tr>
+            <tr><td><b>Produtivo</b></td><td style="color:var(--ink-2)">leitura, estudo, trabalho</td><td><span class="tag tag--nao">fora</span></td></tr>
+            <tr><td><b>Passivo</b></td><td style="color:var(--ink-2)">áudio</td><td><span class="tag tag--nao">fora</span></td></tr>
+          </tbody>
+        </table>
+
+        <ul class="garantias">
+          <li><i>✓</i><span><b>Só o agregado, nunca o conteúdo.</b> O app lê quanto tempo cada aplicativo ficou na frente — jamais mensagens, telas ou digitação.</span></li>
+          <li><i>✓</i><span><b>Recusou a permissão? Tudo bem.</b> Nenhum número é estimado ou inventado; o humor passa a vir só das suas sessões.</span></li>
+          <li><i>✓</i><span><b>“Apagar meus dados” apaga de verdade.</b> Aqui e no servidor, num toque, dentro de Ajustes → Sua conta.</span></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="aparelho">
+          <div class="aparelho-tela">
+            <img loading="lazy" src="assets/tempo-sem-permissao.webp" width="620" height="1342"
+                 alt="Tela de tempo de tela sem permissão: nenhum número inventado, só um convite para conceder.">
+          </div>
+        </div>
+        <p class="aparelho-legenda">Sem permissão: estado vazio honesto,<br>nenhum número inventado.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TESTE ================= -->
+<section class="faixa revela" style="padding-top:0">
+  <div class="dentro">
+    <div class="teste">
+      <p class="olho">No lançamento</p>
+      <h2>Sete dias por conta da casa.</h2>
+      <p>
+        Teste tudo, com todos os bichos. A gente avisa <b>24 horas antes</b> de o
+        período grátis acabar — nada de cobrança surpresa. Depois, plano mensal
+        ou anual, e o anual sai como melhor valor.
+      </p>
+      <div class="acoes"><a class="botao botao--cta" href="#lista">Entrar na lista de espera</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LISTA ================= -->
+<section class="faixa fim" id="lista">
+  <div class="dentro fim-grade">
+    <div>
+      <p class="olho">Lista de espera</p>
+      <h2>Garanta seu lugar<br>no habitat.</h2>
+      <p class="lead" style="margin-top:16px">
+        O MVP está em teste fechado, fechando a última milha antes das lojas.
+        Deixe seu e-mail e você recebe <b>um</b> aviso quando o teste aberto
+        começar. Sem newsletter, sem spam.
+      </p>
+
+      <form class="lista-form" id="form-lista" hidden>
+        <label for="email-lista" style="position:absolute;left:-9999px">Seu e-mail</label>
+        <input id="email-lista" type="email" name="email" required placeholder="voce@email.com" autocomplete="email">
+        <button class="botao botao--cta" type="submit">Avise-me</button>
+      </form>
+      <p class="recado" id="recado-lista" role="status"></p>
+
+      <div class="lojas" id="lojas-em-breve">
+        <span class="loja"><small>em breve</small>App Store</span>
+        <span class="loja"><small>em breve</small>Google Play</span>
+      </div>
+    </div>
+
+    <div class="fim-palco">
+      <img id="noite-bicho" loading="lazy"
+           src="assets/pet-capybara-sleepy.webp" width="311" height="297"
+           alt="Baru dormindo, esperando o dia seguinte.">
+      <p class="fim-legenda" id="noite-legenda">Baru já foi dormir.<br>Ele te espera amanhã.</p>
+    </div>
+  </div>
+
+  <div class="dentro miudo">
+    <p>Baru · app de foco e redução de tempo de tela para iOS e Android, em
+    português, inglês, espanhol e mandarim. Sete dias de teste grátis; depois,
+    plano mensal ou anual, com aviso 24 h antes do fim do teste.</p>
+    <p>A medição de tempo de tela está disponível no Android. No iOS ela depende
+    de uma autorização da Apple ainda em avaliação — todo o resto do app
+    funciona igual nas duas plataformas.</p>
+  </div>
+</section>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     Lista de espera: preencha UM dos campos para o formulário aparecer.
+       endpoint — URL que aceita POST JSON {email};
+       email    — endereço de contato (vira um mailto pronto).
+     Com os dois vazios a página mostra só o "em breve" das lojas.
+  ------------------------------------------------------------------ */
+  var LISTA_ESPERA = { endpoint: "", email: "" };
+
+  var reduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- elenco ---------- */
+  /* Os nomes vêm de lib/models.dart; o pronome existe porque o app
+     resolve {p}/{P} pelo sexo do companheiro (l10n.dart, comPronome).
+     Sem isso a página dizia "Nina sentiu sua falta. Ele te esperou." */
+  var ESPECIES = [
+    { id: "capybara", nome: "Baru",   rotulo: "capivara",  p: "ele" },
+    { id: "otter",    nome: "Rio",    rotulo: "lontra",    p: "ele" },
+    { id: "tortoise", nome: "Toco",   rotulo: "tartaruga", p: "ele" },
+    { id: "owl",      nome: "Nina",   rotulo: "coruja",    p: "ela" },
+    { id: "axolotl",  nome: "Lume",   rotulo: "axolote",   p: "ele" },
+    { id: "penguin",  nome: "Nino",   rotulo: "pinguim",   p: "ele" },
+    { id: "cat",      nome: "Mel",    rotulo: "gata",      p: "ela" },
+    { id: "fox",      nome: "Faísca", rotulo: "raposa",    p: "ela" }
+  ];
+  /* Legendas do catálogo pt de lib/l10n.dart, com os mesmos marcadores. */
+  var HUMOR_TIT = {
+    radiant: "{n} está radiante.",
+    content: "{n} está contente.",
+    sleepy:  "{n} está com sono.",
+    missing: "{n} sentiu sua falta."
+  };
+  var HUMOR_SUB = {
+    radiant: "Abaixo da meta e uma sessão na água. O melhor tipo de dia.",
+    content: "Um dia decente. Uma sessão a mais e {p} estaria radiante.",
+    sleepy:  "Dia longo de tela. Amanhã {p} topa nadar.",
+    missing: "{P} te esperou. Nada foi perdido enquanto você esteve fora."
+  };
+  function frase(texto, esp) {
+    var maiuscula = esp.p.charAt(0).toUpperCase() + esp.p.slice(1);
+    return texto.replace(/\{n\}/g, esp.nome)
+                .replace(/\{p\}/g, esp.p)
+                .replace(/\{P\}/g, maiuscula);
+  }
+
+  var atual = ESPECIES[0];
+  var chips = document.getElementById("chips");
+  var bicho = document.getElementById("bicho");
+  var balaoTitulo = document.getElementById("balao-titulo");
+  var balaoSub = document.getElementById("balao-sub");
+  var humores = document.querySelectorAll("[data-humor]");
+  var noiteBicho = document.getElementById("noite-bicho");
+  var noiteLegenda = document.getElementById("noite-legenda");
+
+  /* Resolve o sprite. O build de arquivo único (build_artifact.py) injeta
+     window.BARU_SPRITES com as imagens em data: URI; sem ele, cai no
+     caminho relativo. Antes o caminho era montado direto aqui, e no HTML
+     embutido a troca de espécie apontava para arquivo inexistente. */
+  function sprite(esp, humor) {
+    var chave = esp.id + "-" + humor;
+    var mapa = window.BARU_SPRITES;
+    return (mapa && mapa[chave]) || ("assets/pet-" + chave + ".webp");
+  }
+
+  function escolher(esp) {
+    atual = esp;
+    bicho.src = sprite(esp, "radiant");
+    bicho.alt = esp.nome + ", " + esp.rotulo + ", radiante.";
+    balaoTitulo.textContent = frase(HUMOR_TIT.radiant, esp);
+    balaoSub.textContent = frase(HUMOR_SUB.radiant, esp);
+    Array.prototype.forEach.call(humores, function (img) {
+      var h = img.getAttribute("data-humor");
+      img.src = sprite(esp, h);
+      var b = document.getElementById("hum-" + h);
+      if (b) b.textContent = frase(HUMOR_TIT[h], esp);
+      var sub = document.getElementById("sub-" + h);
+      if (sub) sub.textContent = frase(HUMOR_SUB[h], esp);
+    });
+    noiteBicho.src = sprite(esp, "sleepy");
+    noiteBicho.alt = esp.nome + " dormindo, esperando o dia seguinte.";
+    var maiuscula = esp.p.charAt(0).toUpperCase() + esp.p.slice(1);
+    noiteLegenda.innerHTML = esp.nome + " já foi dormir.<br>" + maiuscula + " te espera amanhã.";
+    Array.prototype.forEach.call(chips.children, function (c) {
+      c.setAttribute("aria-pressed", String(c.dataset.id === esp.id));
+    });
+  }
+
+  ESPECIES.forEach(function (esp) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.dataset.id = esp.id;
+    b.setAttribute("aria-pressed", String(esp === atual));
+    b.innerHTML =
+      '<img loading="lazy" src="' + sprite(esp, "content") + '" width="44" height="42" alt="">' +
+      "<b>" + esp.nome + "</b><small>" + esp.rotulo + "</small>";
+    b.addEventListener("click", function () { escolher(esp); });
+    chips.appendChild(b);
+  });
+
+  /* ---------- carinho ---------- */
+  var cena = document.getElementById("cena");
+  var dica = document.getElementById("dica");
+  var toques = [];
+
+  function coracao(x, y) {
+    var c = document.createElement("span");
+    c.className = "coracao";
+    c.style.left = (x + (Math.random() * 36 - 18)) + "px";
+    c.style.top = (y - 30) + "px";
+    c.style.animationDelay = (Math.random() * .12) + "s";
+    cena.appendChild(c);
+    c.addEventListener("animationend", function () { c.remove(); });
+  }
+
+  function carinho(x, y) {
+    dica.style.opacity = "0";
+    bicho.classList.remove("pulo");
+    void bicho.offsetWidth;
+    bicho.classList.add("pulo");
+    var agora = Date.now();
+    toques = toques.filter(function (t) { return agora - t < 3000; });
+    toques.push(agora);
+    var n = toques.length >= 3 ? 6 : 1; // 3 toques em 3 s = chuva, como no app
+    for (var i = 0; i < n; i++) coracao(x, y);
+  }
+
+  cena.addEventListener("pointerdown", function (e) {
+    var r = cena.getBoundingClientRect();
+    carinho(e.clientX - r.left, e.clientY - r.top);
+  });
+  cena.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      var r = cena.getBoundingClientRect();
+      carinho(r.width / 2, r.height * 0.55);
+    }
+  });
+
+  /* folhas caindo no palco */
+  if (!reduzido) {
+    for (var i = 0; i < 5; i++) {
+      var f = document.createElement("span");
+      f.className = "folha-cai";
+      f.style.left = (8 + Math.random() * 84) + "%";
+      f.style.animationDuration = (7 + Math.random() * 6) + "s";
+      f.style.animationDelay = (-Math.random() * 9) + "s";
+      f.setAttribute("aria-hidden", "true");
+      cena.appendChild(f);
+    }
+  }
+
+  /* ---------- dia e noite ---------- */
+  var ciclo = document.getElementById("ciclo");
+  var cenas = ciclo.querySelectorAll("img");
+  var pontos = document.querySelectorAll("[data-cena]");
+  var rotulo = document.getElementById("ciclo-rotulo");
+  var rotulos = ["06:00 · amanhecer", "18:00 · entardecer", "22:00 · noite"];
+  var idx = 0, pausaAte = 0;
+
+  function mostrar(i) {
+    idx = i;
+    Array.prototype.forEach.call(cenas, function (img, j) {
+      img.setAttribute("data-ativo", j === i ? "sim" : "nao");
+    });
+    Array.prototype.forEach.call(pontos, function (p, j) {
+      p.setAttribute("aria-selected", String(j === i));
+    });
+    rotulo.textContent = rotulos[i];
+  }
+  Array.prototype.forEach.call(pontos, function (p, j) {
+    p.addEventListener("click", function () { pausaAte = Date.now() + 12000; mostrar(j); });
+  });
+  if (!reduzido) {
+    setInterval(function () {
+      if (Date.now() < pausaAte) return;
+      mostrar((idx + 1) % cenas.length);
+    }, 3800);
+  }
+
+  /* ---------- lista de espera ---------- */
+  var form = document.getElementById("form-lista");
+  var recado = document.getElementById("recado-lista");
+  if (LISTA_ESPERA.endpoint || LISTA_ESPERA.email) {
+    form.hidden = false;
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = document.getElementById("email-lista").value.trim();
+      if (!email) return;
+      if (!LISTA_ESPERA.endpoint) {
+        window.location.href = "mailto:" + LISTA_ESPERA.email +
+          "?subject=" + encodeURIComponent("Lista de espera do Baru") +
+          "&body=" + encodeURIComponent("Quero ser avisado: " + email);
+        return;
+      }
+      recado.textContent = "Enviando…";
+      fetch(LISTA_ESPERA.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email: email })
+      }).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        form.hidden = true;
+        recado.textContent = "Pronto. Avisamos você quando o teste aberto começar.";
+      }).catch(function () {
+        recado.textContent = "Não conseguimos registrar agora. Tente de novo em alguns minutos.";
+      });
+    });
+  }
+
+  /* ---------- revelação ao rolar ---------- */
+  var alvos = document.querySelectorAll(".revela");
+  if (reduzido || !("IntersectionObserver" in window)) {
+    Array.prototype.forEach.call(alvos, function (n) { n.classList.add("visivel"); });
+  } else {
+    var obs = new IntersectionObserver(function (es) {
+      es.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("visivel"); obs.unobserve(en.target); }
+      });
+    }, { rootMargin: "0px 0px -10% 0px", threshold: 0.05 });
+    Array.prototype.forEach.call(alvos, function (n) { obs.observe(n); });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 package com.lhcx.baru_app
 
 import android.content.Intent
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -12,7 +12,11 @@ import io.flutter.plugin.common.MethodChannel
  * por isso que nenhum texto de produto mora do lado nativo: a fala chega
  * pronta e traduzida.
  */
-class MainActivity : FlutterActivity() {
+// `FlutterFragmentActivity`, nao `FlutterActivity`: o `local_auth` mostra o
+// dialogo de biometria com o `BiometricPrompt` do AndroidX, que precisa de
+// um `FragmentActivity` para se ancorar. Com a activity comum o dialogo nao
+// abre — e o erro chega no Dart como "no_fragment_activity".
+class MainActivity : FlutterFragmentActivity() {
 
     private companion object {
         const val CANAL = "baru/overlay"

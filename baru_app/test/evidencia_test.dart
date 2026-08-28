@@ -11,6 +11,10 @@ import 'package:baru_app/models.dart';
 import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/screens/home_screen.dart';
 import 'package:baru_app/screens/missoes_screen.dart';
+import 'package:baru_app/l10n.dart';
+import 'package:baru_app/data/biometria.dart';
+import 'package:baru_app/data/cofre.dart';
+import 'package:baru_app/screens/auth_screen.dart';
 import 'package:baru_app/screens/conta_screen.dart';
 import 'package:baru_app/screens/folhas_screen.dart';
 import 'package:baru_app/screens/sequencia_screen.dart';
@@ -559,6 +563,68 @@ void main() {
     }
     app.nextOnb();
     await mostra('onboarding-revelacao');
+  });
+
+  testWidgets('lembrar o login e entrar pela digital', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(412, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    // A chave muda a cada captura. Sem isso o Flutter reaproveita o `State`
+    // — mesmo tipo, mesma posição —, o `initState` não roda de novo e a
+    // segunda captura sai idêntica à primeira, ignorando o cofre novo. Foi
+    // o que aconteceu: a tela de desbloqueio saiu como formulário vazio.
+    Future<void> mostra(Cofre cofre, Biometria bio, String nome) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RepaintBoundary(
+            key: const Key('captura-auth'),
+            child: AuthScreen(
+              key: ValueKey(nome),
+              lang: 'pt',
+              cofre: cofre,
+              biometria: bio,
+              onAuthenticated: () async {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(Tempo.componente);
+      await _salva(tester, const Key('captura-auth'), nome);
+    }
+
+    // Primeira vez: o formulário, agora com o interruptor de lembrar.
+    await mostra(
+      CofreDeMentira(),
+      BiometriaDeMentira(),
+      'login-lembrar',
+    );
+
+    // A volta: quem já entrou aqui não vê formulário vazio. `comBiometria`
+    // falso de propósito — com verdadeiro a tela pediria a digital sozinha
+    // e a captura sairia no meio do pedido.
+    await mostra(
+      CofreDeMentira(
+        const CredencialLembrada(
+          email: 'ana@exemplo.com',
+          senha: 'sementeDoBaru7',
+          comBiometria: false,
+        ),
+      ),
+      BiometriaDeMentira(),
+      'login-desbloqueio',
+    );
+
+    expect(find.text(T('pt').authOla), findsOneWidget);
+    expect(find.text('ana@exemplo.com'), findsOneWidget);
   });
 
   testWidgets('apagar os próprios dados pede confirmação', (tester) async {

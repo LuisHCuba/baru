@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:uuid/uuid.dart';
 
 import 'data/app_snapshot.dart';
+import 'data/cofre.dart';
 import 'data/auth_errors.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
@@ -449,7 +450,9 @@ class AppState extends ChangeNotifier {
     _saveTimer?.cancel();
     _timer?.cancel();
 
-    // 2. O aparelho.
+    // 2. O aparelho. A credencial lembrada some junto: apagar tudo e
+    //    deixar a senha no cofre seria deixar a porta aberta.
+    await cofre.esquece();
     await repos?.clearSnapshot();
 
     // 3. O servidor.
@@ -477,10 +480,18 @@ class AppState extends ChangeNotifier {
     _restauraPilha(AppScreen.onb);
   }
 
+  /// O cofre da credencial lembrada.
+  ///
+  /// Injetável para o teste; em produção é o do Keystore. Sair da conta e
+  /// apagar os dados têm de esvaziá-lo — senão a senha sobrevive à saída e
+  /// o próximo a pegar o aparelho entra com a digital dele.
+  Cofre cofre = CofreSeguro();
+
   Future<void> signOut() async {
     if (!canSignOut) return;
     await BaruSupabase.instance.signOut();
     await repos?.clearSnapshot();
+    await cofre.esquece();
   }
 
   String get displayName =>

@@ -1,5 +1,24 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// O servidor recusou a credencial — não foi rede, nem configuração.
+///
+/// A diferença importa para o cofre. Credencial recusada é senha velha
+/// (trocada em outro aparelho, conta apagada): guardá-la só faria a pessoa
+/// repetir uma digital que nunca vai funcionar, então some. Já falta de
+/// rede, servidor fora ou app sem configuração não dizem nada sobre a
+/// senha, e apagá-la ali seria perder o que estava certo.
+bool credencialRecusada(Object error) {
+  final code = error is AuthException ? error.code?.toLowerCase() : null;
+  final msg = error is AuthException
+      ? error.message.toLowerCase()
+      : error.toString().toLowerCase();
+
+  if (code == 'invalid_credentials' || code == 'user_not_found') return true;
+  if (msg.contains('invalid login credentials')) return true;
+  if (msg.contains('user not found')) return true;
+  return false;
+}
+
 /// Traduz erros comuns do Supabase Auth para pt/en/es/zh.
 String translateAuthError(Object error, String lang) {
   final code = error is AuthException ? error.code?.toLowerCase() : null;

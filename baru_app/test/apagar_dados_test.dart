@@ -4,6 +4,7 @@ import 'package:baru_app/data/quiz.dart';
 import 'package:baru_app/data/repositories.dart';
 import 'package:baru_app/data/supabase_gateway.dart';
 import 'package:baru_app/models.dart';
+import 'package:baru_app/data/cofre.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -87,6 +88,28 @@ void main() {
       expect(s.companionshipStarted, isFalse);
       expect(s.screen, AppScreen.onb);
       expect(s.onb, 0);
+      s.dispose();
+    });
+
+    test('a credencial lembrada some junto', () async {
+      // Apagar tudo e deixar a senha no cofre seria deixar a porta aberta:
+      // o próximo a pegar o aparelho entraria com a digital dele.
+      final repos = BaruRepositories.memory();
+      await repos.init();
+      final s = _cheio(repos);
+      final cofre = CofreDeMentira(
+        const CredencialLembrada(
+          email: 'ana@exemplo.com',
+          senha: 'sementeDoBaru7',
+          comBiometria: true,
+        ),
+      );
+      s.cofre = cofre;
+
+      await s.apagaMeusDados();
+
+      expect(cofre.atual, isNull);
+      expect(cofre.apagamentos, greaterThan(0));
       s.dispose();
     });
 

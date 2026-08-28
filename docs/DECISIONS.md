@@ -330,3 +330,51 @@ conclusão usa alarme exato e **cai para inexato** quando a permissão é negada
 alguns minutos de atraso são melhores que nada, e a conclusão em si é
 reconciliada pelo relógio quando o app abre (ADR-008). Verificação em aparelho
 está em BL-09. Reverter: o commit é isolado.
+
+## ADR-012 — Credencial lembrada no Keystore, biometria como cadeado (2026-08-28)
+
+**Contexto.** O login era um formulário vazio a cada visita. O pedido foi
+lembrar e-mail e senha, e entrar pela autenticação do aparelho.
+
+**Decisão.** A credencial vai para o `flutter_secure_storage` — Keystore no
+Android, Keychain no iOS —, **nunca** para o `shared_preferences`, onde o
+snapshot do app já mora em texto puro e entra em backup do aparelho. A
+biometria não é o segredo: ela destranca o cofre, e é a senha guardada que
+entra no Supabase. O `local_auth` roda com `biometricOnly: false`, então
+digital, rosto **e** PIN servem.
+
+**Alternativas descartadas.** (a) Guardar só a sessão do Supabase e renovar:
+o refresh token é revogado ao sair, e depois disso não há como entrar sem
+digitar — some justamente o recurso pedido. (b) Exigir biometria de verdade:
+deixaria de fora quem não cadastrou digital e aparelhos sem sensor, sem
+ganho de segurança real, porque o PIN do aparelho protege o mesmo Keystore.
+
+**Consequências.** `MainActivity` teve de virar `FlutterFragmentActivity` —
+o `BiometricPrompt` do AndroidX precisa de um `FragmentActivity` para se
+ancorar. `minSdk` passa a ser efetivamente 23 (o do
+`flutter_secure_storage`); o projeto já está em 24. Quem troca o bloqueio de
+tela perde a chave do Keystore e volta a digitar: tratado como "não há nada
+guardado", não como erro. Credencial **recusada pelo servidor** esvazia o
+cofre; falta de rede ou de configuração não esvazia, porque o erro não diz
+nada sobre a senha e apagá-la ali seria perder o que estava certo. Em ambos
+os casos a tela cai no formulário, para ninguém ficar repetindo uma digital
+que nunca vai funcionar. Reverter: o commit é isolado, e sem o cofre a tela
+volta a abrir no formulário.
+
+## ADR-013 — `INTERNET` no manifesto principal, com teste (2026-08-28)
+
+**Contexto.** O primeiro APK de release exportado instalava, abria e falhava
+em toda chamada de rede. O template do Flutter declara
+`android.permission.INTERNET` apenas em `android/app/src/debug/` e
+`.../profile/`, porque é disso que o hot reload precisa. O build de release
+funde só o `main`.
+
+**Decisão.** Declarar `INTERNET` (e `ACCESS_NETWORK_STATE`) no `main`, e
+travar com `test/manifest_release_test.dart`, que além de exigir a permissão
+compara as duas listas: qualquer permissão que exista só no debug falha o
+teste.
+
+**Consequências.** O erro era invisível em desenvolvimento — `flutter run`
+sempre funcionou — e só aparecia no aparelho de quem instalava o APK. O
+teste move essa descoberta para a suíte. Nenhum efeito em runtime além da
+permissão, que é normal e não pede diálogo.

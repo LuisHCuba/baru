@@ -221,6 +221,17 @@ class T {
   String get authCreateAccount => s('authCreateAccount');
   String get authBackToLogin => s('authBackToLogin');
   String get authLoading => s('authLoading');
+
+  // Lembrar credencial e entrar pelo desbloqueio do aparelho.
+  String get authLembrar => s('authLembrar');
+  String get authLembrarSub => s('authLembrarSub');
+  String get authBiometria => s('authBiometria');
+  String get authBiometriaSub => s('authBiometriaSub');
+  String get authBiometriaMotivo => s('authBiometriaMotivo');
+  String get authBiometriaFalhou => s('authBiometriaFalhou');
+  String get authVoltar => s('authVoltar');
+  String get authOutraConta => s('authOutraConta');
+  String get authOla => s('authOla');
   String get authEmailInvalid => s('authEmailInvalid');
   String get authPasswordShort => s('authPasswordShort');
   String get authPasswordMismatch => s('authPasswordMismatch');
@@ -464,6 +475,15 @@ const _pt = <String, Object>{
   'authCreateAccount': 'Criar conta',
   'authBackToLogin': 'Já tenho conta',
   'authLoading': 'Aguarde…',
+  'authLembrar': 'Lembrar meus dados',
+  'authLembrarSub': 'Guardado só neste aparelho, cifrado.',
+  'authBiometria': 'Entrar com a digital',
+  'authBiometriaSub': 'Use a digital, o rosto ou o PIN do aparelho.',
+  'authBiometriaMotivo': 'Desbloqueie para entrar no Baru',
+  'authBiometriaFalhou': 'Não deu para confirmar. Digite a senha.',
+  'authVoltar': 'Digitar a senha',
+  'authOutraConta': 'Entrar com outra conta',
+  'authOla': 'Que bom te ver de novo',
   'authEmailInvalid': 'Informe um e-mail válido.',
   'authPasswordShort': 'A senha precisa ter pelo menos 6 caracteres.',
   'authPasswordMismatch': 'As senhas não coincidem.',
@@ -911,6 +931,15 @@ const _en = <String, Object>{
   'authCreateAccount': 'Create account',
   'authBackToLogin': 'I already have an account',
   'authLoading': 'Please wait…',
+  'authLembrar': 'Remember me',
+  'authLembrarSub': 'Kept on this device only, encrypted.',
+  'authBiometria': 'Sign in with fingerprint',
+  'authBiometriaSub': 'Use your device\'s fingerprint, face or PIN.',
+  'authBiometriaMotivo': 'Unlock to sign in to Baru',
+  'authBiometriaFalhou': 'Couldn\'t confirm. Type your password.',
+  'authVoltar': 'Type the password',
+  'authOutraConta': 'Use another account',
+  'authOla': 'Good to see you again',
   'authEmailInvalid': 'Enter a valid email address.',
   'authPasswordShort': 'Password must be at least 6 characters.',
   'authPasswordMismatch': 'Passwords do not match.',
@@ -1355,6 +1384,15 @@ const _es = <String, Object>{
   'authCreateAccount': 'Crear cuenta',
   'authBackToLogin': 'Ya tengo cuenta',
   'authLoading': 'Espera…',
+  'authLembrar': 'Recordar mis datos',
+  'authLembrarSub': 'Guardado solo en este dispositivo, cifrado.',
+  'authBiometria': 'Entrar con la huella',
+  'authBiometriaSub': 'Usa la huella, la cara o el PIN del dispositivo.',
+  'authBiometriaMotivo': 'Desbloquea para entrar en Baru',
+  'authBiometriaFalhou': 'No se pudo confirmar. Escribe la contraseña.',
+  'authVoltar': 'Escribir la contraseña',
+  'authOutraConta': 'Entrar con otra cuenta',
+  'authOla': 'Qué bueno verte de nuevo',
   'authEmailInvalid': 'Introduce un correo válido.',
   'authPasswordShort': 'La contraseña debe tener al menos 6 caracteres.',
   'authPasswordMismatch': 'Las contraseñas no coinciden.',
@@ -1801,6 +1839,15 @@ const _zh = <String, Object>{
   'authCreateAccount': '创建账号',
   'authBackToLogin': '已有账号',
   'authLoading': '请稍候…',
+  'authLembrar': '记住我的信息',
+  'authLembrarSub': '仅加密保存在本机。',
+  'authBiometria': '用指纹登录',
+  'authBiometriaSub': '使用设备的指纹、面容或 PIN 码。',
+  'authBiometriaMotivo': '解锁以登录 Baru',
+  'authBiometriaFalhou': '无法确认，请输入密码。',
+  'authVoltar': '输入密码',
+  'authOutraConta': '用其他账号登录',
+  'authOla': '很高兴再次见到你',
   'authEmailInvalid': '请输入有效的邮箱。',
   'authPasswordShort': '密码至少需要 6 个字符。',
   'authPasswordMismatch': '两次密码不一致。',

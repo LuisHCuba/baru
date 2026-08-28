@@ -5,10 +5,10 @@ Branch: `night/2026-08-27`, integrada em `main` | Build: **verde**
 | Portão | Resultado (execução real) |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | **440 passando, 1 pulado** (era 151 no início do dia) |
+| `flutter test` | **460 passando, 1 pulado** (era 151 no início do dia) |
 | `flutter test test/integration` | 7/7 contra Supabase local |
 | `supabase db reset` em banco limpo | **8 migrations · 15 tabelas · 58 políticas · nenhuma sem RLS** (a migration 9 ainda não foi rodada em banco limpo) |
-| Evidência visual | 56 PNGs em `docs/evidence/2026-08-27/` |
+| Evidência visual | 58 PNGs em `docs/evidence/2026-08-27/` |
 | `flutter build apk --release` | **app-release.apk, 51,5 MB** |
 
 ## Abra o app e você vê
@@ -31,6 +31,16 @@ Frases que são verdade hoje e não eram ontem:
 - **O APK de release compila.** Não compilava: `usage_stats` 1.3.1 fica num
   `compileSdk` anterior à API 31 e o `verifyReleaseResources` quebrava em
   `android:attr/lStar not found`.
+- **O APK de release tem internet.** O primeiro exportado não tinha: o
+  template do Flutter declara `INTERNET` só em `debug/` e `profile/`, e o
+  release funde apenas o `main`. O app instalava, abria e toda chamada de
+  rede morria em "erro de internet". Há teste lendo o manifesto.
+- **"Lembrar meus dados" no login**, cifrado no Keystore — e a volta abre
+  com "Que bom te ver de novo" e o botão de digital, não com formulário
+  vazio. O desbloqueio usa digital, rosto **ou** o PIN do aparelho, então
+  quem não cadastrou biometria não fica de fora. Digitar a senha nunca some,
+  e credencial recusada pelo servidor cai no formulário em vez de deixar a
+  pessoa repetindo uma digital que nunca vai funcionar.
 - **As telas entram com transição** e a barra de destinos é fixa.
 - **Dá para acariciar o Baru**: ele acompanha a mão, aperta os olhos, o pelo
   se levanta sob o dedo, sobem corações, e a mão ronrona.

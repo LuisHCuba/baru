@@ -1,7 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- O app fala com o Supabase. Sem isto o release instala e abre, e
+         toda chamada de rede morre em "erro de internet" — o `main` e o
+         unico manifesto que entra no APK de release, e o template do
+         Flutter poe INTERNET so em `debug/` e `profile/`. Por isso
+         funcionava no `flutter run` e nao no APK exportado. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Distinguir "sem rede" de "servidor fora" muda a mensagem que a
+         pessoa le. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <!-- Entrar com a digital/rosto do aparelho. `USE_BIOMETRIC` cobre da
+         API 28; `USE_FINGERPRINT` e o nome antigo, para aparelhos mais
+         velhos. Nenhuma das duas pede caixa de dialogo: sao normais. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- A sessao de foco termina na hora marcada; um aviso atrasado nao
          serve. Se o usuario negar, o app cai para agendamento inexato. -->

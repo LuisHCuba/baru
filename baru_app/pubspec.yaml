@@ -45,6 +45,8 @@ dependencies:
   timezone: ^0.10.1
   flutter_timezone: ^5.1.0
   audioplayers: ^6.7.1
+  local_auth: ^3.0.1
+  flutter_secure_storage: ^10.3.1
 
 dependency_overrides:
   permission_handler_android: 13.0.1

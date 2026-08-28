@@ -6,11 +6,19 @@ JavaScript: um `index.html` com o CSS embutido e as imagens ao lado.
 ```
 landing/
 ├── index.html          a página
-├── assets/*.webp       capturas reais do app (geradas, não versione à mão)
-├── build_assets.py     docs/evidence/ -> assets/ (redimensiona e converte)
+├── assets/*.webp       capturas e sprites reais do app (gerados)
+├── build_assets.py     docs/evidence/ -> assets/: redimensiona as telas e
+│                       corta folha-especies.png em 32 sprites (8 espécies
+│                       × 4 humores), ancorados nos pés numa moldura comum
 ├── build_artifact.py   index.html -> dist/, com as imagens embutidas
 └── dist/               arquivo único para publicar em qualquer lugar
 ```
+
+A página é interativa: dá para escolher qualquer um dos 8 companheiros
+(a escolha se propaga para os humores e para o fechamento), fazer carinho
+no bicho — três toques em 3 s soltam a chuva de corações, a mesma regra do
+app — e o habitat troca de hora sozinho. Tudo em vanilla JS, animações só
+de transform/opacity, imagens abaixo da dobra com `loading="lazy"`.
 
 ## Rodar localmente
 
@@ -69,8 +77,11 @@ houver uma evidência mais nova.
   produto. Se uma regra mudar lá, muda aqui.
 - Todas as imagens são capturas reais da árvore de widgets. Nenhuma arte de
   divulgação, nenhum mockup fantasiado.
-- O seletor de hora do dia mostra três momentos: amanhecer, entardecer e
+- O ciclo de hora do dia mostra três momentos: amanhecer, entardecer e
   noite. `habitat-dia.png` ficou de fora porque é quase idêntico ao
   amanhecer (diferença média de 8,7 em 255 por canal) — a troca parecia
   quebrada.
+- Os nomes e humores dos 8 companheiros vêm do código do app
+  (`lib/models.dart` e o catálogo pt de `lib/l10n.dart`), incluindo as
+  legendas de humor, palavra por palavra.
 - A página não afirma que o app está nas lojas, porque não está.

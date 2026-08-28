@@ -19,25 +19,64 @@ IMAGENS = {
     "tempo-com-dados.png": 620,
     "tempo-sem-permissao.png": 620,
     "trilha-andamento.png": 620,
-    "missoes.png": 620,
-    "tela-loja.png": 620,
-    "tela-sequencia.png": 620,
     "habitat-amanhecer.png": 744,
     "habitat-entardecer.png": 744,
     "habitat-noite.png": 744,
-    "pet-swim.png": 400,
-    "pet-graze.png": 400,
-    "pet-nap.png": 400,
-    "pet-idle.png": 400,
-    "especie-capybara.png": 400,
-    "especie-otter.png": 400,
-    "especie-tortoise.png": 400,
-    "especie-owl.png": 400,
 }
+
+
+ESPECIES = ["capybara", "otter", "tortoise", "owl", "axolotl", "penguin", "cat", "fox"]
+HUMORES = ["radiant", "content", "sleepy", "missing"]
+
+
+def _bandas(perfil):
+    """Intervalos contíguos com conteúdo num perfil booleano."""
+    b, ini = [], None
+    for i, x in enumerate(perfil):
+        if x and ini is None:
+            ini = i
+        if not x and ini is not None:
+            b.append((ini, i))
+            ini = None
+    if ini is not None:
+        b.append((ini, len(perfil)))
+    return b
+
+
+def corta_sprites() -> int:
+    """Corta folha-especies.png (8 espécies × 4 humores, fundo transparente)
+    em sprites individuais numa moldura comum, ancorados nos pés, para a
+    troca de espécie/humor na página não pular."""
+    im = Image.open(FONTE / "folha-especies.png").convert("RGBA")
+    alfa = im.getchannel("A")
+    px = alfa.load()
+    w, h = im.size
+    linhas = _bandas([any(px[x, y] for x in range(w)) for y in range(h)])
+    colunas = _bandas([any(px[x, y] for y in range(h)) for x in range(w)])
+    assert len(linhas) == 8 and len(colunas) == 4, (len(linhas), len(colunas))
+
+    recortes = {}
+    for r, (y0, y1) in enumerate(linhas):
+        for c, (x0, x1) in enumerate(colunas):
+            cel = im.crop((x0, y0, x1, y1))
+            recortes[(ESPECIES[r], HUMORES[c])] = cel.crop(cel.getbbox())
+
+    cw = max(s.width for s in recortes.values()) + 16
+    ch = max(s.height for s in recortes.values()) + 8
+    total = 0
+    for (esp, humor), sp in recortes.items():
+        tela = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+        tela.paste(sp, ((cw - sp.width) // 2, ch - sp.height), sp)
+        saida = DESTINO / f"pet-{esp}-{humor}.webp"
+        tela.save(saida, "WEBP", quality=88, method=6, exact=False)
+        total += saida.stat().st_size
+    print(f"{len(recortes)} sprites {cw}x{ch}, {total/1024:.0f} KB")
+    return total
 
 
 def main() -> None:
     DESTINO.mkdir(parents=True, exist_ok=True)
+    corta_sprites()
     total = 0
     for nome, largura in IMAGENS.items():
         origem = FONTE / nome

@@ -8,6 +8,9 @@
 <meta property="og:title" content="Baru: Focus Capybara">
 <meta property="og:description" content="Larga o celular que ele cresce. Foco sem culpa, com um habitat vivo no seu bolso.">
 <meta property="og:type" content="website">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#428130">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;1000&display=swap">
@@ -111,8 +114,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 }
 
 /* ---------- hero ---------- */
-.hero{overflow:visible}
-.hero-grade{display:grid;gap:clamp(36px,5vw,60px);align-items:center;padding-top:clamp(10px,2vw,28px)}
+.hero{overflow:visible;padding-top:clamp(28px,3vw,40px)}
+.hero-grade{display:grid;gap:clamp(32px,4.5vw,56px);align-items:center}
 .hero h1{margin:20px 0 18px}
 .hero h1 em{font-style:normal;color:var(--verde-texto)}
 .acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
@@ -131,10 +134,10 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
    colina e água (2) · bicho (3) · corações (4) · balão e dica (5).
    Antes as folhas tinham z-index 1 e o balão nenhum: folha passava
    por cima do texto.                                              */
-.palco{position:relative}
+.palco{position:relative;max-width:540px;margin-inline:auto;width:100%}
 .cena{
   position:relative;border-radius:24px;overflow:hidden;isolation:isolate;
-  aspect-ratio:10/8.6;max-height:500px;width:100%;
+  aspect-ratio:10/7.8;width:100%;
   background:linear-gradient(180deg,var(--ceu-a) 0%,var(--ceu-b) 62%);
   border:2px solid var(--borda);
   cursor:pointer;user-select:none;-webkit-user-select:none;
@@ -218,12 +221,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 .chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
 .chip{
   display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:10px 4px 8px;border-radius:16px;cursor:pointer;
+  padding:8px 4px 7px;border-radius:14px;cursor:pointer;
   background:var(--branco);border:2px solid var(--borda);
   box-shadow:0 3px 0 var(--borda);
   transition:transform .12s ease,border-color .12s ease,background .12s ease,box-shadow .12s ease;
 }
-.chip img{width:44px;height:42px;object-fit:contain}
+.chip img{width:40px;height:38px;object-fit:contain}
 .chip b{font:800 12.5px/1 Nunito;color:var(--ink)}
 .chip small{font:700 10px/1 Nunito;letter-spacing:.06em;text-transform:uppercase;color:var(--suave)}
 .chip:hover{transform:translateY(-2px)}
@@ -261,17 +264,17 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 .passo:nth-child(3) .passo-n{background:var(--azul);box-shadow:0 3px 0 #43719F}
 .passo p{font:600 15px/1.55 Nunito;color:var(--texto)}
 .passo-tela{
-  margin:14px auto 0;width:min(230px,80%);border-radius:22px 22px 0 0;overflow:hidden;
+  margin:14px auto 0;margin-top:auto;width:min(230px,80%);border-radius:22px 22px 0 0;overflow:hidden;
   border:2px solid var(--borda);border-bottom:0;
 }
 .passo-tela img{aspect-ratio:620/900;object-fit:cover;object-position:top}
 
 /* ---------- dia e noite ---------- */
-.ciclo{position:relative;border-radius:24px;overflow:hidden;border:2px solid var(--borda);margin-top:36px}
+.ciclo{position:relative;border-radius:24px;overflow:hidden;border:2px solid var(--borda)}
 .ciclo img{width:100%;aspect-ratio:744/592;object-fit:cover;transition:opacity .9s ease}
 .ciclo img+img{position:absolute;inset:0}
 .ciclo img[data-ativo="nao"]{opacity:0}
-.ciclo-pontos{display:flex;gap:8px;justify-content:center;margin-top:18px}
+.ciclo-pontos{display:flex;gap:8px;margin-top:26px}
 .ciclo-pontos button{
   border:0;background:var(--borda);width:34px;height:9px;border-radius:99px;cursor:pointer;
   transition:background .2s ease;
@@ -284,7 +287,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 }
 
 /* ---------- jogo limpo ---------- */
-.limpo{display:grid;gap:clamp(30px,4vw,56px);margin-top:40px;align-items:start}
+.limpo{display:grid;gap:clamp(30px,4vw,56px);margin-top:40px;align-items:center}
 .tabela{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 .tabela th,.tabela td{text-align:left;padding:12px 10px 12px 0;border-bottom:2px solid var(--borda);font:600 15px/1.4 Nunito;color:var(--texto)}
 .tabela td b{color:var(--ink)}
@@ -305,6 +308,10 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
   background:var(--branco);border:2px solid var(--borda);box-shadow:0 4px 0 var(--borda);
 }
 .aparelho-tela{border-radius:28px;overflow:hidden;aspect-ratio:620/1342}
+/* recorte no miolo da tela: a captura de "sem permissão" é quase toda vazia,
+   e o aparelho inteiro parecia imagem que não carregou */
+.aparelho--recorte .aparelho-tela{aspect-ratio:620/720}
+.aparelho--recorte .aparelho-tela img{object-position:center 42%}
 .aparelho-tela img{width:100%;height:100% !important;object-fit:cover;object-position:top}
 .aparelho-legenda{margin-top:14px;text-align:center;font:600 13.5px/1.5 Nunito;color:var(--suave)}
 
@@ -367,14 +374,19 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 }
 
 /* ---------- telas maiores ---------- */
-@media (min-width:720px){
-  .hero-grade{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+/* Dois níveis, não um. Em 720px o layout caía num penhasco: a cena do
+   hero passava de 660 para 308px e os três passos se espremiam lado a
+   lado. As duas colunas só entram quando há largura para elas. */
+@media (min-width:700px){
   .numeros{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .miudo{grid-template-columns:1fr 1fr;gap:14px 40px}
+}
+@media (min-width:900px){
+  .hero-grade{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
   .humores{grid-template-columns:repeat(4,minmax(0,1fr))}
   .passos{grid-template-columns:repeat(3,minmax(0,1fr))}
   .limpo{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
   .fim-grade{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
-  .miudo{grid-template-columns:1fr 1fr;gap:14px 40px}
 }
 </style>
 </head>
@@ -512,24 +524,28 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 
 <!-- ================= DIA E NOITE ================= -->
 <section class="faixa revela">
-  <div class="dentro" style="max-width:860px">
-    <p class="olho">O habitat vive</p>
-    <h2>Às 22h a lua sobe.<br>De verdade.</h2>
-    <p class="lead" style="margin-top:16px">
-      A cena conhece o relógio do seu aparelho: o céu troca de cor, o sol vira
-      lua e a água escurece. Abrir o app de noite é outro lugar.
-    </p>
+  <div class="dentro">
+    <div class="limpo" style="margin-top:0">
+      <div>
+        <p class="olho">O habitat vive</p>
+        <h2>Às 22h a lua sobe.<br>De verdade.</h2>
+        <p class="lead" style="margin-top:16px">
+          A cena conhece o relógio do seu aparelho: o céu troca de cor, o sol
+          vira lua e a água escurece. Abrir o app de noite é outro lugar.
+        </p>
+        <div class="ciclo-pontos" role="tablist" aria-label="Hora do dia">
+          <button role="tab" aria-selected="true" data-cena="0" aria-label="Amanhecer"></button>
+          <button role="tab" aria-selected="false" data-cena="1" aria-label="Entardecer"></button>
+          <button role="tab" aria-selected="false" data-cena="2" aria-label="Noite"></button>
+        </div>
+      </div>
 
-    <div class="ciclo" id="ciclo">
+      <div class="ciclo" id="ciclo">
       <img src="assets/habitat-amanhecer.webp" width="744" height="592" data-ativo="sim" alt="O habitat às 6h: céu quente, sol baixo, água clara.">
       <img src="assets/habitat-entardecer.webp" width="744" height="592" data-ativo="nao" loading="lazy" alt="O habitat às 18h: luz laranja, sol no horizonte.">
       <img src="assets/habitat-noite.webp" width="744" height="592" data-ativo="nao" loading="lazy" alt="O habitat às 22h: céu índigo, lua com halo, água escura.">
-      <span class="ciclo-rotulo" id="ciclo-rotulo">06:00 · amanhecer</span>
-    </div>
-    <div class="ciclo-pontos" role="tablist" aria-label="Hora do dia">
-      <button role="tab" aria-selected="true" data-cena="0" aria-label="Amanhecer"></button>
-      <button role="tab" aria-selected="false" data-cena="1" aria-label="Entardecer"></button>
-      <button role="tab" aria-selected="false" data-cena="2" aria-label="Noite"></button>
+        <span class="ciclo-rotulo" id="ciclo-rotulo">06:00 · amanhecer</span>
+      </div>
     </div>
   </div>
 </section>
@@ -566,7 +582,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
       </div>
 
       <div>
-        <div class="aparelho">
+        <div class="aparelho aparelho--recorte">
           <div class="aparelho-tela">
             <img loading="lazy" src="assets/tempo-sem-permissao.webp" width="620" height="1342"
                  alt="Tela de tempo de tela sem permissão: nenhum número inventado, só um convite para conceder.">

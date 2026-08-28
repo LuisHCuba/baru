@@ -17,17 +17,20 @@ PAGINA = RAIZ / "index.html"
 SAIDA = RAIZ / "dist" / "baru-landing.html"
 
 
-def _uri(caminho: pathlib.Path) -> str:
-    return "data:image/webp;base64," + base64.b64encode(caminho.read_bytes()).decode()
+TIPOS = {".webp": "image/webp", ".png": "image/png", ".ico": "image/x-icon"}
 
 
 def embute(html: str) -> str:
-    """Troca cada src="assets/..." por data: URI."""
+    """Troca cada src/href de assets/ por data: URI, favicon incluído."""
 
     def troca(m):
-        return f'src="{_uri(RAIZ / m.group(1))}"'
+        atributo, caminho = m.group(1), m.group(2)
+        arquivo = RAIZ / caminho
+        tipo = TIPOS[arquivo.suffix]
+        dado = base64.b64encode(arquivo.read_bytes()).decode()
+        return f'{atributo}="data:{tipo};base64,{dado}"'
 
-    return re.sub(r'src="(assets/[^"]+\.webp)"', troca, html)
+    return re.sub(r'(src|href)="(assets/[^"]+\.(?:webp|png|ico))"', troca, html)
 
 
 def mapa_de_sprites() -> str:
@@ -38,7 +41,8 @@ def mapa_de_sprites() -> str:
     lado de um HTML solto."""
     pares = {}
     for arquivo in sorted((RAIZ / "assets").glob("pet-*-*.webp")):
-        pares[arquivo.stem[len("pet-"):]] = _uri(arquivo)
+        dado = base64.b64encode(arquivo.read_bytes()).decode()
+        pares[arquivo.stem[len("pet-"):]] = "data:image/webp;base64," + dado
     corpo = ",".join(f'"{k}":"{v}"' for k, v in pares.items())
     print(f"{len(pares)} sprites no mapa")
     return f"<script>window.BARU_SPRITES={{{corpo}}};</script>\n"

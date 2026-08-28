@@ -33,7 +33,9 @@ Qualquer host de arquivo estático serve — GitHub Pages, Netlify, Vercel,
 Cloudflare Pages, um bucket. Suba `index.html` e a pasta `assets/`.
 
 Para um arquivo só, sem pasta de assets (anexo, e-mail, ferramenta que aceita
-um HTML solto):
+um HTML solto). O build embute as imagens **e** injeta `window.BARU_SPRITES`
+com os 32 sprites — a página monta o caminho do pet por JS, e sem esse mapa
+a troca de espécie quebra no HTML solto:
 
 ```
 python3 landing/build_artifact.py           # documento completo
@@ -86,5 +88,10 @@ houver uma evidência mais nova.
   quebrada.
 - Os nomes e humores dos 8 companheiros vêm do código do app
   (`lib/models.dart` e o catálogo pt de `lib/l10n.dart`), incluindo as
-  legendas de humor, palavra por palavra.
+  legendas de humor, palavra por palavra — com os marcadores `{p}`/`{P}`
+  resolvidos como o app faz em `comPronome`, senão Nina, Mel e Faísca
+  apareciam com "Ele te esperou".
+- A paleta passa em WCAG AA em todos os pares de texto medidos. O verde de
+  ação é `#428130` porque `#58A445` dava só 3,08:1 com o texto branco do
+  CTA principal.
 - A página não afirma que o app está nas lojas, porque não está.

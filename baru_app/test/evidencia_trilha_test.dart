@@ -101,6 +101,7 @@ void main() {
       // Passo 2: primeiro foco feito, o resto travado.
       'trilha-passo-2': _conta(sessoes: 4),
       // Meio da trilha: conquistados atrás, atual no meio, travados à frente.
+      // Sem buraco em lugar nenhum — é a corrente inteira num quadro só.
       'trilha-passo-meio': _conta(
         sessoes: 12,
         abaixo: 4,
@@ -124,6 +125,45 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await _salva(tester, const Key('captura-trilha-passo'), e.key);
     }
+  });
+
+  testWidgets('trilha: a corrente segura quem cumpriu o critério fora da vez',
+      (tester) async {
+    // A prova visual da mudança inteira. Trinta sessões e nada mais: no
+    // modelo antigo esta conta tinha ✓ nos passos 4, 7, 10 e 13 (3, 5, 10 e
+    // 20 sessões), salteados, com cadeado entre eles. Agora o trecho é uma
+    // linha tracejada contínua, e os degraus que já cumpriram o critério
+    // mostram ampulheta em vez de cadeado — travados, mas por ordem, não por
+    // falta de esforço.
+    //
+    // Precisa rolar: os degraus em questão ficam abaixo do cabeçalho e do
+    // seletor de habitat, e sem rolagem a captura sairia igual à do passo 2.
+    _semMovimento(tester);
+    _frame(tester);
+    final app = _conta(sessoes: 30);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RepaintBoundary(
+            key: const Key('captura-trilha-corrente'),
+            child: AppScope(state: app, child: const TrilhaScreen()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.text(tituloDoMarco(app, trilha[6])).hitTestable(),
+      160,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump(const Duration(seconds: 2));
+    await _salva(
+      tester,
+      const Key('captura-trilha-corrente'),
+      'trilha-corrente-travada',
+    );
   });
 
   testWidgets('trilha: o detalhe de um marco travado, com o habitat que abre',
@@ -171,6 +211,45 @@ void main() {
       tester,
       const Key('captura-trilha-detalhe'),
       'trilha-detalhe-travado',
+    );
+  });
+
+  testWidgets('trilha: o detalhe do degrau que já cumpriu e espera a vez',
+      (tester) async {
+    // O estado que só existe depois da corrente, e a pergunta que ele cria:
+    // "eu já fiz vinte sessões, por que este degrau não abriu?". A resposta
+    // tem de estar escrita no detalhe, não deduzida do cadeado.
+    _semMovimento(tester);
+    _frame(tester);
+    final app = _conta(sessoes: 30);
+    final marco = trilha.firstWhere((m) => m.id == 'vinte_focos');
+    expect(app.progresso.esperandoAVez(marco), isTrue);
+
+    await tester.pumpWidget(
+      RepaintBoundary(
+        key: const Key('captura-trilha-espera'),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            body: AppScope(state: app, child: const TrilhaScreen()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.text(tituloDoMarco(app, marco)).hitTestable(),
+      160,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text(tituloDoMarco(app, marco)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    await _salva(
+      tester,
+      const Key('captura-trilha-espera'),
+      'trilha-detalhe-esperando-a-vez',
     );
   });
 

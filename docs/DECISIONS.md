@@ -476,3 +476,113 @@ informativo, nunca tecnico.
 **Consequencias.** Nenhuma permissao nova. Nada que arrisque a revisao da
 Play. Quem quiser escapar escapa — e essa e a diferenca entre um app que a
 pessoa mantem instalado e um que ela desinstala com raiva.
+
+## ADR-017 — A trilha e uma corrente, nao uma lista de metas (2026-08-28)
+
+**Contexto.** Cada marco tinha criterio proprio e independente: sequencia de
+N dias, N sessoes, nivel N, N afagos. Como as naturezas sao diferentes e os
+contadores correm em paralelo, dava para alcancar o passo 8 (nivel 5) sem
+alcancar o 3 (7 dias seguidos). A trilha mostrava tiques salteados, com
+cadeados entre eles.
+
+O relato foi direto: *"A trilha e uma conquista. Nao tem como ele ter
+conquistado o passo 7, 8, sem ter passado pelo 1, 2."* Esta certo. Uma
+sequencia em que o passo 8 chega antes do 3 nao e uma sequencia — e um
+placar com varias corridas ao mesmo tempo, desenhado como se fosse uma so.
+
+**Decisao.** `alcancou(m)` deixou de ser `contador >= alvo` e virou
+`posicao <= passosConquistados`, onde `passosConquistados` e o maior
+**prefixo** com todos os criterios batidos. Como os quatro contadores so
+sobem, o prefixo so cresce: a corrente nunca anda para tras e nada precisa
+ser gravado.
+
+"Tudo antes conquistado, exatamente um atual, tudo depois travado, sem
+buraco" passa a ser garantia **por construcao**, e nao convencao da tela.
+
+**Dois cadeados.** Cadeado e "ainda nao fez"; ampulheta e "ja fez, esperando
+a vez". Sem a distincao, o detalhe do degrau dizia "faltam 0 sessoes" — o
+numero certo para a pergunta errada — e o placar saia "30/20".
+
+**Alternativa descartada.** Manter o tique fora de ordem como bonus visual.
+Foi recusada porque e a propria confusao: o desenho de corrente prometendo
+uma ordem que o modelo nao cumpre.
+
+**Consequencias.**
+
+*Piso de posse.* Especie e habitat sao **derivados** da trilha, nao
+gravados. Sem tratamento, virar a chave tomaria de volta o axolote e a Serra
+de quem os recebeu por fora de ordem — punicao retroativa por mudanca nossa.
+`ProgressoDaTrilha.entregues`, alimentado por `marcosResgatados`, e piso: nao
+devolve o tique nem recria buraco, so impede a perda. Folhas e XP estao
+seguros de qualquer jeito, porque sao contadores que so sobem.
+
+*Segundo caminho quando a permissao e recusada.* `diasAbaixoDaMeta` so anda
+com o acesso ao uso concedido, e recusar e caminho suportado. Enquanto os
+marcos eram independentes, recusar travava so aqueles marcos; numa corrente
+travaria a trilha inteira no passo 2, para sempre. Os cinco marcos desse
+tipo ganharam um caminho alternativo por dias seguidos de presenca, de
+proposito **mais caro**, para quem concedeu continuar fechando pelo atalho.
+
+*A escada de folhas colou na posicao, nao no id.* O conjunto dos 22 valores
+e o mesmo e a soma nao muda, mas reordenar trocou de dono: um marco antigo
+pode ter uma linha de extrato divergente do que foi pago (no pior caso 100
+folhas). Aceito porque a alternativa era quebrar "recompensas crescentes",
+que e o que faz a trilha dar vontade de subir.
+
+## ADR-018 — O buldogue francês entra num degrau que já existia (2026-08-28)
+
+**Contexto.** O buldogue francês virou a nona espécie. As quatro de origem
+(capivara, lontra, tartaruga, coruja) saem do quiz do onboarding, que é fixo em
+três perguntas de quatro opções e mede quem a pessoa é; as outras se
+desbloqueiam na trilha. Restava decidir por onde o buldogue é obtido.
+
+**Decisão.** Ele é a recompensa de `cinquenta_focos`, o passo 20 — um marco que
+**já existia** e que não entregava espécie nenhuma. Nada foi acrescentado à
+trilha.
+
+**Alternativas descartadas.**
+
+(a) *Entrar no quiz.* As quatro de origem são fixas por contrato (§4) e os
+pesos de `quizWeights` estão calibrados para elas; abrir uma quinta opção muda
+o resultado de todo mundo que responder igual a antes.
+
+(b) *Um vigésimo terceiro degrau.* Custo alto e todo ele em cima de invariantes
+que a ADR-017 acabou de fixar: a trilha é uma corrente ordenada por esforço, a
+escada de folhas é um conjunto de 22 valores cuja soma não muda, e os ids são
+chave de resgate em `marcosResgatados`. Um degrau novo empurra a folha de todos
+os degraus a partir dele e mexe no extrato de quem já jogava — caro demais para
+acomodar uma espécie.
+
+(c) *Vender na loja.* Proibido: espécie se desbloqueia por marco, nunca por
+dinheiro (§8B).
+
+**Por que este degrau e não outro.** As espécies estavam nos passos 7, 8, 13,
+16, 17, 18 e 22, e o vão entre a gata (18) e a raposa (22) era o único sem
+prêmio de bicho. E o degrau diz a coisa certa: o buldogue francês é a única raça
+do elenco criada só para fazer companhia — não caça, não pastoreia, não nada —,
+e cinquenta sessões de foco **acompanhadas** são exatamente o que ele faz.
+
+**Consequências.** Nenhuma mudança na estrutura da trilha: 22 passos, os mesmos
+ids, a mesma escada de folhas. O teste que travava "as quatro novas estão na
+trilha" era uma lista escrita à mão e aprovava uma espécie sem marco nenhum;
+passou a ser derivado do `enum` e da tabela do quiz. Reverter: tirar
+`especie: Species.frenchie` da recompensa de `cinquenta_focos`.
+
+**Três coisas que quase passaram batidas, e que viraram teste.**
+
+1. *O `case` caindo na espécie errada.* `especies_test.dart` comparava o RGBA
+   inteiro entre espécies, então bastava a paleta ser diferente para dois bichos
+   passarem — mesmo desenhando a **mesma silhueta**. Aconteceu: o buldogue
+   chegou a desenhar `_gata` e a suíte inteira passou. Agora compara também o
+   canal alfa sozinho, que é a forma sem cor.
+2. *O ícone que não troca.* O ícone por espécie (ADR-015) depende de quatro
+   peças fora do Dart — `activity-alias`, a lista `ESPECIES` no Kotlin, os PNGs
+   por densidade e o XML do adaptativo. Faltando qualquer uma, o ícone
+   simplesmente não muda no aparelho, em silêncio. `manifest_release_test.dart`
+   passou a exigir as quatro para cada valor do `enum`.
+3. *A folha que alimenta a landing.* `docs/evidence/.../folha-especies.png` é o
+   insumo de `landing/build_assets.py`, que separa as linhas por faixas de alfa
+   vazio. Com nove linhas o passo vertical ficou apertado, duas espécies
+   encostaram e a folha saiu com 7 faixas em vez de 9 — o corte teria renomeado
+   metade do elenco em silêncio. A linha ganhou folga, e o script confere a
+   contagem contra a lista em vez de contra um número escrito à mão.

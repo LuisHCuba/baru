@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n_humor.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -480,7 +481,10 @@ class _HabitatSceneState extends State<HabitatScene>
 
     return Semantics(
       image: true,
-      label: app.t.fill(app.t.moodCap(app.moodKey), {'n': app.displayName}),
+      // Quem usa leitor de tela ouvia "Baru está radiante" — o sentimento
+      // sem o fato. A cena é a mesma; a descrição dela tem de ser também.
+      label: '${app.t.humorCap(app.falaDoHumor)} '
+          '${app.t.humorSub(app.falaDoHumor)}',
       child: RepaintBoundary(
         key: HabitatScene.cenaKey,
         child: Container(

@@ -139,6 +139,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
+        <!-- O nome do alias sai de `Species.frenchie` com a inicial em
+             maiuscula (`MainActivity.trocaIcone`), e o do mipmap sai do
+             `sp.name` cru, minusculo, porque e assim que o `aapt` aceita
+             nome de recurso. -->
+        <activity-alias
+            android:name=".IconeFrenchie"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_frenchie"
+            android:label="Baru">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
         <!-- O Baru na tela inicial.
              `RemoteViews` nao desenha `CustomPainter`, entao o bicho e um
              PNG que o Dart rasteriza e grava; o provider so aponta um

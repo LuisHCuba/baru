@@ -2,6 +2,7 @@
 library;
 
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:baru_app/models.dart';
@@ -170,10 +171,100 @@ Future<void> _escreveFundo(WidgetTester tester, Species sp) async {
   }
 }
 
+/// Onde o bicho realmente começa e acaba, dentro da tela dele.
+///
+/// **Por que medir em vez de chutar.** A `PetView` desenha numa caixa fixa e
+/// cada espécie ocupa uma fatia diferente dela: a coruja é alta e estreita,
+/// a capivara é larga e baixa, a tartaruga é quase toda horizontal. Um
+/// `scale` fixo deixava a capivara aceitável e a coruja perdida no meio do
+/// ladrilho — foi exatamente a queixa.
+///
+/// Aqui o bicho é desenhado uma vez sobre transparente, os limites do que
+/// tem tinta são lidos do pixel, e a segunda passada usa esses limites para
+/// preencher a zona segura. Vale para as oito espécies sem número mágico
+/// nenhum.
+Future<Rect> _limitesDoBicho(WidgetTester tester, Species sp) async {
+  const lado = 400.0;
+  await tester.pumpWidget(
+    Directionality(
+      textDirection: TextDirection.ltr,
+      child: Center(
+        child: RepaintBoundary(
+          key: const Key('medida'),
+          child: SizedBox(
+            width: lado,
+            height: lado,
+            child: Center(
+              child: SizedBox(
+                width: 200,
+                height: 160,
+                child: PetView(
+                  species: sp,
+                  mood: Mood.radiant,
+                  activity: Activity.idle,
+                  coat: 0,
+                  interativo: false,
+                  width: 200,
+                  height: 160,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 120));
+
+  final b = tester.renderObject<RenderRepaintBoundary>(
+    find.byKey(const Key('medida')),
+  );
+  late Rect r;
+  await tester.runAsync(() async {
+    final img = await b.toImage(pixelRatio: 1);
+    final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+    img.dispose();
+    final px = data!.buffer.asUint8List();
+    final w = lado.toInt();
+    var minX = w, minY = w, maxX = -1, maxY = -1;
+    for (var y = 0; y < w; y++) {
+      for (var x = 0; x < w; x++) {
+        // Alfa acima de 8 e não o zero cru: as bordas suavizadas deixam um
+        // rastro quase invisível que inflaria a caixa.
+        if (px[(y * w + x) * 4 + 3] > 8) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    r = maxX < 0
+        ? const Rect.fromLTWH(0, 0, 200, 160)
+        : Rect.fromLTRB(
+            minX.toDouble(),
+            minY.toDouble(),
+            (maxX + 1).toDouble(),
+            (maxY + 1).toDouble(),
+          );
+  });
+  return r;
+}
+
 /// A camada de frente do ícone adaptativo: só o bicho, fundo transparente.
-Future<void> _escreveFrente(WidgetTester tester, Species sp) async {
+Future<void> _escreveFrente(
+  WidgetTester tester,
+  Species sp,
+  Rect limites,
+) async {
   for (final e in _adaptativo.entries) {
-    final lado = e.value;
+    final lado = e.value.toDouble();
+    // 0.96 da zona segura: encosta na borda do que a máscara garante, sem
+    // tocar nela.
+    final alvo = lado * _zonaSegura * 0.96;
+    final fator = alvo / math.max(limites.width, limites.height);
+
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,
@@ -181,46 +272,43 @@ Future<void> _escreveFrente(WidgetTester tester, Species sp) async {
           child: RepaintBoundary(
             key: const Key('frente'),
             child: SizedBox(
-              width: lado.toDouble(),
-              height: lado.toDouble(),
-              // Sem `DecoratedBox`: o fundo é a outra camada. Pintar aqui
-              // devolveria o quadrado que a máscara corta.
-              child: Center(
-                child: SizedBox(
-                  width: lado * _zonaSegura,
-                  height: lado * _zonaSegura,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // A sombra primeiro: sem ela o bicho flutua, e flutuar
-                      // é o que faz um ícone parecer recortado e colado.
-                      Align(
-                        alignment: const Alignment(0, 0.92),
-                        child: SombraDoIcone(largura: lado * _zonaSegura * 0.74),
-                      ),
-                      FittedBox(
-                        fit: BoxFit.contain,
-                        // `scale` alto com caixa apertada: a `PetView`
-                        // deixa margem interna, e no primeiro desenho o
-                        // bicho ocupava um terço do círculo.
-                        child: SizedBox(
+              width: lado,
+              height: lado,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // A sombra primeiro: sem ela o bicho flutua, e flutuar é o
+                  // que faz um ícone parecer recortado e colado.
+                  Align(
+                    alignment: const Alignment(0, 0.86),
+                    child: SombraDoIcone(largura: alvo * 0.78),
+                  ),
+                  // O deslocamento leva o **centro medido** do bicho ao
+                  // centro do ladrilho. Centralizar a tela dele em vez do
+                  // corpo deixava a coruja alta e a tartaruga baixa.
+                  Transform.translate(
+                    offset: Offset(
+                      (200 / 2 - limites.center.dx + 100) * fator,
+                      (160 / 2 - limites.center.dy + 120) * fator,
+                    ),
+                    child: Transform.scale(
+                      scale: fator,
+                      child: SizedBox(
+                        width: 200,
+                        height: 160,
+                        child: PetView(
+                          species: sp,
+                          mood: Mood.radiant,
+                          activity: Activity.idle,
+                          coat: 0,
+                          interativo: false,
                           width: 200,
                           height: 160,
-                          child: PetView(
-                            species: sp,
-                            mood: Mood.radiant,
-                            activity: Activity.idle,
-                            coat: 0,
-                            interativo: false,
-                            width: 200,
-                            height: 160,
-                            scale: 1.62,
-                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -276,9 +364,10 @@ void main() {
     );
 
     for (final sp in Species.values) {
+      final limites = await _limitesDoBicho(tester, sp);
       await _escreve(tester, sp);
       await _escreveFundo(tester, sp);
-      await _escreveFrente(tester, sp);
+      await _escreveFrente(tester, sp, limites);
       _escreveXml(sp);
     }
 

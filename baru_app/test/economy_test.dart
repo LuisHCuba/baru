@@ -43,13 +43,35 @@ void main() {
     test('credita +15 na virada do dia', () {
       final s = _pronto(usageAccess: true, usage: 96, goal: 150, leaves: 40);
       s.nextDay();
-      // O primeiro dia abaixo da meta também destrava um marco da trilha, e o
-      // prêmio dele cai junto.
-      final marco = trilha.firstWhere((m) => m.id == 'primeiro_dia_abaixo');
+      // Só o bônus. O marco "fechar um dia abaixo da meta" é o passo 2 da
+      // trilha, e a trilha virou corrente: sem a primeira sessão de foco
+      // (passo 1) ele não conquista. O bônus do contrato §5 não depende disso
+      // — é o marco que espera a vez, não o dinheiro do dia.
+      expect(s.leaves, 40 + AppState.underGoalBonus);
+    });
+
+    test('a primeira sessão paga o marco que o dia abaixo da meta deixou '
+        'esperando', () {
+      // O outro lado do teste acima: o dia abaixo da meta cumpriu o critério
+      // do passo 2 e ficou guardado. Fechada a sessão, a corrente anda dois
+      // degraus de uma vez e paga os dois.
+      final s = _pronto(usageAccess: true, usage: 96, goal: 150, leaves: 0)
+        ..debugFast = false;
+      s.nextDay();
+      final antes = s.leaves;
+
+      s.startSession();
+      s.sessionEndsAt = DateTime.now().subtract(const Duration(seconds: 1));
+      s.reconcileSession();
+
+      final passo1 = trilha.firstWhere((m) => m.id == 'primeiro_foco');
+      final passo2 = trilha.firstWhere((m) => m.id == 'primeiro_dia_abaixo');
       expect(
         s.leaves,
-        40 + AppState.underGoalBonus + marco.recompensa.folhas,
+        antes + sessionReward(s.dur) + passo1.recompensa.folhas +
+            passo2.recompensa.folhas,
       );
+      s.dispose();
     });
 
     test('não credita se o dia fechou acima da meta', () {
@@ -87,7 +109,6 @@ void main() {
         DateTime.now().subtract(const Duration(days: 12)),
       );
       s.applyCalendar(DateTime.now());
-      final marco = trilha.firstWhere((m) => m.id == 'primeiro_dia_abaixo');
       // O presente de retorno (RD-03) entra aqui também: doze dias fora
       // atravessam a régua dele. Somá-lo mantém a asserção sobre o que este
       // teste existe para proteger — o bônus da meta é pago **uma vez**, e
@@ -97,14 +118,13 @@ void main() {
         hoje: dateOnly(DateTime.now()),
         jaCreditadas: const {},
       );
+      // Sem marco da trilha na conta: esta conta nunca fechou uma sessão de
+      // foco, e o passo 1 da corrente é exatamente isso.
       expect(
         s.leaves,
-        AppState.underGoalBonus +
-            marco.recompensa.folhas +
-            (volta?.folhas ?? 0),
+        AppState.underGoalBonus + (volta?.folhas ?? 0),
         reason: 'dias sem o app têm usage sintético em 0 — pagar por eles '
-            'seria inventar medição; só o primeiro conta, e ele destrava o '
-            'marco da trilha uma única vez',
+            'seria inventar medição; só o primeiro conta',
       );
     });
 
@@ -119,11 +139,7 @@ void main() {
         onUserMessage: avisos.add,
       );
 
-      final marco = trilha.firstWhere((m) => m.id == 'primeiro_dia_abaixo');
-      expect(
-        aoAbrir.leaves,
-        25 + AppState.underGoalBonus + marco.recompensa.folhas,
-      );
+      expect(aoAbrir.leaves, 25 + AppState.underGoalBonus);
       expect(avisos, isEmpty, reason: 'ainda não há árvore de widgets');
       aoAbrir.flushPendingNotices();
       expect(avisos.length, 1, reason: 'o aviso sai no primeiro frame');

@@ -25,7 +25,20 @@ IMAGENS = {
 }
 
 
-ESPECIES = ["capybara", "otter", "tortoise", "owl", "axolotl", "penguin", "cat", "fox"]
+# A ordem tem de ser a de `Species` em lib/models.dart: a folha e uma grade e
+# o corte le por posicao, entao trocar dois nomes de lugar troca os dois
+# bichos de nome no site inteiro. Bicho novo entra no fim, como no enum.
+ESPECIES = [
+    "capybara",
+    "otter",
+    "tortoise",
+    "owl",
+    "axolotl",
+    "penguin",
+    "cat",
+    "fox",
+    "frenchie",
+]
 HUMORES = ["radiant", "content", "sleepy", "missing"]
 
 
@@ -44,16 +57,25 @@ def _bandas(perfil):
 
 
 def corta_sprites() -> int:
-    """Corta folha-especies.png (8 espécies × 4 humores, fundo transparente)
-    em sprites individuais numa moldura comum, ancorados nos pés, para a
-    troca de espécie/humor na página não pular."""
+    """Corta folha-especies.png (uma linha por espécie × 4 humores, fundo
+    transparente) em sprites individuais numa moldura comum, ancorados nos
+    pés, para a troca de espécie/humor na página não pular."""
     im = Image.open(FONTE / "folha-especies.png").convert("RGBA")
     alfa = im.getchannel("A")
     px = alfa.load()
     w, h = im.size
     linhas = _bandas([any(px[x, y] for x in range(w)) for y in range(h)])
     colunas = _bandas([any(px[x, y] for y in range(h)) for x in range(w)])
-    assert len(linhas) == 8 and len(colunas) == 4, (len(linhas), len(colunas))
+    # Conferido contra ESPECIES, e nao contra um 8 escrito a mao: o numero de
+    # bichos mudou uma vez e vai mudar de novo. Se a folha estiver velha (o
+    # app ganhou uma especie e ninguem rodou o evidencia_test de novo), a
+    # conta nao bate e o build para aqui — em vez de cortar tudo deslocado em
+    # uma linha e renomear todo mundo em silencio.
+    assert len(linhas) == len(ESPECIES) and len(colunas) == len(HUMORES), (
+        f"folha com {len(linhas)}x{len(colunas)}, esperado "
+        f"{len(ESPECIES)}x{len(HUMORES)} — regere com "
+        f"`flutter test test/evidencia_test.dart`"
+    )
 
     recortes = {}
     for r, (y0, y1) in enumerate(linhas):

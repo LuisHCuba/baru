@@ -136,6 +136,20 @@ class RecompensaDeMarco {
   bool get vazia => folhas == 0 && especie == null && estagioDeHabitat == null;
 }
 
+/// Um critério medido: um contador e o valor a atingir.
+///
+/// Existe como classe em vez de dois campos soltos no marco porque um degrau
+/// pode ter **dois** caminhos até a mesma porta, e o par `tipoAlternativo` +
+/// `alvoAlternativo` deixaria "tipo sem alvo" representável.
+class Criterio {
+  const Criterio(this.tipo, this.alvo);
+
+  final TipoDeMarco tipo;
+
+  /// Valor a atingir: nível 5, 10 sessões, 7 dias seguidos...
+  final int alvo;
+}
+
 /// Um degrau da trilha.
 class Marco {
   const Marco({
@@ -143,6 +157,7 @@ class Marco {
     required this.tipo,
     required this.alvo,
     required this.recompensa,
+    this.alternativa,
   });
 
   final String id;
@@ -152,6 +167,26 @@ class Marco {
   final int alvo;
 
   final RecompensaDeMarco recompensa;
+
+  /// Segundo caminho até o mesmo degrau.
+  ///
+  /// Só os marcos de [TipoDeMarco.diasAbaixoDaMeta] têm um, e o motivo é
+  /// estrutural: `diasAbaixoDaMeta` só anda com a permissão de uso concedida,
+  /// e recusar a permissão é caminho suportado, não degradado (contrato §8).
+  /// Enquanto os marcos eram independentes, um contador parado só travava os
+  /// marcos dele. Numa corrente ele vira **muro**: a trilha inteira pararia
+  /// no primeiro degrau desse tipo e nunca mais andaria, para todo mundo que
+  /// disse não à permissão. É o mesmo defeito que o §8C proíbe nas missões —
+  /// "nunca missão impossível".
+  ///
+  /// A alternativa mede a mesma intenção pelo que o app enxerga sozinho —
+  /// dias de presença seguidos — e é de propósito **mais cara** que o critério
+  /// principal, para quem concedeu a permissão continuar fechando o passo pelo
+  /// caminho curto em vez de pelo desvio.
+  final Criterio? alternativa;
+
+  /// O critério principal, na mesma forma da alternativa.
+  Criterio get criterio => Criterio(tipo, alvo);
 }
 
 /// Um lugar onde o companheiro mora — a "arena" do Baru.
@@ -214,13 +249,18 @@ int passoQueAbreOHabitat(HabitatDaTrilha h) {
   return trilha.length;
 }
 
+/// A posição de cada marco, por id. Calculado uma vez.
+///
+/// A busca linear que morava em [passoDoMarco] custava nada enquanto era
+/// chamada de vez em quando. Agora a posição é o que decide se um degrau está
+/// conquistado, então ela é consultada para cada um dos 22 nós a cada quadro
+/// da tela — busca dentro de busca. O mapa tira o quadrado da conta.
+final Map<String, int> _passoPorId = {
+  for (var i = 0; i < trilha.length; i++) trilha[i].id: i + 1,
+};
+
 /// Onde um marco está na trilha, contando de 1. Zero se não estiver nela.
-int passoDoMarco(Marco m) {
-  for (var i = 0; i < trilha.length; i++) {
-    if (trilha[i].id == m.id) return i + 1;
-  }
-  return 0;
-}
+int passoDoMarco(Marco m) => _passoPorId[m.id] ?? 0;
 
 /// Como um degrau se apresenta na trilha.
 ///
@@ -229,21 +269,42 @@ int passoDoMarco(Marco m) {
 /// via os passos 8, 11 e 13 com barra pela metade, como se estivessem
 /// carregando. Um caminho tem uma frente só.
 enum EstadoNaTrilha {
-  /// Alcançado. Nunca volta atrás, mesmo fora de ordem.
+  /// Atrás da frente. Só se chega aqui passando pelo degrau anterior.
   conquistado,
 
-  /// A frente da trilha: o primeiro degrau em aberto.
+  /// A frente da trilha: o único degrau em aberto.
   atual,
 
-  /// Ainda não é a vez dele.
+  /// Ainda não é a vez dele — com ou sem o critério dele cumprido.
   travado,
 }
 
-/// A trilha: a sequência ordenada e visível que responde "por que eu volto
+/// A trilha: a corrente ordenada e visível que responde "por que eu volto
 /// amanhã".
 ///
-/// Ordem importa. O usuário precisa sempre saber qual é o próximo passo e o
-/// que ganha nele.
+/// **Ordem é a regra, não a decoração.** O passo N+1 não é conquistável antes
+/// do N, aconteça o que acontecer com o critério dele — ver
+/// [ProgressoDaTrilha.passosConquistados]. Isto obriga a lista a estar em
+/// ordem de esforço crescente: se um degrau caro ficar na frente de um barato,
+/// a corrente para nele e o barato lá atrás vira uma promessa que não abre.
+///
+/// A ordem anterior não obedecia a isso — era legível como "um de cada tipo,
+/// rodando", e nesse rodízio o passo 12 (5 dias abaixo da meta, ~5 dias) vinha
+/// depois do passo 11 (nível 6, ~8 dias) e o passo 19 (nível 15, ~53 dias)
+/// vinha antes do passo 20 (30 dias seguidos, ~30 dias). Enquanto cada marco
+/// era independente isso não aparecia; numa corrente, cada inversão é uma
+/// parada seca no meio do caminho.
+///
+/// A estimativa que ordena a lista é "quantos dias de uso engajado até bater",
+/// com ~70 XP/dia (duas sessões, presença, missões e o dia abaixo da meta):
+/// 0,7 · 1 · 1,6 · 2 · 3 · 3 · 3,3 · 5 · 5,3 · 6,7 · 7 · 7,9 · 13 · 14 · 14,5
+/// · 15 · 23 · 30 · 30 · 33 · 53 · 67.
+///
+/// **Os ids nunca mudam.** Eles são a chave de `marcosResgatados`, que é o que
+/// impede um marco de pagar duas vezes e é de onde a carteira lê o histórico:
+/// renomear um id imprimiria folhas e apagaria uma linha do extrato. Reordenar
+/// move a *posição* e, com ela, a folha da escada de recompensas — o conjunto
+/// dos 22 valores é o mesmo de antes, só trocou de dono.
 const trilha = <Marco>[
   Marco(
     id: 'primeiro_foco',
@@ -255,19 +316,20 @@ const trilha = <Marco>[
     id: 'primeiro_dia_abaixo',
     tipo: TipoDeMarco.diasAbaixoDaMeta,
     alvo: 1,
+    alternativa: Criterio(TipoDeMarco.sequencia, 4),
     recompensa: RecompensaDeMarco(folhas: 25),
-  ),
-  Marco(
-    id: 'tres_focos',
-    tipo: TipoDeMarco.sessoes,
-    alvo: 3,
-    recompensa: RecompensaDeMarco(folhas: 30),
   ),
   Marco(
     id: 'nivel_3',
     tipo: TipoDeMarco.nivel,
     alvo: 3,
-    recompensa: RecompensaDeMarco(folhas: 40, estagioDeHabitat: 2),
+    recompensa: RecompensaDeMarco(folhas: 30, estagioDeHabitat: 2),
+  ),
+  Marco(
+    id: 'tres_focos',
+    tipo: TipoDeMarco.sessoes,
+    alvo: 3,
+    recompensa: RecompensaDeMarco(folhas: 40),
   ),
   Marco(
     id: 'tres_dias',
@@ -276,28 +338,30 @@ const trilha = <Marco>[
     recompensa: RecompensaDeMarco(folhas: 50),
   ),
   Marco(
-    id: 'cinco_focos',
-    tipo: TipoDeMarco.sessoes,
-    alvo: 5,
-    recompensa: RecompensaDeMarco(folhas: 60, especie: Species.otter),
-  ),
-  Marco(
     id: 'tres_dias_abaixo',
     tipo: TipoDeMarco.diasAbaixoDaMeta,
     alvo: 3,
-    recompensa: RecompensaDeMarco(folhas: 70),
+    alternativa: Criterio(TipoDeMarco.sequencia, 8),
+    recompensa: RecompensaDeMarco(folhas: 60),
+  ),
+  Marco(
+    id: 'cinco_focos',
+    tipo: TipoDeMarco.sessoes,
+    alvo: 5,
+    recompensa: RecompensaDeMarco(folhas: 70, especie: Species.otter),
+  ),
+  Marco(
+    id: 'cinco_dias_abaixo',
+    tipo: TipoDeMarco.diasAbaixoDaMeta,
+    alvo: 5,
+    alternativa: Criterio(TipoDeMarco.sequencia, 12),
+    recompensa: RecompensaDeMarco(folhas: 80, especie: Species.tortoise),
   ),
   Marco(
     id: 'nivel_5',
     tipo: TipoDeMarco.nivel,
     alvo: 5,
-    recompensa: RecompensaDeMarco(folhas: 80),
-  ),
-  Marco(
-    id: 'semana_inteira',
-    tipo: TipoDeMarco.sequencia,
-    alvo: 7,
-    recompensa: RecompensaDeMarco(folhas: 90, estagioDeHabitat: 3),
+    recompensa: RecompensaDeMarco(folhas: 90),
   ),
   Marco(
     id: 'dez_focos',
@@ -306,22 +370,26 @@ const trilha = <Marco>[
     recompensa: RecompensaDeMarco(folhas: 100),
   ),
   Marco(
+    id: 'semana_inteira',
+    tipo: TipoDeMarco.sequencia,
+    alvo: 7,
+    recompensa: RecompensaDeMarco(folhas: 110, estagioDeHabitat: 3),
+  ),
+  Marco(
     id: 'nivel_6',
     tipo: TipoDeMarco.nivel,
     alvo: 6,
-    recompensa: RecompensaDeMarco(folhas: 110),
+    recompensa: RecompensaDeMarco(folhas: 120),
   ),
   Marco(
-    id: 'cinco_dias_abaixo',
-    tipo: TipoDeMarco.diasAbaixoDaMeta,
-    alvo: 5,
-    recompensa: RecompensaDeMarco(folhas: 120, especie: Species.tortoise),
-  ),
-  Marco(
-    id: 'nivel_8',
-    tipo: TipoDeMarco.nivel,
-    alvo: 8,
-    recompensa: RecompensaDeMarco(folhas: 140),
+    id: 'vinte_focos',
+    tipo: TipoDeMarco.sessoes,
+    alvo: 20,
+    recompensa: RecompensaDeMarco(
+      folhas: 140,
+      estagioDeHabitat: 4,
+      especie: Species.axolotl,
+    ),
   ),
   Marco(
     id: 'duas_semanas',
@@ -330,45 +398,30 @@ const trilha = <Marco>[
     recompensa: RecompensaDeMarco(folhas: 160),
   ),
   Marco(
-    id: 'vinte_focos',
-    tipo: TipoDeMarco.sessoes,
-    alvo: 20,
-    recompensa: RecompensaDeMarco(
-      folhas: 180,
-      estagioDeHabitat: 4,
-      especie: Species.axolotl,
-    ),
-  ),
-  Marco(
-    id: 'nivel_10',
+    id: 'nivel_8',
     tipo: TipoDeMarco.nivel,
-    alvo: 10,
-    recompensa: RecompensaDeMarco(folhas: 200, especie: Species.owl),
+    alvo: 8,
+    recompensa: RecompensaDeMarco(folhas: 180),
   ),
   Marco(
     id: 'quinze_dias_abaixo',
     tipo: TipoDeMarco.diasAbaixoDaMeta,
     alvo: 15,
-    recompensa: RecompensaDeMarco(folhas: 220, especie: Species.penguin),
+    alternativa: Criterio(TipoDeMarco.sequencia, 25),
+    recompensa: RecompensaDeMarco(folhas: 200, especie: Species.penguin),
   ),
   Marco(
-    id: 'cinquenta_focos',
-    tipo: TipoDeMarco.sessoes,
-    alvo: 50,
-    recompensa: RecompensaDeMarco(folhas: 260),
-  ),
-  Marco(
-    id: 'nivel_15',
+    id: 'nivel_10',
     tipo: TipoDeMarco.nivel,
-    alvo: 15,
-    recompensa: RecompensaDeMarco(folhas: 300),
+    alvo: 10,
+    recompensa: RecompensaDeMarco(folhas: 220, especie: Species.owl),
   ),
   Marco(
     id: 'trinta_dias',
     tipo: TipoDeMarco.sequencia,
     alvo: 30,
     recompensa: RecompensaDeMarco(
-      folhas: 340,
+      folhas: 260,
       estagioDeHabitat: 5,
       especie: Species.cat,
     ),
@@ -377,6 +430,33 @@ const trilha = <Marco>[
     id: 'trinta_dias_abaixo',
     tipo: TipoDeMarco.diasAbaixoDaMeta,
     alvo: 30,
+    alternativa: Criterio(TipoDeMarco.sequencia, 45),
+    recompensa: RecompensaDeMarco(folhas: 300),
+  ),
+  // O buldogue francês entra **num degrau que já existia**, e não num degrau
+  // novo.
+  //
+  // A trilha é uma corrente ordenada por esforço, com 22 posições, uma escada
+  // de folhas que a soma inteira preserva e ids que são chave de resgate
+  // (`marcosResgatados`). Um vigésimo terceiro degrau empurraria a folha de
+  // todos os degraus a partir dele, e mexer na escada de recompensa por causa
+  // de uma espécie nova é pagar caro por nada: `cinquenta_focos` não
+  // entregava espécie nenhuma e as espécies estavam nos passos 7, 8, 13, 16,
+  // 17, 18 e 22 — o vão entre a gata e a raposa era justamente aqui.
+  //
+  // E o degrau diz a coisa certa. O buldogue francês é a única raça do elenco
+  // criada só para fazer companhia: não caça, não pastoreia, não nada. Ele é
+  // o prêmio de cinquenta sessões **acompanhadas**, que é o que ele faz.
+  Marco(
+    id: 'cinquenta_focos',
+    tipo: TipoDeMarco.sessoes,
+    alvo: 50,
+    recompensa: RecompensaDeMarco(folhas: 340, especie: Species.frenchie),
+  ),
+  Marco(
+    id: 'nivel_15',
+    tipo: TipoDeMarco.nivel,
+    alvo: 15,
     recompensa: RecompensaDeMarco(folhas: 400),
   ),
   Marco(
@@ -398,6 +478,7 @@ class ProgressoDaTrilha {
     required this.sessoesConcluidas,
     required this.melhorSequencia,
     required this.diasAbaixoDaMeta,
+    this.entregues = const <String>{},
   });
 
   final int xp;
@@ -408,6 +489,21 @@ class ProgressoDaTrilha {
   final int melhorSequencia;
 
   final int diasAbaixoDaMeta;
+
+  /// Ids de marcos que **já entregaram** o que prometiam, em algum momento.
+  ///
+  /// Piso de migração. O modelo anterior pagava o marco no instante em que o
+  /// critério dele batia, fora de ordem — quem tem `marcosResgatados` com
+  /// buracos ganhou espécie e habitat que a corrente ainda não alcançou.
+  /// Folhas e XP não correm risco (moram em contadores que só sobem, e a
+  /// carteira lê `marcosResgatados`, não a trilha), mas espécie e habitat são
+  /// **derivados** — sem este piso, virar a chave tiraria de volta um bicho e
+  /// um cenário que a pessoa já tinha, e o §1 do contrato não permite tirar
+  /// nada.
+  ///
+  /// Não entra em [alcancados]: o ✓ segue a corrente, senão a trilha voltaria
+  /// a ter buraco. O piso é sobre **posse**, não sobre posição.
+  final Set<String> entregues;
 
   int get nivel => Balanco.nivelPara(xp);
 
@@ -424,7 +520,47 @@ class ProgressoDaTrilha {
     }
   }
 
-  bool alcancou(Marco m) => valorDe(m.tipo) >= m.alvo;
+  /// O contador bateu o alvo deste critério.
+  bool bateu(Criterio c) => valorDe(c.tipo) >= c.alvo;
+
+  /// O critério do marco está cumprido — **sem olhar a posição dele**.
+  ///
+  /// Continua existindo e continua valendo: é ele que abre o degrau atual. O
+  /// que ele não faz mais é conquistar um degrau fora da vez.
+  bool cumpriuOCriterio(Marco m) {
+    if (bateu(m.criterio)) return true;
+    final alt = m.alternativa;
+    return alt != null && bateu(alt);
+  }
+
+  /// Quantos degraus a corrente já entregou: o maior **prefixo** em que todos
+  /// os critérios bateram.
+  ///
+  /// É a regra inteira em quatro linhas. Como os contadores só sobem (XP,
+  /// sessões, melhor sequência, dias abaixo da meta), o prefixo também só
+  /// cresce — a corrente nunca anda para trás, e nenhum degrau precisa ser
+  /// gravado como "já foi".
+  int get passosConquistados {
+    var n = 0;
+    for (final m in trilha) {
+      if (!cumpriuOCriterio(m)) break;
+      n += 1;
+    }
+    return n;
+  }
+
+  /// Este degrau é seu.
+  ///
+  /// **Ordem obrigatória**: não basta o critério bater, é preciso que todos os
+  /// de trás tenham batido. Antes bastava o critério, e como os quatro
+  /// contadores correm em paralelo e medem coisas de naturezas diferentes,
+  /// alguém fechava o passo 13 (20 sessões) sem nunca ter fechado o passo 11
+  /// (7 dias seguidos) — a trilha mostrava ✓ salteado, e conquistar o passo 13
+  /// sem ter passado pelo 11 não é uma trilha, é uma lista.
+  bool alcancou(Marco m) {
+    final passo = passoDoMarco(m);
+    return passo > 0 && passo <= passosConquistados;
+  }
 
   /// Progresso de 0 a 1 dentro de um marco.
   ///
@@ -433,33 +569,53 @@ class ProgressoDaTrilha {
   /// zero, "chegar ao nível 3" nascia com um terço da barra cheia numa conta
   /// recém-criada — e passava à frente de "faça sua primeira sessão" na hora
   /// de escolher o próximo passo.
+  ///
+  /// Com dois caminhos, vale o mais adiantado: é o que a pessoa vai fechar.
   double fracaoDe(Marco m) {
-    final piso = m.tipo == TipoDeMarco.nivel ? 1 : 0;
-    final alvo = m.alvo - piso;
-    if (alvo <= 0) return 1;
-    return ((valorDe(m.tipo) - piso) / alvo).clamp(0.0, 1.0);
+    var f = fracaoDoCriterio(m.criterio);
+    final alt = m.alternativa;
+    if (alt != null) {
+      final fa = fracaoDoCriterio(alt);
+      if (fa > f) f = fa;
+    }
+    return f;
   }
 
-  /// Onde você está na trilha: o **primeiro** marco ainda não alcançado.
+  double fracaoDoCriterio(Criterio c) {
+    final piso = c.tipo == TipoDeMarco.nivel ? 1 : 0;
+    final alvo = c.alvo - piso;
+    if (alvo <= 0) return 1;
+    return ((valorDe(c.tipo) - piso) / alvo).clamp(0.0, 1.0);
+  }
+
+  /// Dos caminhos deste marco, o que está mais perto de fechar.
+  ///
+  /// A tela mostra **um** critério por degrau (T-02: "o que falta para este
+  /// passo" em uma frase). Mostrar os dois lado a lado devolveria o problema
+  /// que a frase existe para resolver.
+  Criterio criterioMaisPerto(Marco m) {
+    final alt = m.alternativa;
+    if (alt == null) return m.criterio;
+    return fracaoDoCriterio(alt) > fracaoDoCriterio(m.criterio)
+        ? alt
+        : m.criterio;
+  }
+
+  /// Onde você está na trilha: o degrau logo depois do último conquistado.
   ///
   /// Um caminho tem ordem. Apontar para o "mais perto de acontecer" mandava o
   /// "VOCÊ ESTÁ AQUI" para o fim da trilha enquanto os primeiros passos
   /// seguiam apagados — que foi o que o usuário viu e não fez sentido nenhum.
-  ///
-  /// Os marcos continuam independentes: quem alcançar um lá embaixo antes da
-  /// hora fica com o ✓ dele, e isso lê como bônus. O que não pode é a
-  /// **frente** da trilha pular para trás de um degrau apagado.
   Marco? get proximoMarco {
-    for (final m in trilha) {
-      if (!alcancou(m)) return m;
-    }
-    return null;
+    final feitos = passosConquistados;
+    return feitos >= trilha.length ? null : trilha[feitos];
   }
 
-  /// O marco não alcançado mais perto de fechar.
+  /// O marco não alcançado com o critério mais perto de fechar.
   ///
-  /// Responde outra pergunta: não "onde estou", e sim "o que dá para fechar
-  /// hoje". A trilha usa [proximoMarco]; quem quiser sugerir ação usa este.
+  /// Responde outra pergunta: não "onde estou", e sim "que critério está
+  /// quase batendo". Mede critério, não conquista — a trilha **nunca** aponta
+  /// para ele, senão o "VOCÊ ESTÁ AQUI" voltaria a saltar degrau.
   Marco? get marcoMaisPerto {
     Marco? melhor;
     var melhorFracao = -1.0;
@@ -476,33 +632,45 @@ class ProgressoDaTrilha {
 
   /// Como o degrau se apresenta na trilha.
   ///
-  /// Alcançado ganha de posição: quem fechou um marco lá embaixo antes da
-  /// hora fica com o ✓ dele. O que não pode acontecer — e acontecia — é um
-  /// degrau que ninguém alcançou aparecer com anel de progresso pela metade,
-  /// como se estivesse a caminho de sozinho.
+  /// Decidido pela **posição** contra a frente da corrente, e só por ela. É
+  /// isto que garante, por construção, o que a tela precisa mostrar: tudo
+  /// antes conquistado, exatamente um atual, tudo depois travado, sem buraco
+  /// no meio. Não há estado que produza duas frentes nem um ✓ solto adiante.
   EstadoNaTrilha estadoDe(Marco m) {
-    if (alcancou(m)) return EstadoNaTrilha.conquistado;
-    if (proximoMarco?.id == m.id) return EstadoNaTrilha.atual;
+    final passo = passoDoMarco(m);
+    if (passo == 0) return EstadoNaTrilha.travado;
+    final feitos = passosConquistados;
+    if (passo <= feitos) return EstadoNaTrilha.conquistado;
+    if (passo == feitos + 1) return EstadoNaTrilha.atual;
     return EstadoNaTrilha.travado;
   }
+
+  /// O critério deste degrau já bateu, mas ainda não é a vez dele.
+  ///
+  /// É o que acontece com quem juntou 30 sessões sem nunca fechar um dia
+  /// abaixo da meta. Sem nome próprio, a tela dizia "faltam 0 sessões" — o
+  /// número certo para a pergunta errada.
+  bool esperandoAVez(Marco m) => !alcancou(m) && cumpriuOCriterio(m);
 
   /// Em que passo a pessoa está, contando de 1.
   ///
   /// É a resposta literal a "em que momento eu tô, em que passo": a posição
   /// do primeiro degrau em aberto. Com a trilha inteira feita, vale o total.
   int get passoAtual {
-    final p = proximoMarco;
-    return p == null ? trilha.length : passoDoMarco(p);
+    final feitos = passosConquistados;
+    return feitos >= trilha.length ? trilha.length : feitos + 1;
   }
 
   int get totalDePassos => trilha.length;
 
-  /// Quanto falta para o marco, na unidade dele. Zero quando já é seu.
+  /// Quanto falta no critério mais perto, na unidade dele. Zero quando bateu.
   ///
   /// Nível é a exceção: "faltam 2 níveis" não diz o que fazer hoje, e o que
   /// a pessoa junta de fato é XP. Ver [xpQueFaltaPara].
-  int quantoFalta(Marco m) {
-    final falta = m.alvo - valorDe(m.tipo);
+  int quantoFalta(Marco m) => quantoFaltaNo(criterioMaisPerto(m));
+
+  int quantoFaltaNo(Criterio c) {
+    final falta = c.alvo - valorDe(c.tipo);
     return falta < 0 ? 0 : falta;
   }
 
@@ -513,15 +681,21 @@ class ProgressoDaTrilha {
     return falta < 0 ? 0 : falta;
   }
 
-  /// Quantos marcos já foram conquistados.
-  int get conquistados => trilha.where(alcancou).length;
+  /// Quantos marcos já foram conquistados. Igual a [passosConquistados] — a
+  /// corrente não tem furo, então contar é o mesmo que medir a frente.
+  int get conquistados => passosConquistados;
 
-  List<Marco> get alcancados => trilha.where(alcancou).toList();
+  List<Marco> get alcancados => trilha.take(passosConquistados).toList();
+
+  /// O que a conta já **tem**: o que a corrente entregou, mais o que o modelo
+  /// antigo entregou antes de a corrente existir. Ver [entregues].
+  Iterable<Marco> get _comPosse =>
+      trilha.where((m) => alcancou(m) || entregues.contains(m.id));
 
   /// Espécies liberadas por marco, mais a que veio do quiz.
   Set<Species> especiesLiberadas(Species doQuiz) {
     final out = <Species>{doQuiz};
-    for (final m in alcancados) {
+    for (final m in _comPosse) {
       final e = m.recompensa.especie;
       if (e != null) out.add(e);
     }
@@ -531,7 +705,7 @@ class ProgressoDaTrilha {
   /// Estágio da cena: sobe com os marcos e nunca desce.
   int get estagioDoHabitat {
     var estagio = 1;
-    for (final m in alcancados) {
+    for (final m in _comPosse) {
       final e = m.recompensa.estagioDeHabitat;
       if (e != null && e > estagio) estagio = e;
     }

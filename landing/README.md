@@ -8,13 +8,13 @@ landing/
 ├── index.html          a página
 ├── assets/*.webp       capturas e sprites reais do app (gerados)
 ├── build_assets.py     docs/evidence/ -> assets/: redimensiona as telas e
-│                       corta folha-especies.png em 32 sprites (8 espécies
+│                       corta folha-especies.png em 36 sprites (9 espécies
 │                       × 4 humores), ancorados nos pés numa moldura comum
 ├── build_artifact.py   index.html -> dist/, com as imagens embutidas
 └── dist/               arquivo único para publicar em qualquer lugar
 ```
 
-A página é interativa: dá para escolher qualquer um dos 8 companheiros
+A página é interativa: dá para escolher qualquer um dos 9 companheiros
 (a escolha se propaga para os humores e para o fechamento), fazer carinho
 no bicho — três toques em 3 s soltam a chuva de corações, a mesma regra do
 app — e o habitat troca de hora sozinho. Tudo em vanilla JS, animações só
@@ -34,7 +34,7 @@ Cloudflare Pages, um bucket. Suba `index.html` e a pasta `assets/`.
 
 Para um arquivo só, sem pasta de assets (anexo, e-mail, ferramenta que aceita
 um HTML solto). O build embute as imagens **e** injeta `window.BARU_SPRITES`
-com os 32 sprites — a página monta o caminho do pet por JS, e sem esse mapa
+com os 36 sprites — a página monta o caminho do pet por JS, e sem esse mapa
 a troca de espécie quebra no HTML solto:
 
 ```
@@ -86,7 +86,7 @@ houver uma evidência mais nova.
   noite. `habitat-dia.png` ficou de fora porque é quase idêntico ao
   amanhecer (diferença média de 8,7 em 255 por canal) — a troca parecia
   quebrada.
-- Os nomes e humores dos 8 companheiros vêm do código do app
+- Os nomes e humores dos 9 companheiros vêm do código do app
   (`lib/models.dart` e o catálogo pt de `lib/l10n.dart`), incluindo as
   legendas de humor, palavra por palavra — com os marcadores `{p}`/`{P}`
   resolvidos como o app faz em `comPronome`, senão Nina, Mel e Faísca

@@ -33,6 +33,18 @@ Travado por teste: `test/l10n_test.dart` (paridade de chaves entre catálogos).
 | `neutral` | uso ≤ meta × 1,2 |
 | `sleepy` | acima disso |
 
+A tabela é lida **de cima para baixo, com a primeira que casar vencendo**, e
+isso muda a faixa real de duas linhas:
+
+- `neutral` tem piso implícito. Abaixo da meta o `content` já casou, então a
+  faixa efetiva é `[meta, meta × 1,2]` **e sem sessão concluída** — com meta
+  de 150 min, exatamente `[150, 180]`.
+- `sleepy` é **inalcançável com qualquer sessão concluída**, porque `content`
+  casa com "≥1 sessão" antes dele. Doze horas de tela com uma sessão de 25
+  min dão `content`. A regra é intencional — o produto não pune quem
+  apareceu —, mas a **legenda** precisa dizer o fato, e não "um dia decente".
+
+
 Sem permissão de uso concedida, o humor deriva só das sessões de foco
 (`radiant` com ≥1 sessão, senão `content`) — recusar a permissão é caminho
 suportado, não degradado.
@@ -43,9 +55,22 @@ Atividade derivada: `sleepy`/`neutral` → `nap`, `radiant` → `swim`,
 `content` → `graze`, resto → `idle`.
 
 ### 4. Espécies
-`capybara` (Baru), `otter` (Rio), `tortoise` (Toco), `owl` (Nina). Definidas por
-quiz de 3 perguntas com pesos; trocáveis depois nos ajustes. Nome do pet é
-editável (máx. 18 caracteres).
+
+**As quatro de origem**, e só elas, saem do quiz de 3 perguntas com pesos:
+`capybara` (Baru), `otter` (Rio), `tortoise` (Toco), `owl` (Nina). Essa lista é
+fixa — abrir uma quinta opção mudaria o resultado de quem já respondeu.
+
+**As conquistáveis** se desbloqueiam na trilha, nunca por dinheiro (§8B):
+`axolotl` (Lume), `penguin` (Nino), `cat` (Mel), `fox` (Faísca) e
+`frenchie` (Bolota, o buldogue francês — passo 20, ver ADR-018).
+
+Todas são trocáveis nos ajustes depois de liberadas. Nome do pet é editável
+(máx. 18 caracteres).
+
+Toda espécie nova nasce nos quatro idiomas (nome curto e frase), com paleta de
+pelagem própria de mais de um tom, desenho próprio em `widgets/pet.dart` e ícone
+de app próprio. Travado por `test/l10n_especies_test.dart`,
+`test/especies_test.dart` e `test/manifest_release_test.dart`.
 
 ### 5. Economia — folhas
 
@@ -107,11 +132,23 @@ O companheiro ganha XP por sessão concluída (12/30/60 conforme a duração), p
 dia fechado abaixo da meta (20), por missão (10 diária, 40 semanal) e por dia
 de sequência (5). **O nível nunca cai.**
 
-A **trilha** é a sequência ordenada e visível de doze marcos, do primeiro foco
-aos cem. Cada marco tem requisito claro, recompensa concreta e prévia. Marco
-conquistado nunca é retirado — a trilha lê a *melhor* sequência, não a atual.
-As espécies extras (lontra, tartaruga, coruja) se desbloqueiam por marco,
-**nunca por dinheiro**.
+A **trilha** é a sequência ordenada e visível de vinte e dois marcos, do
+primeiro foco aos cem dias. Cada marco tem requisito claro, recompensa
+concreta e prévia.
+
+Ela é uma **corrente**: um passo só conquista depois do anterior, e um marco
+cujo critério já foi batido espera a vez em vez de se antecipar. Antes cada
+marco tinha critério independente, e como os critérios são de naturezas
+diferentes — dias, sessões, nível, afagos — dava para ter o passo 8
+conquistado com o 3 pendente. Ver ADR-017.
+
+Marco conquistado nunca é retirado, e o que já foi **entregue** também não:
+espécie e habitat são derivados da trilha, e um piso de posse impede que a
+corrente tome de volta o que uma conta antiga já recebeu.
+
+As espécies extras se desbloqueiam por marco, **nunca por dinheiro**, e cada
+marco de habitat abre um cenário novo — do jeito que a arena do Clash Royale
+troca.
 
 Todos os números vivem em `lib/data/progressao.dart`.
 

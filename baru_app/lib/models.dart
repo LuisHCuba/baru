@@ -23,10 +23,28 @@ enum AppScreen {
 
 /// As espécies do Baru.
 ///
-/// As quatro primeiras saem do quiz do onboarding; as quatro últimas se
-/// desbloqueiam na trilha. A ordem importa: é ela que dá a ordem na tela de
-/// escolha e a ordem dos nomes no catálogo.
-enum Species { capybara, otter, tortoise, owl, axolotl, penguin, cat, fox }
+/// As quatro primeiras saem do quiz do onboarding; as demais se desbloqueiam
+/// na trilha. A ordem importa: é ela que dá a ordem na tela de escolha e a
+/// ordem dos nomes no catálogo.
+///
+/// **`frenchie` e não `frenchBulldog` nem `bulldog`.** O nome do valor vira
+/// nome de arquivo de recurso do Android — `ic_frente_${sp.name}.png`, gerado
+/// por `test/gera_icone_test.dart` —, e o `aapt` recusa recurso com maiúscula
+/// no nome ("file name must contain only lowercase a-z, 0-9, or _"): o build
+/// de release quebraria, e só ele. `bulldog` sozinho seria o buldogue inglês,
+/// que tem outra silhueta — orelha dobrada, cara mais pesada — e é o desenho
+/// errado com o nome certo pela metade.
+enum Species {
+  capybara,
+  otter,
+  tortoise,
+  owl,
+  axolotl,
+  penguin,
+  cat,
+  fox,
+  frenchie,
+}
 
 enum Mood { radiant, content, neutral, sleepy, missingYou }
 
@@ -73,6 +91,12 @@ const petNames = {
   Species.penguin: 'Nino',
   Species.cat: 'Mel',
   Species.fox: 'Faísca',
+  // Bolota: duas sílabas, do mesmo vocabulário vegetal do resto do app
+  // (folha, raiz, Lume) e descreve o bicho — compacto e redondo. "Pipoca" e
+  // "Brioche" foram descartados por serem piada de raça: o nome padrão é o
+  // que a pessoa vê antes de escolher o dela, e ele apresenta o bicho em vez
+  // de fazer graça com ele.
+  Species.frenchie: 'Bolota',
 };
 
 const durations = [25, 50, 90, 45];

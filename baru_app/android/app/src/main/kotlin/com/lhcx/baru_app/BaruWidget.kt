@@ -5,8 +5,10 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetPlugin
 import java.io.File
@@ -26,6 +28,50 @@ import java.io.File
  */
 class BaruWidget : AppWidgetProvider() {
 
+    private companion object {
+        /** ~4 bytes por pixel; 250 mil ja encostam no teto do Binder. */
+        const val MAX_PIXELS = 200_000
+    }
+
+
+    /**
+     * Le o PNG do bicho num tamanho que o Binder aceite.
+     *
+     * `setImageViewBitmap` serializa o bitmap **descomprimido** para o
+     * processo do launcher, e a transacao do Binder tem limite pratico de
+     * ~1 MB. Um PNG grande decodifica em varios megabytes, a transacao e
+     * recusada e o launcher fica com o `ImageView` vazio — sem erro
+     * nenhum, so o quadrado.
+     *
+     * O Dart ja grava no tamanho certo; esta funcao e o cinto de seguranca
+     * para o caso de um PNG antigo ter sobrado no disco.
+     */
+    private fun leCabendoNoBinder(caminho: String): Bitmap? {
+        val arquivo = File(caminho)
+        if (!arquivo.exists()) return null
+        return try {
+            val medida = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeFile(caminho, medida)
+            var amostra = 1
+            while (
+                (medida.outWidth / amostra) * (medida.outHeight / amostra) >
+                MAX_PIXELS
+            ) {
+                amostra *= 2
+            }
+            BitmapFactory.decodeFile(
+                caminho,
+                BitmapFactory.Options().apply { inSampleSize = amostra },
+            )
+        } catch (_: Exception) {
+            // Arquivo pela metade, disco cheio, PNG corrompido: o widget
+            // some com o bicho, nao com o app.
+            null
+        }
+    }
+
     override fun onUpdate(
         context: Context,
         manager: AppWidgetManager,
@@ -40,10 +86,14 @@ class BaruWidget : AppWidgetProvider() {
             // outro processo e nao teria permissao de ler o nosso arquivo
             // por Uri sem um provider so para isso.
             val caminho = dados.getString("baru_pet_png", null)
-            if (caminho != null && File(caminho).exists()) {
-                BitmapFactory.decodeFile(caminho)?.let {
-                    v.setImageViewBitmap(R.id.baru_pet, it)
-                }
+            val bicho = if (caminho != null) leCabendoNoBinder(caminho) else null
+            if (bicho != null) {
+                v.setImageViewBitmap(R.id.baru_pet, bicho)
+            } else {
+                // Sem imagem, o `ImageView` fica um retangulo vazio e o
+                // widget parece quebrado. Escondendo, o nome e a raiz
+                // ocupam o espaco e o widget continua dizendo alguma coisa.
+                v.setViewVisibility(R.id.baru_pet, View.GONE)
             }
 
             val nome = dados.getString("baru_nome", "") ?: ""

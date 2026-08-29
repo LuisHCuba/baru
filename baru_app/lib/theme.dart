@@ -92,6 +92,7 @@ class AppColors {
         Species.penguin => Cores.pelagemPinguim,
         Species.cat => Cores.pelagemGata,
         Species.fox => Cores.pelagemRaposa,
+        Species.frenchie => Cores.pelagemBuldogue,
       };
 
   /// O tom escolhido, com o índice preso ao tamanho da paleta da espécie.

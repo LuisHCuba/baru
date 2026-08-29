@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
 
 /// O fundo do ícone do app.
 ///
@@ -50,62 +49,79 @@ class _PintorDoFundo extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final r = Rect.fromLTWH(0, 0, size.width, size.height);
 
-    // 1. A luz. Foco acima do centro, onde o bicho fica.
+    // 1. O verde profundo do fundo.
+    //
+    // Escuro de propósito: o bicho é castanho, e castanho sobre verde médio
+    // fica lamacento no tamanho de um ícone. O que faz um ícone ler de longe
+    // é separação entre figura e fundo, não riqueza de detalhe.
     canvas.drawRect(
       r,
       Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(0, -0.35),
-          radius: 1.05,
-          colors: const [
-            Color(0xFF8FB87C),
-            Cores.primariaClara,
-            Color(0xFF4E7342),
-          ],
-          stops: const [0.0, 0.45, 1.0],
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF5C8A4C), Color(0xFF31502A)],
         ).createShader(r),
     );
 
-    // 2. A folhagem. Tom próximo do fundo: a diferença é de brilho, não de
-    // matiz — folhas de outra cor virariam manchas competindo com o bicho.
+    // 2. O halo atrás do bicho.
+    //
+    // É esta camada que faz o contraste. Sem ela, o corpo escuro do bicho
+    // encosta num fundo escuro e some; com ela, ele sempre nasce sobre uma
+    // área clara, qualquer que seja a pelagem.
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height * 0.46),
+      size.width * 0.40,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFFA9CF93).withValues(alpha: 0.95),
+            const Color(0xFFA9CF93).withValues(alpha: 0.0),
+          ],
+        ).createShader(
+          Rect.fromCircle(
+            center: Offset(size.width / 2, size.height * 0.46),
+            radius: size.width * 0.40,
+          ),
+        ),
+    );
+
+    // 3. Três folhas grandes nos cantos.
+    //
+    // Grandes e poucas. A versão anterior espalhava onze pequenas em volta,
+    // e no tamanho real elas viravam sujeira clara em vez de mato — num
+    // ícone de 48dp, detalhe fino é ruído.
     final sorte = math.Random(semente * 104729 + 17);
-    final folha = Paint()..color = const Color(0x1AFFFFFF);
-    final sombra = Paint()..color = const Color(0x14000000);
-    // Menores e em volta: no primeiro desenho eram grandes e no meio, e
-    // viravam manchas pálidas disputando espaço com o bicho. Folhagem tem
-    // de emoldurar, não ocupar.
-    for (var i = 0; i < 11; i++) {
-      final aoRedor = i / 11 * math.pi * 2;
-      final raio = size.width * (0.36 + sorte.nextDouble() * 0.10);
-      final cx = size.width / 2 + math.cos(aoRedor) * raio;
-      final cy = size.height / 2 + math.sin(aoRedor) * raio;
-      final comp = size.width * (0.09 + sorte.nextDouble() * 0.07);
-      final ang = aoRedor + math.pi / 2;
+    final folha = Paint()..color = const Color(0x26000000);
+    for (var i = 0; i < 3; i++) {
+      final ang = -0.6 + i * 2.2 + sorte.nextDouble() * 0.4;
+      final raio = size.width * 0.46;
+      final cx = size.width / 2 + math.cos(ang) * raio;
+      final cy = size.height / 2 + math.sin(ang) * raio;
+      final comp = size.width * (0.34 + sorte.nextDouble() * 0.10);
 
       canvas.save();
       canvas.translate(cx, cy);
-      canvas.rotate(ang);
-      // Folha como duas curvas espelhadas: um oval seria bolha, e bolha não
-      // lê como mato.
+      canvas.rotate(ang + math.pi / 2);
       final p = Path()
         ..moveTo(0, -comp / 2)
-        ..quadraticBezierTo(comp * 0.38, 0, 0, comp / 2)
-        ..quadraticBezierTo(-comp * 0.38, 0, 0, -comp / 2)
+        ..quadraticBezierTo(comp * 0.34, 0, 0, comp / 2)
+        ..quadraticBezierTo(-comp * 0.34, 0, 0, -comp / 2)
         ..close();
-      canvas.drawPath(p, i.isEven ? folha : sombra);
+      canvas.drawPath(p, folha);
       canvas.restore();
     }
 
-    // 3. A vinheta. A máscara do launcher corta as bordas; escurecê-las faz
-    // o corte parecer intenção.
+    // 4. A vinheta. A máscara corta as bordas de qualquer jeito; escurecê-
+    // las faz o corte parecer intenção.
     canvas.drawRect(
       r,
       Paint()
         ..shader = RadialGradient(
           center: Alignment.center,
-          radius: 0.78,
-          colors: const [Color(0x00000000), Color(0x33000000)],
-          stops: const [0.62, 1.0],
+          radius: 0.80,
+          colors: const [Color(0x00000000), Color(0x3D000000)],
+          stops: const [0.58, 1.0],
         ).createShader(r),
     );
   }

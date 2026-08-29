@@ -53,12 +53,23 @@ Legenda: `[ ]` não começou · `[~]` em andamento · `[x]` entregue e provado
 > apontando para o arquivo — o mesmo caminho do gerador de ícone
 > (`test/gera_icone_test.dart`), agora em runtime.
 
+## 3.6 Elenco
+
+- [x] **EL-01** — Buldogue francês como nona espécie, no app e no site.
+  Desenhado no mesmo `CustomPainter` das outras oito — orelha de morcego,
+  cara achatada, vincos na testa, corpo em bloco. Seis pelagens de registro
+  (fulvo, creme, tigrado, blue, preto), nome e frase nos quatro idiomas,
+  ícone de app por `activity-alias`, e os 36 sprites da landing. Obtido no
+  passo 20 da trilha (`cinquenta_focos`), num degrau que já existia: ver
+  ADR-018. **Não** entra no quiz — as quatro de origem são fixas.
+
 ## 3.5 Presença do bicho
 
 - [x] **PB-01** — **O pet está pequeno na tela.** Ele é o produto; hoje ocupa
   pouco da home. Aumentar de verdade, não 10%.
-- [ ] **PB-02** — Presença viciante: mais reações, mais vida, mais motivo
-  para voltar e olhar.
+- [~] **PB-02** — Presença viciante: mais reações, mais vida, mais motivo
+  para voltar e olhar. Em andamento junto com as animações de atividade —
+  o bicho tem de **fazer** o que a tela diz que ele está fazendo.
 
 ## 4. A raiz, desenhada
 
@@ -67,6 +78,22 @@ Legenda: `[ ]` não começou · `[~]` em andamento · `[x]` entregue e provado
 - [x] **RZ-02** — Marcos visuais: a raiz muda de forma em números redondos.
 - [x] **RZ-03** — Compartilhável (imagem gerada, não captura de tela).
 - [x] **RZ-04** — A raiz aparece no widget e na home, não só na tela dela.
+
+## 4.5 Correções de campo
+
+- [x] **C-01** — Crash ao trocar de pet. Quatro espécies entraram no `enum` e
+  na migração 12 sem descrição no catálogo, e `t.species(id)` fazia `as List`
+  no `null` que voltava: Ajustes virava tela vermelha. Corrigido no conteúdo
+  (as quatro, nos quatro idiomas) e na estrutura (busca por id degrada). A
+  mesma guarda foi aplicada a `moodCap`, `moodSub`, `moodLbl` e `possessivo`.
+- [x] **C-02** — Widget mostrando um quadrado. `setImageViewBitmap` serializa
+  o bitmap **descomprimido** por Binder, que tem teto de ~1 MB; 320×280
+  lógicos num aparelho 3× viravam 3,2 MB e o launcher descartava em
+  silêncio. O PNG passou a sair em pixels finais, com proteção no Kotlin.
+- [x] **C-03** — Ícone com o bicho pequeno. O gerador escalava às cegas e
+  cada espécie ocupa uma fatia diferente da própria tela. Agora ele **mede**
+  os limites reais lendo o alfa, e o fundo ganhou halo atrás do bicho, que é
+  o que dá contraste.
 
 ## 5. Trilha
 
@@ -79,6 +106,10 @@ Legenda: `[ ]` não começou · `[~]` em andamento · `[x]` entregue e provado
 - [x] **T-04** — Trocar de habitat de dentro da trilha.
 - [x] **T-05** — Enriquecer: mais passos, mais recompensas, mais a ver.
 
+- [x] **T-06** — **A trilha é linear.** Um passo só conquista depois do
+  anterior; critério já batido espera a vez, com ampulheta em vez de
+  cadeado. Antes, com 30 sessões e nada mais, havia ✓ nos passos de 3, 5, 10
+  e 20 — salteados, com cadeados no meio. Ver ADR-017.
 ## 6. Permissões
 
 - [x] **P-01** — Ao abrir, pedir **todas** as permissões de que o app
@@ -130,8 +161,14 @@ Legenda: `[ ]` não começou · `[~]` em andamento · `[x]` entregue e provado
 
 ## 11. Loja
 
-- [ ] **L-01** — Enriquecer muito mais: cenários, roupas, objetos.
-- [ ] **L-02** — Estética: a loja ainda parece uma grade de quadrados.
+- [x] **L-01** — De 17 para 31 itens, com filtros, cartão de destaque e
+  prateleiras temáticas. Cenários e roupas novas seguem bloqueados: cenário
+  precisa de entrada em `LuzDaCena.doCenario` e roupa precisa de silhueta
+  nova em `pet.dart` — sem isso, item novo é recolorir. Há teste travando o
+  invariante do cenário.
+- [x] **L-02** — As miniaturas deixaram de ser recorte sobre bege: cada uma
+  pinta a cena real do habitat com o item no lugar onde ele vai ficar, e o
+  cenário acende com a própria luz.
 
 ## 12. Pagamento
 

@@ -126,7 +126,10 @@ class CartaoProximoPasso extends StatelessWidget {
               ),
               const SizedBox(width: Espaco.xs),
               Text(
-                '${p.valorDe(marco.tipo)}/${marco.alvo}',
+                // O critério mostrado é o mesmo que a frase de baixo conta.
+                // Fixar no principal deixaria a barra andando pelo desvio e o
+                // placar parado no caminho que a pessoa não está fazendo.
+                _placarDoCriterio(p, p.criterioMaisPerto(marco)),
                 style: estilo(
                   Tipo.rotuloPequeno,
                   color: Cores.acentoTexto,
@@ -297,17 +300,24 @@ class _CartaoDeHabitat extends StatelessWidget {
                   color: liberado ? Cores.tinta : Cores.tintaA(0.5),
                 ),
               ),
-              Text(
-                legenda,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: estilo(
-                  Tipo.corpoPequeno,
-                  color: emUso
-                      ? Cores.primariaEscura
-                      : liberado
-                          ? Cores.acentoTexto
-                          : Cores.tintaA(0.45),
+              // `FittedBox`: "Abre no passo 11" não cabe nos 100 px do cartão
+              // e saía cortado — "Abre no passo …", que esconde exatamente o
+              // número que a legenda existe para dizer. Encolher a letra
+              // perde menos que perder o passo.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  legenda,
+                  maxLines: 1,
+                  style: estilo(
+                    Tipo.corpoPequeno,
+                    color: emUso
+                        ? Cores.primariaEscura
+                        : liberado
+                            ? Cores.acentoTexto
+                            : Cores.tintaA(0.45),
+                  ),
                 ),
               ),
             ],
@@ -735,13 +745,21 @@ class _NoState extends State<_No> with SingleTickerProviderStateMixin {
       EstadoNaTrilha.atual => _iconeDoMarco(widget.marco.tipo),
       // O cadeado é o que separa "ainda não" de "quase lá". Sem ele, um nó
       // apagado com o ícone do tipo lê como degrau disponível.
-      EstadoNaTrilha.travado => Icons.lock_rounded,
+      //
+      // A ampulheta é o cadeado do degrau que **já cumpriu o critério** e só
+      // espera a vez. Desenhar cadeado nos dois casos esconderia a única
+      // pergunta que a corrente cria: "por que este aqui não abriu, se eu já
+      // fiz?". A resposta inteira está no detalhe; o ícone é o convite.
+      EstadoNaTrilha.travado => widget.progresso
+              .cumpriuOCriterio(widget.marco)
+          ? Icons.hourglass_bottom_rounded
+          : Icons.lock_rounded,
     };
 
     return Semantics(
       button: true,
       label: '${tituloDoMarco(widget.app, widget.marco)} · '
-          '${_rotuloDoEstado(widget.app, estado)}',
+          '${_rotuloDoEstado(widget.app, widget.marco, widget.progresso)}',
       child: GestureDetector(
         onTap: () => _abreDetalhe(context),
         behavior: HitTestBehavior.opaque,
@@ -822,7 +840,7 @@ void abreDetalheDoMarco(
     final t = app.t;
     final estado = progresso.estadoDe(m);
     final feito = estado == EstadoNaTrilha.conquistado;
-    final valor = progresso.valorDe(m.tipo);
+    final criterio = progresso.criterioMaisPerto(m);
     final habitat = m.recompensa.estagioDeHabitat == null
         ? null
         : habitatDoEstagio(m.recompensa.estagioDeHabitat!);
@@ -892,7 +910,7 @@ void abreDetalheDoMarco(
                 // caminho responder isso sozinho, sem ninguém perguntar.
                 Text(
                   // Sem espaços, igual ao cartão do topo: "4/7".
-                  '$valor/${m.alvo}',
+                  _placarDoCriterio(progresso, criterio),
                   style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
                 ),
                 const SizedBox(height: Espaco.xs),
@@ -900,6 +918,19 @@ void abreDetalheDoMarco(
                   oQueFaltaNoMarco(app, m),
                   style: estilo(Tipo.corpoForte, color: Cores.acentoForte),
                 ),
+                // O segundo caminho só aparece aqui, no detalhe: no caminho
+                // ele seria uma segunda frase por degrau, e T-02 pede uma.
+                if (m.alternativa != null) ...[
+                  const SizedBox(height: Espaco.xs),
+                  Text(
+                    '${t.s('trilhaOuTambem')} '
+                    '${_criterioEmPalavras(app, m.alternativa!)}',
+                    style: estilo(
+                      Tipo.corpoPequeno,
+                      color: Cores.tintaA(0.55),
+                    ),
+                  ),
+                ],
               ] else ...[
                 Etiqueta(
                   texto: t.trilhaFeito,
@@ -958,6 +989,32 @@ void abreDetalheDoMarco(
   }
 }
 
+
+/// O placar de um critério: "4/7".
+///
+/// O valor é limitado ao alvo de propósito. Num degrau travado com o critério
+/// já cumprido o contador passa do alvo — "30/20" faz o placar parecer
+/// quebrado, quando a informação verdadeira é que aquela conta já fechou.
+String _placarDoCriterio(ProgressoDaTrilha p, Criterio c) {
+  final valor = p.valorDe(c.tipo);
+  return '${valor > c.alvo ? c.alvo : valor}/${c.alvo}';
+}
+
+/// Um critério em palavras, sem "faltam": "5 dias seguidos de presença".
+///
+/// Serve o segundo caminho do degrau, que é uma condição a mais e não um
+/// pedido a mais — a frase de "o que falta" é uma só, e é a do caminho que a
+/// pessoa está fazendo.
+String _criterioEmPalavras(AppState app, Criterio c) {
+  garanteTextosDaTrilha();
+  final t = app.t;
+  return switch (c.tipo) {
+    TipoDeMarco.sessoes => t.fill(t.marcoSessoes, {'n': c.alvo}),
+    TipoDeMarco.sequencia => t.fill(t.marcoSequencia, {'n': c.alvo}),
+    TipoDeMarco.nivel => t.fill(t.marcoNivel, {'n': c.alvo}),
+    TipoDeMarco.diasAbaixoDaMeta => t.fill(t.marcoAbaixo, {'n': c.alvo}),
+  };
+}
 
 String tituloDoMarco(AppState app, Marco m) {
   garanteTextosDaTrilha();
@@ -1022,8 +1079,15 @@ String oQueFaltaNoMarco(AppState app, Marco m) {
   final t = app.t;
   final p = app.progresso;
   if (p.alcancou(m)) return t.s('trilhaJaSeu');
-  final falta = p.quantoFalta(m);
-  switch (m.tipo) {
+  // Critério cumprido e degrau ainda travado: a trilha é uma corrente, e este
+  // elo espera os de trás. Sem esta linha a frase caía em "faltam 0 sessões"
+  // — o número certo para a pergunta errada.
+  if (p.esperandoAVez(m)) {
+    return t.fill(t.s('trilhaEsperaAVez'), {'n': passoDoMarco(m) - 1});
+  }
+  final criterio = p.criterioMaisPerto(m);
+  final falta = p.quantoFaltaNo(criterio);
+  switch (criterio.tipo) {
     case TipoDeMarco.sessoes:
       return falta == 1
           ? t.s('trilhaFaltaSessao1')
@@ -1046,12 +1110,18 @@ String oQueFaltaNoMarco(AppState app, Marco m) {
   }
 }
 
-String _rotuloDoEstado(AppState app, EstadoNaTrilha estado) {
+/// O estado do degrau em palavras — o que o leitor de tela recebe.
+///
+/// Cor e ícone não chegam a quem usa leitor de tela, e "travado" sozinho
+/// mentiria por omissão no degrau que já cumpriu o critério e só espera a vez.
+String _rotuloDoEstado(AppState app, Marco m, ProgressoDaTrilha p) {
   garanteTextosDaTrilha();
-  return switch (estado) {
+  return switch (p.estadoDe(m)) {
     EstadoNaTrilha.conquistado => app.t.trilhaFeito,
     EstadoNaTrilha.atual => app.t.trilhaAgora,
-    EstadoNaTrilha.travado => app.t.s('trilhaTravado'),
+    EstadoNaTrilha.travado => p.cumpriuOCriterio(m)
+        ? app.t.s('trilhaProntoTravado')
+        : app.t.s('trilhaTravado'),
   };
 }
 

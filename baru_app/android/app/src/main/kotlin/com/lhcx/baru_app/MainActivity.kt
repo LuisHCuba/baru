@@ -27,7 +27,7 @@ class MainActivity : FlutterFragmentActivity() {
         /** Tem de bater com os `activity-alias` do manifesto. */
         val ESPECIES = listOf(
             "capybara", "otter", "tortoise", "owl",
-            "axolotl", "penguin", "cat", "fox",
+            "axolotl", "penguin", "cat", "fox", "frenchie",
         )
     }
 

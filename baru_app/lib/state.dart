@@ -18,6 +18,7 @@ import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
 import 'l10n.dart';
 import 'l10n_descanso.dart';
+import 'l10n_humor.dart';
 import 'l10n_sobreposicao.dart';
 import 'theme.dart';
 import 'models.dart';
@@ -89,6 +90,17 @@ class AppState extends ChangeNotifier {
         sessoesConcluidas: sessoesConcluidas,
         melhorSequencia: melhorSequencia,
         diasAbaixoDaMeta: diasAbaixoDaMeta,
+        // Piso de posse para quem já recebeu.
+        //
+        // Espécie e habitat são **derivados** da trilha, não gravados. Ao
+        // virar a chave para a corrente linear, uma conta que ganhou o
+        // axolote e a Serra por fora de ordem perderia os dois — punição
+        // retroativa por uma mudança nossa, que o contrato proíbe.
+        //
+        // `entregues` é piso: não devolve o ✓ nem recria buraco na
+        // corrente, só impede que o que já foi entregue seja tomado de
+        // volta.
+        entregues: marcosResgatados,
       );
 
   int get nivel => progresso.nivel;
@@ -302,10 +314,32 @@ class AppState extends ChangeNotifier {
         maiorSessaoHoje: maiorSessaoHoje,
         fechouAbaixoHoje: usageAccess && usage < goal,
         dispersivoHoje: resumoTela?.dispersivo.inMinutes,
+        neutroHoje: resumoTela?.neutro.inMinutes,
+        produtivoHoje: resumoTela?.produtivo.inMinutes,
         sessoesNaSemana: sessoesNaSemana,
         minutosNaSemana: minutosNaSemana,
         diasAbaixoNaSemana: diasAbaixoNaSemana,
         temPermissaoDeUso: usageAccess,
+        carinhosHoje: carinhosHoje,
+        faixasDeFocoHoje: _faixasDeFocoHoje,
+        // "Faltou" é ter passado um dia inteiro fora, não ter aberto ontem à
+        // noite e hoje de manhã. `daysAway` já é isso, calculado da data e
+        // não de um contador que se acumula (ADR-006).
+        voltouDepoisDeFaltar: daysAway >= 1,
+      );
+
+  /// Em quantos períodos do dia houve foco **concluído** hoje.
+  ///
+  /// Sai de `sessions`, que já é persistido, sincronizado e restaurado — não
+  /// precisou de campo novo, de migração nem de mexer no `row_codec`. É a
+  /// mesma fonte que `horarioDoHabito` lê para aprender a hora do lembrete.
+  ///
+  /// Só as concluídas: uma sessão abandonada às 8h não é foco da manhã, e
+  /// contá-la deixaria a missão de variedade de horário ser cumprida
+  /// começando e desistindo em três horários diferentes.
+  int get _faixasDeFocoHoje => faixasDeFoco(
+        sessions.where((s) => s.completed).map((s) => s.at),
+        dia: lastOpenDate,
       );
 
   /// As missoes de hoje. Sorteio deterministico por conta e data.
@@ -327,7 +361,24 @@ class AppState extends ChangeNotifier {
   List<Missao> get missoesSemanais =>
       missoes.where((m) => m.ritmo == RitmoDaMissao.semanal).toList();
 
-  int get missoesResgataveis => missoes.where((m) => m.resgatavel).length;
+  /// A missão da retomada, só no dia em que a pessoa volta depois de faltar.
+  ///
+  /// Fica fora do sorteio (ver `defDaRetomada`) e por isso fora de [missoes]:
+  /// quem desenha decide se há o que desenhar.
+  Missao? get missaoDeRetomada => _quadro.aRetomada(
+        dia: lastOpenDate,
+        contadores: contadoresDeMissao,
+        resgatadas: missoesResgatadas,
+      );
+
+  /// Quantas há para colher agora, incluindo a da retomada.
+  ///
+  /// O distintivo da home lê daqui. Deixar a retomada de fora faria a home
+  /// dizer "nada para colher" com folha parada na tela ao lado — e é
+  /// justamente no dia da volta que o empurrão importa.
+  int get missoesResgataveis =>
+      missoes.where((m) => m.resgatavel).length +
+      ((missaoDeRetomada?.resgatavel ?? false) ? 1 : 0);
 
   /// Recolhe o premio de uma missao concluida.
   ///
@@ -727,19 +778,53 @@ class AppState extends ChangeNotifier {
   String get displayName =>
       petName.isEmpty ? petNames[species]! : petName;
 
-  String get moodKey {
-    switch (mood) {
-      case Mood.radiant:
-        return 'radiant';
-      case Mood.content:
-        return 'content';
-      case Mood.neutral:
-        return 'neutral';
-      case Mood.sleepy:
-        return 'sleepy';
-      case Mood.missingYou:
-        return 'missing_you';
+  /// A chave de texto do humor. Delegada a `chaveDoHumor` para que a fala
+  /// enriquecida e o catálogo antigo nunca discordem de qual chave é qual —
+  /// duas tabelas iguais mantidas à mão divergem na primeira mexida.
+  String get moodKey => chaveDoHumor(mood);
+
+  /// Os fatos medidos que explicam o humor de hoje.
+  ///
+  /// Só medição: nada aqui é estimado. `usageAccess` é o mesmo portão que o
+  /// [mood] usa para olhar tempo de tela, então cena e legenda leem o dia da
+  /// mesma fonte.
+  FatosDoHumor get fatosDoHumor => FatosDoHumor(
+        humor: mood,
+        nomeDoPet: displayName,
+        temMedicaoDeTela: usageAccess,
+        minutosDeTela: usage,
+        meta: goal,
+        sessoesHoje: completedToday,
+        minutosDeFocoHoje: minutosDeFocoHoje,
+        desistiuHoje: abandonedToday,
+        minutosDaDesistencia: _minutosDaDesistenciaDeHoje,
+        diasFora: daysAway,
+        raiz: streak,
+        maiorRaiz: melhorSequencia,
+        folhas: leaves,
+        minutosDispersivos: resumoTela?.dispersivo.inMinutes,
+      );
+
+  /// A fala do humor: qual texto a home mostra, e com que números.
+  FalaDoHumor get falaDoHumor {
+    garanteTextosDoHumor();
+    return escolheAFala(fatosDoHumor, t);
+  }
+
+  /// Quanto durava a sessão que parou no meio hoje.
+  ///
+  /// Sai de `sessions`, não de `sessionDur`: quem desiste de 25 min e depois
+  /// completa 50 deixa `sessionDur` em 50, e a legenda diria que a sessão
+  /// interrompida tinha 50 min. `null` quando não há registro — e aí a fala
+  /// omite o número em vez de inventar um.
+  int? get _minutosDaDesistenciaDeHoje {
+    final hoje = dateOnly(lastOpenDate);
+    for (final s in sessions.reversed) {
+      if (!s.aborted) continue;
+      if (dateOnly(s.at) != hoje) continue;
+      return s.dur;
     }
+    return null;
   }
 
   String get speciesKey => species.name;

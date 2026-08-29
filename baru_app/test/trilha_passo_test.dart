@@ -80,14 +80,16 @@ void main() {
       expect(atuais.length, 1, reason: 'um caminho tem uma frente só');
     });
 
-    test('marco alcançado fora de ordem continua conquistado', () {
-      // Sem permissão de uso ninguém fecha dia abaixo da meta, então o passo
-      // 2 trava para sempre — e as sessões seguem contando. O ✓ do que foi
-      // feito não pode virar cadeado por causa da posição.
+    test('marco com o critério cumprido fora de ordem não conquista', () {
+      // Era o contrário até aqui, e é a mudança que o dono do produto pediu
+      // com todas as letras: "não tem como ele ter conquistado, sei lá, o
+      // passo 7, 8, sem ter passado pelo 1, 2".
       final p = _conta(sessoes: 5).progresso;
       final cinco = trilha.firstWhere((m) => m.id == 'cinco_focos');
       expect(p.proximoMarco?.id, 'primeiro_dia_abaixo');
-      expect(p.estadoDe(cinco), EstadoNaTrilha.conquistado);
+      expect(p.cumpriuOCriterio(cinco), isTrue, reason: 'cinco sessões há');
+      expect(p.estadoDe(cinco), EstadoNaTrilha.travado);
+      expect(p.esperandoAVez(cinco), isTrue);
     });
 
     test('o passo atual é a posição do primeiro degrau em aberto', () {

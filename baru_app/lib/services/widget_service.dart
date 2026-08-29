@@ -155,12 +155,10 @@ class WidgetService {
     try {
       if (precisaDesenhar) {
         desenhos++;
-        // O PNG é grande de propósito: o widget pode ser esticado, e
-        // `ImageView` amplia imagem pequena até borrar.
         final caminho = await (rasteriza ?? _rasterizaDeVerdade)(
           _CenaDoWidget(estado: e),
           'baru_pet',
-          const Size(320, 280),
+          tamanhoDoPng,
         );
         await (gravaDado ?? _gravaDeVerdade)('baru_pet_png', caminho);
       }
@@ -176,8 +174,31 @@ class WidgetService {
     }
   }
 
+  /// O tamanho do PNG do bicho, em pixels de verdade.
+  ///
+  /// **Isto é um teto, não uma preferência.** O `RemoteViews` viaja para o
+  /// processo do launcher por Binder, e a transação tem limite prático de
+  /// ~1 MB. `setImageViewBitmap` serializa o bitmap **descomprimido**: a
+  /// 4 bytes por pixel, 250 mil pixels já encostam no teto.
+  ///
+  /// A primeira versão pedia 320×280 **lógicos** e deixava o `pixelRatio`
+  /// no padrão, que num aparelho 3× vira 960×840 = 3,2 MB. O launcher
+  /// descartava a imagem em silêncio e sobrava o quadrado vazio — foi o
+  /// relato: "tá com um quadrado dentro dele".
+  ///
+  /// 360×312 dá 112 mil pixels, ~450 KB: folga confortável, e ainda maior
+  /// que qualquer widget 4×2 numa tela comum.
+  static const tamanhoDoPng = Size(360, 312);
+
+  /// `pixelRatio: 1` porque [tamanhoDoPng] já está em pixels finais. Deixar
+  /// o padrão multiplicaria pela densidade da tela e devolveria o problema.
   Future<String> _rasterizaDeVerdade(Widget w, String chave, Size t) =>
-      HomeWidget.renderFlutterWidget(w, key: chave, logicalSize: t);
+      HomeWidget.renderFlutterWidget(
+        w,
+        key: chave,
+        logicalSize: t,
+        pixelRatio: 1,
+      );
 
   Future<void> _gravaDeVerdade(String chave, Object valor) =>
       HomeWidget.saveWidgetData<Object>(chave, valor);

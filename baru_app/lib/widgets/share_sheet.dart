@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../share/habitat_share.dart';
+import '../l10n_humor.dart';
 import '../state.dart';
 import '../theme.dart';
 import 'common.dart';
@@ -34,7 +35,9 @@ class _ShareSheetState extends State<ShareSheet> {
     if (_started || !mounted) return;
     _started = true;
     final app = AppScope.of(context);
-    final caption = app.t.fill(app.t.moodCap(app.moodKey), {'n': app.displayName});
+    // O que sai do app tem de dizer o mesmo que a tela: quem recebe a
+    // imagem não tem contexto nenhum além desta linha.
+    final caption = app.t.humorCap(app.falaDoHumor);
     final ok = await HabitatShare.share(boundaryKey: _boundary, text: caption);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

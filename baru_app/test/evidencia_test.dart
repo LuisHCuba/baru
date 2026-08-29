@@ -221,13 +221,27 @@ void main() {
     }
   });
 
-  testWidgets('folha das quatro especies em quatro humores', (tester) async {
+  /// A folha de espécies × humores.
+  ///
+  /// Ela não é só evidência: é o **insumo** da landing.
+  /// `landing/build_assets.py` recorta esta imagem em sprites separando as
+  /// linhas por faixas de alfa vazio, e daí saem os bichos do site.
+  ///
+  /// Por isso a linha ganhou 8 px de folga em cima e embaixo. Sem ela o
+  /// passo vertical é 150 para um bicho que desenha uns 140: sobram ~10 px,
+  /// e basta uma espécie de silhueta alta encostar na de baixo para as duas
+  /// virarem uma faixa só. Foi o que aconteceu com nove espécies — a folha
+  /// saiu com 7 faixas em vez de 9, e o corte teria renomeado metade do
+  /// elenco em silêncio.
+  testWidgets('folha das especies em quatro humores', (tester) async {
     tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
     addTearDown(
       tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
     );
-    tester.view.physicalSize = const Size(900, 1400);
+    // Altura derivada do `enum`, e não fixa: uma espécie a mais estourava o
+    // `Column` e derrubava o teste com `RenderFlex overflowed`.
+    tester.view.physicalSize = Size(900, Species.values.length * 166 + 40);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -249,22 +263,25 @@ void main() {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 for (final sp in Species.values)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (final (humor, atividade) in casos)
-                        SizedBox(
-                          width: 200,
-                          height: 150,
-                          child: PetView(
-                            species: sp,
-                            mood: humor,
-                            activity: atividade,
-                            coat: 0,
-                            interativo: false,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (final (humor, atividade) in casos)
+                          SizedBox(
+                            width: 200,
+                            height: 150,
+                            child: PetView(
+                              species: sp,
+                              mood: humor,
+                              activity: atividade,
+                              coat: 0,
+                              interativo: false,
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -480,7 +497,12 @@ void main() {
     addTearDown(
       tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
     );
-    tester.view.physicalSize = const Size(900, 920);
+    // A altura sai do número de espécies, e não de um 920 escrito à mão: a
+    // folha tem uma linha por bicho, e a nona (o buldogue) estourou a caixa
+    // em exatos 70 px — 9 × 110 contra os 8 × 110 que o número cobria. Um
+    // `RenderFlex overflowed` derruba o teste, então isso não era uma folha
+    // torta: era a suíte vermelha por causa de um `enum` que cresceu.
+    tester.view.physicalSize = Size(900, Species.values.length * 110 + 40);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);

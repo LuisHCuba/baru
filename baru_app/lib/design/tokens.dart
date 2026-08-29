@@ -147,6 +147,28 @@ class Cores {
     Color(0xFFE29A76),
   ];
 
+  /// Buldogue francês: as cores que o padrão da raça de fato admite.
+  ///
+  /// A única paleta do elenco que **não** é uma família de tons do mesmo
+  /// pigmento, e é de propósito: nas outras oito o que varia é a intensidade
+  /// do mesmo pelo, no buldogue variam pelos diferentes — fulvo, tigrado,
+  /// creme, blue e preto são cores de registro, não graduações. Uma escada de
+  /// bege daria a mesma escolha de sempre e apagaria o traço da raça.
+  ///
+  /// O índice 0 é o fulvo porque é o que o ícone e as capturas usam
+  /// (`coat: 0`), e é a cor pela qual a raça é reconhecida à primeira vista.
+  /// O tigrado e o preto entram escuros de propósito: `sombraForte` deriva
+  /// deles e é ela que desenha vinco e narina — num pelo já claro os vincos
+  /// da testa somem, e sem vinco não é buldogue.
+  static const pelagemBuldogue = [
+    Color(0xFFCBA274), // fulvo
+    Color(0xFFA9773F), // fulvo escuro
+    Color(0xFFE2CFB0), // creme, a base do pied
+    Color(0xFF6B5A4B), // tigrado
+    Color(0xFF8E9296), // blue
+    Color(0xFF4A423E), // preto-focinho-escuro
+  ];
+
   /// Compatibilidade: o valor antigo, usado só onde a espécie não é sabida.
   static const pelagem = pelagemCapivara;
 

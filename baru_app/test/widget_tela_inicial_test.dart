@@ -1,6 +1,7 @@
 import 'package:baru_app/models.dart';
 import 'package:baru_app/services/widget_service.dart';
 import 'package:baru_app/state.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// O Baru na tela inicial do aparelho.
@@ -119,6 +120,41 @@ void main() {
           (w, k, t) async => throw StateError('sem widget na tela');
 
       await expectLater(_manda(_estado(nome: 'x')), completes);
+    });
+  });
+
+  group('o tamanho do PNG', () {
+    test('cabe na transação do Binder', () {
+      // `setImageViewBitmap` serializa o bitmap **descomprimido** para o
+      // processo do launcher, e a transação tem limite prático de ~1 MB. A
+      // primeira versão pedia 320×280 lógicos e deixava o `pixelRatio` no
+      // padrão: num aparelho 3× isso vira 960×840 = 3,2 MB, o launcher
+      // descarta a imagem em silêncio e sobra um quadrado vazio.
+      final t = WidgetService.tamanhoDoPng;
+      final bytes = t.width * t.height * 4;
+
+      expect(
+        bytes,
+        lessThan(1000 * 1024),
+        reason: 'acima disso o launcher descarta e o widget fica vazio',
+      );
+    });
+
+    test('e ainda é maior que um widget 4x2 numa tela comum', () {
+      // O outro lado do mesmo cuidado: encolher demais borra a imagem
+      // quando o `ImageView` estica.
+      expect(WidgetService.tamanhoDoPng.width, greaterThanOrEqualTo(320));
+    });
+
+    test('a rasterização pede exatamente esse tamanho', () async {
+      Size? pedido;
+      WidgetService.instance.rasteriza = (w, k, t) async {
+        pedido = t;
+        return '/tmp/x.png';
+      };
+      await _manda(_estado());
+
+      expect(pedido, WidgetService.tamanhoDoPng);
     });
   });
 

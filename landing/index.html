@@ -215,7 +215,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 }
 
 /* chips de espécie */
-.chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+/* Três colunas, e não quatro: com nove companheiros o grid de quatro deixa
+   a última linha com um chip solo, e um botão sozinho embaixo de duas fileiras
+   cheias lê como erro de carregamento. Três por três fecha o quadrado — e o
+   chip fica mais largo, o que o rótulo mais comprido do elenco
+   ("buldogue francês") precisa para não quebrar em duas linhas. */
+.chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
 .chip{
   display:flex;flex-direction:column;align-items:center;gap:2px;
   padding:10px 4px 8px;border-radius:16px;cursor:pointer;
@@ -405,7 +410,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
       </div>
       <ul class="provas">
         <li>7 dias grátis</li>
-        <li>8 companheiros</li>
+        <li>9 companheiros</li>
         <li>4 idiomas</li>
       </ul>
     </div>
@@ -421,7 +426,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
           <span id="balao-sub">Abaixo da meta e uma sessão na água. O melhor tipo de dia.</span>
         </div>
         <img class="cena-bicho" id="bicho" src="assets/pet-capybara-radiant.webp"
-             width="311" height="297" fetchpriority="high"
+             width="369" height="299" fetchpriority="high"
              alt="Baru, a capivara, radiante, com brilhos ao redor.">
         <span class="cena-dica" id="dica">toque para fazer carinho</span>
       </div>
@@ -433,7 +438,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 <!-- ================= NÚMEROS ================= -->
 <section class="faixa faixa--tom revela" style="padding-top:clamp(36px,5vw,56px);padding-bottom:clamp(36px,5vw,56px)">
   <div class="dentro numeros">
-    <div class="numero"><b>8</b><span>companheiros com<br>personalidade própria</span></div>
+    <div class="numero"><b>9</b><span>companheiros com<br>personalidade própria</span></div>
     <div class="numero"><b>4</b><span>idiomas de primeira classe:<br>pt · en · es · zh</span></div>
     <div class="numero"><b>12</b><span>marcos na trilha —<br>nenhum é retirado depois</span></div>
     <div class="numero"><b>0</b><span>punições. É regra escrita<br>do produto, não promessa</span></div>
@@ -455,22 +460,22 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 
     <div class="humores">
       <article class="humor">
-        <img data-humor="radiant" src="assets/pet-capybara-radiant.webp" width="311" height="297" alt="">
+        <img data-humor="radiant" src="assets/pet-capybara-radiant.webp" width="369" height="299" alt="">
         <b id="hum-radiant">Baru está radiante.</b>
         <p id="sub-radiant">Abaixo da meta e uma sessão na água. O melhor tipo de dia.</p>
       </article>
       <article class="humor">
-        <img data-humor="content" src="assets/pet-capybara-content.webp" width="311" height="297" alt="">
+        <img data-humor="content" src="assets/pet-capybara-content.webp" width="369" height="299" alt="">
         <b id="hum-content">Baru está contente.</b>
         <p id="sub-content">Um dia decente. Uma sessão a mais e ele estaria radiante.</p>
       </article>
       <article class="humor">
-        <img data-humor="sleepy" src="assets/pet-capybara-sleepy.webp" width="311" height="297" alt="">
+        <img data-humor="sleepy" src="assets/pet-capybara-sleepy.webp" width="369" height="299" alt="">
         <b id="hum-sleepy">Baru está com sono.</b>
         <p id="sub-sleepy">Dia longo de tela. Amanhã ele topa nadar.</p>
       </article>
       <article class="humor">
-        <img data-humor="missing" src="assets/pet-capybara-missing.webp" width="311" height="297" alt="">
+        <img data-humor="missing" src="assets/pet-capybara-missing.webp" width="369" height="299" alt="">
         <b id="hum-missing">Baru sentiu sua falta.</b>
         <p id="sub-missing">Ele te esperou. Nada foi perdido enquanto você esteve fora.</p>
       </article>
@@ -621,7 +626,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 
     <div class="fim-palco">
       <img id="noite-bicho" loading="lazy"
-           src="assets/pet-capybara-sleepy.webp" width="311" height="297"
+           src="assets/pet-capybara-sleepy.webp" width="369" height="299"
            alt="Baru dormindo, esperando o dia seguinte.">
       <p class="fim-legenda" id="noite-legenda">Baru já foi dormir.<br>Ele te espera amanhã.</p>
     </div>
@@ -663,7 +668,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
     { id: "axolotl",  nome: "Lume",   rotulo: "axolote",   p: "ele" },
     { id: "penguin",  nome: "Nino",   rotulo: "pinguim",   p: "ele" },
     { id: "cat",      nome: "Mel",    rotulo: "gata",      p: "ela" },
-    { id: "fox",      nome: "Faísca", rotulo: "raposa",    p: "ela" }
+    { id: "fox",      nome: "Faísca", rotulo: "raposa",    p: "ela" },
+    { id: "frenchie", nome: "Bolota", rotulo: "buldogue francês", p: "ele" }
   ];
   /* Legendas do catálogo pt de lib/l10n.dart, com os mesmos marcadores. */
   var HUMOR_TIT = {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n_humor.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -130,12 +131,15 @@ class ReportScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      t.fill(t.moodCap(app.moodKey), {'n': app.displayName}),
+                      // A mesma fala da home, com o fato e o número. Duas
+                      // telas dizendo coisas diferentes sobre o mesmo dia é
+                      // pior que uma delas dizer pouco.
+                      t.humorCap(app.falaDoHumor),
                       style: nunito(size: 16.5, weight: FontWeight.w800, height: 1.3),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      t.moodLbl(app.moodKey),
+                      t.humorSub(app.falaDoHumor),
                       style: nunito(size: 13, height: 1.4, color: AppColors.inkA(0.6)),
                     ),
                   ],

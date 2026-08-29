@@ -75,13 +75,41 @@ class T {
   }
   List<String> get days => List<String>.from(_m['days'] as List);
   List<String> get tabs => List<String>.from(_m['tabs'] as List);
-  List<String> species(String id) =>
-      List<String>.from((_m['species'] as Map)[id] as List);
+  /// Nome e frase da espécie.
+  ///
+  /// Degrada em vez de estourar. O `as List` cru derrubava a tela inteira
+  /// quando o id não estava no catálogo — foi o que aconteceu com as quatro
+  /// espécies novas: elas entraram no `enum` e na migração 12 e ninguém
+  /// escreveu a descrição, então trocar de bicho quebrava Ajustes com
+  /// `type 'Null' is not a subtype of type 'List'`.
+  ///
+  /// Texto faltando é defeito de tradução; tela em branco vermelho é
+  /// defeito de produto. Os dois são erros, mas só um a pessoa vê.
+  List<String> species(String id) {
+    final mapa = _m['species'];
+    final achado = mapa is Map ? mapa[id] : null;
+    if (achado is List && achado.isNotEmpty) {
+      return List<String>.from(achado);
+    }
+    // O nome do bicho ao menos existe em `animalNames`, e é melhor que a
+    // tela mostrar o id cru.
+    return [animalName(id), ''];
+  }
   String animalName(String id) =>
       '${(_m['animalNames'] as Map)[id] ?? id}';
-  String moodCap(String mood) => (_m['moodCap'] as Map)[mood] as String;
-  String moodSub(String mood) => (_m['moodSub'] as Map)[mood] as String;
-  String moodLbl(String mood) => (_m['moodLbl'] as Map)[mood] as String;
+  // Mesma guarda do [species], pelo mesmo motivo: busca por id que não
+  // acha derruba a tela em vermelho. Aqui a chave vem de um `enum` fechado
+  // e a falta é improvável — mas foi o que se disse das espécies antes de
+  // quatro entrarem sem descrição.
+  String moodCap(String mood) => _porId('moodCap', mood);
+  String moodSub(String mood) => _porId('moodSub', mood);
+  String moodLbl(String mood) => _porId('moodLbl', mood);
+
+  String _porId(String grupo, String id) {
+    final mapa = _m[grupo];
+    final achado = mapa is Map ? mapa[id] : null;
+    return achado is String ? achado : '';
+  }
 
   String freezeNote(int left) {
     if (left <= 0) return repFreeze0;
@@ -308,7 +336,7 @@ class T {
     final p = pronome(sexo);
     final capital =
         p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}';
-    final d = (_m['possessivo'] as Map)[sexo.name] as String;
+    final d = _porId('possessivo', sexo.name);
     return fill(texto, {...vars, 'p': p, 'P': capital, 'd': d});
   }
   String get folhasT => s('folhasT');
@@ -816,6 +844,26 @@ const _pt = <String, Object>{
       'Você é uma coruja.',
       'Mais lúcida depois que escurece. Você precisa de silêncio, não de pressa.',
     ],
+    'axolotl': [
+      'Você é um axolote.',
+      'Calmo em água parada, e se recupera do que parecia perdido. Você recomeça melhor do que continua.',
+    ],
+    'penguin': [
+      'Você é um pinguim.',
+      'Desengonçado em terra, exato na água. Você precisa do ambiente certo mais do que de esforço.',
+    ],
+    'cat': [
+      'Você é uma gata.',
+      'Escolhe a hora e o lugar, e não negocia. Você rende quando ninguém está cobrando.',
+    ],
+    'fox': [
+      'Você é uma raposa.',
+      'Curiosa e rápida de mudar de ideia. Você aprende no atalho, não no manual.',
+    ],
+    'frenchie': [
+      'Você é um buldogue francês.',
+      'Ronco, sofá e presença. Você trabalha melhor ao lado de alguém do que trancado sozinho.',
+    ],
   },
   'goalT': 'Quanto tempo de tela num dia comum?',
   'goalB': 'Um chute serve. Só precisamos de um ponto de partida.',
@@ -863,15 +911,22 @@ const _pt = <String, Object>{
   'usageLeft': 'faltam {x}',
   'usageOver': '{x} acima',
   'usageEven': 'na meta',
+  // Os cinco textos curtos do humor. A home **não** os usa mais: ela mostra a
+  // fala com a causa e o número (`lib/l10n_humor.dart`). Estes sobraram onde
+  // não há espaço para o fato — rótulo do relatório, legenda de a11y do
+  // habitat, legenda do share — e onde por isso não podem afirmar medição
+  // nenhuma. Foi o que os dois consertos abaixo corrigiram: `radiant` dizia
+  // "abaixo da meta" mesmo sem permissão de uso, e `neutral` punha o bicho na
+  // parte rasa da água — que quatro das oito espécies não têm.
   'moodCap': {
     'radiant': '{n} está radiante.',
     'content': '{n} está contente.',
-    'neutral': '{n} cochila na parte rasa.',
+    'neutral': '{n} está cochilando.',
     'sleepy': '{n} está com sono.',
     'missing_you': '{n} sentiu sua falta.',
   },
   'moodSub': {
-    'radiant': 'Abaixo da meta e uma sessão na água. O melhor tipo de dia.',
+    'radiant': 'O dia está indo do jeito que vocês dois queriam.',
     'content': 'Um dia decente. Uma sessão a mais e {p} estaria radiante.',
     'neutral': 'Em cima da meta. Nada para corrigir.',
     'sleepy': 'Dia longo de tela. Amanhã {p} topa nadar.',
@@ -985,6 +1040,7 @@ const _pt = <String, Object>{
     'penguin': 'Pinguim',
     'cat': 'Gata',
     'fox': 'Raposa',
+    'frenchie': 'Buldogue francês',
   },
   'shareMeta': 'Imagem · 402 × 296',
   'shareNote':
@@ -1294,6 +1350,26 @@ const _en = <String, Object>{
       "You're an owl.",
       'Clearest after dark. You need quiet more than you need speed.',
     ],
+    'axolotl': [
+      'You are an axolotl.',
+      'Calm in still water, and you regrow what looked lost. You restart better than you continue.',
+    ],
+    'penguin': [
+      'You are a penguin.',
+      'Clumsy on land, exact in water. You need the right setting more than more effort.',
+    ],
+    'cat': [
+      'You are a cat.',
+      'You pick the time and the place, and you do not negotiate. You do your best when nobody is watching.',
+    ],
+    'fox': [
+      'You are a fox.',
+      'Curious and quick to change your mind. You learn on the shortcut, not in the manual.',
+    ],
+    'frenchie': [
+      'You are a French bulldog.',
+      'Snoring, sofa, company. You work better beside someone than shut in on your own.',
+    ],
   },
   'goalT': 'How much screen time on an average day?',
   'goalB': 'A rough guess is fine. We only need a starting point.',
@@ -1342,12 +1418,12 @@ const _en = <String, Object>{
   'moodCap': {
     'radiant': '{n} is radiant.',
     'content': '{n} is content.',
-    'neutral': '{n} is dozing in the shallows.',
+    'neutral': '{n} is dozing.',
     'sleepy': '{n} is sleepy.',
     'missing_you': '{n} missed you.',
   },
   'moodSub': {
-    'radiant': 'Under your goal and a session in the water. Best kind of day.',
+    'radiant': 'The day is going the way you both wanted.',
     'content': 'A decent day. One more session and {p} would be beaming.',
     'neutral': 'Right around your goal. Nothing to fix.',
     'sleepy': 'A long screen day. Tomorrow {p} is up for a swim.',
@@ -1460,6 +1536,7 @@ const _en = <String, Object>{
     'penguin': 'Penguin',
     'cat': 'Cat',
     'fox': 'Fox',
+    'frenchie': 'French bulldog',
   },
   'shareMeta': 'Image · 402 × 296',
   'shareNote':
@@ -1769,6 +1846,26 @@ const _es = <String, Object>{
       'Eres un búho.',
       'Más lúcido de noche. Necesitas silencio, no prisa.',
     ],
+    'axolotl': [
+      'Eres un ajolote.',
+      'Tranquilo en agua quieta, y recuperas lo que parecía perdido. Empiezas de nuevo mejor de lo que sigues.',
+    ],
+    'penguin': [
+      'Eres un pingüino.',
+      'Torpe en tierra, exacto en el agua. Necesitas el entorno correcto más que más esfuerzo.',
+    ],
+    'cat': [
+      'Eres una gata.',
+      'Eliges la hora y el lugar, y no negocias. Rindes cuando nadie te está mirando.',
+    ],
+    'fox': [
+      'Eres un zorro.',
+      'Curioso y rápido para cambiar de idea. Aprendes en el atajo, no en el manual.',
+    ],
+    'frenchie': [
+      'Eres un bulldog francés.',
+      'Ronquido, sofá y compañía. Trabajas mejor al lado de alguien que encerrado a solas.',
+    ],
   },
   'goalT': '¿Cuánto tiempo de pantalla en un día normal?',
   'goalB': 'Una estimación basta. Solo necesitamos un punto de partida.',
@@ -1819,13 +1916,12 @@ const _es = <String, Object>{
   'moodCap': {
     'radiant': '{n} está radiante.',
     'content': '{n} está contento.',
-    'neutral': '{n} dormita en la orilla.',
+    'neutral': '{n} está dormitando.',
     'sleepy': '{n} tiene sueño.',
     'missing_you': '{n} te echó de menos.',
   },
   'moodSub': {
-    'radiant':
-        'Por debajo de la meta y una sesión en el agua. El mejor tipo de día.',
+    'radiant': 'El día va como los dos querían.',
     'content': 'Un día decente. Una sesión más y {p} estaría radiante.',
     'neutral': 'Justo en la meta. Nada que corregir.',
     'sleepy': 'Día largo de pantalla. Mañana {p} se anima a nadar.',
@@ -1937,6 +2033,7 @@ const _es = <String, Object>{
     'penguin': 'Pingüino',
     'cat': 'Gata',
     'fox': 'Zorro',
+    'frenchie': 'Bulldog francés',
   },
   'shareMeta': 'Imagen · 402 × 296',
   'shareNote':
@@ -2228,6 +2325,26 @@ const _zh = <String, Object>{
     'otter': ['你是水獭。', '好动又爱玩。你在短而密集的时段里最专注。'],
     'tortoise': ['你是乌龟。', '稳比快好。每天走一点点，就是你的全部诀窍。'],
     'owl': ['你是猫头鹰。', '入夜后最清醒。你需要安静，而不是速度。'],
+    'axolotl': [
+      '你是一只六角恐龙。',
+      '静水里安稳，失去的还能长回来。你重新开始比坚持下去更擅长。',
+    ],
+    'penguin': [
+      '你是一只企鹅。',
+      '在陆上笨拙，在水里精准。你需要的是对的环境，而不是更用力。',
+    ],
+    'cat': [
+      '你是一只猫。',
+      '时间和地点你自己挑，不商量。没人盯着的时候你最好。',
+    ],
+    'fox': [
+      '你是一只狐狸。',
+      '好奇，也很快改主意。你在捷径里学，不在说明书里。',
+    ],
+    'frenchie': [
+      '你是一只法国斗牛犬。',
+      '打呼、沙发、有人在旁边。比起一个人关起来，你在别人身边更做得出事。',
+    ],
   },
   'goalT': '平常一天用多久手机？',
   'goalB': '大概就行，我们只需要一个起点。',
@@ -2276,12 +2393,12 @@ const _zh = <String, Object>{
   'moodCap': {
     'radiant': '{n} 神采飞扬。',
     'content': '{n} 很满足。',
-    'neutral': '{n} 在浅水里打瞌睡。',
+    'neutral': '{n} 在打盹。',
     'sleepy': '{n} 困了。',
     'missing_you': '{n} 有点想你。',
   },
   'moodSub': {
-    'radiant': '低于目标，还完成了一次专注。这是最好的一天。',
+    'radiant': '这一天正照着你们两个想要的样子在走。',
     'content': '还不错的一天。再来一次专注，{p}就会神采飞扬。',
     'neutral': '刚好在目标附近。没什么要改的。',
     'sleepy': '屏幕时间很长的一天。明天{p}还愿意去游泳。',
@@ -2379,6 +2496,7 @@ const _zh = <String, Object>{
     'penguin': '企鹅',
     'cat': '猫',
     'fox': '狐狸',
+    'frenchie': '法国斗牛犬',
   },
   'shareMeta': '图片 · 402 × 296',
   'shareNote': '系统分享面板。第一阶段分享栖息地截图。',

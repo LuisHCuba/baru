@@ -18,15 +18,22 @@ import 'package:flutter_test/flutter_test.dart';
 /// um cenário na loja. Aqui se prova o contrário — subir de marco muda o
 /// lugar, e o lugar dá para escolher de dentro da trilha.
 
-AppState _conta({int xp = 0, int sessoes = 0}) {
+AppState _conta({int xp = 0, int sessoes = 0, int abaixo = 0}) {
   final s = AppState()..startCompanionship();
   s.xp = xp;
   s.sessoesConcluidas = sessoes;
+  s.diasAbaixoDaMeta = abaixo;
   return s;
 }
 
-/// Uma conta com o segundo habitat aberto (marco de nível 3).
-AppState _comIgarape() => _conta(xp: Balanco.xpAcumuladoPara(3));
+/// Uma conta com o segundo habitat aberto.
+///
+/// O igarapé é o prêmio do passo 3 (nível 3), e a trilha é uma corrente: o
+/// nível 3 sozinho não abre nada enquanto o passo 1 (primeira sessão) e o
+/// passo 2 (primeiro dia abaixo da meta) estiverem em aberto. Chamar isto de
+/// "conta com nível 3" seria descrever o critério e esquecer a ordem.
+AppState _comIgarape() =>
+    _conta(xp: Balanco.xpAcumuladoPara(3), sessoes: 1, abaixo: 1);
 
 Future<void> _abre(WidgetTester tester, AppState app) async {
   tester.view.physicalSize = const Size(412, 892);
@@ -86,7 +93,9 @@ void main() {
     });
 
     test('subir o marco abre o habitat e muda de lugar sozinho', () {
-      final s = _conta();
+      // Os dois primeiros passos já fechados: o que este teste mede é o
+      // terceiro abrindo o igarapé, não a corrente inteira.
+      final s = _conta(sessoes: 1, abaixo: 1);
       expect(s.habitatAtivo.id, 'lagoa');
 
       s.xp = Balanco.xpAcumuladoPara(3);

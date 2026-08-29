@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n_humor.dart';
 import '../l10n_loja.dart';
 import '../models.dart';
 import '../state.dart';
@@ -17,6 +18,7 @@ class HomeScreen extends StatelessWidget {
     final app = AppScope.of(context);
     final t = app.t;
     final next = app.nextItem;
+    final fala = app.falaDoHumor;
     final usagePct = (app.usage / (app.goal * 1.35)).clamp(0.0, 1.0);
     final unlockPct = next == null ? 1.0 : (app.leaves / next.price).clamp(0.0, 1.0);
     return ListView(
@@ -99,15 +101,25 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 14),
         const HabitatScene(),
         const SizedBox(height: 20),
+        // A legenda diz **o fato** que levou o bicho àquele humor, com o
+        // número que o app mediu, e só depois o sentimento. Antes vinha de
+        // `moodCap`/`moodSub`: um texto por humor, sempre igual, que dizia
+        // "sentiu sua falta" sem dizer se a pessoa sumiu três dias ou se
+        // desistiu de uma sessão. Ver `lib/l10n_humor.dart`.
+        //
+        // `frase` resolve pronome e valores no mesmo passo; separar em dois
+        // `fill` deixaria `{P}` cru quando a fala tem número e pronome.
         Text(
-          t.fill(t.moodCap(app.moodKey), {'n': app.displayName}),
+          app.frase(t.humorCap(fala), fala.valores),
+          key: const Key('home-humor-cap'),
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
           style: nunito(size: 26, weight: FontWeight.w800, height: 1.2, letterSpacing: -0.4),
         ),
         const SizedBox(height: 8),
         Text(
-          app.frase(t.moodSub(app.moodKey)),
+          app.frase(t.humorSub(fala), fala.valores),
+          key: const Key('home-humor-sub'),
           style: nunito(size: 15, height: 1.5, color: AppColors.inkA(0.66)),
         ),
         const SizedBox(height: 16),

@@ -85,18 +85,21 @@ void main() {
       }
     });
 
-    test('as sete espécies fora da sua se desbloqueiam pela trilha', () {
+    test('toda espécie fora da capivara se desbloqueia pela trilha', () {
+      // Antes esta era uma lista de sete nomes escrita à mão, e uma lista
+      // assim só sabe reclamar do que já existe: acrescentar espécie ao
+      // `enum` sem marco nenhum passava por ela sem ruído. Agora o alvo é
+      // derivado — **todo** valor do `enum` fora a capivara tem de ser
+      // entregue por algum degrau.
+      //
+      // A capivara fica de fora porque é o piso: é ela que a conta recebe
+      // antes do quiz, e o quiz troca a espécie em vez de conquistá-la.
       final porMarco =
           trilha.map((m) => m.recompensa.especie).whereType<Species>().toSet();
-      expect(porMarco, {
-        Species.otter,
-        Species.tortoise,
-        Species.owl,
-        Species.axolotl,
-        Species.penguin,
-        Species.cat,
-        Species.fox,
-      });
+      expect(
+        porMarco,
+        Species.values.toSet()..remove(Species.capybara),
+      );
     });
 
     test('conta nova tem o primeiro marco como próximo passo', () {
@@ -113,7 +116,13 @@ void main() {
     test('espécie extra só aparece depois do marco', () {
       final s = _conta();
       expect(s.especiesLiberadas.contains(Species.otter), isFalse);
+      // A lontra é o passo 7. Cinco sessões cumprem o critério **dele**, mas
+      // a corrente ainda precisa dos seis de trás — por isso a conta fecha
+      // também o dia abaixo da meta, o nível 3 e os três dias seguidos.
       s.sessoesConcluidas = 5;
+      s.diasAbaixoDaMeta = 3;
+      s.melhorSequencia = 3;
+      s.xp = Balanco.xpAcumuladoPara(3);
       s.ganhaXp(1);
       expect(s.especiesLiberadas.contains(Species.otter), isTrue);
     });
@@ -121,6 +130,9 @@ void main() {
     test('o estágio do habitat sobe com os marcos e nunca desce', () {
       final s = _conta();
       expect(s.estagioDoHabitat, 1);
+      // O igarapé é o prêmio do passo 3 (nível 3). Os passos 1 e 2 vêm antes.
+      s.sessoesConcluidas = 1;
+      s.diasAbaixoDaMeta = 1;
       s.xp = Balanco.xpAcumuladoPara(3);
       s.ganhaXp(0);
       expect(s.estagioDoHabitat, 2);

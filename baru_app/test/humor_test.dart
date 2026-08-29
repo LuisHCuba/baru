@@ -53,10 +53,16 @@ const _idsEsperados = <String>{
   'sone',
 };
 
-/// As falas que **só** o `overrideMood` do painel de depuração alcança: a
-/// regra do §3 nunca produz fatos que caiam nelas. Existem para que um humor
-/// forçado não cite número que não explica nada.
-const _soPorOverride = <String>{
+/// As falas de reserva: o degrau final de cada humor, sem número nenhum.
+///
+/// Nenhum dia real cai nelas — a varredura abaixo prova isso, e é justamente
+/// por isso que elas estão listadas à parte. Existiam para o `overrideMood`
+/// do painel de depuração, que forçava um humor cujos fatos não o
+/// sustentavam; o painel e o campo saíram do app. Continuam existindo porque
+/// `escolheAFala` tem de devolver alguma coisa em toda combinação de fatos, e
+/// no dia em que um fato novo escapar das regras específicas a tela vai dizer
+/// o sentimento em vez de citar uma medida que não tem.
+const _falasDeReserva = <String>{
   'saudade',
   'radiante',
   'contente',
@@ -120,7 +126,6 @@ AppState _pet({
   int melhorSequencia = 0,
   int leaves = 0,
   int minutosDeFocoHoje = 0,
-  Mood? override,
   ResumoDeTela? resumo,
   List<SessionRecord> sessions = const [],
 }) {
@@ -135,7 +140,6 @@ AppState _pet({
   s.melhorSequencia = melhorSequencia;
   s.leaves = leaves;
   s.minutosDeFocoHoje = minutosDeFocoHoje;
-  s.overrideMood = override;
   s.resumoTela = resumo;
   s.sessions = List<SessionRecord>.from(sessions);
   return s;
@@ -474,33 +478,63 @@ void main() {
       );
     });
 
-    test('todo id, menos os do override, sai de fatos reais', () {
+    test('todo id, menos os de reserva, sai de fatos reais', () {
       final vistos = _idsAlcancadosPeloEstado();
       expect(
-        _idsEsperados.difference(_soPorOverride).difference(vistos),
+        _idsEsperados.difference(_falasDeReserva).difference(vistos),
         isEmpty,
         reason: 'texto que nenhum dia real alcança',
       );
     });
 
-    test('as falas de reserva só existem para o humor forçado', () {
+    test('a reserva não é alcançável, e quando chamada não cita número', () {
+      // A primeira metade é a mesma de antes: o app não tem caminho até essas
+      // falas. A segunda mudou de porta. Ela batia em `overrideMood`, que era
+      // a única forma de chegar lá; sem o campo, o teste chama a regra
+      // diretamente com fatos que nenhuma das específicas cobre — que é o
+      // caso para o qual a reserva existe. A afirmação continua a mesma: o
+      // texto de reserva não pode carregar uma medida.
       final vistos = _idsAlcancadosPeloEstado();
-      expect(vistos.intersection(_soPorOverride), isEmpty);
+      expect(vistos.intersection(_falasDeReserva), isEmpty);
 
-      for (final humor in Mood.values) {
-        final s = _pet(override: humor, usage: 9999, goal: 150);
-        expect(s.mood, humor);
+      // Radiante sem sessão nenhuma: a regra do §3 não produz isso, e nenhuma
+      // fala de `radiant` tem o que dizer sem o `{c}` de sessões.
+      final semSessao = _fala(
+        _fatos(humor: Mood.radiant, sessoes: 0, tela: 9999, meta: 150),
+      );
+      expect(semSessao.id, 'radiante');
+      expect(semSessao.valores.containsKey('tela'), isFalse);
+
+      // Neutro sem medição de tela: idem, do outro lado da regra.
+      final semMedicao = _fala(
+        _fatos(humor: Mood.neutral, medicao: false, tela: 9999, meta: 150),
+      );
+      expect(semMedicao.id, 'neutro');
+      expect(semMedicao.valores.containsKey('tela'), isFalse);
+
+      // E todas as cinco resolvem texto nos quatro idiomas: reserva que sai
+      // vazia na tela seria pior do que a mentira que ela evita.
+      for (final id in _falasDeReserva) {
+        for (final lang in _idiomas) {
+          final t = T(lang);
+          expect(t.s('humorCap_$id'), isNot('humorCap_$id'), reason: '$id/$lang');
+          expect(t.s('humorSub_$id'), isNot('humorSub_$id'), reason: '$id/$lang');
+        }
       }
-      // E o forçado nunca cita número que os fatos não sustentam.
-      final forcado = _pet(override: Mood.radiant, usage: 9999, goal: 150);
-      expect(forcado.falaDoHumor.id, 'radiante');
-      expect(forcado.falaDoHumor.valores.containsKey('tela'), isFalse);
     });
   });
 
   group('o AppState monta os fatos a partir do que mediu', () {
-    test('a duração citada é a da sessão que parou, não a da última', () {
-      // Desistiu de 25 e depois completou 50: `sessionDur` ficaria em 50.
+    test('a duração citada é a da desistência mais recente, e nunca a de uma '
+        'sessão que foi até o fim', () {
+      // Este caso já existia com dois registros — parou 25, completou 50 — e
+      // afirmava que o bicho continuava triste. Aquele cenário virou o teste
+      // da cura (ver "a desistência não custa o dia inteiro"): concluir
+      // depois de parar devolve o bicho. O que ele protegia de verdade
+      // continua aqui, com um registro a mais: `_minutosDaDesistenciaDeHoje`
+      // filtra por `aborted` (por isso 50 não pode aparecer) e pega a mais
+      // recente (por isso 45 ganha de 25). Ler "a última sessão" daria 45
+      // também — só o filtro por `aborted` explica o 50 sumir.
       final hoje = dateOnly(DateTime.now());
       final s = _pet(
         abandonedToday: true,
@@ -516,18 +550,27 @@ void main() {
           ),
           SessionRecord(
             id: 'b',
-            at: hoje.add(const Duration(hours: 14)),
+            at: hoje.add(const Duration(hours: 12)),
             dur: 50,
             completed: true,
             aborted: false,
             reward: 25,
           ),
+          SessionRecord(
+            id: 'c',
+            at: hoje.add(const Duration(hours: 15)),
+            dur: 45,
+            completed: false,
+            aborted: true,
+            reward: 0,
+          ),
         ],
       );
       expect(s.mood, Mood.missingYou);
       expect(s.falaDoHumor.id, 'desistencia');
-      expect(_naTela(s.falaDoHumor), contains('25min'));
+      expect(_naTela(s.falaDoHumor), contains('45min'));
       expect(_naTela(s.falaDoHumor), isNot(contains('50min')));
+      expect(_naTela(s.falaDoHumor), isNot(contains('25min')));
       s.dispose();
     });
 
@@ -577,8 +620,18 @@ void main() {
         Mood.sleepy: 'sleepy',
         Mood.missingYou: 'missing_you',
       };
+      // Cada humor montado pelos fatos do §3, e não plantado à mão: assim o
+      // teste também guarda a derivação, não só a tabela de chaves.
+      final cenarios = <Mood, AppState>{
+        Mood.radiant: _pet(usage: 90, completedToday: 1),
+        Mood.content: _pet(usage: 90),
+        Mood.neutral: _pet(usage: 150),
+        Mood.sleepy: _pet(usage: 400),
+        Mood.missingYou: _pet(abandonedToday: true),
+      };
       for (final e in esperado.entries) {
-        final s = _pet(override: e.key);
+        final s = cenarios[e.key]!;
+        expect(s.mood, e.key, reason: 'o cenário de ${e.key.name} não vale mais');
         expect(s.moodKey, e.value);
         s.dispose();
       }

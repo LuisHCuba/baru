@@ -179,7 +179,13 @@ void main() {
       tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
     );
 
-    for (final caso in {'vazio': <String>[], 'cheio': habitats['full']!}.entries) {
+    // "Cheio" sai do próprio catálogo, e não de uma lista escrita à mão.
+    // Havia um mapa `habitats` em `models.dart` só para isto e para o painel
+    // de depuração; os dois saíram. Derivar tem a vantagem de não poder
+    // envelhecer: item novo na loja entra na evidência sozinho, em vez de o
+    // PNG "cheio" passar a mostrar um habitat incompleto em silêncio.
+    final catalogo = itensDeCena.map((i) => i.id).toList();
+    for (final caso in {'vazio': <String>[], 'cheio': catalogo}.entries) {
       final app = _estado(itens: caso.value);
       await tester.pumpWidget(_habitat(app, DateTime(2026, 8, 27, 12)));
       await tester.pump();

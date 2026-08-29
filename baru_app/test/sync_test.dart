@@ -1,5 +1,6 @@
 import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/data/local_store.dart';
+import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/data/repositories.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/state.dart';
@@ -254,31 +255,18 @@ void main() {
     );
   });
 
-  test('forçar humor no debug não sincroniza nada', () async {
+  test('trocar de habitat empurra o inventário, e só ele', () async {
+    // Este caso cobria `setHabitat`, o preset do painel de depuração. O
+    // painel saiu; a regra que ele protegia não. Trocar de habitat é hoje um
+    // gesto de produto — a pessoa escolhe de dentro da trilha — e continua
+    // valendo que ele escreve em `owned`/`equipados` e não pode arrastar as
+    // outras doze tabelas junto.
     final c = _Cenario();
     final s = c.novoEstado();
     await _esperaPersist();
     c.limpa();
 
-    s.forceMood(Mood.sleepy);
-    s.toggleDebugFast();
-    await _esperaPersist();
-
-    expect(
-      [...c.pet.chamadas, ...c.shop.chamadas, ...c.settings.chamadas],
-      isEmpty,
-      reason: 'estado de debug não pode vazar para a conta do usuário',
-    );
-  });
-
-  test('mudanças de debug que alteram o snapshot sincronizam o domínio certo',
-      () async {
-    final c = _Cenario();
-    final s = c.novoEstado();
-    await _esperaPersist();
-    c.limpa();
-
-    s.setHabitat('half');
+    s.escolheHabitat(habitatsDaTrilha.first.id);
     await _esperaPersist();
 
     expect(c.shop.chamadas, isNotEmpty, reason: 'o inventário mudou');

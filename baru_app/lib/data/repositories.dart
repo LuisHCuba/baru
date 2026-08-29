@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models.dart';
 import 'app_snapshot.dart';
 import 'local_store.dart';
@@ -32,6 +34,16 @@ class BaruRepositories {
   final ProgressoRepository progresso;
 
   static BaruRepositories local() => BaruRepositories(PrefsSnapshotStore());
+
+  /// Persistência que só existe enquanto o processo existe.
+  ///
+  /// É infraestrutura de teste, não caminho de produto: quem grava no
+  /// aparelho é [local]. Fica anotada em vez de apagada porque os testes de
+  /// apagar-dados, de auth e de sincronização precisam de um armazenamento
+  /// real e descartável — mas anotada, para o analisador barrar o dia em que
+  /// alguém a chamar de dentro do app e o snapshot do usuário passar a
+  /// evaporar a cada abertura.
+  @visibleForTesting
   static BaruRepositories memory() => BaruRepositories(MemorySnapshotStore());
 
   Future<void> init() => store.init();

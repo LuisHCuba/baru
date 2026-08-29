@@ -176,14 +176,16 @@
              `specialUse` porque nenhum tipo da lista descreve o que ele faz:
              nao e midia, nao e localizacao, nao e chamada. O que ele faz e
              perguntar de dois em dois segundos qual app esta na frente,
-             enquanto a sessao corre, e chamar o companheiro de volta. -->
+             enquanto a sessao corre, e chamar o companheiro de volta — e
+             manter na barra a contagem regressiva da pausa em curso, que e
+             uma notificacao so, no mesmo id que o lado Dart usa. -->
         <service
             android:name=".VigiaDaSessao"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Chamar a pessoa de volta ao foco quando ela sai do app durante uma sessao que ela mesma iniciou." />
+                android:value="Manter visivel a contagem regressiva da pausa que a pessoa mesma iniciou e chamar ela de volta ao foco quando sai do app durante essa pausa." />
         </service>
         <activity
             android:name=".MainActivity"

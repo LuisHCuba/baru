@@ -2,6 +2,7 @@ import 'package:baru_app/l10n.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/services/overlay_service.dart';
 import 'package:baru_app/services/vigia_service.dart';
+import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,6 +44,17 @@ class _CanalEspiao {
     }
     return null;
   }
+}
+
+
+/// Uma conta que já conquistou o marco da espécie pedida.
+///
+/// A trilha passou a **cobrar** o que entrega: `pickSpecies` recusa espécie
+/// não conquistada. Plantar o marco é o caminho honesto — afrouxar a porta
+/// para o teste passar apagaria justamente a regra nova.
+void _liberaEspecie(AppState a, Species e) {
+  final marco = trilha.firstWhere((m) => m.recompensa.especie == e);
+  a.marcosResgatados = {...a.marcosResgatados, marco.id};
 }
 
 void main() {
@@ -170,6 +182,7 @@ void main() {
       addTearDown(app.dispose);
       espiao.chamadas.clear();
 
+      _liberaEspecie(app, Species.fox);
       app.pickSpecies(Species.fox);
       await Future<void>.delayed(Duration.zero);
 

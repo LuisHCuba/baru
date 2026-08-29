@@ -2559,12 +2559,12 @@ class _PetPainter extends CustomPainter {
   // aqui, são **seis** traços, cada um respondendo a um defeito que dava para
   // apontar com o dedo na captura:
   //
-  // 1. **Orelha de morcego, e não de rato.** Base larga no alto do crânio,
-  //    duas bordas quase retas convergindo, topo estreito e arredondado. A
-  //    versão anterior estufava no meio (a borda de fora ia a 56 com a base
-  //    em 44) e o resultado era uma pá. O que faz a orelha ler como "de
-  //    morcego" é ela ser mais **alta que larga** e nascer perto da irmã, no
-  //    alto da cabeça — não nos cantos.
+  // 1. **Orelha de morcego, e não de rato nem de pastor-alemão.** Base de 34
+  //    no alto do crânio, bordas quase retas, altura de 46 e uma calota de 24
+  //    fechando o topo — sobe **sem afinar** e termina em arco. Duas
+  //    tentativas erradas vieram antes: uma estufava no meio (borda de fora
+  //    em 56 com a base em 44) e virava pá de remo; a outra fechava o topo em
+  //    14 e virava orelha em ponta. Ver [_orelhaDeMorcego].
   // 2. **Cara achatada de verdade.** Nariz grande e alto, quase entre os
   //    olhos, sobre uma focinheira larga e **rasa** que não avança nada.
   //    Braquicefálico em desenho é isto: a frente da cara é um plano, não uma
@@ -2573,18 +2573,20 @@ class _PetPainter extends CustomPainter {
   //    — sombra embaixo, luz um fio acima. Um traço escuro sozinho lê como
   //    arranhão; o par lê como pele dobrada, que é o que a raça tem na testa,
   //    entre os olhos e sobre o focinho.
-  // 4. **Papada e beiço.** Duas massas de bochecha que passam da linha do
-  //    crânio, e o lábio superior caindo em dois lobos dos lados do focinho,
-  //    com os dentinhos de baixo aparecendo no meio. É o terço inferior da
-  //    cara, e sem ele sobra um filhote de focinho curto.
-  // 5. **Corpo de pera invertida.** Peito largo no ombro (±50) afinando até a
-  //    cintura (±31), com duas pernas dianteiras grossas e curtas por fora do
-  //    tronco. A bolha simétrica de antes dava um bicho macio; o buldogue é
-  //    compacto e musculoso, e músculo em desenho chapado é **silhueta**, não
-  //    sombreado.
-  // 6. **Marcação de pelagem.** Máscara escura no fulvo, manchas brancas no
-  //    pied, listras no tigrado. Sem elas as seis entradas da paleta eram o
-  //    mesmo cão em seis tintas.
+  // 4. **Papada e beiço.** O crânio é um caminho só que **alarga embaixo**
+  //    (±46 no topo, ±48 na bochecha) em vez de afinar como o do resto do
+  //    elenco, e o lábio superior cai em dois lobos dos lados do focinho, com
+  //    os dentinhos de baixo aparecendo no meio. É o terço inferior da cara,
+  //    e sem ele sobra um filhote de focinho curto.
+  // 5. **Corpo de pera invertida.** Peito largo no ombro (±53) afinando até a
+  //    cintura (±30), com duas pernas dianteiras grossas e curtas descendo por
+  //    baixo do peito. A bolha simétrica de antes dava um bicho macio; o
+  //    buldogue é compacto e musculoso, e músculo em desenho chapado é
+  //    **silhueta**, não sombreado. A cabeça subiu de -24 para -29 por causa
+  //    disto: a -24 o queixo cobria o ombro inteiro e a pera não aparecia.
+  // 6. **Marcação de pelagem.** Máscara escura no fulvo, peito e patas brancos
+  //    com manchas escuras no pied, listras no tigrado. Sem elas as seis
+  //    entradas da paleta eram o mesmo cão em seis tintas.
   //
   // Sem cauda, de propósito. A da raça é um toco de três centímetros que de
   // frente não aparece; a pluma da raposa ou a curva da gata dariam outro
@@ -2624,6 +2626,7 @@ class _PetPainter extends CustomPainter {
   /// Sai de [pelo] e não de uma cor fixa porque a máscara tem de continuar
   /// sendo *aquele* cão mais escuro — uma cor absoluta ficaria roxa no blue e
   /// preta no fulvo, e as duas leriam como buraco na cara.
+  ///
   /// 0,45 e não 0,55: na primeira tentativa a máscara ficava tão escura que
   /// engolia nariz, boca e vinco — restavam dois olhos e dois dentes flutuando
   /// num borrão marrom. Máscara é sombra na cara, não buraco nela.
@@ -3081,30 +3084,36 @@ class _PetPainter extends CustomPainter {
     // em vez de uma testa vincada e um rolo sobre o nariz.
     final fundoDoRolo =
         _marca == _MarcaDoBuldogue.mascara ? _tomDaMascara : pelo;
+    // Elipse, e não uma calota de base reta: com `base: 0.5` a borda de baixo
+    // saía uma linha horizontal atravessando a cara, e de perto o rolo lia
+    // como esparadrapo colado no nariz.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 3), width: 42, height: 13),
-        base: 0.5,
+        Rect.fromCenter(center: const Offset(0, 2), width: 40, height: 12),
       ),
-      _p(Color.lerp(fundoDoRolo, luz, 0.34)!),
+      _p(Color.lerp(fundoDoRolo, luz, 0.26)!),
     );
     canvas.drawPath(
       Path()
-        ..moveTo(-20, 3)
-        ..cubicTo(-12, 9, 12, 9, 20, 3),
-      _traco(sombraForte.withValues(alpha: 0.34), 1.8),
+        ..moveTo(-19, 4)
+        ..cubicTo(-11, 9, 11, 9, 19, 4),
+      _traco(sombraForte.withValues(alpha: 0.30), 1.7),
     );
   }
 
   /// Focinheira rasa, nariz grande, beiço caído e os dentinhos de baixo.
   void _focinhoDoBuldogue(Canvas canvas) {
     // No fulvo mascarado a focinheira é **escura** — é ela o centro da
-    // máscara. Nas outras pelagens é clara, como no resto do elenco. Pintar
-    // sempre de claro furava um buraco no meio da máscara.
+    // máscara —, no pied é branca, e nas outras é o pelo levemente clareado.
+    // Pintar sempre de claro furava um buraco no meio da máscara.
     final corDoFocinho = switch (_marca) {
       _MarcaDoBuldogue.mascara => Color.lerp(_tomDaMascara, pelo, 0.34)!,
       _MarcaDoBuldogue.pied => _brancoDoPied,
-      _ => claro,
+      // `claro` (30% para o creme) é o que as outras oito espécies usam, e
+      // num pelo preto ele devolve um cinza pálido: de perto o bicho parecia
+      // usar focinheira de plástico. Cão preto tem focinho preto; 18% chega
+      // para a forma existir sem clarear o pelo.
+      _ => Color.lerp(pelo, Cores.superficie, 0.18)!,
     };
 
     // A focinheira: larga (56 num crânio de 96) e **rasa**. Nas outras
@@ -3166,7 +3175,7 @@ class _PetPainter extends CustomPainter {
     canvas.drawPath(
       Path()
         ..moveTo(0, 22)
-        ..lineTo(0, 29),
+        ..lineTo(0, 27),
       _traco(sombra.withValues(alpha: 0.45), 1.8),
     );
 
@@ -3177,8 +3186,6 @@ class _PetPainter extends CustomPainter {
       30,
       cor: Color.lerp(Cores.tinta, corDoFocinho, 0.18)!,
     );
-    _linguaDoBuldogue(canvas);
-
     // Prognatismo: dois dentinhos de baixo aparecendo por cima do lábio. É o
     // traço do padrão da raça que ninguém desenha e todo mundo reconhece —
     // sem ele a cara achatada fica com um sorriso de gato.
@@ -3194,6 +3201,11 @@ class _PetPainter extends CustomPainter {
         _p(Cores.superficie),
       );
     }
+
+    // A língua **depois** dos dentes: ela cai por fora do lábio, e é a
+    // primeira coisa que fica na frente de tudo. Desenhada antes, os dois
+    // dentinhos ficavam pousados em cima dela.
+    _linguaDoBuldogue(canvas);
   }
 
   /// A língua de fora — só quando ele está de fato alegre.

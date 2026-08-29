@@ -116,7 +116,6 @@ class AppWeight {
 
 /// Fachada histórica sobre [Raio].
 class AppRadii {
-  static const debug = 9.0;
   static const tab = 7.0;
   static const chip = Raio.chip;
   static const input = Raio.campo;

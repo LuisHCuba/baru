@@ -373,8 +373,13 @@ class AppSnapshot {
   ///   diminuir por sincronização.
   /// - **Conjunto de conquista vira união.** Marco e missão resgatados nunca
   ///   são retirados (§ "o usuário nunca perde nada").
-  /// - **O que é do dia e o que o remoto não carrega fica com o local.**
-  ///   Contadores de hoje e da semana, medição de tela, sessão em curso.
+  /// - **Contador de janela também fica com o maior.** Os de hoje e os da
+  ///   semana descrevem a mesma janela nos dois lados — os de foco são
+  ///   recalculados das sessões na leitura, e o de dias abaixo da meta vem
+  ///   carimbado com a semana. Quem tem o número maior é quem viu mais.
+  /// - **O que só existe no aparelho fica com o local.** A sessão de foco em
+  ///   curso e a tentativa de descanso: nenhuma das duas continua em outro
+  ///   telefone.
   /// - **O resto é do remoto**, que é a fonte da verdade entre aparelhos.
   AppSnapshot fundeCom(AppSnapshot local) {
     int maior(int a, int b) => a > b ? a : b;
@@ -397,18 +402,28 @@ class AppSnapshot {
       respostasDoQuiz:
           respostasDoQuiz.isEmpty ? local.respostasDoQuiz : respostasDoQuiz,
       missoesResgatadas: uniao(missoesResgatadas, local.missoesResgatadas),
-      // Do dia e da semana: o remoto não guarda nada disso.
-      minutosDeFocoHoje: local.minutosDeFocoHoje,
-      maiorSessaoHoje: local.maiorSessaoHoje,
+      // Do dia e da semana: **fica com o maior**, não com o local.
+      //
+      // Estes cinco deixaram de ser cegos ao remoto. Os quatro de foco são
+      // recalculados de `baru_sessions` na leitura e `diasAbaixoNaSemana` vem
+      // carimbado com a semana a que pertence, então os dois lados descrevem
+      // a mesma janela — e quem tiver o número maior é quem viu mais sessão.
+      //
+      // "Local sempre ganha" era certo enquanto o remoto não guardava nada:
+      // zero não podia apagar o que o aparelho sabia. Agora custaria o caso
+      // que importa — reinstalar o app, onde o local é que vale zero e o
+      // progresso do dia sumia mesmo com as sessões sincronizadas.
+      minutosDeFocoHoje: maior(minutosDeFocoHoje, local.minutosDeFocoHoje),
+      maiorSessaoHoje: maior(maiorSessaoHoje, local.maiorSessaoHoje),
+      sessoesNaSemana: maior(sessoesNaSemana, local.sessoesNaSemana),
+      minutosNaSemana: maior(minutosNaSemana, local.minutosNaSemana),
+      diasAbaixoNaSemana: maior(diasAbaixoNaSemana, local.diasAbaixoNaSemana),
       // Local sempre ganha: o descanso é do aparelho que está na mão, e o
       // remoto nem sabe que existe.
       descansoComecouEm: local.descansoComecouEm,
       descansoTelaNoInicio: local.descansoTelaNoInicio,
       descansoNoAppSegundos: local.descansoNoAppSegundos,
       melhorDescansoMinutos: local.melhorDescansoMinutos,
-      sessoesNaSemana: local.sessoesNaSemana,
-      minutosNaSemana: local.minutosNaSemana,
-      diasAbaixoNaSemana: local.diasAbaixoNaSemana,
       // Sessão em curso: quem sabe dela é o aparelho onde ela roda.
       sessionStartedAt: local.sessionStartedAt,
       sessionEndsAt: local.sessionEndsAt,
@@ -613,7 +628,12 @@ class SessionRecord {
       };
 
   factory SessionRecord.fromJson(Map<String, dynamic> j) {
-    final at = DateTime.tryParse('${j['at'] ?? ''}') ?? DateTime.now();
+    // `toLocal` porque a mesma sessão chega em duas gramáticas: do disco vem
+    // sem fuso (já é local) e do Postgres vem com `+00:00`. Sem normalizar,
+    // "as sessões de hoje" muda de resposta conforme a origem, e o relatório
+    // do dia perde as da madrugada.
+    final at =
+        DateTime.tryParse('${j['at'] ?? ''}')?.toLocal() ?? DateTime.now();
     final dur = (j['dur'] as num?)?.toInt() ?? 0;
     final reward = (j['reward'] as num?)?.toInt() ?? 0;
     final completed = j['completed'] == true;

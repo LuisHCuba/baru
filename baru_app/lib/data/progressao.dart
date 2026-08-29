@@ -693,6 +693,32 @@ class ProgressoDaTrilha {
       trilha.where((m) => alcancou(m) || entregues.contains(m.id));
 
   /// Espécies liberadas por marco, mais a que veio do quiz.
+  /// As quatro que o quiz pode devolver.
+  ///
+  /// Elas **não** ficam todas abertas: a trilha entrega lontra, tartaruga e
+  /// coruja como recompensa, e abrir as quatro de saída esvaziaria três
+  /// degraus. O que vale é o momento — no onboarding a pessoa escolhe entre
+  /// as quatro, porque o quiz sugere e não sentencia; depois disso a porta
+  /// da trilha vale para todas as oito que ela entrega.
+  static const deOrigem = {
+    Species.capybara,
+    Species.otter,
+    Species.tortoise,
+    Species.owl,
+  };
+
+  /// Em que passo da trilha a espécie abre, ou `null` se ela é de origem.
+  ///
+  /// A tela precisa disto para dizer **onde** a espécie abre, e não só que
+  /// está travada: cadeado sem destino é frustração, cadeado com número é
+  /// motivo para subir.
+  static int? passoQueAbre(Species e) {
+    for (var i = 0; i < trilha.length; i++) {
+      if (trilha[i].recompensa.especie == e) return i + 1;
+    }
+    return null;
+  }
+
   Set<Species> especiesLiberadas(Species doQuiz) {
     final out = <Species>{doQuiz};
     for (final m in _comPosse) {

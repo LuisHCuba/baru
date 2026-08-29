@@ -8,6 +8,8 @@ import 'services/notification_service.dart';
 import 'services/som_service.dart';
 import 'services/vigia_service.dart';
 import 'services/widget_service.dart';
+import 'l10n_descanso.dart';
+import 'l10n_notificacao.dart';
 import 'models.dart';
 import 'navegacao.dart';
 import 'widgets/folha_restrita.dart';
@@ -82,6 +84,21 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     BaruNotifications.instance.aoDesistirPelaBarra = () {
       if (state.sessionEndsAt != null) state.abandon();
     };
+    // O mesmo para a missão do descanso — e é `desisteDoDescanso`, não
+    // `abandon`: encerrar o descanso não custa nada, o melhor do dia fica
+    // guardado (§1).
+    BaruNotifications.instance.aoEncerrarDescansoPelaBarra = () {
+      if (state.descansoComecouEm != null) state.desisteDoDescanso();
+    };
+    // Os dois catálogos de módulo que a barra de notificações usa. Registrar
+    // aqui, e não na primeira leitura, porque a primeira leitura pode
+    // acontecer no `didChangeAppLifecycleState` — e uma chave que não
+    // resolve devolve a **própria chave**, que iria para a barra como texto.
+    garanteTextosDaNotificacao();
+    garanteTextosDoDescanso();
+    // O rótulo vem por função, não por valor: o idioma muda nos ajustes e a
+    // notificação pode ser postada horas depois.
+    BaruNotifications.instance.rotuloDeVolta = () => state.t.notifBarraVoltar;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.bootstrapNotice != null) {
         _scaffoldKey.currentState?.showSnackBar(
@@ -146,6 +163,45 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
       // Voltar do background é o momento em que a rede costuma ter voltado.
       state.retryPendingSync();
     }
+    // Depois das duas pontas, porque as duas mudam a conta: sair fecha o
+    // tempo dentro do Baru, e voltar reconcilia a fuga com o medidor de tela.
+    unawaited(_sincronizaDescansoNaBarra());
+  }
+
+  /// A missão do descanso na barra de notificações.
+  ///
+  /// **Por que aqui e não no domínio.** O descanso não tem prazo de parede:
+  /// o que conta é relógio menos tela menos tempo dentro do Baru, então o
+  /// instante em que ele acaba **se move** toda vez que a pessoa pega o
+  /// telefone. Publicar a cada `notifyListeners` seria uma ida à plataforma
+  /// por segundo; publicar só na troca de primeiro plano acerta os dois
+  /// únicos instantes em que a conta muda de verdade — e o momento em que
+  /// a pessoa larga o telefone é exatamente quando a notificação passa a ser
+  /// a única cara da missão.
+  ///
+  /// A projeção é `agora + o que falta`, não `começou + 40 min`: enquanto o
+  /// telefone está parado nada é subtraído e a projeção é exata; quando não
+  /// está, é este método que a refaz.
+  Future<void> _sincronizaDescansoNaBarra() async {
+    final fim = BaruNotifications.contagemDoDescanso(
+      state.leituraDoDescanso,
+      DateTime.now(),
+    );
+    if (fim == null) {
+      // Quem sabe se há foco correndo é o estado, não a notificação: a
+      // memória de quem escreveu a barra morre com o processo, e a barra
+      // não.
+      await BaruNotifications.instance.encerraDescanso(
+        focoEmCurso: state.sessionEndsAt != null,
+      );
+      return;
+    }
+    await BaruNotifications.instance.mostraDescanso(
+      terminaEm: fim,
+      titulo: state.t.fill(state.t.descansoVigiaTitulo, {'n': state.displayName}),
+      corpo: state.t.descansoVigiaCorpo,
+      rotuloEncerrar: state.t.notifDescansoDesistir,
+    );
   }
 
   @override

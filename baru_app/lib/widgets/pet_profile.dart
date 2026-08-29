@@ -134,12 +134,25 @@ class SpeciesPicker extends StatelessWidget {
     required this.onPick,
     required this.label,
     required this.speciesLabel,
+    this.liberadas,
+    this.rotuloDeTravada,
   });
 
   final Species selected;
   final ValueChanged<Species> onPick;
   final String label;
   final String Function(Species) speciesLabel;
+
+  /// As que a pessoa já pode escolher. Nulo = todas.
+  ///
+  /// A trilha entrega espécie como recompensa, e o seletor mostrava as nove
+  /// como se todas fossem escolhíveis: tocar numa travada não fazia nada e
+  /// não dizia por quê. Toque que some em silêncio é pior que porta
+  /// visível — a pessoa acha que o app quebrou.
+  final Set<Species>? liberadas;
+
+  /// O que dizer na travada. Recebe a espécie e devolve o texto do cadeado.
+  final String Function(Species)? rotuloDeTravada;
 
   @override
   Widget build(BuildContext context) {
@@ -152,12 +165,20 @@ class SpeciesPicker extends StatelessWidget {
           runSpacing: 8,
           children: [
             for (final s in Species.values)
-              SelectChip(
-                label: speciesLabel(s),
-                selected: selected == s,
-                onTap: () => onPick(s),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-              ),
+              if (liberadas == null || liberadas!.contains(s))
+                SelectChip(
+                  label: speciesLabel(s),
+                  selected: selected == s,
+                  onTap: () => onPick(s),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                )
+              else
+                _EspecieTravada(
+                  rotulo: rotuloDeTravada?.call(s) ?? speciesLabel(s),
+                ),
           ],
         ),
       ],
@@ -237,6 +258,44 @@ class CompanionCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+
+/// Uma espécie que a trilha ainda não abriu.
+///
+/// Aparece de propósito: esconder o que falta tira o motivo de subir. É o
+/// mesmo desenho do habitat travado — cadeado, tom apagado, e a frase que
+/// diz onde ela abre.
+class _EspecieTravada extends StatelessWidget {
+  const _EspecieTravada({required this.rotulo});
+
+  final String rotulo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      enabled: false,
+      label: rotulo,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: Cores.tintaA(0.05),
+          borderRadius: Raio.todos(Raio.pilula),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.lock_outline_rounded, size: 15, color: Cores.tintaA(0.4)),
+            const SizedBox(width: 6),
+            Text(
+              rotulo,
+              style: estilo(Tipo.rotulo, color: Cores.tintaA(0.45)),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:baru_app/models.dart';
 import 'package:baru_app/services/widget_service.dart';
+import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -56,6 +57,17 @@ EstadoDoWidget _estado({
       usoDoDia: uso,
       meta: meta,
     );
+
+
+/// Uma conta que já conquistou o marco da espécie pedida.
+///
+/// A trilha passou a **cobrar** o que entrega: `pickSpecies` recusa espécie
+/// não conquistada. Plantar o marco é o caminho honesto — afrouxar a porta
+/// para o teste passar apagaria justamente a regra nova.
+void _liberaEspecie(AppState a, Species e) {
+  final marco = trilha.firstWhere((m) => m.recompensa.especie == e);
+  a.marcosResgatados = {...a.marcosResgatados, marco.id};
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -168,6 +180,7 @@ void main() {
         ..onb = 9
         ..companionshipStarted = true;
       addTearDown(app.dispose);
+      _liberaEspecie(app, Species.fox);
       app.pickSpecies(Species.fox);
 
       final e = app.estadoDoWidget;

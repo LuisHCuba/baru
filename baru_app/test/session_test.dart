@@ -215,6 +215,93 @@ void main() {
     });
   });
 
+  group('a desistência não custa o dia inteiro', () {
+    // O defeito relatado do campo: "quando o pet está triste por uma
+    // interrupção, ele não está voltando a ficar bem depois de um intervalo
+    // de sucesso". Era verdade — `abandonedToday` só era limpo na virada do
+    // dia, e a precedência do humor lia esse campo cru. Parar uma sessão às
+    // nove da manhã deixava o bicho triste até a meia-noite por mais que a
+    // pessoa focasse depois: punição de dia inteiro, que o contrato §1
+    // proíbe ("abandonar uma sessão = sem recompensa, nada mais").
+    //
+    // O ciclo inteiro passa pelas mesmas chamadas que a tela faz — nada de
+    // plantar flag — porque é aí que o defeito morava.
+    AppState diaComPermissao() {
+      final s = _base(dur: 25);
+      s.usageAccess = true;
+      s.usage = 10;
+      s.goal = 150;
+      return s;
+    }
+
+    void concluiUmaSessao(AppState s) {
+      s.startSession();
+      s.sessionEndsAt = DateTime.now().subtract(const Duration(seconds: 1));
+      s.reconcileSession();
+    }
+
+    test('desistir entristece, e concluir depois traz o bicho de volta', () {
+      final s = diaComPermissao();
+      expect(s.mood, isNot(Mood.missingYou), reason: 'o dia começou limpo');
+
+      s.startSession();
+      s.abandon();
+      expect(
+        s.mood,
+        Mood.missingYou,
+        reason: 'parar no meio tem de aparecer na cena — é o que o gesto diz',
+      );
+
+      concluiUmaSessao(s);
+
+      expect(
+        s.mood,
+        isNot(Mood.missingYou),
+        reason: 'o intervalo de sucesso devolve o bicho',
+      );
+      expect(
+        s.mood,
+        Mood.radiant,
+        reason: 'uso abaixo da meta e uma sessão completa: a regra do §3',
+      );
+      expect(
+        s.abandonedToday,
+        isTrue,
+        reason: 'o fato do dia continua registrado — o que sarou foi o humor, '
+            'e o relatório e a sincronização dependem dele',
+      );
+      s.dispose();
+    });
+
+    test('parar de novo depois de concluir entristece de novo', () {
+      // O outro lado da regra: a cura não é um perdão de uma vez por dia. O
+      // bicho reage ao último gesto, e o próximo foco terminado o traz de
+      // volta outra vez.
+      final s = diaComPermissao();
+      concluiUmaSessao(s);
+      expect(s.mood, Mood.radiant);
+
+      s.startSession();
+      s.abandon();
+      expect(s.mood, Mood.missingYou);
+
+      concluiUmaSessao(s);
+      expect(s.mood, Mood.radiant);
+      s.dispose();
+    });
+
+    test('a ausência de dois dias não é curada por uma sessão', () {
+      // A cura é só da desistência. Sumir dois dias é outro fato, ele
+      // continua na primeira linha da precedência, e a fala dele diz o
+      // número de dias — nada disso muda aqui.
+      final s = diaComPermissao();
+      s.daysAway = 3;
+      concluiUmaSessao(s);
+      expect(s.mood, Mood.missingYou);
+      s.dispose();
+    });
+  });
+
   group('desistir', () {
     test('não deixa sessão fantasma para ser retomada', () {
       final s = _base(leaves: 40);

@@ -18,26 +18,58 @@ void main() {
     expect(sessionReward(45), 22);
   });
 
-  test('humor: missing_you ganha de radiant', () {
+  test('humor: missing_you ganha de radiant enquanto a desistência é a última '
+      'coisa que aconteceu', () {
+    // A precedência do §3 não mudou; mudou o que conta como "abandonou hoje".
+    // Aqui a pessoa concluiu de manhã e parou uma sessão à tarde: o dia tem
+    // sessão completa e uso abaixo da meta — a receita do `radiant` — e ainda
+    // assim o bicho sente, porque o último gesto foi sair no meio.
+    final hoje = dateOnly(DateTime.now());
     final s = AppState();
     s.usageAccess = true;
     s.usage = 10;
     s.goal = 150;
     s.completedToday = 1;
     s.abandonedToday = true;
+    s.sessions = [
+      SessionRecord(
+        id: 'a',
+        at: hoje.add(const Duration(hours: 9)),
+        dur: 50,
+        completed: true,
+        aborted: false,
+        reward: 25,
+      ),
+      SessionRecord(
+        id: 'b',
+        at: hoje.add(const Duration(hours: 14)),
+        dur: 25,
+        completed: false,
+        aborted: true,
+        reward: 0,
+      ),
+    ];
     expect(s.mood, Mood.missingYou);
   });
 
-  test('onboarding zera o habitat; snapshot 165 é só reset de debug', () {
+  test('o primeiro dia é vazio, e nada no app o preenche sozinho', () {
+    // A outra metade deste caso conferia que `resetAll()` semeava 165 folhas,
+    // 'lily', 'dock' e uma raiz de 4 dias — o retrato do design, não o de
+    // ninguém. O método saiu, e com ele a única forma de o app entregar
+    // progresso que não mediu. O que sobra é a afirmação que interessa: sair
+    // do onboarding não dá nada de presente.
     final s = AppState();
     expect(s.leaves, 0);
     expect(s.owned, isEmpty);
     s.startCompanionship();
     expect(s.leaves, 0);
     expect(s.owned, isEmpty);
-    s.resetAll();
-    expect(s.leaves, 165);
-    expect(s.owned, ['lily', 'dock']);
+    expect(s.streak, 0);
+    expect(s.xp, 0);
+    expect(s.sessoesConcluidas, 0);
+    expect(s.usage, 0);
+    expect(s.week.where((d) => d == WeekDayKind.present), isEmpty);
+    expect(s.week.where((d) => d == WeekDayKind.frozen), isEmpty);
   });
 
   test('refazer onboarding troca o animal sem apagar o habitat', () {

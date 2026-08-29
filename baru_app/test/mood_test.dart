@@ -1,3 +1,4 @@
+import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/data/quiz.dart';
 import 'package:baru_app/state.dart';
@@ -24,6 +25,40 @@ AppState _pet({
   s.completedToday = completedToday;
   s.abandonedToday = abandonedToday;
   s.daysAway = daysAway;
+  return s;
+}
+
+/// Uma linha do log de sessões de hoje.
+SessionRecord _sessao({
+  required int hora,
+  required int dur,
+  required bool concluida,
+}) =>
+    SessionRecord(
+      id: 's$hora',
+      at: dateOnly(DateTime.now()).add(Duration(hours: hora)),
+      dur: dur,
+      completed: concluida,
+      aborted: !concluida,
+      reward: concluida ? sessionReward(dur) : 0,
+    );
+
+/// Um estado que **chega** a cada humor pela regra do §3.
+///
+/// Antes estes casos escreviam `overrideMood` direto. Era mais curto e era
+/// pior: o teste afirmava sobre um humor plantado à mão, então continuaria
+/// verde mesmo se a derivação parasse de produzir aquele humor. Agora cada
+/// caso passa pela tabela do contrato, e a asserção de dentro é a rede — se
+/// as faixas mudarem, isto cai aqui, com nome, e não em silêncio lá adiante.
+AppState _petNoHumor(Mood humor) {
+  final s = switch (humor) {
+    Mood.missingYou => _pet(abandonedToday: true),
+    Mood.radiant => _pet(usage: 50, completedToday: 1),
+    Mood.content => _pet(usage: 50),
+    Mood.neutral => _pet(usage: 100),
+    Mood.sleepy => _pet(usage: 121),
+  };
+  expect(s.mood, humor, reason: 'o cenário de ${humor.name} deixou de valer');
   return s;
 }
 
@@ -63,9 +98,18 @@ void main() {
   });
 
   group('a precedência é estrita', () {
-    test('missing_you ganha de radiant', () {
+    test('missing_you ganha de radiant, com a desistência ainda em aberto', () {
+      // O dia tem sessão completa e uso bem abaixo da meta — `radiant` puro —
+      // e mesmo assim perde para a desistência. O que mudou em relação à
+      // versão anterior deste caso é só o cenário: a desistência precisa ser
+      // o **último** gesto do dia, senão ela já foi curada (ver o grupo "a
+      // desistência não custa o dia inteiro").
       final s = _pet(usage: 10, goal: 100, completedToday: 1)
-        ..abandonedToday = true;
+        ..abandonedToday = true
+        ..sessions = [
+          _sessao(hora: 9, dur: 50, concluida: true),
+          _sessao(hora: 14, dur: 25, concluida: false),
+        ];
       expect(s.mood, Mood.missingYou);
     });
 
@@ -110,7 +154,7 @@ void main() {
         Mood.missingYou: Activity.idle,
       };
       for (final entrada in esperado.entries) {
-        final s = _pet()..overrideMood = entrada.key;
+        final s = _petNoHumor(entrada.key);
         expect(s.activity, entrada.value, reason: entrada.key.name);
       }
     });
@@ -118,9 +162,7 @@ void main() {
     test('todo humor tem atividade e legenda nos 4 idiomas', () {
       for (final humor in Mood.values) {
         for (final lang in ['pt', 'en', 'es', 'zh']) {
-          final s = _pet()
-            ..overrideMood = humor
-            ..lang = lang;
+          final s = _petNoHumor(humor)..lang = lang;
           expect(s.activity, isNotNull);
           expect(s.t.moodCap(s.moodKey), isNotEmpty, reason: '$humor/$lang');
           expect(s.t.moodSub(s.moodKey), isNotEmpty, reason: '$humor/$lang');

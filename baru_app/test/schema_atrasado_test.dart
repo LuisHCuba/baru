@@ -29,6 +29,56 @@ void main() {
       expect(ColunaAusenteNoRemoto.de(e)?.coluna, 'equipped');
     });
 
+    test('o nome sai das quatro gramáticas em que o erro chega', () {
+      // Só a primeira estava reconhecida. As outras três acontecem de
+      // verdade — o Postgres não usa aspas simples — e sem o nome quem
+      // degrada não sabe se a coluna recusada era mesmo opcional: ou degrada
+      // por qualquer erro, ou não degrada nunca.
+      String? nome(String mensagem, String codigo) =>
+          ColunaAusenteNoRemoto.de(
+            PostgrestException(message: mensagem, code: codigo),
+          )?.coluna;
+
+      expect(
+        nome(
+          "Could not find the 'som' column of 'baru_settings' in the schema "
+          'cache',
+          'PGRST204',
+        ),
+        'som',
+        reason: 'PostgREST, aspas simples',
+      );
+      expect(
+        nome(
+          'column "som" of relation "baru_settings" does not exist',
+          '42703',
+        ),
+        'som',
+        reason: 'Postgres num insert, aspas duplas',
+      );
+      expect(
+        nome('column baru_settings.som does not exist', '42703'),
+        'som',
+        reason: 'Postgres num select, sem aspa nenhuma — era o que faltava',
+      );
+      expect(
+        nome('column som does not exist', '42703'),
+        'som',
+        reason: 'sem a tabela na frente',
+      );
+    });
+
+    test('sem nome reconhecível o erro continua sendo de coluna', () {
+      // "desconhecida" nunca casa com uma coluna declarada opcional, então a
+      // degradação não acontece por engano — mas o tipo continua certo.
+      expect(
+        ColunaAusenteNoRemoto.de(
+          PostgrestException(message: 'algo bem diferente', code: 'PGRST204'),
+        )?.coluna,
+        'desconhecida',
+      );
+    });
+
     test('erro de rede não vira erro de coluna', () {
       expect(
         ColunaAusenteNoRemoto.de(

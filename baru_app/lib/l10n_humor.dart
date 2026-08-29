@@ -123,9 +123,13 @@ class FalaDoHumor {
 /// Escolhe a fala a partir dos fatos. Primeira regra que casa vence.
 ///
 /// A ordem dentro de cada humor vai do fato mais específico ao mais geral, e
-/// cada humor termina numa fala **sem número**. Essa última existe para o
-/// `overrideMood` do painel de depuração, que força um humor cujos fatos não
-/// o sustentam: sem ela a tela citaria um número que não explica nada.
+/// cada humor termina numa fala **sem número**. Essa última é o degrau
+/// obrigatório da escada: a função tem de devolver alguma coisa, e um dia
+/// cujos fatos não caem em nenhuma regra específica não pode virar uma frase
+/// que cita medida. Nenhum dia real chega nela hoje — `test/humor_test.dart`
+/// varre o espaço de fatos e exige que continue assim —, mas apagá-la
+/// trocaria uma fala vaga e verdadeira por um número inventado no dia em que
+/// um fato novo aparecer.
 FalaDoHumor escolheAFala(FatosDoHumor f, T t) => switch (f.humor) {
       Mood.missingYou => _saudade(f, t),
       Mood.radiant => _radiante(f, t),
@@ -155,8 +159,8 @@ FalaDoHumor _saudade(FatosDoHumor f, T t) {
 }
 
 FalaDoHumor _radiante(FatosDoHumor f, T t) {
-  // Sem sessão nenhuma não há `{c}` honesto para escrever, e radiante sem
-  // sessão só acontece por override. Sai antes de qualquer fala que conte
+  // Sem sessão nenhuma não há `{c}` honesto para escrever, e a regra do §3
+  // não produz radiante sem sessão. Sai antes de qualquer fala que conte
   // sessões — `humorSessoes(0)` diria "uma sessão".
   if (f.sessoesHoje < 1) return _fala('radiante', f, const {});
   final c = t.humorSessoes(f.sessoesHoje);
@@ -216,7 +220,8 @@ FalaDoHumor _contente(FatosDoHumor f, T t) {
 
 FalaDoHumor _neutro(FatosDoHumor f, T t) {
   // `neutral` sem permissão é inalcançável pela regra do §3 (sem medição o
-  // humor só vai a `radiant` ou `content`). Chega aqui só por override.
+  // humor só vai a `radiant` ou `content`). A guarda fica como degrau: sem
+  // ela, um `neutral` sem leitura citaria minutos que não existem.
   if (!f.temMedicaoDeTela) return _fala('neutro', f, const {});
   final tela = _min(f.minutosDeTela, t);
   if (f.minutosDeTela == f.meta) return _fala('neutroNaMeta', f, {'tela': tela});

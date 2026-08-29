@@ -586,3 +586,318 @@ passou a ser derivado do `enum` e da tabela do quiz. Reverter: tirar
    encostaram e a folha saiu com 7 faixas em vez de 9 — o corte teria renomeado
    metade do elenco em silêncio. A linha ganhou folga, e o script confere a
    contagem contra a lista em vez de contra um número escrito à mão.
+
+## ADR-019 — Nenhuma ferramenta de desenvolvimento no aparelho de quem usa (2026-08-28)
+
+**Contexto.** O dono do produto pediu o app "100% como produto final, sem
+dados mock ou sistema de testes". O app tinha um painel de depuração completo
+(`lib/widgets/debug_panel.dart`) e, sustentando esse painel, um conjunto de
+métodos e dados dentro do código de produção: forçar humor, presets de
+habitat, +200 folhas, ±30 min de tempo de tela, trocar de espécie sem passar
+pela trilha, e um `resetAll()` que semeava o retrato do design — 165 folhas,
+`lily` + `dock`, raiz de 4 dias, uma semana com dois dias presentes e um
+congelado.
+
+O painel estava **órfão** desde algum turno anterior: nada na árvore de
+widgets o instanciava. Mas os métodos continuavam públicos em `AppState`, e a
+porta mais cara continuava aberta no caminho quente — `Mood get mood` começava
+com `if (overrideMood != null) return overrideMood!;`.
+
+**Decisão.** Sai tudo o que existe para facilitar o desenvolvimento e que rode
+no aparelho de um usuário. O critério é esse, e não "está em `lib/`": teste em
+`test/` e costura marcada `@visibleForTesting` são rede de segurança e ficam.
+
+Saíram, em `lib/`:
+
+- `widgets/debug_panel.dart` inteiro (`DebugFab` + `DebugPanel`), e
+  `AppRadii.debug`, o token de raio que só ele usava.
+- `AppState.overrideMood` e `forceMood()`, com os onze `overrideMood = null`
+  espalhados que existiam só para limpar a porta dos fundos.
+- `AppState.grantLeaves()`, `usageUp()`, `usageDown()`, `setHabitat()`,
+  `setSpecies()`, `resetAll()`, `toggleDebugFast()`.
+- `models.dart`: o mapa `habitats` (presets `empty`/`half`/`full`) e
+  `weekPattern` (a semana de mentira que só o `resetAll` usava).
+- Em `_advanceDay`, o parâmetro `debugUsage` e a linha
+  `usage = debugUsage && usageAccess ? 40 : 0` — quarenta minutos de tela que
+  aparelho nenhum tinha reportado.
+
+Ficaram, com barreira e com o porquê escrito no código:
+
+- `AppState.debugFast` (contrato §12). `kDebugMode` é barreira real: em
+  release a constante é `false` **e nenhum caminho do app escreve mais nesse
+  campo**, porque o botão que o virava saiu com o painel.
+- `AppState.nextDay()`, agora `@visibleForTesting`. É a única forma de
+  exercitar a virada do dia sem esperar até amanhã; em produção quem vira o
+  dia é `applyCalendar`, a partir da data real.
+- `BaruRepositories.memory()`, agora `@visibleForTesting`. Persistência
+  descartável de que os testes de apagar-dados, auth e sync precisam.
+
+**Alternativas descartadas.**
+
+(a) *Esconder o painel atrás de `kDebugMode` e manter o resto.* Era o que já
+existia — `DebugFab` já checava `kDebugMode` — e não resolvia nada: o problema
+não era o botão, eram os métodos públicos e o `overrideMood` no caminho de
+produção, que sobrevivem ao `if` da UI.
+
+(b) *Manter `resetAll()` como "refazer onboarding".* Não é isso. O refazer
+onboarding do usuário é `restartOnboarding()`, e o apagar de verdade é
+`apagaMeusDados()` (com teste próprio em `test/apagar_dados_test.dart`).
+`resetAll()` era um semeador de demonstração.
+
+(c) *Mover `habitats` para `test/`.* Melhor ainda: derivar do catálogo.
+`itensDeCena` já é a lista completa, e a evidência do "habitat cheio" passou a
+sair dela. Uma lista escrita à mão que precisa acompanhar a loja envelhece em
+silêncio — o PNG "cheio" passaria a mostrar um habitat incompleto sem ninguém
+notar.
+
+**Consequências.** `Mood get mood` passou a derivar só de fatos medidos, o que
+é a mudança que mais importa: a cena não tem mais como descrever um dia que
+não aconteceu. Dois testes que existiam **só** para cobrir ferramenta de debug
+foram apagados: `sync_test.dart` › "forçar humor no debug não sincroniza nada"
+(cobria `forceMood` + `toggleDebugFast`) e `loja_vitrine_test.dart` › "os
+atalhos de habitat só citam objeto que existe" (cobria o mapa `habitats`; a
+asserção de que "cheio" é o catálogo inteiro virou tautologia ao derivar).
+Quatro testes que usavam `overrideMood` para varrer os cinco humores passaram
+a **montar os fatos** de cada humor — ficaram mais fortes, porque agora também
+guardam a derivação. Reverter: `git revert` do commit; não há migração nem
+dado de usuário envolvido.
+
+## ADR-020 — Uma sessão concluída cura a desistência do dia (2026-08-28)
+
+**Contexto.** Relato do dono: *"quando o pet está triste por uma interrupção,
+ele não está voltando a ficar bem depois de um intervalo de sucesso"*. Estava
+certo, e a causa era exata: `abandonedToday` era escrito em `abandon()` e
+limpo em **dois** lugares — a virada do dia e o começo do companheirismo —,
+nenhum deles uma sessão concluída; e a precedência do humor lia esse campo
+cru. Parar uma sessão às nove da manhã deixava o bicho triste até a
+meia-noite, por mais sessões que a pessoa completasse depois.
+
+Isso é punição de dia inteiro por um tropeço, e o contrato §1 diz o contrário
+com todas as letras: "abandonar uma sessão = sem recompensa, **nada mais**".
+Um dia inteiro de tristeza é bem mais do que nada mais.
+
+**Decisão.** O humor passa a ler `desistenciaEmAberto` em vez de
+`abandonedToday`. A desistência está em aberto quando a pessoa parou uma
+sessão hoje **e a última sessão registrada do dia continua sendo essa**.
+Concluir depois devolve o bicho; parar de novo depois de concluir o entristece
+de novo, e a sessão seguinte o traz de volta outra vez.
+
+`abandonedToday` **não muda de significado**: continua sendo o registro do
+dia, continua no snapshot, em `baru_daily_progress.abandoned_today`, no
+relatório e nas missões. O que sarou foi o humor, não o fato. Sem registro no
+log de sessões — snapshot antigo, corte das 80 últimas, linha vinda de outro
+aparelho — a regra cai em `completedToday == 0`, que chega no mesmo snapshot
+que `abandonedToday` e portanto vive e morre com ele.
+
+**Alternativas descartadas.**
+
+(a) *Qualquer sessão concluída no dia perdoa (`completedToday >= 1`).* Mais
+simples e usa contador que já existe, mas deixa invisível a desistência das
+cinco da tarde de quem focou de manhã: o bicho nunca reage ao gesto. A cena
+carrega o estado **agora**, e o último gesto é o melhor retrato dele.
+
+(b) *Exigir que a sessão nova seja pelo menos tão longa quanto a que parou.*
+É uma barra para transpor — exatamente a punição que o §1 proíbe —, e é
+impossível de explicar na tela sem soar como cobrança.
+
+(c) *Apagar `abandonedToday` ao concluir.* Perderia um fato que aconteceu, e
+quebraria relatório, missões e a coluna sincronizada. Há outra frente mexendo
+na sincronização; mudar o significado da coluna seria o pior momento possível.
+
+**O que não mudou.** A fala "Uma sessão de {min} parou no meio hoje." continua
+existindo e continua honesta: ela só é escolhida dentro de `_saudade`, que só
+roda quando o humor **é** `missing_you` — ou seja, enquanto a desistência está
+em aberto. Depois da cura ela não é mostrada, e por isso não passa a mentir. A
+ausência de dois dias ou mais também não é curada por uma sessão: é outro
+fato, com outra fala, e continua na primeira linha da precedência.
+
+**Consequências.** `docs/PRODUCT.md` §3 foi atualizado — a linha do
+`missing_you` agora diz "desistência **em aberto**", com o parágrafo que
+define o termo. Três testes novos em `test/session_test.dart` › "a desistência
+não custa o dia inteiro" percorrem o ciclo pelas mesmas chamadas que a tela
+faz (`startSession` → `abandon` → `reconcileSession`), sem plantar flag.
+Verificado por mutação: trocando `return ultima.aborted` por `return true`, os
+dois testes da cura falham com "Expected: not Mood:<Mood.missingYou>". Dois
+casos antigos que codificavam a regra velha — `state_test.dart` e
+`mood_test.dart`, ambos "missing_you ganha de radiant" — foram reescritos com
+a desistência como **último** gesto do dia, que é onde a precedência ainda
+vale. Reverter: trocar `desistenciaEmAberto` de volta por `abandonedToday` na
+primeira linha de `Mood get mood`.
+
+---
+
+## ADR-021 — Contador de missão é conta sobre as sessões, não coluna (2026-08-28)
+
+**Contexto.** Seis campos do `AppSnapshot` não chegavam ao banco:
+`minutosDeFocoHoje`, `maiorSessaoHoje`, `sessoesNaSemana`, `minutosNaSemana`,
+`diasAbaixoNaSemana` e `som`. Efeito medido no código: reinstalar o app ou
+entrar no segundo aparelho zerava o progresso das missões do dia e da semana
+mesmo com as sessões já sincronizadas, e devolvia o som ligado a quem o tinha
+desligado. É a mesma classe do defeito que a migration 10 e o
+`AppSnapshot.fundeCom` vieram corrigir.
+
+**Decisão.** Colunas só para o que não é derivável.
+
+- Os **quatro** de foco viram conta sobre `baru_sessions`, refeita na leitura
+  (`BaruRowCodec.contadoresDe`). `baru_sessions` já sobe inteira e guarda
+  `started_at`, `duration_min` e `completed` — tudo o que os quatro somam.
+- `diasAbaixoNaSemana` ganha coluna (migration 15). Não sai de sessão nenhuma:
+  depende do tempo de tela do **dia fechado**, e o app só guarda o agregado do
+  dia corrente em `baru_screen_time`.
+- `som` ganha coluna (migration 14). Preferência não é derivável de nada.
+
+A coluna nova vem com `semana_de`, a segunda-feira a que o contador pertence,
+e o app devolve zero quando o carimbo não é o da semana corrente.
+
+**Alternativas descartadas.**
+
+(a) *Uma coluna para cada um dos quatro.* Seria um segundo registro do mesmo
+fato. Dois registros do mesmo fato divergem na primeira sessão que suba com o
+contador desatualizado — ou o contrário — e ninguém percebe até a missão pagar
+errado. A conta não pode divergir de si mesma.
+
+(b) *`dias_abaixo_na_semana` sem `semana_de`.* A zeragem da segunda-feira
+acontece dentro do aparelho e **não marca sincronização**: o remoto seguiria
+com o número da semana passada até uma gravação por outro motivo. A semana
+nova começaria com a missão semanal meio cumprida de graça.
+
+(c) *Uma tabela de dias fechados, com o resultado de cada dia.* Resolveria
+`diasAbaixoNaSemana` e abriria relatório histórico — mas exige o evento de
+fechamento do dia, que mora em `AppState._advanceDay`. Fica para quando houver
+motivo além deste contador.
+
+**Consequências.** A janela dos quatro é a do relógio de **quem lê**: eles
+zeram sozinhos na virada do dia e na segunda, sem depender de outro aparelho
+ter empurrado o zero. `fundeCom` deixou de dar os cinco de bandeja ao local e
+passou a ficar com o maior — os dois lados descrevem a mesma janela agora, e
+"local sempre ganha" custaria justamente o caso da reinstalação. Duas
+correções de fuso vieram junto: `started_at` e `trial_started_at` iam sem fuso
+na string, e o Postgres lia como UTC — a sessão das 9h voltava às 6h, perto o
+bastante da meia-noite para cair no dia errado.
+
+Reverter: tirar a chamada de `contadoresDe` do `fromRows` e devolver
+`local.` aos cinco campos em `fundeCom`. As colunas ficam; são aditivas.
+
+---
+
+## ADR-022 — `baru_daily_quests` fica no banco, sem escritor (2026-08-28)
+
+**Contexto.** A tabela guardava duas quests fixas do desenho anterior ao
+quadro de missões — `focus_session` e `under_goal` — e o app gravava nela a
+cada `pushStreak`, ou seja, a cada fim de sessão. Três fatos: nenhum `select`
+do app jamais a leu; os dois valores são derivados de
+`baru_daily_progress.completed_sessions` e de
+`baru_screen_time.usage_min < goal_min`; e o `check` de `quest_key` aceita
+duas chaves enquanto o sistema de missões tem 17 tipos, cujo resgate mora em
+`baru_progression.missoes_resgatadas` como `id@periodo`.
+
+**Decisão.** Parar de escrever. Manter a tabela, as linhas, a RLS e o lugar
+dela em `tabelasDoUsuario`. A migration 16 é só um `comment on table` que
+registra o porquê onde o schema pode ser lido sozinho.
+
+**Alternativas descartadas.**
+
+(a) *`drop table`.* Destrutivo num banco com dados reais, e sem nada em troca:
+apagaria o histórico de quem usou o app antes desta decisão.
+
+(b) *Ampliar o `check` para as 17 chaves e passar a ler.* Daria uma segunda
+gramática para o mesmo fato que `missoes_resgatadas` já guarda — e é a chave
+com período dentro que torna o resgate idempotente.
+
+(c) *Continuar escrevendo sem ler.* Uma viagem de rede por fim de sessão para
+acumular linha que ninguém lê.
+
+**Consequências.** Um `pushStreak` a menos por sessão. Apagar a conta continua
+alcançando a tabela (a lista do app não mudou, e o `on delete cascade` para
+`auth.users` também não). O único fato que só ela registrava — se um **dia
+passado** fechou abaixo da meta — deixa de ser gravado; hoje ninguém o lê, e
+quem precisar dele vai querer a tabela da alternativa (c) da ADR-021, com o
+evento de fechamento do dia por trás. Reverter: voltar a chamar o `upsert` em
+`pushStreak`.
+
+---
+
+## ADR-023 — Uma notificação só para a contagem, e ela é a do serviço (2026-08-28)
+
+**Contexto.** O ADR-011 pôs a sessão na barra com o cronômetro do sistema
+(`usesChronometer` + `chronometerCountDown`), desenhado pelo Android a partir
+do instante de término. O ADR-014, depois, levantou o `VigiaDaSessao`, um
+serviço em primeiro plano — e o Android **obriga** um serviço desses a ter
+notificação própria.
+
+Ninguém juntou as duas pontas. A do plugin ficou no id 1004, canal
+`baru_sessao`, com cronômetro; a do serviço no id 4711, canal `baru_vigia`,
+sem cronômetro nenhum. **Ids diferentes não se sobrescrevem**: o
+`NotificationManager` guarda por (pacote, tag, id) e nenhuma das duas usava
+tag. Durante toda sessão de foco havia **duas linhas na barra com o mesmo
+título e o mesmo corpo**, e só uma contando. Pior: a que o Android garante
+manter — a do serviço — era a parada. O relato do dono foi "os timers não
+estão dinâmicos", e é exatamente isso que ele estava vendo.
+
+Junto disso, dois defeitos menores e reais:
+
+- **"Desistir" não desistia.** A ação ia com `showsUserInterface` no padrão
+  `false`, e nesse caminho o `flutter_local_notifications` manda o toque para
+  um `BroadcastReceiver` que precisa de um isolate registrado em
+  `onDidReceiveBackgroundNotificationResponse`. O app nunca registrou um. O
+  botão cancelava a notificação e o app não ficava sabendo: a sessão seguia
+  correndo e, na volta, o relógio **pagava** a recompensa de quem desistiu.
+- **A missão do descanso não tinha notificação nenhuma.** A missão principal
+  do dia — a que pede quarenta minutos longe do telefone — sumia da vista no
+  segundo em que passava a valer.
+
+**Decisão.** Uma contagem por vez, num id só, e quem a desenha é o serviço em
+primeiro plano.
+
+1. O `VigiaDaSessao` passa a postar **no mesmo id e no mesmo canal** que o
+   Dart usa. Duas escritas no mesmo id são uma atualização, não uma segunda
+   notificação — é o caminho documentado para mexer na notificação de um
+   serviço em primeiro plano. O id e o canal viajam do Dart num canal novo
+   (`baru/barra`), junto com o prazo e os rótulos, e ficam gravados em
+   `SharedPreferences` para o caso de o processo morrer no meio da sessão.
+2. A notificação do serviço ganha o mesmo cronômetro regressivo, mais
+   `VISIBILITY_PUBLIC` (o padrão do Android esconde o conteúdo em bloqueio
+   seguro, e o conteúdo aqui é a contagem) e `CATEGORY_STOPWATCH`.
+3. "Desistir" e "Voltar ao Baru" **abrem o app**, carregando a ação no
+   `Intent`. O arranque a frio é coberto dos dois lados: pelo plugin com
+   `getNotificationAppLaunchDetails`, e pelo serviço com uma ação guardada no
+   `MainActivity` até o Dart existir para recebê-la.
+4. A missão do descanso ganha a mesma barra, com precedência para o foco. O
+   prazo dela é **projetado** (`agora + o que falta`), não fixo: o relógio do
+   descanso desconta a fuga e o tempo dentro do próprio Baru, então
+   `começou + 40 min` mentiria assim que a pessoa pegasse o telefone.
+
+**Alternativas descartadas.**
+
+(a) *`MediaStyle`.* Só ganha o tratamento de player com um `MediaSession`
+válido atrás, e a partir do Android 11 os controles de mídia dos ajustes
+rápidos vêm da sessão, não da notificação. Forjar uma sessão para um timer
+sequestraria o botão de volume e os controles de fone, e apareceria como
+player nos ajustes rápidos. É abuso de API, e a Play trata como tal.
+
+(b) *`CallStyle`.* Ganha ranking alto de verdade, e em troca de uma promessa:
+que aquilo é uma chamada. Mostraria afordâncias de atender/desligar e pede
+`FOREGROUND_SERVICE_TYPE_PHONE_CALL`, que por sua vez pede `MANAGE_OWN_CALLS`
+e ser um app de chamadas. Comprar destaque com um nome falso.
+
+(c) *Manter as duas notificações e só sincronizar o texto.* Continuariam
+sendo duas linhas na barra. O problema nunca foi o texto.
+
+(d) *Tirar o cronômetro do serviço e deixar só a do plugin.* A do serviço não
+pode deixar de existir — o Android exige — e é ela que o sistema garante
+manter. Sobraria a garantida sem contagem.
+
+(e) *Registrar o isolate de segundo plano do plugin para "Desistir" agir sem
+abrir o app.* Um segundo ponto de entrada Dart, sem estado, que teria de
+duplicar o que `abandon()` faz com folhas, sequência e histórico. Abrir o app
+é honesto: desistir leva à tela de resultado de qualquer forma.
+
+**Consequências.** A barra tem uma notificação durante a pausa, e ela conta.
+Desligar o vigia enquanto uma sessão corre usa `STOP_FOREGROUND_DETACH` em vez
+de `REMOVE`, senão encerrar o descanso apagaria o cronômetro de um foco vivo.
+O `VigiaDaSessao` só cria o canal se ele não existir, e nesse ramo usa o
+rótulo do próprio app — nenhuma frase nasce do lado nativo. **Nada disso foi
+visto num aparelho**: o desenho do cronômetro é o system UI. Registrado em
+BL-16. Reverter: os arquivos tocados são `notification_service.dart`,
+`l10n_notificacao.dart`, `app.dart`, `VigiaDaSessao.kt`, `MainActivity.kt` e o
+manifesto.

@@ -82,26 +82,6 @@ void main() {
       }
     });
 
-    test('os atalhos de habitat só citam objeto que existe', () {
-      // `habitats` alimenta o painel de depuração e a captura de evidência.
-      // Um id escrito errado ali não estoura: some da cena em silêncio.
-      final objetos = itensDeCena.map((i) => i.id).toSet();
-      for (final entrada in habitats.entries) {
-        for (final id in entrada.value) {
-          expect(
-            objetos,
-            contains(id),
-            reason: '${entrada.key} cita "$id", que não é objeto de cena',
-          );
-        }
-      }
-      expect(
-        habitats['full']!.length,
-        itensDeCena.length,
-        reason: '"cheio" tem de querer dizer o catálogo inteiro',
-      );
-    });
-
     test('todo cenário da loja sabe acender o habitat', () {
       // Cenário é a única categoria que não se desenha sozinha: quem pinta a
       // luz dele é `LuzDaCena.doCenario`, por id. Um cenário novo no

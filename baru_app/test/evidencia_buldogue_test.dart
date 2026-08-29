@@ -30,9 +30,19 @@ import 'package:flutter_test/flutter_test.dart';
 /// - `buldogue-pelagens.png` — a paleta inteira. É a única do app que
 ///   troca de pigmento em vez de trocar de tom, e o risco disso é o tigrado
 ///   e o preto engolirem os vincos.
+/// - `buldogue-atividades.png` — as quatro atividades em que ele entra, lado
+///   a lado. `swim` está ali de propósito e mostra o buldogue **brincando na
+///   beira**: cão braquicefálico afunda de frente, e a tradução mora em
+///   [acaoDoBicho]. A captura é o que impede alguém de "consertar" isso sem
+///   ver o que estava consertando.
 /// - `buldogue-brincadeira-*.png` — a atividade dele, quadro a quadro. O
 ///   teste **falha** se dois quadros vizinhos saírem idênticos: sem isso a
 ///   evidência afirmaria um movimento que ninguém exercitou.
+/// - `buldogue-cara.png` — a cara em dobro. As folhas acima mostram o bicho
+///   no tamanho em que ele aparece na tela, e nesse tamanho não dá para
+///   julgar ruga, beiço nem narina: a decisão "isto é um buldogue francês"
+///   se ganha ou se perde em detalhes de dois ou três pixels.
+///
 /// - `buldogue-orelha-*.png` — o par de quadros parado/tocado. A orelha é o
 ///   que sai da silhueta da cabeça, então é nela que a reação ao toque mais
 ///   aparece — mas ver isso é trabalho do olho, não do `expect`: o toque
@@ -289,6 +299,87 @@ void main() {
         );
       }
     }
+  });
+
+  testWidgets('as quatro atividades em que ele entra', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(1000, 400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    // A cabeça do buldogue nasce 29 px acima do corpo, contra 28 do resto do
+    // elenco, e o pasto a faz descer até 21 px. As duas coisas juntas são o
+    // caso em que o queixo cai sobre as pernas — que é o defeito que esta
+    // folha existe para deixar de ser invisível.
+    const casos = [
+      (Activity.idle, Mood.content, 'à toa'),
+      (Activity.graze, Mood.content, 'petiscando'),
+      (Activity.nap, Mood.sleepy, 'cochilando'),
+      (Activity.swim, Mood.radiant, 'brincando na beira'),
+    ];
+
+    await tester.pumpWidget(
+      _folha([
+        [
+          for (final (a, m, nome) in casos)
+            _cartao(Species.frenchie, m, a, 0, nome),
+        ],
+      ]),
+    );
+    await tester.pump();
+    await _salva(tester, const Key('folha'), 'buldogue-atividades');
+
+    // A legenda "brincando na beira" tem de corresponder ao que o desenho
+    // faz. Se alguém trocar o `case` do buldogue em `acaoDoBicho` para
+    // `nado`, a folha continuaria bonita e passaria a mentir.
+    expect(
+      acaoDoBicho(Species.frenchie, Activity.swim),
+      AcaoDoBicho.brincadeira,
+      reason: 'o buldogue voltou a nadar, e cão braquicefálico afunda de '
+          'frente — ver a nota em acaoDoBicho',
+    );
+  });
+
+  testWidgets('a cara em dobro, para as rugas serem julgáveis', (tester) async {
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    tester.view.physicalSize = const Size(1000, 620);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    // `scale` e não um quadro maior: o painter desenha em pixels fixos, então
+    // aumentar a caixa só acrescentaria fundo. O que precisa crescer é o
+    // bicho.
+    Widget grande(Mood m, int coat) => SizedBox(
+          width: 320,
+          height: 280,
+          child: PetView(
+            species: Species.frenchie,
+            mood: m,
+            activity: Activity.idle,
+            coat: coat,
+            scale: 1.9,
+            interativo: false,
+          ),
+        );
+
+    await tester.pumpWidget(
+      _folha([
+        [grande(Mood.content, 0), grande(Mood.radiant, 2)],
+        [grande(Mood.missingYou, 3), grande(Mood.neutral, 5)],
+      ]),
+    );
+    await tester.pump();
+    await _salva(tester, const Key('folha'), 'buldogue-cara');
   });
 
   testWidgets('as seis pelagens, e nenhuma apaga o desenho', (tester) async {

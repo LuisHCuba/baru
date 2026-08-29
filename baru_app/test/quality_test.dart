@@ -1,3 +1,4 @@
+import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/l10n.dart';
 import 'package:baru_app/app.dart';
 import 'package:baru_app/data/app_snapshot.dart';
@@ -14,6 +15,13 @@ AppSnapshot _snap(AppScreen screen) {
     onb: 5,
     lang: 'pt',
     species: Species.capybara,
+    // A trilha passou a cobrar a espécie que entrega, e a lontra é prêmio
+    // de degrau. Sem o marco, a folha abre com ela **travada** e o toque
+    // não faz nada — o teste falharia por uma regra nova e correta, e
+    // afrouxar a porta para ele passar apagaria a regra.
+    marcosResgatados: [
+      trilha.firstWhere((m) => m.recompensa.especie == Species.otter).id,
+    ],
     q0: 'Água',
     q1: 'À tarde',
     q2: 'Uma rotina',

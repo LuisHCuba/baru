@@ -108,6 +108,34 @@ class AppState extends ChangeNotifier {
   int get xpParaProximoNivel => Balanco.faltaParaProximoNivel(xp);
   Marco? get proximoMarco => progresso.proximoMarco;
   Set<Species> get especiesLiberadas => progresso.especiesLiberadas(species);
+
+  /// A pessoa pode trocar para esta espécie agora.
+  ///
+  /// Duas regras, e o que separa as duas é **o momento**:
+  ///
+  /// - **No onboarding**, as quatro de origem estão abertas. O quiz sugere
+  ///   um bicho; a tela de revelação existe justamente para a pessoa dizer
+  ///   "não, quero a coruja". Gatear ali transformaria a sugestão em
+  ///   sentença.
+  /// - **Depois**, vale a trilha. A lontra, a tartaruga e a coruja são
+  ///   recompensa de degrau — abrir as quatro para sempre esvaziaria três
+  ///   deles, e o axolote, o pinguim, a gata, a raposa e o buldogue só
+  ///   chegam subindo.
+  /// As espécies que a tela deve oferecer agora.
+  ///
+  /// Derivada de [podeEscolher] de propósito. A primeira versão passava
+  /// `especiesLiberadas` para o seletor e `podeEscolher` para a guarda —
+  /// os dois discordavam no onboarding, a lontra aparecia com cadeado e o
+  /// toque não fazia nada. Porta e vitrine têm de vir da mesma regra.
+  Set<Species> get especiesEscolhiveis =>
+      Species.values.where(podeEscolher).toSet();
+
+  bool podeEscolher(Species s) {
+    if (!companionshipStarted) {
+      return ProgressoDaTrilha.deOrigem.contains(s);
+    }
+    return especiesLiberadas.contains(s);
+  }
   int get estagioDoHabitat => progresso.estagioDoHabitat;
   List<HabitatDaTrilha> get habitatsLiberados => progresso.habitatsLiberados;
 
@@ -455,7 +483,6 @@ class AppState extends ChangeNotifier {
   int daysAway = 0;
   int reward = 0;
   bool aborted = false;
-  Mood? overrideMood;
   bool trial = false;
   bool evening = true;
 
@@ -471,6 +498,15 @@ class AppState extends ChangeNotifier {
   bool missed = true;
   bool sharing = false;
   PayPlan payPlan = PayPlan.annual;
+
+  /// Comprime o relógio da sessão em 60× (contrato de produto §12).
+  ///
+  /// Fica porque um teste de sessão de 90 minutos que roda em 90 minutos não
+  /// é teste. `kDebugMode` é a barreira, e é real: o compilador de release
+  /// resolve a constante para `false` e **não existe mais nada no app que
+  /// escreva neste campo** — o botão que a virava saiu junto com o painel de
+  /// depuração. Num APK de release a sessão de 25 minutos dura 25 minutos,
+  /// sem caminho de volta.
   bool debugFast = kDebugMode;
   bool usageAccess = false;
   bool companionshipStarted = false;
@@ -540,11 +576,12 @@ class AppState extends ChangeNotifier {
 
   /// Repinta a tela sem gravar nem sincronizar.
   ///
-  /// Para o que não vive no snapshot: humor forçado do painel de debug, folha
-  /// de compartilhamento, flag do timer 60x. Passar essas mudanças pelo
-  /// `notifyListeners` normal disparava uma gravação e — como a máscara ficava
-  /// vazia e máscara vazia significa "empurre tudo" — um push das 13 tabelas
-  /// só para abrir a folha de compartilhamento.
+  /// Para o que não vive no snapshot: folha de compartilhamento, confirmação
+  /// de saída, a pergunta do quiz em que a tela está. Passar essas mudanças
+  /// pelo `notifyListeners` normal
+  /// disparava uma gravação e — como a máscara ficava vazia e máscara vazia
+  /// significa "empurre tudo" — um push das 13 tabelas só para abrir a folha
+  /// de compartilhamento.
   void _notifyEfemero() => super.notifyListeners();
 
   T get t => T(lang);
@@ -827,11 +864,66 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
+  /// A última sessão registrada hoje, concluída ou não.
+  ///
+  /// Lê `sessions` de trás para frente porque o log é cronológico por
+  /// construção — `_logSession` só acrescenta —, o mesmo idioma que
+  /// [_minutosDaDesistenciaDeHoje] já usa.
+  SessionRecord? get _ultimaSessaoDeHoje {
+    final hoje = dateOnly(lastOpenDate);
+    for (final s in sessions.reversed) {
+      if (dateOnly(s.at) == hoje) return s;
+    }
+    return null;
+  }
+
+  /// A desistência de hoje ainda está de pé?
+  ///
+  /// [abandonedToday] continua sendo o **registro do dia**, e não muda de
+  /// significado: vai para o snapshot, para `baru_daily_progress`, para o
+  /// relatório e para as missões. Um fato que aconteceu não se apaga.
+  ///
+  /// O humor, porém, não é o extrato do dia — é o estado agora. Enquanto esta
+  /// pergunta era simplesmente `abandonedToday`, parar uma sessão às nove da
+  /// manhã deixava o bicho triste até a meia-noite, por mais sessões que a
+  /// pessoa concluísse depois: um tropeço custava o dia inteiro. O contrato
+  /// §1 diz o contrário com todas as letras — "abandonar uma sessão = sem
+  /// recompensa, **nada mais**" — e um dia inteiro de tristeza é bem mais do
+  /// que nada mais.
+  ///
+  /// A regra é a mais simples que devolve o bicho sem apagar o fato: vale a
+  /// **última** sessão de hoje. Concluiu depois de parar, ele volta; parou
+  /// depois de concluir, ele sente — e a sessão seguinte o traz de volta de
+  /// novo. Descartei "qualquer sessão concluída perdoa", que deixaria uma
+  /// desistência das cinco da tarde invisível, e "a sessão nova tem de ser
+  /// pelo menos tão longa quanto a que parou", que é uma barra para transpor,
+  /// isto é, exatamente a punição que o contrato proíbe.
+  bool get desistenciaEmAberto {
+    if (!abandonedToday) return false;
+    final ultima = _ultimaSessaoDeHoje;
+    if (ultima != null) return ultima.aborted;
+    // Sem registro no log — snapshot antigo, corte das 80 últimas, linha
+    // vinda de outro aparelho — sobra o contador do dia, que chega no mesmo
+    // snapshot que `abandonedToday` e portanto some junto com ele ou com ele
+    // sobrevive.
+    return completedToday == 0;
+  }
+
   String get speciesKey => species.name;
 
+  /// O humor sai **só** dos fatos medidos, na ordem do contrato §3.
+  ///
+  /// Havia um `overrideMood` na frente desta cadeia: o painel de depuração
+  /// escrevia nele e a cena inteira — bicho, atividade, legenda, ícone —
+  /// passava a descrever um dia que não aconteceu. Era a porta dos fundos
+  /// mais cara do app, porque o humor é o que o produto afirma sobre a
+  /// pessoa. Sem ela não há como a tela mentir: se o humor mudou, algum
+  /// destes fatos mudou.
+  ///
+  /// A primeira linha lê [desistenciaEmAberto], e não `abandonedToday` cru:
+  /// ver o porquê lá.
   Mood get mood {
-    if (overrideMood != null) return overrideMood!;
-    if (abandonedToday || daysAway >= 2) return Mood.missingYou;
+    if (desistenciaEmAberto || daysAway >= 2) return Mood.missingYou;
     if (!usageAccess) {
       return completedToday >= 1 ? Mood.radiant : Mood.content;
     }
@@ -1150,7 +1242,6 @@ class AppState extends ChangeNotifier {
         final mins = resumo.minutosContabilizados;
         if (mins != usage) {
           usage = mins;
-          overrideMood = null;
           _markSync(_syncSettings);
         }
         changed = true;
@@ -1245,7 +1336,6 @@ class AppState extends ChangeNotifier {
     final mins = resumo.minutosContabilizados;
     if (mins != usage) {
       usage = mins;
-      overrideMood = null;
       _markSync(_syncSettings);
     }
     if (notify) notifyListeners();
@@ -1272,7 +1362,6 @@ class AppState extends ChangeNotifier {
         porCategoria: porCategoria,
       );
       usage = resumoTela!.minutosContabilizados;
-      overrideMood = null;
     }
     _markSync(_syncSettings);
     notifyListeners();
@@ -1378,7 +1467,6 @@ class AppState extends ChangeNotifier {
     freezesLeft = 1;
     reward = 0;
     aborted = false;
-    overrideMood = null;
     sharing = false;
     sessions = [];
     sessionStartedAt = null;
@@ -1422,6 +1510,15 @@ class AppState extends ChangeNotifier {
   /// Troca o animal nos ajustes. Nome customizado fica; o padrão do design muda.
   void pickSpecies(Species s) {
     if (species == s) return;
+    // A trilha entrega espécie como recompensa, e o app não estava
+    // cobrando: `especiesLiberadas` existia sem nenhum consumidor, os dois
+    // seletores iteravam `Species.values` inteiro, e uma conta nova
+    // equipava o buldogue no primeiro dia — os 22 degraus viravam enfeite.
+    //
+    // O habitat já tinha essa porta (`escolheHabitat`); a assimetria é que
+    // era o defeito. Silencioso pelo mesmo motivo dele: a tela não oferece
+    // o toque, e uma chamada fora de hora não pode virar espécie.
+    if (!podeEscolher(s)) return;
     final current = petName.trim();
     final wasDefault = current.isEmpty || current == petNames[species];
     species = s;
@@ -1688,7 +1785,6 @@ class AppState extends ChangeNotifier {
     remaining = dur * 60;
     running = true;
     confirming = false;
-    overrideMood = null;
     _empilha(AppScreen.session);
     _markSync(_syncSession);
     // Grava a sessão em curso: se o app for morto agora, ela é retomada.
@@ -1810,7 +1906,6 @@ class AppState extends ChangeNotifier {
     minutosNaSemana += minutos;
     sessoesNaSemana += 1;
     if (minutos > maiorSessaoHoje) maiorSessaoHoje = minutos;
-    overrideMood = null;
     ganhaXp(Balanco.xpDeSessao(minutos));
     _logSession(
       completed: true,
@@ -1899,7 +1994,6 @@ class AppState extends ChangeNotifier {
     abandonedToday = true;
     running = false;
     confirming = false;
-    overrideMood = null;
     sessionStartedAt = null;
     sessionEndsAt = null;
     sessionDur = minutos;
@@ -1932,48 +2026,18 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void forceMood(Mood? m) {
-    overrideMood = overrideMood == m ? null : m;
-    _notifyEfemero();
-  }
-
-  void setHabitat(String key) {
-    owned = List<String>.from(habitats[key]!);
-    // E equipar também. O habitat desenha o que está **em uso**, não o que
-    // está no inventário: sem esta linha o preset "cheio" do painel de
-    // depuração comprava tudo e não punha nada em cena.
-    equipados = Set<String>.from(owned);
-    _markSync(_syncShop);
-    notifyListeners();
-  }
-
-  void setSpecies(Species s) {
-    species = s;
-    petName = '';
-    unawaited(IconeService.instance.usa(s.name));
-    _markSync(_syncPet);
-    notifyListeners();
-  }
-
-  void usageUp() {
-    usage += 30;
-    overrideMood = null;
-    _markSync(_syncSettings);
-    notifyListeners();
-  }
-
-  void usageDown() {
-    usage = (usage - 30).clamp(0, 9999);
-    overrideMood = null;
-    _markSync(_syncSettings);
-    notifyListeners();
-  }
-
-  /// Debug: simula amanhã chegando com o usuário ausente.
+  /// Faz a meia-noite passar uma vez, para o teste.
+  ///
+  /// Costura de teste, não atalho de produto: o único jeito de exercitar a
+  /// virada do dia — bônus da meta, congelamento, expiração de missão — sem
+  /// esperar até amanhã. Em produção quem vira o dia é [applyCalendar], a
+  /// partir da data real; nada na árvore de widgets chama isto, e
+  /// `@visibleForTesting` faz o analisador reclamar se alguém tentar.
+  @visibleForTesting
   void nextDay() {
     final de = dateOnly(lastOpenDate);
     final para = de.add(const Duration(days: 1));
-    _advanceDay(de: de, para: para, debugUsage: true);
+    _advanceDay(de: de, para: para);
     lastOpenDate = para;
     if (completedToday == 0) daysAway += 1;
     _markSync(_syncSession);
@@ -1992,7 +2056,6 @@ class AppState extends ChangeNotifier {
   void _advanceDay({
     required DateTime de,
     required DateTime para,
-    required bool debugUsage,
     bool creditBonus = true,
   }) {
     if (creditBonus && _closedUnderGoal) {
@@ -2030,11 +2093,15 @@ class AppState extends ChangeNotifier {
 
     todayIndex = iPara;
     week[iPara] = WeekDayKind.today;
-    usage = debugUsage && usageAccess ? 40 : 0;
+    // Dia novo começa sem medição nenhuma. Havia um `40` escrito aqui para o
+    // painel de depuração abrir o dia seguinte já com tempo de tela — número
+    // que aparelho nenhum tinha reportado. Quem preenche isto é
+    // `syncPermissionsFromOs`, lendo o UsageStats; até ele responder, zero é
+    // a única resposta honesta.
+    usage = 0;
     completedToday = 0;
     abandonedToday = false;
     carinhosHoje = 0;
-    overrideMood = null;
 
     // Missões diárias expiram à meia-noite, sem punição: o contador zera e a
     // missão de amanhã é outra.
@@ -2077,7 +2144,6 @@ class AppState extends ChangeNotifier {
       _advanceDay(
         de: cursor,
         para: proximo,
-        debugUsage: false,
         creditBonus: steps == 0,
       );
       cursor = proximo;
@@ -2165,48 +2231,12 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void grantLeaves() {
-    leaves += 200;
-    _markSync(_syncShop);
-    notifyListeners();
-  }
-
-  void resetAll() {
-    leaves = 165;
-    owned = ['lily', 'dock'];
-    usage = 96;
-    goal = 150;
-    avg = 240;
-    streak = 4;
-    completedToday = 1;
-    abandonedToday = false;
-    daysAway = 0;
-    overrideMood = null;
-    trial = false;
-    trialStartedAt = null;
-    usageAccess = true;
-    companionshipStarted = true;
-    week = List<WeekDayKind>.from(weekPattern);
-    todayIndex = 5;
-    freezesLeft = 1;
-    // Explícito em vez de cair no "máscara vazia = empurre tudo": o reset
-    // muda mesmo todos os domínios, e deixar local e remoto divergirem seria
-    // pior do que sincronizar um estado de debug.
-    _markSync(_syncAll);
-    notifyListeners();
-  }
-
   void restorePurchases() {
     trial = true;
     trialStartedAt ??= DateTime.now();
     _markSync(_syncTrial);
     unawaited(_syncNotificationSchedules());
     go(AppScreen.home);
-  }
-
-  void toggleDebugFast() {
-    debugFast = !debugFast;
-    _notifyEfemero();
   }
 
   AppSnapshot toSnapshot() {

@@ -18,6 +18,33 @@ import 'package:flutter_test/flutter_test.dart';
 
 AppState _estado() => AppState()..startCompanionship();
 
+/// Um estado que **chega** a cada humor pela regra do §3 (contrato de produto).
+///
+/// Escrevia `overrideMood` antes — o campo era a porta dos fundos do painel
+/// de depuração e saiu do app. Montar os fatos custa três linhas a mais e
+/// vale a pena: a geometria passa a ser medida num bicho que o app poria
+/// mesmo naquela pose, e não num humor plantado.
+AppState _estadoNoHumor(Mood humor) {
+  final s = _estado();
+  s.usageAccess = true;
+  s.goal = 100;
+  switch (humor) {
+    case Mood.missingYou:
+      s.abandonedToday = true;
+    case Mood.radiant:
+      s.usage = 50;
+      s.completedToday = 1;
+    case Mood.content:
+      s.usage = 50;
+    case Mood.neutral:
+      s.usage = 100;
+    case Mood.sleepy:
+      s.usage = 121;
+  }
+  expect(s.mood, humor, reason: 'o cenário de ${humor.name} deixou de valer');
+  return s;
+}
+
 Widget _cena(AppState app, {double? altura, double largura = 372}) {
   return MaterialApp(
     home: Scaffold(
@@ -94,7 +121,7 @@ void main() {
     // afunda, pastando ele sobe. É subindo que ele encosta no topo.
     final atividades = <Activity>{};
     for (final humor in Mood.values) {
-      final app = _estado()..overrideMood = humor;
+      final app = _estadoNoHumor(humor);
       atividades.add(app.activity);
       await tester.pumpWidget(_cena(app));
       await tester.pump();

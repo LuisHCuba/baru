@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -6,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../data/descanso_do_dia.dart';
 import '../data/descanso_retencao.dart';
 
 /// Notificações locais: relatório da noite (21h) e "senti sua falta".
@@ -18,7 +20,25 @@ class BaruNotifications {
   static const _missedId = 1002;
   static const _trialId = 1003;
 
-  /// A sessão em curso, fixa na barra.
+  /// **A única contagem viva na barra.**
+  ///
+  /// Um id só, de propósito. Durante uma sessão de foco havia duas
+  /// notificações ao mesmo tempo — esta, do plugin, e a do
+  /// `VigiaDaSessao`, que é um serviço em primeiro plano e portanto
+  /// **precisa** ter notificação própria. Ids diferentes (1004 e 4711) em
+  /// canais diferentes não se sobrescrevem: o `NotificationManager` guarda
+  /// por (pacote, tag, id), e nenhuma das duas usava tag. O resultado eram
+  /// duas linhas com o mesmo título e o mesmo corpo, e só uma delas com a
+  /// contagem — exatamente o "não está dinâmico" que o dono relatou.
+  ///
+  /// Agora o Kotlin posta neste mesmo id, neste mesmo canal. Duas escritas
+  /// no mesmo id são uma **atualização**, não uma segunda notificação: é o
+  /// padrão documentado para atualizar a notificação de um serviço em
+  /// primeiro plano. Quem escrever por último ganha, e as duas carregam a
+  /// mesma contagem, então não existe "perder a corrida".
+  ///
+  /// O valor viaja para o lado nativo em [_publicaNoNativo] — o Kotlin não
+  /// repete a constante.
   static const sessaoId = 1004;
 
   /// O aviso de sessão concluída, agendado para o fim dela.
@@ -38,7 +58,25 @@ class BaruNotifications {
 
   /// Id da ação de desistir na notificação da sessão.
   static const acaoDesistir = 'baru_desistir';
+
+  /// Id da ação de encerrar a missão do descanso.
+  static const acaoEncerraDescanso = 'baru_descanso_encerra';
+
+  /// Id da ação que só traz a pessoa de volta ao app.
+  static const acaoVoltar = 'baru_voltar';
+
   static const _lastMissedKey = 'baru_last_missed_notify';
+
+  /// O canal para o lado nativo desenhar a **mesma** contagem.
+  ///
+  /// Separado de `baru/overlay` de propósito: aquele é da frente da
+  /// sobreposição, e dois donos no mesmo canal é como se perde um método em
+  /// merge.
+  static const _canalDaBarra = MethodChannel('baru/barra');
+
+  /// Injetável: sem plataforma, um teste não exercita contrato nenhum.
+  @visibleForTesting
+  MethodChannel canalDaBarra = _canalDaBarra;
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -47,7 +85,112 @@ class BaruNotifications {
 
   /// Chamado quando o usuário toca "Desistir" na notificação da sessão.
   /// Ligado pelo app; nulo em teste e em web.
-  void Function()? aoDesistirPelaBarra;
+  ///
+  /// **Por que é propriedade e não campo.** O toque pode ter **acordado o
+  /// app do zero**: nesse caso a ação chega durante o `init()`, antes de
+  /// existir árvore de widgets para registrar o callback. Guardar a ação e
+  /// entregá-la a quem chegar depois é o que faz "Desistir" com o app morto
+  /// significar alguma coisa.
+  void Function()? get aoDesistirPelaBarra => _aoDesistir;
+  void Function()? _aoDesistir;
+  set aoDesistirPelaBarra(void Function()? f) {
+    _aoDesistir = f;
+    _escoaPendente();
+  }
+
+  /// Chamado quando o usuário encerra o descanso pela barra.
+  void Function()? get aoEncerrarDescansoPelaBarra => _aoEncerrarDescanso;
+  void Function()? _aoEncerrarDescanso;
+  set aoEncerrarDescansoPelaBarra(void Function()? f) {
+    _aoEncerrarDescanso = f;
+    _escoaPendente();
+  }
+
+  /// De onde sai o rótulo do botão "voltar ao app".
+  ///
+  /// **Uma função e não uma string** porque o idioma muda nos ajustes, e a
+  /// notificação da sessão pode ser postada muito depois disso. Guardar o
+  /// texto congelaria o idioma do arranque na única tela do produto que a
+  /// pessoa lê sem abrir o app.
+  ///
+  /// Nulo em teste e em web: sem rótulo, a notificação sai sem o botão e o
+  /// toque no corpo continua abrindo o app.
+  String Function()? rotuloDeVolta;
+
+  /// A ação que chegou antes de haver quem a atendesse.
+  String? _acaoPendente;
+
+  /// Entrega a ação guardada, se já houver quem a atenda.
+  ///
+  /// Só limpa a pendência quando **alguém atendeu**: um toque que chega
+  /// entre o `init()` e o `initState` do app não pode virar um clique
+  /// perdido.
+  void _escoaPendente() {
+    final acao = _acaoPendente;
+    if (acao == null) return;
+    if (acao == acaoDesistir && _aoDesistir != null) {
+      _acaoPendente = null;
+      _aoDesistir!();
+      return;
+    }
+    if (acao == acaoEncerraDescanso && _aoEncerrarDescanso != null) {
+      _acaoPendente = null;
+      _aoEncerrarDescanso!();
+    }
+  }
+
+  /// Só para o teste: dá o serviço por armado, sem plataforma nativa.
+  ///
+  /// `init()` faz três coisas que exigem aparelho — fuso, plugin e canais —
+  /// e o que se quer provar aqui é o que vem **depois**: quem fica com a
+  /// barra, o que atravessa o canal, e o que acontece com um toque que
+  /// chegou cedo demais. Mesma armadilha e mesma saída do
+  /// `VigiaService.zeraParaTeste`.
+  @visibleForTesting
+  void preparaParaTeste({bool pronto = true}) {
+    _ready = pronto;
+    _contagemAtual = null;
+    _acaoPendente = null;
+    _aoDesistir = null;
+    _aoEncerrarDescanso = null;
+    rotuloDeVolta = null;
+  }
+
+  /// Puxa do lado nativo a ação que ficou guardada.
+  ///
+  /// **No arranque a frio o toque chega antes de existir Dart para ouvir**: a
+  /// activity nasce por causa dele, e o canal só ganha handler dentro do
+  /// `init()`. Um `invokeMethod` empurrado pelo nativo naquele intervalo cai
+  /// num canal sem ouvinte. Por isso quem chega depois é quem pergunta.
+  @visibleForTesting
+  Future<void> puxaAcaoGuardada() async {
+    if (kIsWeb) return;
+    try {
+      recebeAcaoDaBarra(
+        await canalDaBarra.invokeMethod<String>('acaoPendente'),
+      );
+    } on MissingPluginException {
+      // Web, desktop, teste: nada guardado.
+    } on PlatformException {
+      // Idem.
+    }
+  }
+
+  /// Roteia uma ação vinda da barra, de onde quer que ela tenha vindo.
+  ///
+  /// Três caminhos chegam aqui e é o mesmo destino nos três: o plugin com o
+  /// app vivo, o plugin no arranque a frio (`getNotificationAppLaunchDetails`)
+  /// e o botão da notificação do serviço em primeiro plano, que passa pelo
+  /// `MainActivity`.
+  /// Ação desconhecida — [acaoVoltar] inclusive — não decide nada: só as
+  /// duas que têm dono aqui saem daqui como decisão. Voltar ao app é voltar
+  /// ao app; se ele abandonasse a sessão de passagem, seria uma armadilha.
+  @visibleForTesting
+  void recebeAcaoDaBarra(String? acaoId) {
+    if (acaoId == null) return;
+    _acaoPendente = acaoId;
+    _escoaPendente();
+  }
 
   Future<void> init() async {
     if (kIsWeb || _ready) return;
@@ -68,12 +211,37 @@ class BaruNotifications {
     );
     await _plugin.initialize(
       settings: const InitializationSettings(android: android, iOS: ios),
-      onDidReceiveNotificationResponse: (resposta) {
-        if (resposta.actionId == acaoDesistir) {
-          aoDesistirPelaBarra?.call();
-        }
-      },
+      onDidReceiveNotificationResponse: (resposta) =>
+          recebeAcaoDaBarra(resposta.actionId),
     );
+
+    // O botão da notificação do serviço em primeiro plano não passa pelo
+    // plugin: ele abre a `MainActivity`, que devolve a ação por aqui.
+    canalDaBarra.setMethodCallHandler((chamada) async {
+      if (chamada.method == 'acaoDaBarra') {
+        recebeAcaoDaBarra(chamada.arguments as String?);
+      }
+      return null;
+    });
+
+    await puxaAcaoGuardada();
+
+    // **O caso que estava furado: o app aberto pela própria notificação.**
+    //
+    // Com o app morto, `onDidReceiveNotificationResponse` não é chamado —
+    // o plugin guarda a resposta no intent de arranque e ela só sai por
+    // `getNotificationAppLaunchDetails`. Sem esta consulta, tocar
+    // "Desistir" com o app fechado apagava a notificação e não abandonava
+    // sessão nenhuma; na volta o relógio concluía a sessão e **pagava** a
+    // recompensa de quem tinha desistido.
+    try {
+      final arranque = await _plugin.getNotificationAppLaunchDetails();
+      if (arranque?.didNotificationLaunchApp ?? false) {
+        recebeAcaoDaBarra(arranque?.notificationResponse?.actionId);
+      }
+    } catch (_) {
+      // Plataforma sem o plugin: nada a recuperar.
+    }
 
     if (defaultTargetPlatform == TargetPlatform.android) {
       final android = _plugin.resolvePlatformSpecificImplementation<
@@ -124,6 +292,20 @@ class BaruNotifications {
     return result.isGranted || result.isLimited;
   }
 
+  /// Qual missão está com a contagem da barra neste instante.
+  ///
+  /// Uma só, porque o id é um só. Guardado para que o descanso não roube a
+  /// vez da sessão de foco — ver [mostraDescanso].
+  @visibleForTesting
+  String? get contagemAtual => _contagemAtual;
+  String? _contagemAtual;
+
+  /// A marca da sessão de foco na disputa pela barra.
+  static const contagemDeFoco = 'foco';
+
+  /// A marca da missão do descanso.
+  static const contagemDeDescanso = 'descanso';
+
   /// Coloca a sessão na barra de notificações, com contagem regressiva viva.
   ///
   /// A contagem é desenhada pelo **próprio Android**, a partir de
@@ -138,15 +320,123 @@ class BaruNotifications {
     if (kIsWeb || !_ready) return;
     if (!await hasPermission()) return;
 
+    _contagemAtual = contagemDeFoco;
+    final rotuloVoltar = rotuloDeVolta?.call() ?? '';
+    final detalhes = detalhesDaSessao(
+      terminaEm: terminaEm,
+      rotuloDesistir: rotuloDesistir,
+      rotuloVoltar: rotuloVoltar,
+    );
+    // O nativo primeiro: se o vigia já estiver de pé, ele redesenha a
+    // notificação com a contagem no mesmo instante, e não sobra janela em
+    // que a barra mostre o texto parado do serviço.
+    await _publicaNoNativo(
+      terminaEm: terminaEm,
+      titulo: titulo,
+      corpo: corpo,
+      rotuloDesistir: rotuloDesistir,
+      idDesistir: acaoDesistir,
+      rotuloVoltar: rotuloVoltar,
+    );
     await _plugin.show(
       id: sessaoId,
       title: titulo,
       body: corpo,
-      notificationDetails: detalhesDaSessao(
-        terminaEm: terminaEm,
-        rotuloDesistir: rotuloDesistir,
-      ),
+      notificationDetails: detalhes,
     );
+  }
+
+  /// Põe a missão do descanso na barra, com a mesma presença da sessão.
+  ///
+  /// **Por que ela precisa disto.** O descanso é a missão principal do dia e
+  /// pede exatamente o contrário de olhar o app: quarenta minutos longe do
+  /// telefone. Sem notificação ela sumia da vista no segundo em que começava
+  /// a valer — a única missão do produto invisível justamente enquanto corre.
+  ///
+  /// **O foco tem precedência.** Se uma sessão de foco já está com a barra,
+  /// o descanso não a toma: são contagens diferentes com um id só, e a que
+  /// tem prazo duro e recompensa é a do foco. Trocar seria mostrar o número
+  /// errado para quem está olhando de relance.
+  Future<void> mostraDescanso({
+    required DateTime terminaEm,
+    required String titulo,
+    required String corpo,
+    required String rotuloEncerrar,
+  }) async {
+    if (kIsWeb || !_ready) return;
+    if (_contagemAtual == contagemDeFoco) return;
+    if (!await hasPermission()) return;
+
+    _contagemAtual = contagemDeDescanso;
+    final rotuloVoltar = rotuloDeVolta?.call() ?? '';
+    final detalhes = detalhesDaContagem(
+      terminaEm: terminaEm,
+      idDesistir: acaoEncerraDescanso,
+      rotuloDesistir: rotuloEncerrar,
+      rotuloVoltar: rotuloVoltar,
+    );
+    await _publicaNoNativo(
+      terminaEm: terminaEm,
+      titulo: titulo,
+      corpo: corpo,
+      rotuloDesistir: rotuloEncerrar,
+      idDesistir: acaoEncerraDescanso,
+      rotuloVoltar: rotuloVoltar,
+    );
+    await _plugin.show(
+      id: sessaoId,
+      title: titulo,
+      body: corpo,
+      notificationDetails: detalhes,
+    );
+  }
+
+  /// Tira o descanso da barra.
+  ///
+  /// Não mexe na barra se quem está nela é a sessão de foco: encerrar uma
+  /// missão não pode apagar a contagem da outra.
+  ///
+  /// [focoEmCurso] existe porque [contagemAtual] **não sobrevive à morte do
+  /// processo**, e a notificação sobrevive. App morto no meio de uma sessão
+  /// e reaberto: a barra ainda tem o cronômetro do foco, e a memória de quem
+  /// a escreveu não tem mais. Sem esta pergunta a quem sabe — o estado do
+  /// app —, a primeira ida ao segundo plano apagaria o cronômetro de uma
+  /// sessão viva, que é exatamente o defeito que este trabalho existe para
+  /// resolver.
+  Future<void> encerraDescanso({bool focoEmCurso = false}) async {
+    if (kIsWeb || !_ready) return;
+    if (focoEmCurso || _contagemAtual == contagemDeFoco) return;
+    _contagemAtual = null;
+    await _publicaNoNativo(terminaEm: null);
+    await _plugin.cancel(id: sessaoId);
+  }
+
+  /// Quando a contagem do descanso deve acabar, projetada de agora.
+  ///
+  /// **O relógio do descanso não é o relógio de parede.** O que conta é
+  /// `decorrido - fuga - tempo no próprio Baru` (ver `leDescanso`), então um
+  /// prazo fixo em `comecouEm + 40 min` mentiria assim que a pessoa pegasse
+  /// o telefone. O que não mente é a projeção: **agora + o que falta**.
+  ///
+  /// Enquanto o telefone está parado — que é a missão inteira — nada é
+  /// subtraído e a projeção é exata. Quando a pessoa volta, o app recalcula
+  /// e republica: é o único instante em que a conta muda, e é o instante em
+  /// que o app está aberto para refazê-la.
+  ///
+  /// Devolve `null` quando não há o que contar — sem tentativa, tentativa já
+  /// completa, rompida ou expirada. Uma contagem que chegou a zero e fica lá
+  /// é pior que contagem nenhuma: ela diz que a missão continua quando ela
+  /// já acabou.
+  ///
+  /// Separado da chamada para o teste conferir a regra sem plataforma: o
+  /// defeito mora nesta conta, não em quem a publica.
+  static DateTime? contagemDoDescanso(
+    LeituraDoDescanso? leitura,
+    DateTime agora,
+  ) {
+    if (leitura == null || !leitura.emAndamento) return null;
+    final falta = leitura.falta;
+    return falta > Duration.zero ? agora.add(falta) : null;
   }
 
   /// Como a sessão aparece na barra.
@@ -159,6 +449,26 @@ class BaruNotifications {
   static NotificationDetails detalhesDaSessao({
     required DateTime terminaEm,
     required String rotuloDesistir,
+    String rotuloVoltar = '',
+  }) =>
+      detalhesDaContagem(
+        terminaEm: terminaEm,
+        idDesistir: acaoDesistir,
+        rotuloDesistir: rotuloDesistir,
+        rotuloVoltar: rotuloVoltar,
+      );
+
+  /// A forma da única contagem viva na barra.
+  ///
+  /// Serve às duas missões porque as duas pedem a mesma coisa do sistema:
+  /// fixa, silenciosa, contando sozinha, legível na tela de bloqueio. O que
+  /// muda entre elas é a palavra — e palavra chega pronta de fora.
+  @visibleForTesting
+  static NotificationDetails detalhesDaContagem({
+    required DateTime terminaEm,
+    required String idDesistir,
+    required String rotuloDesistir,
+    String rotuloVoltar = '',
   }) {
     return NotificationDetails(
       android: AndroidNotificationDetails(
@@ -179,12 +489,43 @@ class BaruNotifications {
         // andando com o app morto.
         usesChronometer: true,
         chronometerCountDown: true,
+        // **A tela de bloqueio.** O padrão do Android é `private`: num
+        // aparelho com bloqueio seguro a notificação aparece, mas o conteúdo
+        // vira "conteúdo oculto" — e a contagem, que é o conteúdo, some. Não
+        // há segredo aqui: quanto falta da própria pausa é o que a pessoa
+        // precisa ver sem desbloquear nada.
+        visibility: NotificationVisibility.public,
+        // `stopwatch` é o que isto é. A categoria alimenta a ordenação e o
+        // filtro de "não perturbe"; mentir aqui (`alarm`, `call`) compraria
+        // destaque com um nome falso — o Android não dá destaque de graça,
+        // dá em troca de uma promessa que o app teria de cumprir.
+        category: AndroidNotificationCategory.stopwatch,
         actions: [
           AndroidNotificationAction(
-            acaoDesistir,
+            idDesistir,
             rotuloDesistir,
             cancelNotification: true,
+            // **A correção do botão que não fazia nada.** Sem isto o plugin
+            // manda o toque para um `BroadcastReceiver` que tenta acordar um
+            // isolate de segundo plano registrado em
+            // `onDidReceiveBackgroundNotificationResponse` — que o app nunca
+            // registrou. O botão cancelava a notificação e o app não ficava
+            // sabendo: a sessão seguia correndo e, na volta, o relógio
+            // **pagava** a recompensa de quem tinha desistido. Com
+            // `showsUserInterface` o toque abre o app, e aí a decisão
+            // acontece de verdade — o que é o certo de qualquer forma,
+            // porque desistir leva à tela de resultado.
+            showsUserInterface: true,
           ),
+          if (rotuloVoltar.isNotEmpty)
+            AndroidNotificationAction(
+              acaoVoltar,
+              rotuloVoltar,
+              showsUserInterface: true,
+              // Voltar não é encerrar: a contagem continua exatamente onde
+              // estava.
+              cancelNotification: false,
+            ),
         ],
       ),
       iOS: const DarwinNotificationDetails(
@@ -192,6 +533,45 @@ class BaruNotifications {
         presentBanner: false,
       ),
     );
+  }
+
+  /// Manda a contagem para o lado nativo desenhar a mesma notificação.
+  ///
+  /// **Por que existe.** O `VigiaDaSessao` é um serviço em primeiro plano e
+  /// o Android **obriga** um serviço desses a ter notificação própria — não
+  /// dá para ele simplesmente usar a do plugin. O que dá é postar no mesmo
+  /// id, com o mesmo conteúdo: aí as duas escritas viram uma notificação só.
+  /// Sem isto eram duas, e a que o Android garante manter era justamente a
+  /// que **não** contava.
+  ///
+  /// Nenhuma palavra nasce do outro lado: rótulo, título e corpo vão daqui,
+  /// já traduzidos. `terminaEm` nulo significa "não há contagem".
+  Future<void> _publicaNoNativo({
+    required DateTime? terminaEm,
+    String titulo = '',
+    String corpo = '',
+    String rotuloDesistir = '',
+    String idDesistir = acaoDesistir,
+    String rotuloVoltar = '',
+  }) async {
+    if (kIsWeb) return;
+    try {
+      await canalDaBarra.invokeMethod<void>('contagem', {
+        'id': sessaoId,
+        'canal': canalSessao,
+        'terminaEm': terminaEm?.millisecondsSinceEpoch ?? 0,
+        'titulo': titulo,
+        'corpo': corpo,
+        'rotuloDesistir': rotuloDesistir,
+        'idDesistir': idDesistir,
+        'rotuloVoltar': rotuloVoltar,
+        'idVoltar': acaoVoltar,
+      });
+    } on MissingPluginException {
+      // Web, desktop, teste: a notificação do plugin já basta.
+    } on PlatformException {
+      // Nada aqui pode derrubar a sessão da pessoa.
+    }
   }
 
   /// A sessão só é anunciada se ainda houver tempo.
@@ -250,8 +630,15 @@ class BaruNotifications {
   /// Tira a sessão da barra e cancela o aviso de fim.
   ///
   /// Chamado ao concluir e ao desistir: agendamento sem motivo tem de sumir.
+  ///
+  /// Limpa também a contagem guardada do lado nativo. Sem isso, o serviço
+  /// levantado pela **próxima** sessão desenharia o prazo da anterior no
+  /// intervalo entre subir e receber o novo — uma contagem já vencida, que é
+  /// o defeito mais fácil de acreditar que é "o timer travou".
   Future<void> encerraSessao() async {
     if (kIsWeb || !_ready) return;
+    _contagemAtual = null;
+    await _publicaNoNativo(terminaEm: null);
     await _plugin.cancel(id: sessaoId);
     await _plugin.cancel(id: sessaoFimId);
   }

@@ -348,6 +348,11 @@ class OnboardingScreen extends StatelessWidget {
           onPick: app.pickSpecies,
           label: app.t.revealTrocar,
           speciesLabel: (s) => app.t.animalName(s.name),
+          // No onboarding as quatro de origem estão abertas; as cinco da
+          // trilha aparecem travadas, dizendo onde abrem. Escondê-las tiraria
+          // o motivo de subir antes mesmo de a pessoa começar.
+          liberadas: app.especiesEscolhiveis,
+          rotuloDeTravada: (s) => app.t.animalName(s.name),
         ),
       ],
     );

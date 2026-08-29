@@ -119,16 +119,6 @@ const metaPasso = 15;
 /// o nome dela.
 enum Sexo { naoDito, macho, femea }
 
-const weekPattern = [
-  WeekDayKind.present,
-  WeekDayKind.present,
-  WeekDayKind.frozen,
-  WeekDayKind.present,
-  WeekDayKind.present,
-  WeekDayKind.today,
-  WeekDayKind.empty,
-];
-
 /// Segunda = 0 … domingo = 6, igual ao `days` do design.
 int weekdayIndex([DateTime? now]) => (now ?? DateTime.now()).weekday - 1;
 
@@ -549,38 +539,6 @@ ShopItemDef? itemPorId(String id) {
   }
   return null;
 }
-
-/// Atalhos do painel de depuração. "Cheio" quer dizer **tudo**: uma pré-visão
-/// que mostra oito de vinte e dois itens não serve para julgar se a cena
-/// aguenta o catálogo.
-const habitats = {
-  'empty': <String>[],
-  'half': ['lily', 'dock', 'rock'],
-  'full': [
-    'lily',
-    'bamboo',
-    'rock',
-    'dock',
-    'lantern',
-    'tree',
-    'boat',
-    'bridge',
-    'juncos',
-    'cogumelos',
-    'samambaia',
-    'folhas_de_outono',
-    'pedras_do_riacho',
-    'cardume',
-    'nuvens',
-    'tronco_caido',
-    'casa_de_passaro',
-    'vagalumes',
-    'neve',
-    'varal_de_luzes',
-    'fogueira',
-    'cerejeira',
-  ],
-};
 
 /// Pesos do quiz (3 perguntas × 4 opções), iguais ao design.
 const quizWeights = [

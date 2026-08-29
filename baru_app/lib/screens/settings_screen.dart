@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../data/progressao.dart';
+import '../l10n_trilha.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -320,21 +322,36 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _abreEspecie(BuildContext context, AppState app) {
+    // A frase "Abre no passo N" mora no catálogo da trilha; sem registrar,
+    // `s()` devolveria a própria chave na tela.
+    garanteTextosDaTrilha();
     final t = app.t;
     _folha(
       context,
       t.revealKicker,
       (fechar) => Column(
         children: [
+          // Travada mostra o passo que a abre. Sumir com ela esconderia
+          // metade do elenco e o motivo de subir a trilha; deixá-la
+          // tocável sem efeito faria a pessoa achar que o app quebrou.
           for (final e in Species.values)
-            _Opcao(
-              rotulo: t.animalName(e.name),
-              marcada: app.species == e,
-              aoTocar: () {
-                app.pickSpecies(e);
-                fechar();
-              },
-            ),
+            if (app.especiesEscolhiveis.contains(e))
+              _Opcao(
+                rotulo: t.animalName(e.name),
+                marcada: app.species == e,
+                aoTocar: () {
+                  app.pickSpecies(e);
+                  fechar();
+                },
+              )
+            else
+              _OpcaoTravada(
+                rotulo: t.animalName(e.name),
+                detalhe: t.fill(
+                  t.s('trilhaAbreNoPasso'),
+                  {'n': ProgressoDaTrilha.passoQueAbre(e) ?? 0},
+                ),
+              ),
         ],
       ),
     );
@@ -735,6 +752,53 @@ class _Passo extends StatelessWidget {
             icone,
             size: 22,
             color: ativo ? Cores.primariaEscura : Cores.tintaA(0.25),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Uma espécie que a trilha ainda não abriu.
+///
+/// Aparece de propósito, e com o passo que a destrava: esconder o que falta
+/// tira o motivo de subir, e deixá-la tocável sem efeito faz a pessoa achar
+/// que o app quebrou.
+class _OpcaoTravada extends StatelessWidget {
+  const _OpcaoTravada({required this.rotulo, required this.detalhe});
+
+  final String rotulo;
+  final String detalhe;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      enabled: false,
+      label: '$rotulo. $detalhe',
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: Toque.minimo),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: Espaco.xs),
+          child: Row(
+            children: [
+              Icon(
+                Icons.lock_outline_rounded,
+                size: 18,
+                color: Cores.tintaA(0.35),
+              ),
+              const SizedBox(width: Espaco.sm),
+              Expanded(
+                child: Text(
+                  rotulo,
+                  style: estilo(Tipo.corpo, color: Cores.tintaA(0.45)),
+                ),
+              ),
+              Text(
+                detalhe,
+                style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.4)),
+              ),
+            ],
           ),
         ),
       ),

@@ -20,7 +20,7 @@ import 'package:uuid/uuid.dart';
 /// primeiro usuário sincronizar.
 ///
 /// Este arquivo sobe um usuário de verdade pelo endpoint de auth, escreve as
-/// 13 tabelas com o token dele (o que também exercita RLS como usuário comum)
+/// 14 tabelas com o token dele (o que também exercita RLS como usuário comum)
 /// e reconstrói o snapshot pela leitura.
 ///
 /// Precisa do stack local:
@@ -99,6 +99,11 @@ Future<void> _grava(
 /// de sessão colidiriam — o upsert do segundo bate na policy de UPDATE do
 /// primeiro e volta 403. Com uuid v4 isso não acontece na prática; o teste
 /// reproduzia o cenário por usar ids fixos entre casos.
+DateTime _hoje() {
+  final n = DateTime.now();
+  return DateTime(n.year, n.month, n.day);
+}
+
 AppSnapshot _snapshotRico() {
   final s = AppState()
     ..startCompanionship()
@@ -126,8 +131,27 @@ AppSnapshot _snapshotRico() {
     ..q2 = 'Una rutina'
     ..onb = 5
     ..go(AppScreen.home)
+    ..som = false
+    ..sexo = Sexo.femea
+    ..eveningHour = 22
+    ..eveningMinute = 30
+    ..respostasDoQuiz = {'q_agua': 'a_rio', 'q_hora': 'a_tarde'}
+    ..equipados = {'lily', 'rock'}
+    ..sessoesConcluidas = 31
+    ..melhorSequencia = 12
+    ..diasAbaixoDaMeta = 18
+    ..diasAbaixoNaSemana = 2
+    ..missoesResgatadas = {'um_foco@2026-08-26'}
+    ..marcosResgatados = {'primeiro_foco'}
+    ..xp = 420
+    ..nivelCelebrado = 4
+    ..afeto = 63
+    ..carinhosHoje = 3
     ..trialStartedAt = DateTime.utc(2026, 8, 20, 12)
-    ..lastOpenDate = DateTime(2026, 8, 26)
+    // Hoje, e não uma data fixa: `dias_abaixo_na_semana` volta carimbado com
+    // a segunda-feira da semana de `lastOpenDate`, e um carimbo de semana
+    // vencida vale zero de propósito.
+    ..lastOpenDate = _hoje()
     ..todayIndex = 2
     ..week = [
       WeekDayKind.present,
@@ -211,14 +235,19 @@ void main() {
         token: token);
     await _grava('baru_screen_time',
         _codec.screenTimeRow(userId: uid, s: original), token: token);
+    // `baru_progression` faltava aqui: a tabela que guarda XP, vínculo,
+    // totais da trilha e missões resgatadas nunca tinha sido exercida contra
+    // schema de verdade.
+    await _grava('baru_progression',
+        _codec.progressionRow(userId: uid, s: original), token: token);
     await _grava('baru_streaks', _codec.streakRow(userId: uid, s: original),
         token: token);
     await _grava('baru_week_calendar', _codec.weekRows(userId: uid, s: original),
         token: token);
     await _grava('baru_daily_progress',
         _codec.dailyProgressRow(userId: uid, s: original), token: token);
-    await _grava('baru_daily_quests',
-        _codec.dailyQuestRows(userId: uid, s: original), token: token);
+    // `baru_daily_quests` não entra: o app parou de gravar nela (migration
+    // 16). Escrever aqui provaria um contrato que o produto não tem mais.
     await _grava('baru_subscriptions',
         _codec.subscriptionRow(userId: uid, s: original), token: token);
     await _grava(
@@ -249,8 +278,13 @@ void main() {
       streak: await um('baru_streaks'),
       daily: await um('baru_daily_progress'),
       subscription: await um('baru_subscriptions'),
+      progresso: await um('baru_progression'),
+      // `equipped` junto com `item_id`: sem a coluna na leitura, o codec não
+      // tem opinião do remoto sobre o que está em uso e o round-trip do
+      // "em uso" não seria exercido por ninguém.
       inventory: await _lista(
-        '/rest/v1/baru_inventory_items?user_id=eq.$uid&select=item_id&order=acquired_at',
+        '/rest/v1/baru_inventory_items?user_id=eq.$uid'
+        '&select=item_id,equipped&order=acquired_at',
         token: token,
       ),
       week: await _lista(
@@ -270,7 +304,7 @@ void main() {
     );
   }
 
-  test('o snapshot sobrevive à ida e volta pelas 13 tabelas', () async {
+  test('o snapshot sobrevive à ida e volta pelas 14 tabelas', () async {
     await escreveTudo();
     final volta = await lerTudo();
 
@@ -291,7 +325,23 @@ void main() {
     expect(volta.avg, original.avg);
     expect(volta.evening, original.evening);
     expect(volta.missed, original.missed);
+    expect(volta.som, original.som);
+    expect(volta.sexo, original.sexo);
+    expect(volta.eveningHour, original.eveningHour);
+    expect(volta.eveningMinute, original.eveningMinute);
+    expect(volta.respostasDoQuiz, original.respostasDoQuiz);
     expect(volta.usageAccess, original.usageAccess);
+    expect(volta.equipados, original.equipados);
+    expect(volta.xp, original.xp);
+    expect(volta.afeto, original.afeto);
+    expect(volta.carinhosHoje, original.carinhosHoje);
+    expect(volta.nivelCelebrado, original.nivelCelebrado);
+    expect(volta.sessoesConcluidas, original.sessoesConcluidas);
+    expect(volta.melhorSequencia, original.melhorSequencia);
+    expect(volta.diasAbaixoDaMeta, original.diasAbaixoDaMeta);
+    expect(volta.diasAbaixoNaSemana, original.diasAbaixoNaSemana);
+    expect(volta.marcosResgatados, original.marcosResgatados);
+    expect(volta.missoesResgatadas, original.missoesResgatadas);
     expect(volta.streak, original.streak);
     expect(volta.todayIndex, original.todayIndex);
     expect(volta.freezesLeft, original.freezesLeft);

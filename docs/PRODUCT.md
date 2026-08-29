@@ -27,7 +27,7 @@ Travado por teste: `test/l10n_test.dart` (paridade de chaves entre catálogos).
 
 | Humor | Condição |
 |---|---|
-| `missing_you` | abandonou sessão hoje **ou** ≥2 dias sem abrir |
+| `missing_you` | desistência **em aberto** hoje **ou** ≥2 dias sem abrir |
 | `radiant` | uso < meta **e** ≥1 sessão completa hoje |
 | `content` | uso < meta **ou** ≥1 sessão completa |
 | `neutral` | uso ≤ meta × 1,2 |
@@ -43,6 +43,13 @@ isso muda a faixa real de duas linhas:
   casa com "≥1 sessão" antes dele. Doze horas de tela com uma sessão de 25
   min dão `content`. A regra é intencional — o produto não pune quem
   apareceu —, mas a **legenda** precisa dizer o fato, e não "um dia decente".
+
+**Desistência em aberto** quer dizer: parou uma sessão no meio hoje e **a
+última sessão do dia continua sendo essa**. Concluir uma sessão depois devolve
+o bicho ao humor que os fatos mandam; parar de novo depois de concluir o
+entristece de novo. A desistência continua registrada no dia (relatório,
+missões, `baru_daily_progress.abandoned_today`) — o que sarou foi o humor, não
+o fato. Ver ADR-020.
 
 
 Sem permissão de uso concedida, o humor deriva só das sessões de foco

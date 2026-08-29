@@ -4,6 +4,100 @@ Cada item traz a ação exata. Tudo o que dependia do agente já está pronto.
 
 ---
 
+## BL-16 — Migrations 14, 15 e 16: preparadas, **não aplicadas**
+
+**O que corrigem.** Seis campos do `AppSnapshot` que não chegavam ao banco.
+Quatro deles não viraram coluna — viraram conta sobre `baru_sessions`, que já
+sobe inteira (ver ADR-019). Sobraram dois defeitos de schema:
+
+| Arquivo | Coluna | Defeito que fecha |
+|---|---|---|
+| `20260828100000_baru_settings_som.sql` | `baru_settings.som` | quem desligava o som via ele voltar ligado ao reinstalar o app ou entrar no segundo aparelho |
+| `20260828100001_baru_progression_semana.sql` | `baru_progression.dias_abaixo_na_semana`, `.semana_de` | o progresso da missão semanal "três dias abaixo da meta" zerava ao trocar de aparelho; é o único dos cinco contadores que não é derivável de sessão nenhuma |
+| `20260828100002_baru_daily_quests_sem_escritor.sql` | (nenhuma) | só um `comment on table`: registra que `baru_daily_quests` deixou de ter escritor e **por que não foi derrubada** |
+
+**As três são aditivas e idempotentes.** `add column if not exists` com
+default, `check` criado dentro de `do $$ ... $$` que confere `pg_constraint`
+antes, e a terceira não muda schema nenhum. Nenhuma apaga, renomeia ou
+reescreve linha. Podem ser reaplicadas sem erro.
+
+**O app já funciona sem elas.** O push degrada por coluna
+(`BaruSupabase.colunasOpcionais` + `_upsertTolerante`): a coluna recusada sai
+do corpo e a linha sobe sem ela, em vez de o domínio inteiro falhar. Na
+leitura, coluna ausente cai no padrão do app — som ligado, contador da semana
+zero. O que não acontece até rodarem é o dado chegar ao **segundo aparelho**.
+
+**Ação pedida.**
+
+```
+cd baru_app
+supabase db push
+```
+
+Ou colar no SQL Editor, nesta ordem:
+
+```sql
+-- 14/14 — a preferência de som
+alter table public.baru_settings
+  add column if not exists som boolean not null default true;
+
+comment on column public.baru_settings.som is
+  'Som do app ligado. Padrao ligado: e o estado de quem nunca mexeu.';
+
+-- 15/15 — os dias abaixo da meta desta semana, com a semana junto
+alter table public.baru_progression
+  add column if not exists dias_abaixo_na_semana integer not null default 0,
+  add column if not exists semana_de date;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'baru_progression_semana_ck'
+  ) then
+    alter table public.baru_progression
+      add constraint baru_progression_semana_ck
+      check (
+        dias_abaixo_na_semana >= 0
+        and dias_abaixo_na_semana <= 7
+        and (semana_de is null or extract(isodow from semana_de) = 1)
+      );
+  end if;
+end $$;
+
+comment on column public.baru_progression.dias_abaixo_na_semana is
+  'Dias fechados abaixo da meta na semana de `semana_de`. Zera na segunda.';
+
+comment on column public.baru_progression.semana_de is
+  'Segunda-feira da semana a que `dias_abaixo_na_semana` pertence.';
+
+-- 16/16 — baru_daily_quests fica, sem escritor
+comment on table public.baru_daily_quests is
+  'Historico das duas quests do desenho antigo (focus_session, under_goal). '
+  'Sem escritor desde 2026-08-28: os dois valores sao derivados de '
+  'baru_daily_progress e baru_screen_time, e o registro de missao vive em '
+  'baru_progression.missoes_resgatadas. Mantida pelos dados que ja tem.';
+```
+
+**Depende de BL-12.** A 15 acrescenta colunas a `baru_progression`, que só
+existe se a migration 8 já tiver rodado, e as colunas da migration 10 são
+irmãs destas. Rodar 14 e 16 é independente.
+
+**Não conferido contra banco de verdade.** Não há token do Supabase neste
+ambiente e nenhum stack local foi subido neste turno. A prova que existe é
+`test/ida_e_volta_test.dart`, que confere as colunas que o codec escreve
+contra o que as migrations criam — lendo os arquivos `.sql`, não o banco.
+Depois de aplicar, o round-trip contra Postgres de verdade é:
+
+```
+supabase start
+flutter test test/integration \
+  --dart-define=BARU_TEST_URL=http://127.0.0.1:54321 \
+  --dart-define=BARU_TEST_KEY=<publishable key do supabase start>
+```
+
+---
+
 ## BL-12 — Faltam as migrations 10 e 11 no remoto
 
 **Situação.** As migrations 7, 8 e 9 já foram aplicadas (sonda REST em
@@ -405,3 +499,68 @@ await VigiaService.instance.comeca(
 
 Sem esse argumento o parâmetro fica no padrão vazio e o vigia manda a fala
 única de sempre — nada regride, mas S-03 fica desligado.
+
+## BL-16 — A contagem na barra: o que só o aparelho responde
+
+**O que foi feito.** As duas notificações que disputavam a sessão viraram
+uma. Antes: a do plugin (id 1004, canal `baru_sessao`, com cronômetro) e a do
+`VigiaDaSessao` (id 4711, canal `baru_vigia`, sem cronômetro) coexistiam —
+ids diferentes não se sobrescrevem, então a barra mostrava duas linhas iguais
+e só uma contava. E a que o Android garante manter era a parada. Ver ADR-023.
+
+Agora os dois lados escrevem no mesmo id, no mesmo canal, com o mesmo
+cronômetro regressivo; a notificação sai com `VISIBILITY_PUBLIC` e
+`CATEGORY_STOPWATCH`; "Desistir" e "Voltar ao Baru" abrem o app e a ação
+chega ao Dart mesmo com o app morto; e a **missão do descanso** ganhou a
+mesma barra, com prazo projetado (`agora + o que falta`, porque o relógio do
+descanso desconta a fuga e o tempo dentro do próprio Baru).
+
+**O que os testes cobrem** (`test/uma_contagem_test.dart`, 40 casos, 22
+mutações conferidas, 2 sobreviventes anotadas abaixo): que o id e o canal do Kotlin são os do Dart e que não
+sobrou um segundo `startForeground`; que a notificação do serviço carrega
+`setUsesChronometer` + `setChronometerCountDown` + `setWhen(terminaEm)`; que
+prazo vencido não vira cronômetro; que desligar o vigia não apaga a contagem
+de uma sessão viva; que só uma missão fica com a barra por vez e o foco tem
+precedência; que a projeção do descanso reage à fuga e ao tempo no app; que
+"Desistir" vai pelo caminho que chega ao app; e que um toque que chega antes
+de o app existir é entregue uma vez, e só uma.
+
+**O que só o aparelho responde:**
+
+1. **Só existe uma notificação durante a sessão.** É a prova principal. Se
+   aparecerem duas, o id ou o canal divergiram.
+2. **A contagem anda com o app fechado** — e continua andando depois de o app
+   ser morto pelo gerenciador de tarefas. Quem desenha é o system UI, a
+   partir do timestamp; nada disso roda em `flutter test`.
+3. **Na tela de bloqueio** a contagem aparece com o conteúdo à mostra, e não
+   como "conteúdo oculto". Depende também do ajuste do sistema
+   (Ajustes › Notificações › Notificações na tela de bloqueio), que **nenhum
+   app pode forçar** — se estiver em "não mostrar", não há código que resolva.
+4. **"Desistir" com o app fechado** abre o app **e** abandona a sessão: sem
+   recompensa, tela de resultado, notificação fora da barra. Este era o
+   defeito mais caro — antes o botão sumia com a notificação e o relógio
+   pagava a recompensa de quem tinha desistido.
+5. **"Voltar ao Baru"** traz o app à frente e a contagem **continua** na
+   barra.
+6. **A missão do descanso** aparece na barra ao começar, some ao completar ou
+   ao romper, e o número reflete a fuga: sair 2 min para outro app tem de
+   empurrar o prazo em 2 min quando você volta.
+7. **Foco e descanso ao mesmo tempo.** Nada no app impede começar um descanso
+   durante uma sessão de foco. A barra tem de continuar mostrando o **foco**,
+   e encerrar o descanso não pode apagá-la.
+8. **Idioma.** Trocar o idioma nos ajustes e começar uma sessão: os botões da
+   notificação saem no idioma novo. O **nome do canal** nas configurações do
+   sistema não muda até reabrir o app — `init()` roda uma vez por processo.
+
+**As duas mutações que sobrevivem, e por quê.** Trocar o texto em inglês
+pelo texto em português passa nos testes — paridade de chaves e "não está
+vazio" é o que dá para automatizar; **qualidade de tradução não é**. E o
+`app.dart` publica a barra do descanso na troca de primeiro plano, então uma
+tentativa que começa e termina sem o app nunca ir ao segundo plano não chega
+a aparecer na barra — é o caso em que a notificação não teria utilidade
+nenhuma, e por isso não foi tratado.
+
+**Uma linha que não é minha para escrever.** A precedência do foco sobre o
+descanso é garantida por `BaruNotifications`, mas nada em `AppState` impede
+as duas missões correrem juntas. Se o produto quiser proibir, o lugar é
+`AppState.comecaODescanso`, em `lib/state.dart`.

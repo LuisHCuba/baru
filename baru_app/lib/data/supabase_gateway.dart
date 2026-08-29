@@ -49,13 +49,30 @@ class ColunaAusenteNoRemoto implements Exception {
 
   final String coluna;
 
+  /// O nome vem em quatro gramáticas, e as quatro acontecem.
+  ///
+  /// O PostgREST usa aspas simples; o Postgres usa aspas duplas no `insert` e
+  /// **nenhuma aspa** no `select`. Só a primeira estava reconhecida, então
+  /// toda coluna recusada numa leitura virava "desconhecida" — e quem degrada
+  /// decide pelo nome se a coluna era mesmo opcional. Sem o nome, ou se
+  /// degradava por qualquer erro, ou não se degradava nunca.
+  static final _gramaticas = <RegExp>[
+    RegExp(r"Could not find the '([a-z0-9_]+)' column"),
+    RegExp(r'column "([a-z0-9_]+)" of relation'),
+    RegExp(r'column (?:[a-z0-9_]+\.)?([a-z0-9_]+) does not exist'),
+    RegExp(r"'([a-z0-9_]+)'"),
+  ];
+
   /// `PGRST204` é o PostgREST sem a coluna no cache de schema; `42703` é o
   /// Postgres dizendo que ela não existe.
   static ColunaAusenteNoRemoto? de(Object erro) {
     if (erro is! PostgrestException) return null;
     if (erro.code != 'PGRST204' && erro.code != '42703') return null;
-    final m = RegExp("'([a-z_]+)'").firstMatch(erro.message);
-    return ColunaAusenteNoRemoto(m?.group(1) ?? 'desconhecida');
+    for (final g in _gramaticas) {
+      final m = g.firstMatch(erro.message);
+      if (m != null) return ColunaAusenteNoRemoto(m.group(1)!);
+    }
+    return const ColunaAusenteNoRemoto('desconhecida');
   }
 
   @override
@@ -170,11 +187,105 @@ class BaruSupabase {
     return resp;
   }
 
+  /// Colunas que o app escreve e um banco atrasado pode não ter.
+  ///
+  /// O repositório anda na frente da migração — é o normal deste projeto, e
+  /// já custou uma vez com `equipped`. Uma coluna nova não pode derrubar a
+  /// linha inteira: o resto dela é dado que o usuário acabou de produzir, e
+  /// sacrificá-lo para insistir num acréscimo troca muito por pouco.
+  ///
+  /// Entra aqui **só** o que veio depois das tabelas base. Coluna que sempre
+  /// existiu fica de fora de propósito: se ela sumir, é defeito de schema e
+  /// tem de estourar em vez de virar dado silenciosamente perdido.
+  static const colunasOpcionais = <String, Set<String>>{
+    // migration 9
+    'baru_pets': {'sexo'},
+    // migration 13
+    'baru_onboarding_answers': {'respostas'},
+    // migrations 9 e 14
+    'baru_settings': {'evening_hour', 'evening_minute', 'som'},
+    // migrations 10 e 15
+    'baru_progression': {
+      'sessoes_concluidas',
+      'melhor_sequencia',
+      'dias_abaixo_da_meta',
+      'missoes_resgatadas',
+      'dias_abaixo_na_semana',
+      'semana_de',
+    },
+    // migration 11
+    'baru_inventory_items': {'equipped'},
+  };
+
+  static const _equipped = 'baru_inventory_items.equipped';
+
+  /// Colunas que este banco recusou nesta sessão, como `tabela.coluna`.
+  ///
+  /// Lembrar evita repetir, a cada gravação, a tentativa que já se sabe que
+  /// falha — e evita a ida e volta que ela custa. Vale para leitura também:
+  /// uma recusa na escrita já ensina o `select` a não pedir a coluna.
+  final Set<String> _colunasSemRemoto = {};
+
+  /// O corpo da gravação sem as colunas que este banco já recusou.
+  ///
+  /// Separado da chamada de rede porque é aqui que mora a promessa: **o resto
+  /// da linha sobe**. Uma coluna recusada tira uma chave do mapa e nada mais.
+  @visibleForTesting
+  static Map<String, dynamic> semAsAusentes(
+    String tabela,
+    Map<String, dynamic> linha,
+    Set<String> ausentes,
+  ) =>
+      {
+        for (final e in linha.entries)
+          if (!ausentes.contains('$tabela.${e.key}')) e.key: e.value,
+      };
+
+  /// Grava uma linha tolerando coluna que este banco ainda não tem.
+  ///
+  /// Tira a coluna recusada e tenta de novo, uma por vez — o PostgREST só
+  /// nomeia uma por resposta. Só degrada pelo que está em [colunasOpcionais],
+  /// e no máximo tantas vezes quantas forem as opcionais daquela tabela:
+  /// erro de verdade continua estourando, e um servidor que reclamasse
+  /// sempre da mesma coluna não viraria laço infinito.
+  Future<void> _upsertTolerante(
+    String tabela,
+    Map<String, dynamic> linha,
+  ) async {
+    final client = _client!;
+    final opcionais = colunasOpcionais[tabela] ?? const <String>{};
+    var restantes = opcionais.length;
+    while (true) {
+      try {
+        await client
+            .from(tabela)
+            .upsert(semAsAusentes(tabela, linha, _colunasSemRemoto));
+        return;
+      } catch (e) {
+        final ausente = ColunaAusenteNoRemoto.de(e);
+        if (ausente == null ||
+            !opcionais.contains(ausente.coluna) ||
+            restantes-- <= 0) {
+          rethrow;
+        }
+        _colunasSemRemoto.add('$tabela.${ausente.coluna}');
+        debugPrint(
+          'Baru: `${ausente.coluna}` não existe em $tabela — a gravação segue '
+          'sem ela até a migração ser aplicada.',
+        );
+      }
+    }
+  }
+
   /// Todas as tabelas que guardam dado do usuário.
   ///
   /// A lista vive aqui, ao lado de quem escreve nelas: uma tabela nova que
   /// entre no `push` e não entre aqui vira dado que o usuário não consegue
   /// apagar.
+  ///
+  /// `baru_daily_quests` continua aqui **mesmo sem escritor**: o app parou de
+  /// gravar nela (ver a migration 16), mas as linhas de quem já usou o app
+  /// continuam lá, e apagar a conta tem de alcançar todas.
   static const tabelasDoUsuario = [
     'baru_sessions',
     'baru_inventory_items',
@@ -288,6 +399,12 @@ class BaruSupabase {
       await pushSettings(snapshot);
       await pushStreak(snapshot);
       await pushSubscription(snapshot);
+      // Faltava aqui. O caminho de produção sobe domínio a domínio e chama
+      // `pushProgression` pelo `_syncProgresso`, então isto não custou dado
+      // a ninguém — mas um método chamado "sobe o snapshot" que deixa XP,
+      // vínculo, marcos e missões resgatadas em terra é uma armadilha para
+      // quem confiar no nome.
+      await pushProgression(snapshot);
       await pushSessions(snapshot.sessions);
       return const RemotePushResult(ok: true);
     } catch (e) {
@@ -300,28 +417,31 @@ class BaruSupabase {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    await client.from('baru_profiles').upsert(
-          _codec.profileRow(userId: uid, deviceId: _deviceId, s: snapshot),
-        );
-    await client.from('baru_onboarding_answers').upsert(
-          _codec.onboardingRow(userId: uid, s: snapshot),
-        );
+    await _upsertTolerante(
+      'baru_profiles',
+      _codec.profileRow(userId: uid, deviceId: _deviceId, s: snapshot),
+    );
+    await _upsertTolerante(
+      'baru_onboarding_answers',
+      _codec.onboardingRow(userId: uid, s: snapshot),
+    );
   }
 
   Future<void> pushPet(AppSnapshot snapshot) async {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    await client.from('baru_pets').upsert(_codec.petRow(userId: uid, s: snapshot));
+    await _upsertTolerante('baru_pets', _codec.petRow(userId: uid, s: snapshot));
   }
 
   Future<void> pushShop(AppSnapshot snapshot) async {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    await client.from('baru_wallets').upsert(
-          _codec.walletRow(userId: uid, s: snapshot),
-        );
+    await _upsertTolerante(
+      'baru_wallets',
+      _codec.walletRow(userId: uid, s: snapshot),
+    );
     // Só ids conhecidos da loja: o banco tem CHECK, mas um snapshot
     // corrompido não deveria chegar a montar filtro com lixo dentro.
     final conhecidos = shopItems.map((i) => i.id).toSet();
@@ -364,7 +484,7 @@ class BaruSupabase {
           ignoreDuplicates: true,
         );
 
-    if (_semColunaEquipped) return;
+    if (_colunasSemRemoto.contains(_equipped)) return;
     try {
       await client.from('baru_inventory_items').upsert([
         for (final r in rows)
@@ -380,7 +500,7 @@ class BaruSupabase {
       // o "em uso" fica guardado no aparelho até a migração ser aplicada.
       final ausente = ColunaAusenteNoRemoto.de(e);
       if (ausente == null) rethrow;
-      _semColunaEquipped = true;
+      _colunasSemRemoto.add(_equipped);
       debugPrint(
         'Baru: sem `equipped` no remoto — o item em uso só fica no aparelho '
         'até a migração 11 ser aplicada.',
@@ -388,20 +508,18 @@ class BaruSupabase {
     }
   }
 
-  /// Lembrado por sessão: sem isto, toda gravação repetiria a tentativa que
-  /// já se sabe que falha.
-  bool _semColunaEquipped = false;
-
   Future<void> pushSettings(AppSnapshot snapshot) async {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    await client.from('baru_settings').upsert(
-          _codec.settingsRow(userId: uid, s: snapshot),
-        );
-    await client.from('baru_screen_time').upsert(
-          _codec.screenTimeRow(userId: uid, s: snapshot),
-        );
+    await _upsertTolerante(
+      'baru_settings',
+      _codec.settingsRow(userId: uid, s: snapshot),
+    );
+    await _upsertTolerante(
+      'baru_screen_time',
+      _codec.screenTimeRow(userId: uid, s: snapshot),
+    );
 
     // Reclassificações de app. Some do remoto o que o usuário desfez.
     final ajustes = snapshot.ajustesDeCategoria;
@@ -422,36 +540,46 @@ class BaruSupabase {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    await client.from('baru_streaks').upsert(
-          _codec.streakRow(userId: uid, s: snapshot),
-        );
+    await _upsertTolerante(
+      'baru_streaks',
+      _codec.streakRow(userId: uid, s: snapshot),
+    );
     await client.from('baru_week_calendar').upsert(
           _codec.weekRows(userId: uid, s: snapshot),
         );
-    await client.from('baru_daily_progress').upsert(
-          _codec.dailyProgressRow(userId: uid, s: snapshot),
-        );
-    await client.from('baru_daily_quests').upsert(
-          _codec.dailyQuestRows(userId: uid, s: snapshot),
-        );
+    await _upsertTolerante(
+      'baru_daily_progress',
+      _codec.dailyProgressRow(userId: uid, s: snapshot),
+    );
+    // `baru_daily_quests` **não** é gravada aqui, e é de propósito.
+    //
+    // Escrevia dois booleanos derivados — "houve foco hoje" e "o dia está
+    // abaixo da meta" — que já estão em `baru_daily_progress` e
+    // `baru_screen_time`, e ninguém no app jamais leu de volta. Custava uma
+    // viagem de rede por fim de sessão para acumular linha que não é lida.
+    // O registro de missão que o app usa é `baru_progression.missoes_
+    // resgatadas`, com o período dentro da chave; o `check` daquela tabela
+    // ainda só aceita duas das 17 missões que existem hoje. Ver migration 16.
   }
 
   Future<void> pushProgression(AppSnapshot snapshot) async {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    await client.from('baru_progression').upsert(
-          _codec.progressionRow(userId: uid, s: snapshot),
-        );
+    await _upsertTolerante(
+      'baru_progression',
+      _codec.progressionRow(userId: uid, s: snapshot),
+    );
   }
 
   Future<void> pushSubscription(AppSnapshot snapshot) async {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    await client.from('baru_subscriptions').upsert(
-          _codec.subscriptionRow(userId: uid, s: snapshot),
-        );
+    await _upsertTolerante(
+      'baru_subscriptions',
+      _codec.subscriptionRow(userId: uid, s: snapshot),
+    );
   }
 
   Future<void> pushSessions(List<SessionRecord> sessions) async {
@@ -513,11 +641,7 @@ class BaruSupabase {
       final progresso = linhas[8];
 
       final listas = await Future.wait([
-        client
-            .from('baru_inventory_items')
-            .select('item_id')
-            .eq('user_id', uid)
-            .order('acquired_at'),
+        _lerInventario(uid),
         client
             .from('baru_week_calendar')
             .select('day_index, kind')
@@ -578,6 +702,44 @@ class BaruSupabase {
         .map((e) => _codec.sessionFromRow(Map<String, dynamic>.from(e)))
         .toList();
     return _codec.fromLegacyProfile(profile, sessions);
+  }
+
+  /// Lê o inventário **com** o `equipped`, e sem ele contra banco atrasado.
+  ///
+  /// A leitura pedia só `item_id`. Com a chave ausente do mapa, o codec caía
+  /// na regra "nulo também vale por em uso" — escrita para linha antiga, não
+  /// para coluna não pedida — e devolvia **todo** item possuído como em uso.
+  /// Como o remoto ganha do local quando vem não-vazio, tirar um item do
+  /// habitat não sobrevivia ao arranque seguinte: `equipped` era escrito e
+  /// nunca lido.
+  ///
+  /// A queda para `item_id` mantém o app funcionando contra um banco sem a
+  /// migration 11 — ali o "em uso" continua só no aparelho, que é o
+  /// comportamento que a escrita já tinha.
+  Future<List<Map<String, dynamic>>> _lerInventario(String uid) async {
+    final client = _client!;
+    Future<List<Map<String, dynamic>>> pede(String colunas) async {
+      final r = await client
+          .from('baru_inventory_items')
+          .select(colunas)
+          .eq('user_id', uid)
+          .order('acquired_at');
+      return _mapas(r);
+    }
+
+    if (_colunasSemRemoto.contains(_equipped)) return pede('item_id');
+    try {
+      return await pede('item_id, equipped');
+    } catch (e) {
+      final ausente = ColunaAusenteNoRemoto.de(e);
+      if (ausente?.coluna != 'equipped') rethrow;
+      _colunasSemRemoto.add(_equipped);
+      debugPrint(
+        'Baru: sem `equipped` no remoto — o inventário volta inteiro, o "em '
+        'uso" fica com o aparelho até a migração 11 ser aplicada.',
+      );
+      return pede('item_id');
+    }
   }
 
   List<Map<String, dynamic>> _mapas(dynamic raw) {

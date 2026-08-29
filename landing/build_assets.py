@@ -96,9 +96,41 @@ def corta_sprites() -> int:
     return total
 
 
+def gera_favicon() -> None:
+    """Favicon a partir da própria capivara, sobre o verde da marca.
+
+    Fundo verde e não creme porque no 16x16 o marrom do bicho some contra
+    um fundo claro — testado ampliando as três variantes."""
+    pet = Image.open(DESTINO / "pet-capybara-content.webp").convert("RGBA")
+    bb = pet.getbbox()
+    # a cabeça vai do topo das orelhas até um pouco abaixo do focinho
+    cabeca = pet.crop((bb[0], bb[1], bb[2], bb[1] + 165))
+    cabeca = cabeca.crop(cabeca.getbbox())
+
+    def icone(lado: int) -> Image.Image:
+        tela = Image.new("RGBA", (lado, lado), (66, 129, 48, 255))
+        escala = (lado * 0.80) / cabeca.width
+        c = cabeca.resize(
+            (max(1, round(cabeca.width * escala)), max(1, round(cabeca.height * escala))),
+            Image.LANCZOS,
+        )
+        tela.paste(c, ((lado - c.width) // 2, (lado - c.height) // 2), c)
+        return tela
+
+    grande = icone(180)
+    grande.convert("RGB").save(DESTINO / "apple-touch-icon.png")
+    # .ico com os três tamanhos que os navegadores pedem
+    icone(48).save(
+        DESTINO / "favicon.ico",
+        sizes=[(16, 16), (32, 32), (48, 48)],
+    )
+    print("favicon.ico (16/32/48) e apple-touch-icon.png 180x180")
+
+
 def main() -> None:
     DESTINO.mkdir(parents=True, exist_ok=True)
     corta_sprites()
+    gera_favicon()
     total = 0
     for nome, largura in IMAGENS.items():
         origem = FONTE / nome

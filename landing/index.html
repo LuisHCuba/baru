@@ -8,6 +8,9 @@
 <meta property="og:title" content="Baru: Focus Capybara">
 <meta property="og:description" content="Larga o celular que ele cresce. Foco sem culpa, com um habitat vivo no seu bolso.">
 <meta property="og:type" content="website">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#428130">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;1000&display=swap">
@@ -111,8 +114,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 }
 
 /* ---------- hero ---------- */
-.hero{overflow:visible}
-.hero-grade{display:grid;gap:clamp(36px,5vw,60px);align-items:center;padding-top:clamp(10px,2vw,28px)}
+.hero{overflow:visible;padding-top:clamp(28px,3vw,40px)}
+.hero-grade{display:grid;gap:clamp(32px,4.5vw,56px);align-items:center}
 .hero h1{margin:20px 0 18px}
 .hero h1 em{font-style:normal;color:var(--verde-texto)}
 .acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
@@ -131,10 +134,10 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
    colina e água (2) · bicho (3) · corações (4) · balão e dica (5).
    Antes as folhas tinham z-index 1 e o balão nenhum: folha passava
    por cima do texto.                                              */
-.palco{position:relative}
+.palco{position:relative;max-width:540px;margin-inline:auto;width:100%}
 .cena{
   position:relative;border-radius:24px;overflow:hidden;isolation:isolate;
-  aspect-ratio:10/8.6;max-height:500px;width:100%;
+  aspect-ratio:10/7.4;width:100%;
   background:linear-gradient(180deg,var(--ceu-a) 0%,var(--ceu-b) 62%);
   border:2px solid var(--borda);
   cursor:pointer;user-select:none;-webkit-user-select:none;
@@ -164,7 +167,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 }
 .cena-bicho{
   position:absolute;z-index:3;left:50%;bottom:15%;
-  width:min(50%,190px);transform:translateX(-50%);transform-origin:50% 100%;
+  width:min(54%,205px);transform:translateX(-50%);transform-origin:50% 100%;
   filter:drop-shadow(0 8px 6px rgba(62,47,35,.16));
   animation:flutua 4.6s ease-in-out infinite;
 }
@@ -176,14 +179,11 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
   60%{transform:translateX(-50%) translateY(-16px) scale(.94,1.08)}
   100%{transform:translateX(-50%) scale(1,1)}
 }
-.cena-balao{
-  position:absolute;z-index:5;left:14px;top:14px;max-width:74%;
-  display:flex;flex-direction:column;gap:2px;
-  background:rgba(255,255,255,.96);border:2px solid var(--borda);
-  border-radius:16px;padding:12px 16px;pointer-events:none;
-}
-.cena-balao b{font:800 16px/1.3 Nunito;color:var(--ink)}
-.cena-balao span{font:600 12.5px/1.45 Nunito;color:var(--texto)}
+/* A legenda de humor fica ABAIXO da cena, como na home do app. Dentro
+   dela, o cartão cobria a cabeça do bicho e atrapalhava o carinho. */
+.humor-legenda{display:flex;flex-direction:column;gap:3px;margin-top:16px;padding:0 2px}
+.humor-legenda b{font:800 19px/1.25 Nunito;color:var(--ink)}
+.humor-legenda span{font:600 14px/1.5 Nunito;color:var(--texto)}
 .cena-dica{
   position:absolute;z-index:5;left:14px;bottom:12px;
   font:800 11px/1 Nunito;letter-spacing:.1em;text-transform:uppercase;
@@ -223,12 +223,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
 .chip{
   display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:10px 4px 8px;border-radius:16px;cursor:pointer;
+  padding:8px 4px 7px;border-radius:14px;cursor:pointer;
   background:var(--branco);border:2px solid var(--borda);
   box-shadow:0 3px 0 var(--borda);
   transition:transform .12s ease,border-color .12s ease,background .12s ease,box-shadow .12s ease;
 }
-.chip img{width:44px;height:42px;object-fit:contain}
+.chip img{width:40px;height:38px;object-fit:contain}
 .chip b{font:800 12.5px/1 Nunito;color:var(--ink)}
 .chip small{font:700 10px/1 Nunito;letter-spacing:.06em;text-transform:uppercase;color:var(--suave)}
 .chip:hover{transform:translateY(-2px)}
@@ -266,17 +266,17 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 .passo:nth-child(3) .passo-n{background:var(--azul);box-shadow:0 3px 0 #43719F}
 .passo p{font:600 15px/1.55 Nunito;color:var(--texto)}
 .passo-tela{
-  margin:14px auto 0;width:min(230px,80%);border-radius:22px 22px 0 0;overflow:hidden;
+  margin:14px auto 0;margin-top:auto;width:min(230px,80%);border-radius:22px 22px 0 0;overflow:hidden;
   border:2px solid var(--borda);border-bottom:0;
 }
 .passo-tela img{aspect-ratio:620/900;object-fit:cover;object-position:top}
 
 /* ---------- dia e noite ---------- */
-.ciclo{position:relative;border-radius:24px;overflow:hidden;border:2px solid var(--borda);margin-top:36px}
+.ciclo{position:relative;border-radius:24px;overflow:hidden;border:2px solid var(--borda)}
 .ciclo img{width:100%;aspect-ratio:744/592;object-fit:cover;transition:opacity .9s ease}
 .ciclo img+img{position:absolute;inset:0}
 .ciclo img[data-ativo="nao"]{opacity:0}
-.ciclo-pontos{display:flex;gap:8px;justify-content:center;margin-top:18px}
+.ciclo-pontos{display:flex;gap:8px;margin-top:26px}
 .ciclo-pontos button{
   border:0;background:var(--borda);width:34px;height:9px;border-radius:99px;cursor:pointer;
   transition:background .2s ease;
@@ -289,7 +289,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 }
 
 /* ---------- jogo limpo ---------- */
-.limpo{display:grid;gap:clamp(30px,4vw,56px);margin-top:40px;align-items:start}
+.limpo{display:grid;gap:clamp(30px,4vw,56px);margin-top:40px;align-items:center}
 .tabela{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 .tabela th,.tabela td{text-align:left;padding:12px 10px 12px 0;border-bottom:2px solid var(--borda);font:600 15px/1.4 Nunito;color:var(--texto)}
 .tabela td b{color:var(--ink)}
@@ -310,16 +310,30 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
   background:var(--branco);border:2px solid var(--borda);box-shadow:0 4px 0 var(--borda);
 }
 .aparelho-tela{border-radius:28px;overflow:hidden;aspect-ratio:620/1342}
+/* recorte no miolo da tela: a captura de "sem permissão" é quase toda vazia,
+   e o aparelho inteiro parecia imagem que não carregou */
+.aparelho--recorte .aparelho-tela{aspect-ratio:620/720}
+.aparelho--recorte .aparelho-tela img{object-position:center 42%}
 .aparelho-tela img{width:100%;height:100% !important;object-fit:cover;object-position:top}
 .aparelho-legenda{margin-top:14px;text-align:center;font:600 13.5px/1.5 Nunito;color:var(--suave)}
 
 /* ---------- teste (a única faixa de cor cheia) ---------- */
 .teste{
   background:var(--verde);border-radius:28px;color:#fff;
-  padding:clamp(34px,6vw,60px) clamp(22px,5vw,60px);
-  display:grid;gap:20px;position:relative;overflow:hidden;
-  box-shadow:0 6px 0 var(--verde-borda);
+  padding:clamp(34px,5vw,54px) clamp(22px,4vw,52px);
+  display:grid;gap:clamp(28px,4vw,52px);position:relative;overflow:hidden;
+  box-shadow:0 6px 0 var(--verde-borda);align-items:center;
 }
+.teste>div{display:grid;gap:18px;align-content:start}
+/* a metade direita do cartão estava vazia; as três promessas que já eram
+   verdade no texto viraram conteúdo e ocupam a coluna */
+.promessas{list-style:none;margin:0;padding:0;display:grid;gap:16px;position:relative}
+.promessas li{
+  display:grid;gap:3px;padding:16px 18px;border-radius:16px;
+  background:rgba(255,255,255,.12);
+}
+.promessas b{font:800 15.5px/1.3 Nunito;color:#fff}
+.promessas span{font:600 13.5px/1.5 Nunito;color:rgba(255,255,255,.92)}
 .teste::after{
   content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;
   border-radius:0 62% 0 62%;background:rgba(255,255,255,.12);transform:rotate(-18deg);
@@ -372,14 +386,20 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 }
 
 /* ---------- telas maiores ---------- */
-@media (min-width:720px){
-  .hero-grade{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+/* Dois níveis, não um. Em 720px o layout caía num penhasco: a cena do
+   hero passava de 660 para 308px e os três passos se espremiam lado a
+   lado. As duas colunas só entram quando há largura para elas. */
+@media (min-width:700px){
   .numeros{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .miudo{grid-template-columns:1fr 1fr;gap:14px 40px}
+}
+@media (min-width:900px){
+  .hero-grade{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
   .humores{grid-template-columns:repeat(4,minmax(0,1fr))}
   .passos{grid-template-columns:repeat(3,minmax(0,1fr))}
   .limpo{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
   .fim-grade{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
-  .miudo{grid-template-columns:1fr 1fr;gap:14px 40px}
+  .teste{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
 }
 </style>
 </head>
@@ -421,15 +441,17 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
         <div class="cena-sol" aria-hidden="true"></div>
         <div class="cena-colina" aria-hidden="true"></div>
         <div class="cena-agua" aria-hidden="true"></div>
-        <div class="cena-balao">
-          <b id="balao-titulo">Baru está radiante.</b>
-          <span id="balao-sub">Abaixo da meta e uma sessão na água. O melhor tipo de dia.</span>
-        </div>
         <img class="cena-bicho" id="bicho" src="assets/pet-capybara-radiant.webp"
              width="369" height="299" fetchpriority="high"
              alt="Baru, a capivara, radiante, com brilhos ao redor.">
         <span class="cena-dica" id="dica">toque para fazer carinho</span>
       </div>
+
+      <div class="humor-legenda">
+        <b id="balao-titulo">Baru está radiante.</b>
+        <span id="balao-sub">Abaixo da meta e uma sessão na água. O melhor tipo de dia.</span>
+      </div>
+
       <div class="chips" id="chips" aria-label="Escolha o companheiro"></div>
     </div>
   </div>
@@ -517,24 +539,28 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 
 <!-- ================= DIA E NOITE ================= -->
 <section class="faixa revela">
-  <div class="dentro" style="max-width:860px">
-    <p class="olho">O habitat vive</p>
-    <h2>Às 22h a lua sobe.<br>De verdade.</h2>
-    <p class="lead" style="margin-top:16px">
-      A cena conhece o relógio do seu aparelho: o céu troca de cor, o sol vira
-      lua e a água escurece. Abrir o app de noite é outro lugar.
-    </p>
+  <div class="dentro">
+    <div class="limpo" style="margin-top:0">
+      <div>
+        <p class="olho">O habitat vive</p>
+        <h2>Às 22h a lua sobe.<br>De verdade.</h2>
+        <p class="lead" style="margin-top:16px">
+          A cena conhece o relógio do seu aparelho: o céu troca de cor, o sol
+          vira lua e a água escurece. Abrir o app de noite é outro lugar.
+        </p>
+        <div class="ciclo-pontos" role="tablist" aria-label="Hora do dia">
+          <button role="tab" aria-selected="true" data-cena="0" aria-label="Amanhecer"></button>
+          <button role="tab" aria-selected="false" data-cena="1" aria-label="Entardecer"></button>
+          <button role="tab" aria-selected="false" data-cena="2" aria-label="Noite"></button>
+        </div>
+      </div>
 
-    <div class="ciclo" id="ciclo">
+      <div class="ciclo" id="ciclo">
       <img src="assets/habitat-amanhecer.webp" width="744" height="592" data-ativo="sim" alt="O habitat às 6h: céu quente, sol baixo, água clara.">
       <img src="assets/habitat-entardecer.webp" width="744" height="592" data-ativo="nao" loading="lazy" alt="O habitat às 18h: luz laranja, sol no horizonte.">
       <img src="assets/habitat-noite.webp" width="744" height="592" data-ativo="nao" loading="lazy" alt="O habitat às 22h: céu índigo, lua com halo, água escura.">
-      <span class="ciclo-rotulo" id="ciclo-rotulo">06:00 · amanhecer</span>
-    </div>
-    <div class="ciclo-pontos" role="tablist" aria-label="Hora do dia">
-      <button role="tab" aria-selected="true" data-cena="0" aria-label="Amanhecer"></button>
-      <button role="tab" aria-selected="false" data-cena="1" aria-label="Entardecer"></button>
-      <button role="tab" aria-selected="false" data-cena="2" aria-label="Noite"></button>
+        <span class="ciclo-rotulo" id="ciclo-rotulo">06:00 · amanhecer</span>
+      </div>
     </div>
   </div>
 </section>
@@ -571,7 +597,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
       </div>
 
       <div>
-        <div class="aparelho">
+        <div class="aparelho aparelho--recorte">
           <div class="aparelho-tela">
             <img loading="lazy" src="assets/tempo-sem-permissao.webp" width="620" height="1342"
                  alt="Tela de tempo de tela sem permissão: nenhum número inventado, só um convite para conceder.">
@@ -587,14 +613,21 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 <section class="faixa revela" style="padding-top:0">
   <div class="dentro">
     <div class="teste">
-      <p class="olho">No lançamento</p>
-      <h2>Sete dias por conta da casa.</h2>
-      <p>
-        Teste tudo, com todos os bichos. A gente avisa <b>24 horas antes</b> de o
-        período grátis acabar — nada de cobrança surpresa. Depois, plano mensal
-        ou anual, e o anual sai como melhor valor.
-      </p>
-      <div class="acoes"><a class="botao botao--cta" href="#lista">Entrar na lista de espera</a></div>
+      <div>
+        <p class="olho">No lançamento</p>
+        <h2>Sete dias por conta da casa.</h2>
+        <p>
+          Teste tudo, com todos os bichos e o habitat inteiro. Depois, plano
+          mensal ou anual — e o anual sai como melhor valor.
+        </p>
+        <div class="acoes"><a class="botao botao--cta" href="#lista">Entrar na lista de espera</a></div>
+      </div>
+
+      <ul class="promessas">
+        <li><b>Aviso 24 h antes</b><span>Você é avisado um dia antes de o teste acabar. Nada de cobrança surpresa.</span></li>
+        <li><b>Sem cartão para começar</b><span>O teste começa junto com o app, não com um formulário de pagamento.</span></li>
+        <li><b>Cancela quando quiser</b><span>Pela loja, em dois toques. O que você construiu no habitat continua seu.</span></li>
+      </ul>
     </div>
   </div>
 </section>
@@ -614,6 +647,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
       <form class="lista-form" id="form-lista" hidden>
         <label for="email-lista" style="position:absolute;left:-9999px">Seu e-mail</label>
         <input id="email-lista" type="email" name="email" required placeholder="voce@email.com" autocomplete="email">
+        <input type="text" name="empresa" tabindex="-1" autocomplete="off" aria-hidden="true"
+               style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
         <button class="botao botao--cta" type="submit">Avise-me</button>
       </form>
       <p class="recado" id="recado-lista" role="status"></p>
@@ -647,12 +682,25 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
   "use strict";
 
   /* ------------------------------------------------------------------
-     Lista de espera: preencha UM dos campos para o formulário aparecer.
-       endpoint — URL que aceita POST JSON {email};
-       email    — endereço de contato (vira um mailto pronto).
-     Com os dois vazios a página mostra só o "em breve" das lojas.
+     Lista de espera.
+
+     Grava em public.baru_waitlist no Supabase, através da função
+     baru_waitlist_entrar (migration 20260828100000_baru_waitlist.sql).
+     A chave abaixo é a **publicável/anon** — ela é feita para viver no
+     cliente. Quem protege a lista é o banco: a tabela tem RLS sem
+     nenhuma policy, então nem esta chave nem ninguém lê os e-mails por
+     aqui; o único caminho é a função, que só insere.
+
+     Cole a chave anon do Dashboard (Settings -> API). Com ela vazia o
+     formulário não aparece e a página mostra só o "em breve" das lojas —
+     um campo que engole o e-mail de alguém sem destino é pior que campo
+     nenhum.
   ------------------------------------------------------------------ */
-  var LISTA_ESPERA = { endpoint: "", email: "" };
+  var LISTA_ESPERA = {
+    url: "https://slqpuppkapiewjqvedtj.supabase.co",
+    anonKey: "",
+    idioma: "pt"
+  };
 
   var reduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -829,29 +877,53 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
   /* ---------- lista de espera ---------- */
   var form = document.getElementById("form-lista");
   var recado = document.getElementById("recado-lista");
-  if (LISTA_ESPERA.endpoint || LISTA_ESPERA.email) {
+  var lojas = document.getElementById("lojas-em-breve");
+
+  if (LISTA_ESPERA.url && LISTA_ESPERA.anonKey) {
     form.hidden = false;
+    if (lojas) lojas.style.marginTop = "22px";
+
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var email = document.getElementById("email-lista").value.trim();
-      if (!email) return;
-      if (!LISTA_ESPERA.endpoint) {
-        window.location.href = "mailto:" + LISTA_ESPERA.email +
-          "?subject=" + encodeURIComponent("Lista de espera do Baru") +
-          "&body=" + encodeURIComponent("Quero ser avisado: " + email);
-        return;
-      }
+      var campo = document.getElementById("email-lista");
+      var botao = form.querySelector("button");
+      var email = campo.value.trim();
+
+      // isca: campo invisível que só robô preenche
+      if (form.querySelector('[name="empresa"]').value) return;
+      if (!campo.checkValidity()) { campo.reportValidity(); return; }
+
+      botao.disabled = true;
       recado.textContent = "Enviando…";
-      fetch(LISTA_ESPERA.endpoint, {
+
+      fetch(LISTA_ESPERA.url + "/rest/v1/rpc/baru_waitlist_entrar", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ email: email })
+        headers: {
+          apikey: LISTA_ESPERA.anonKey,
+          Authorization: "Bearer " + LISTA_ESPERA.anonKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ p_email: email, p_idioma: LISTA_ESPERA.idioma })
       }).then(function (r) {
-        if (!r.ok) throw new Error(r.status);
-        form.hidden = true;
-        recado.textContent = "Pronto. Avisamos você quando o teste aberto começar.";
+        if (r.ok) {
+          form.hidden = true;
+          recado.textContent = "Pronto. Avisamos você quando o teste aberto começar.";
+          return;
+        }
+        return r.json().then(function (erro) {
+          botao.disabled = false;
+          // a função devolve sempre a mesma coisa para e-mail repetido,
+          // então aqui só sobram e-mail malformado e excesso de tentativas
+          var msg = (erro && erro.message) || "";
+          recado.textContent = msg.indexOf("muitas tentativas") >= 0
+            ? "Já recebemos vários pedidos daqui. Tente de novo mais tarde."
+            : msg.indexOf("email invalido") >= 0
+              ? "Esse e-mail não parece válido. Confere?"
+              : "Não conseguimos registrar agora. Tente de novo em alguns minutos.";
+        });
       }).catch(function () {
-        recado.textContent = "Não conseguimos registrar agora. Tente de novo em alguns minutos.";
+        botao.disabled = false;
+        recado.textContent = "Sem conexão com o servidor. Tente de novo em alguns minutos.";
       });
     });
   }

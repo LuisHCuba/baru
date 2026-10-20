@@ -24,6 +24,12 @@ play-store/
 └── capturar.sh           regenera telas/ a partir do app
 ```
 
+## Onde está publicado
+
+- Página: https://lhcx.tech/solucoes/baru/ (mídia em `midia.lhcx.tech/site/baru/`)
+- Pacote para a Play: https://midia.lhcx.tech/site/baru/loja/Baru-GooglePlay.zip
+- Comercial em qualidade cheia: `midia.lhcx.tech/site/baru/loja/baru-comercial-v1-{horizontal-1920x1080,vertical-1080x1920}.mp4`
+
 ## Subir na Play
 
 1. **Ícone:** `loja/icone-512.png`.

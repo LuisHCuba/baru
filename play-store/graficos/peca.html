@@ -176,12 +176,12 @@ function pecaTela() {
   }));
 }
 
-function cena(W, H, escala) {
+function cena(W, H, escala, sol = [0.80, 0.07]) {
   // A cena do habitat, em formas chapadas, como a landing e o app: céu quente,
   // sol, uma colina larga e a água.
   const p = document.getElementById('peca');
   Object.assign(p.style, { width: px(W), height: px(H), background: 'linear-gradient(180deg,#F7D9AE 0%,#F2E4C9 66%)' });
-  p.appendChild(el('div', 'sol', { left: px(W * 0.80), top: px(H * 0.07), width: px(150 * escala), height: px(150 * escala) }));
+  p.appendChild(el('div', 'sol', { left: px(W * sol[0]), top: px(H * sol[1]), width: px(150 * escala), height: px(150 * escala) }));
   p.appendChild(el('div', '', { position: 'absolute', left: px(W * 0.30), right: px(-W * 0.2), bottom: px(H * 0.22), height: px(H * 0.42), borderRadius: '50% 50% 0 0 / 100% 100% 0 0', background: '#C8DABB' }));
   p.appendChild(el('div', '', { position: 'absolute', left: px(-W * 0.2), width: px(W * 0.7), bottom: px(H * 0.22), height: px(H * 0.30), borderRadius: '50% 50% 0 0 / 100% 100% 0 0', background: '#D6E4C9' }));
   p.appendChild(el('div', '', { position: 'absolute', left: 0, right: 0, bottom: 0, height: px(H * 0.26), background: 'linear-gradient(180deg,#A8C79C 0%,#9BBE8F 100%)' }));
@@ -205,7 +205,25 @@ function pecaDestaque(W = 1024, H = 500, og = false) {
   document.fonts.ready.then(() => requestAnimationFrame(() => (window.__pronto = true)));
 }
 
-({ tela: pecaTela, destaque: () => pecaDestaque(), og: () => pecaDestaque(1200, 630, true) })[PECA]();
+
+function pecaCapa(vertical) {
+  // Capa do comercial: a cena do habitat, a marca no alto e o elenco embaixo.
+  // O meio fica livre para o botão de play que a página desenha por cima.
+  const W = vertical ? 1080 : 1920, H = vertical ? 1920 : 1080, e = vertical ? 1.9 : 1.55;
+  const p = cena(W, H, e, vertical ? [0.70, 0.30] : [0.80, 0.07]);
+  const topo = el('div', '', { position: 'absolute', left: 0, right: 0, top: px(vertical ? 150 : 90), textAlign: 'center' });
+  const marca = el('div', 'marca', { fontSize: px(vertical ? 230 : 190), justifyContent: 'center' }, '<i></i>Baru');
+  topo.appendChild(marca);
+  topo.appendChild(el('div', '', { font: `1000 ${vertical ? 78 : 64}px/1.05 Nunito`, color: '#3D332A', letterSpacing: '-.035em', marginTop: px(18) }, LEMA[LANG]));
+  p.appendChild(topo);
+  const elenco = vertical
+    ? [['owl', 30, 1110, 370], ['fox', 690, 1120, 370], ['frenchie', -20, 1450, 400], ['penguin', 730, 1470, 340], ['capybara', 220, 1250, 640]]
+    : [['owl', 230, 560, 330], ['fox', 1350, 560, 340], ['frenchie', 420, 690, 330], ['penguin', 1200, 700, 320], ['capybara', 720, 560, 480]];
+  for (const [sp, x, y, w] of elenco) p.appendChild(bicho(sp, 'radiante', x, y, w));
+  document.fonts.ready.then(() => requestAnimationFrame(() => (window.__pronto = true)));
+}
+
+({ tela: pecaTela, capaV: () => pecaCapa(true), capaH: () => pecaCapa(false), destaque: () => pecaDestaque(), og: () => pecaDestaque(1200, 630, true) })[PECA]();
 </script>
 </body>
 </html>

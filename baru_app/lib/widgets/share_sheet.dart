@@ -37,7 +37,8 @@ class _ShareSheetState extends State<ShareSheet> {
     final app = AppScope.of(context);
     // O que sai do app tem de dizer o mesmo que a tela: quem recebe a
     // imagem não tem contexto nenhum além desta linha.
-    final caption = app.t.humorCap(app.falaDoHumor);
+    final caption =
+        app.frase(app.t.humorCap(app.falaDoHumor), app.falaDoHumor.valores);
     final ok = await HabitatShare.share(boundaryKey: _boundary, text: caption);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,0 +1,211 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  Peças da ficha da Google Play, desenhadas em HTML e fotografadas pelo
+  Chromium (render.mjs). Uma página só; a peça e o idioma vêm da URL:
+    peca.html?peca=tela&n=1&lang=pt     → captura 1080 × 1920
+    peca.html?peca=destaque&lang=pt     → feature graphic 1024 × 500
+    peca.html?peca=og                   → imagem social 1200 × 630
+  As telas do celular são capturas reais (../telas/<lang>/), e os bichos saem
+  do mesmo CustomPainter do app (../arte/).
+-->
+<style>
+@font-face{font-family:Nunito;src:url(fontes/nunito-latin-wght-normal.woff2) format("woff2");font-weight:400 1000}
+:root{
+  --ink:#3D332A; --texto:#6E6156; --verde:#428130; --verde-claro:#6E9C5E; --verde-tinta:#EAF4E4;
+  --creme:#FAF1E3; --creme2:#F7F4EC; --laranja:#EF8354; --borda:#E8E1D4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%}
+body{font-family:Nunito,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;background:var(--creme)}
+#peca{position:relative;overflow:hidden}
+
+/* ---------- celular ---------- */
+.cel{position:absolute;border-radius:96px;background:#1E1A17;padding:22px;
+  box-shadow:0 0 0 4px #3a332d inset,0 50px 90px rgba(61,51,42,.30),0 14px 30px rgba(61,51,42,.18)}
+.cel .tela{position:relative;width:100%;border-radius:76px;overflow:hidden;background:#FAF1E3;aspect-ratio:1080/2400}
+.cel .tela img{display:block;width:100%;height:100%;object-fit:cover}
+.cel .barra{position:absolute;left:0;right:0;top:0;height:3.1%;display:flex;align-items:center;justify-content:space-between;
+  padding:0 9% 0 10%;font:800 26px/1 Nunito;color:#3D332A;letter-spacing:.01em}
+.cel .barra .icones{display:flex;gap:10px;align-items:center}
+.cel .barra .icones i{display:block;background:#3D332A}
+.cel .camera{position:absolute;top:1.25%;left:50%;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:#0d0b0a}
+
+/* ---------- decoração ---------- */
+.folha{position:absolute;border-radius:0 62% 0 62%;background:var(--verde-claro);opacity:.22}
+.sol{position:absolute;border-radius:50%;background:radial-gradient(circle,#F2B25E 0 40%,rgba(239,160,90,.35) 58%,transparent 72%)}
+.bicho{position:absolute;filter:drop-shadow(0 18px 18px rgba(61,51,42,.22))}
+
+/* ---------- texto das capturas ---------- */
+.titulo{position:absolute;left:84px;right:84px;top:118px;color:var(--ink);font:1000 104px/1.0 Nunito;letter-spacing:-.035em;text-wrap:balance}
+.titulo em{font-style:normal;color:var(--verde)}
+.sub{position:absolute;left:86px;right:110px;color:var(--texto);font:700 42px/1.32 Nunito;letter-spacing:-.01em;text-wrap:balance}
+.escuro .titulo{color:#FFF8EC}.escuro .titulo em{color:#A9D88F}.escuro .sub{color:rgba(255,248,236,.82)}
+
+/* ---------- marca ---------- */
+.marca{display:flex;align-items:center;gap:.28em;font:1000 1em/1 Nunito;color:var(--verde);letter-spacing:-.03em}
+.marca i{width:.36em;height:.36em;border-radius:0 60% 0 60%;background:var(--verde);transform:rotate(-18deg);display:inline-block}
+.selo{display:inline-flex;align-items:center;gap:14px;background:#fff;border:3px solid var(--borda);box-shadow:0 5px 0 var(--borda);
+  border-radius:22px;padding:14px 26px;font:800 26px/1.1 Nunito;color:var(--ink)}
+.selo small{display:block;font:800 15px/1 Nunito;letter-spacing:.14em;text-transform:uppercase;color:#77695C;margin-bottom:5px}
+</style>
+</head>
+<body>
+<div id="peca"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const PECA = q.get('peca') || 'tela', N = +(q.get('n') || 1), LANG = q.get('lang') || 'pt';
+const TXT = {
+  pt: [
+    ['Larga o celular que ele <em>cresce</em>.', 'Um bichinho que vive das suas sessões de foco.'],
+    ['Foco que vira <em>folhas</em>.', 'Sessões de 25 a 90 min. Desistir não tira nada.'],
+    ['Tempo de tela <em>honesto</em>.', 'Contado por categoria. O podcast no bolso não entra.'],
+    ['Uma trilha de <em>22 passos</em>.', 'Cada marco abre um habitat novo. Nada é retirado.'],
+    ['Missões <em>curtas</em>, todo dia.', 'Recompensa exata. Expirar à meia-noite não pune.'],
+    ['<em>9 companheiros</em> para conquistar.', 'Liberados na trilha, nunca com dinheiro.'],
+    ['Um habitat que é <em>seu</em>.', 'Folhas viram itens que caem na cena.'],
+    ['<em>Zero</em> punição.', 'Ele nunca morre. No pior dia, só sente sua falta.'],
+  ],
+  en: [
+    ['Phone down. Watch it <em>grow</em>.', 'A little companion that lives on your focus sessions.'],
+    ['Focus that turns into <em>leaves</em>.', 'Sessions from 25 to 90 min. Giving up costs nothing.'],
+    ['<em>Honest</em> screen time.', 'Counted by category. The podcast in your pocket doesn’t count.'],
+    ['A path of <em>22 steps</em>.', 'Every milestone opens a new habitat. Nothing is taken back.'],
+    ['<em>Short</em> missions, every day.', 'Exact rewards. Expiring at midnight never punishes.'],
+    ['<em>9 companions</em> to unlock.', 'Earned along the path, never with money.'],
+    ['A habitat that’s <em>yours</em>.', 'Leaves become items that drop into the scene.'],
+    ['<em>Zero</em> punishment.', 'It never dies. On your worst day, it just misses you.'],
+  ],
+  es: [
+    ['Suelta el móvil y verás cómo <em>crece</em>.', 'Un compañero que vive de tus sesiones de enfoque.'],
+    ['Enfoque que se vuelve <em>hojas</em>.', 'Sesiones de 25 a 90 min. Rendirte no te quita nada.'],
+    ['Tiempo de pantalla <em>honesto</em>.', 'Contado por categoría. El pódcast en el bolsillo no cuenta.'],
+    ['Un camino de <em>22 pasos</em>.', 'Cada hito abre un hábitat nuevo. Nada se quita.'],
+    ['Misiones <em>cortas</em>, cada día.', 'Recompensa exacta. Caducar a medianoche no castiga.'],
+    ['<em>9 compañeros</em> por conquistar.', 'Se desbloquean en el camino, nunca con dinero.'],
+    ['Un hábitat que es <em>tuyo</em>.', 'Las hojas se vuelven objetos que caen en la escena.'],
+    ['<em>Cero</em> castigos.', 'Nunca muere. En tu peor día, solo te extraña.'],
+  ],
+};
+const LOJA = {pt:['em breve na','Google Play'],en:['coming soon to','Google Play'],es:['muy pronto en','Google Play']};
+const LEMA = {pt:'Foco sem culpa.',en:'Focus without guilt.',es:'Enfoque sin culpa.'};
+const PROMESSA = {pt:'Larga o celular que ele cresce.',en:'Phone down. Watch it grow.',es:'Suelta el móvil y verás cómo crece.'};
+
+const el = (tag, cls, css = {}, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; Object.assign(e.style, css); e.innerHTML = html; return e; };
+const px = (v) => v + 'px';
+const tela = (nome) => `../telas/${LANG}/${nome}.png`;
+const pet = (sp, humor = 'radiante') => `../arte/pet-${sp}-${humor}.png`;
+
+function celular(nome, x, y, w, rot = 0) {
+  const c = el('div', 'cel', { left: px(x), top: px(y), width: px(w), transform: `rotate(${rot}deg)` });
+  const t = el('div', 'tela');
+  t.appendChild(el('img', '', {}, '')).src = tela(nome);
+  const barra = el('div', 'barra', { fontSize: px(w * 0.042) }, `<span>9:41</span><span class="icones">
+    <i style="width:${w*.03}px;height:${w*.022}px;clip-path:polygon(0 100%,100% 0,100% 100%)"></i>
+    <i style="width:${w*.045}px;height:${w*.022}px;border-radius:3px"></i></span>`);
+  t.appendChild(barra);
+  c.appendChild(t);
+  c.style.padding = px(w * 0.034); c.style.borderRadius = px(w * 0.15);
+  t.style.borderRadius = px(w * 0.12);
+  c.appendChild(el('div', 'camera', { width: px(w*.045), height: px(w*.045), marginLeft: px(-w*.0225), top: px(w*.06) }));
+  return c;
+}
+function folha(x, y, s, rot, cor, op) { return el('div', 'folha', { left: px(x), top: px(y), width: px(s), height: px(s), transform: `rotate(${rot}deg)`, background: cor || '', opacity: op ?? '' }); }
+function bicho(sp, humor, x, y, w) { const i = el('img', 'bicho', { left: px(x), top: px(y), width: px(w) }); i.src = pet(sp, humor); return i; }
+
+const FUNDOS = [
+  'linear-gradient(180deg,#FFF6E8 0%,#F8E6C9 100%)',
+  'linear-gradient(180deg,#EEF5E6 0%,#DCEACF 100%)',
+  'linear-gradient(180deg,#FFF8EE 0%,#F3E9DA 100%)',
+  'linear-gradient(180deg,#FDEDE1 0%,#F8D9C4 100%)',
+  'linear-gradient(180deg,#F1F6EA 0%,#E0ECD3 100%)',
+  'linear-gradient(180deg,#3A3D63 0%,#5B5C86 100%)',
+  'linear-gradient(180deg,#FFF6E8 0%,#F5E4CB 100%)',
+  'linear-gradient(180deg,#FBE9DC 0%,#EFD3C1 100%)',
+];
+
+function pecaTela() {
+  const W = 1080, H = 1920, p = document.getElementById('peca');
+  Object.assign(p.style, { width: px(W), height: px(H), background: FUNDOS[N - 1] });
+  if (N === 6) p.classList.add('escuro');
+  const [tit, sub] = TXT[LANG][N - 1];
+  const titulo = el('div', 'titulo', {}, tit);
+  p.appendChild(titulo);
+  const s = el('div', 'sub', {}, sub);
+  p.appendChild(s);
+
+  // decoração de fundo, atrás de tudo
+  const deco = {
+    1: () => [el('div', 'sol', { left: '760px', top: '560px', width: '330px', height: '330px' }), folha(-60, 1500, 200, 20), folha(930, 1260, 120, -30)],
+    2: () => [folha(880, 560, 180, 12), folha(-50, 1180, 150, -20), folha(940, 1600, 110, 40)],
+    3: () => [folha(900, 600, 160, -10, '#7C93B8', .18), folha(-40, 1350, 170, 25, '#E0714B', .16), folha(950, 1560, 120, 50, '#B39BC8', .25)],
+    4: () => [el('div', 'sol', { left: '-90px', top: '640px', width: '300px', height: '300px' }), folha(920, 1400, 160, -25, '#EF8354', .2)],
+    5: () => [folha(910, 620, 170, 30), folha(-60, 1320, 190, -15), folha(980, 1700, 100, 10)],
+    6: () => Array.from({ length: 26 }, (_, i) => el('div', '', { position: 'absolute', left: px((i * 397) % 1080), top: px(560 + (i * 263) % 1300), width: px(4 + (i % 3) * 3), height: px(4 + (i % 3) * 3), borderRadius: '50%', background: '#FFF8EC', opacity: .25 + (i % 4) * .12 })),
+    7: () => [folha(-70, 700, 200, 25), folha(900, 1450, 170, -20), el('div', 'sol', { left: '820px', top: '600px', width: '260px', height: '260px' })],
+    8: () => [folha(920, 640, 150, -20, '#EF8354', .18), folha(-60, 1480, 200, 15)],
+  }[N]();
+  deco.forEach((d) => p.insertBefore(d, p.firstChild));
+
+  const layouts = {
+    1: () => { p.appendChild(celular('01-home', 220, 640, 640, 0)); p.appendChild(bicho('capybara', 'radiante', 640, 1430, 430)); },
+    2: () => { p.appendChild(celular('02-sessao', 220, 640, 640, 0)); p.appendChild(bicho('otter', 'radiante', -30, 1450, 400)); },
+    3: () => { p.appendChild(celular('05-tempo', 220, 640, 640, 0)); },
+    4: () => { p.appendChild(celular('03-trilha', 220, 640, 640, 0)); p.appendChild(bicho('tortoise', 'contente', 690, 1470, 400)); },
+    5: () => { p.appendChild(celular('04-missoes', 220, 640, 640, 0)); p.appendChild(bicho('cat', 'radiante', -40, 1460, 400)); },
+    6: () => {
+      p.appendChild(celular('home-fox-entardecer', -70, 760, 520, -8));
+      p.appendChild(celular('home-frenchie', 630, 760, 520, 8));
+      p.appendChild(celular('home-owl-noite', 260, 660, 560, 0));
+    },
+    7: () => { p.appendChild(celular('06-loja', 220, 640, 640, 0)); p.appendChild(bicho('penguin', 'radiante', 700, 1480, 380)); },
+    8: () => { p.appendChild(celular('07-relatorio', 220, 640, 640, 0)); p.appendChild(bicho('capybara', 'saudade', -20, 1440, 430)); },
+  };
+  layouts[N]();
+  // a legenda logo abaixo do título, medida depois que o título quebra
+  // Mede depois da fonte: com a reserva do sistema o título quebra em outro
+  // ponto e a legenda caía em cima dele. Se o texto ocupar mais que o
+  // previsto, o celular e os bichos descem juntos.
+  document.fonts.ready.then(() => requestAnimationFrame(() => {
+    s.style.top = px(titulo.offsetTop + titulo.offsetHeight + 30);
+    const sobra = s.offsetTop + s.offsetHeight + 56 - 640;
+    if (sobra > 0) p.querySelectorAll('.cel,.bicho').forEach((e) => (e.style.top = px(parseFloat(e.style.top) + sobra)));
+    window.__pronto = true;
+  }));
+}
+
+function cena(W, H, escala) {
+  // A cena do habitat, em formas chapadas, como a landing e o app: céu quente,
+  // sol, uma colina larga e a água.
+  const p = document.getElementById('peca');
+  Object.assign(p.style, { width: px(W), height: px(H), background: 'linear-gradient(180deg,#F7D9AE 0%,#F2E4C9 66%)' });
+  p.appendChild(el('div', 'sol', { left: px(W * 0.80), top: px(H * 0.07), width: px(150 * escala), height: px(150 * escala) }));
+  p.appendChild(el('div', '', { position: 'absolute', left: px(W * 0.30), right: px(-W * 0.2), bottom: px(H * 0.22), height: px(H * 0.42), borderRadius: '50% 50% 0 0 / 100% 100% 0 0', background: '#C8DABB' }));
+  p.appendChild(el('div', '', { position: 'absolute', left: px(-W * 0.2), width: px(W * 0.7), bottom: px(H * 0.22), height: px(H * 0.30), borderRadius: '50% 50% 0 0 / 100% 100% 0 0', background: '#D6E4C9' }));
+  p.appendChild(el('div', '', { position: 'absolute', left: 0, right: 0, bottom: 0, height: px(H * 0.26), background: 'linear-gradient(180deg,#A8C79C 0%,#9BBE8F 100%)' }));
+  p.appendChild(el('div', '', { position: 'absolute', left: px(W * 0.62), bottom: px(H * 0.13), width: px(W * 0.12), height: px(6 * escala), borderRadius: '99px', background: 'rgba(255,255,255,.5)' }));
+  for (let i = 0; i < 6; i++) p.appendChild(folha(W * (0.05 + i * 0.16), H * (0.08 + (i % 3) * 0.2), 22 * escala, i * 40, '', .22));
+  return p;
+}
+
+function pecaDestaque(W = 1024, H = 500, og = false) {
+  const e = og ? 1.17 : 1;
+  const p = cena(W, H, e);
+  const bloco = el('div', '', { position: 'absolute', left: px(58 * e), top: px(og ? 120 : 96), width: px(470 * e) });
+  bloco.appendChild(el('div', 'marca', { fontSize: px(118 * e) }, '<i></i>Baru'));
+  bloco.appendChild(el('div', '', { font: `1000 ${46 * e}px/1.05 Nunito`, color: '#3D332A', letterSpacing: '-.03em', marginTop: px(14 * e) }, LEMA[LANG]));
+  bloco.appendChild(el('div', '', { font: `700 ${25 * e}px/1.3 Nunito`, color: '#6E6156', marginTop: px(10 * e) }, PROMESSA[LANG]));
+  if (og) bloco.appendChild(el('div', 'selo', { marginTop: '26px' }, `<span><small>${LOJA[LANG][0]}</small>${LOJA[LANG][1]}</span>`));
+  p.appendChild(bloco);
+  // o elenco à direita, o Baru na frente
+  const elenco = [['owl', 560, 150, 220], ['fox', 815, 150, 225], ['frenchie', 455, 250, 235], ['capybara', 625, 190, 340]];
+  for (const [sp, x, y, w] of elenco) p.appendChild(bicho(sp, 'radiante', x * (W / 1024), y * (H / 500), w * e));
+  document.fonts.ready.then(() => requestAnimationFrame(() => (window.__pronto = true)));
+}
+
+({ tela: pecaTela, destaque: () => pecaDestaque(), og: () => pecaDestaque(1200, 630, true) })[PECA]();
+</script>
+</body>
+</html>

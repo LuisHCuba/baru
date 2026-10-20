@@ -134,12 +134,12 @@ class ReportScreen extends StatelessWidget {
                       // A mesma fala da home, com o fato e o número. Duas
                       // telas dizendo coisas diferentes sobre o mesmo dia é
                       // pior que uma delas dizer pouco.
-                      t.humorCap(app.falaDoHumor),
+                      app.frase(t.humorCap(app.falaDoHumor), app.falaDoHumor.valores),
                       style: nunito(size: 16.5, weight: FontWeight.w800, height: 1.3),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      t.humorSub(app.falaDoHumor),
+                      app.frase(t.humorSub(app.falaDoHumor), app.falaDoHumor.valores),
                       style: nunito(size: 13, height: 1.4, color: AppColors.inkA(0.6)),
                     ),
                   ],

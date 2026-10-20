@@ -4,6 +4,7 @@ import 'package:baru_app/l10n.dart';
 import 'package:baru_app/l10n_humor.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/screens/home_screen.dart';
+import 'package:baru_app/screens/report_screen.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -695,6 +696,31 @@ void main() {
     expect(sub.data, contains('2 sessões de foco'));
     // O que o dono do produto reclamou: sentimento sem fato.
     expect('${cap.data}${sub.data}', isNot(contains('{')));
+  });
+
+  testWidgets('o relatório diz a mesma fala, com os números preenchidos', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(412, 892);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    // O relatório chamava `humorCap` sem `frase`: a tela mostrava
+    // "{raiz} dias seguidos" e "{c} hoje" com as chaves à vista.
+    final app = _pet(usage: 96, goal: 150, completedToday: 1, streak: 4);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AppScope(state: app, child: const ReportScreen())),
+      ),
+    );
+    await tester.pump();
+
+    final textos = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? '')
+        .join('\n');
+    expect(_buracos(textos), isEmpty);
   });
 }
 

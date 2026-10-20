@@ -17,3 +17,6 @@ baru_app/assets/pets/
 
 # Landing: arquivo único gerado por build_artifact.py
 landing/dist/
+
+# Material da Play: quadros intermediários do vídeo (regenerados por build.sh)
+play-store/video/build/

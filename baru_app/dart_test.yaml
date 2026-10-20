@@ -3,3 +3,7 @@ tags:
     # Precisa de um Supabase acessível. Sem BARU_TEST_URL/BARU_TEST_KEY os
     # casos se pulam sozinhos, então a suíte normal não depende de Docker.
     skip: false
+  capturas:
+    # Telas para a loja e para o site. Escreve em ../play-store/telas e só
+    # roda com CAPTURAS=1 (ver test/capturas_loja_test.dart).
+    skip: false

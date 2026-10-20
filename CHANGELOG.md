@@ -3,6 +3,32 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-10-20 — material da Google Play, e o relatório que mostrava as chaves
+
+### Adicionado
+
+- **`play-store/`**: tudo o que a ficha da Google Play pede, em pt-BR, en-US e
+  es-419 — ícone de 512 px, recurso gráfico 1024 × 500, oito capturas
+  1080 × 1920 por idioma, textos da ficha e o vídeo promocional em vertical e
+  horizontal. Ver `play-store/README.md`.
+- **`test/capturas_loja_test.dart`**: fotografa o app inteiro, com a casca e a
+  barra de destinos, em 1080 × 2400. Só roda com `CAPTURAS=1`.
+- **`test/arte_loja_test.dart`**: o ícone da loja, os nove companheiros em
+  quatro humores e o habitat nos quatro momentos do dia, em alta resolução,
+  pelos mesmos `CustomPainter` do app. Só roda com `CAPTURAS=1`.
+
+### Corrigido
+
+- **O relatório mostrava "{raiz} dias seguidos" e "{c} hoje".** A home passava
+  a fala do humor por `app.frase(..., valores)`; o relatório, o rótulo de
+  leitor de tela do habitat e a legenda do compartilhamento chamavam
+  `humorCap`/`humorSub` crus, com as chaves à vista. Teste novo em
+  `humor_test.dart` exige o relatório sem chave nenhuma.
+
+### Alterado
+
+- **Landing:** "12 marcos" virou "22 passos", que é a trilha de hoje.
+
 ## 2026-08-27 — o quiz sem astrologia, com o dobro de perguntas e guardado inteiro
 
 ### O QUE MUDOU NA TELA

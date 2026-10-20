@@ -483,8 +483,8 @@ class _HabitatSceneState extends State<HabitatScene>
       image: true,
       // Quem usa leitor de tela ouvia "Baru está radiante" — o sentimento
       // sem o fato. A cena é a mesma; a descrição dela tem de ser também.
-      label: '${app.t.humorCap(app.falaDoHumor)} '
-          '${app.t.humorSub(app.falaDoHumor)}',
+      label: '${app.frase(app.t.humorCap(app.falaDoHumor), app.falaDoHumor.valores)} '
+          '${app.frase(app.t.humorSub(app.falaDoHumor), app.falaDoHumor.valores)}',
       child: RepaintBoundary(
         key: HabitatScene.cenaKey,
         child: Container(

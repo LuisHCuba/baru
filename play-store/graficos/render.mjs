@@ -38,4 +38,5 @@ await foto('peca=og&lang=pt', 1200, 630, path.join(aqui, '..', 'loja', 'og-1200x
 // capas do comercial: a vertical vai para a página do site, a horizontal é a miniatura do YouTube
 await foto('peca=capaV&lang=pt', 1080, 1920, path.join(aqui, '..', 'video', 'saida', 'capa-vertical-1080x1920.png'));
 await foto('peca=capaH&lang=pt', 1920, 1080, path.join(aqui, '..', 'video', 'saida', 'capa-horizontal-1920x1080.png'));
+await foto('peca=miniatura&lang=pt', 1280, 720, path.join(aqui, '..', 'video', 'saida', 'miniatura-youtube-1280x720.png'));
 await browser.close();

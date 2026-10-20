@@ -170,3 +170,4 @@
 8558346 video/saida/baru-vertical.mp4
 245730 video/saida/capa-horizontal-1920x1080.png
 272925 video/saida/capa-vertical-1080x1920.png
+142305 video/saida/miniatura-youtube-1280x720.png

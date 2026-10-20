@@ -24,6 +24,19 @@ play-store/
 └── capturar.sh           regenera telas/ a partir do app
 ```
 
+## A mídia fica no R2
+
+Imagens, áudio e vídeos **não ficam no git**: estão em
+`midia.lhcx.tech/site/baru/play-store/`, com a mesma estrutura de pastas.
+Depois de clonar:
+
+```
+play-store/baixar-midia.sh
+```
+
+Ele lê `midia.txt` (tamanho e caminho de cada arquivo) e só baixa o que falta.
+Se regenerar alguma coisa, suba de volta para o R2 e atualize `midia.txt`.
+
 ## Onde está publicado
 
 - Página: https://lhcx.tech/solucoes/baru/ (mídia em `midia.lhcx.tech/site/baru/`)

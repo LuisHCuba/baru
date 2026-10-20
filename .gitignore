@@ -20,3 +20,10 @@ landing/dist/
 
 # Material da Play: quadros intermediários do vídeo (regenerados por build.sh)
 play-store/video/build/
+# Material da Play: a mídia fica no R2 (midia.lhcx.tech/site/baru/play-store/).
+# play-store/baixar-midia.sh baixa o que faltar, pela lista em play-store/midia.txt.
+play-store/loja/
+play-store/telas/
+play-store/arte/
+play-store/video/assets/
+play-store/video/saida/

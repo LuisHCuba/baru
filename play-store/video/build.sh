@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p build/clip saida
+../baixar-midia.sh   # áudio, clipe e arte vêm do R2
 [ -f build/clip/096.jpg ] || ffmpeg -v error -y -i assets/clipe/celular-na-mesa.mp4 -vf scale=1080:1920 -q:v 3 build/clip/%03d.jpg
 python3 audio.py
 node render.mjs full v &

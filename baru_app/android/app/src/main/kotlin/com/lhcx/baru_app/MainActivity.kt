@@ -234,7 +234,7 @@ class MainActivity : FlutterFragmentActivity() {
                             )
                             putExtra(
                                 OverlayDoBaru.EXTRA_PELO,
-                                call.argument<Int>("pelo")
+                                call.argument<Number>("pelo")?.toInt()
                                     ?: 0xFFB07A4E.toInt(),
                             )
                             putExtra(
@@ -277,7 +277,7 @@ class MainActivity : FlutterFragmentActivity() {
                             )
                             putExtra(
                                 VigiaDaSessao.EXTRA_PELO,
-                                call.argument<Int>("pelo")
+                                call.argument<Number>("pelo")?.toInt()
                                     ?: 0xFFB07A4E.toInt(),
                             )
                             putExtra(

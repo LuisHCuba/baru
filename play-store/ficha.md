@@ -197,9 +197,9 @@ Hecho por LHCX en São Paulo, Brasil.
 | Categoria | Estilo de vida (alternativa: Produtividade) |
 | Tags | Produtividade, Hábitos, Bem-estar digital — escolha entre as que o Console oferecer |
 | E-mail de contato | adm@lhcx.tech |
-| Site | https://lhcx.tech/solucoes/baru/ |
-| Política de privacidade | https://lhcx.tech/solucoes/baru/privacidade/ |
-| Exclusão de conta (URL) | https://lhcx.tech/solucoes/baru/excluir-conta/ |
+| Site | https://baru.lhcx.tech/ |
+| Política de privacidade | https://baru.lhcx.tech/privacidade/ |
+| Exclusão de conta (URL) | https://baru.lhcx.tech/excluir-conta/ |
 | Ícone | `loja/icone-512.png` (512 × 512, PNG 32 bits com alfa) |
 | Recurso gráfico | `loja/<idioma>/destaque-1024x500.png` (PNG 24 bits, sem alfa) |
 | Capturas do telefone | `loja/<idioma>/captura-1.png` … `captura-8.png` (1080 × 1920, 9:16) |

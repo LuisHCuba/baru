@@ -1051,7 +1051,7 @@ const _pt = <String, Object>{
   'repFreezeMany':
       'Restam {n} congelamentos nesta semana. Se você faltar um dia, ele te espera.',
   'privacyBody':
-      'O Baru guarda no servidor só o mínimo para o seu progresso funcionar em qualquer aparelho: a sua conta, o seu companheiro, as sessões de foco e o total diário de tempo de tela, se você permitir. Quais apps você usou e por quanto tempo fica só no celular. O app nunca lê mensagens, conteúdo de tela ou o que você digita, e não tem anúncios. Política completa: lhcx.tech/solucoes/baru/privacidade',
+      'O Baru guarda no servidor só o mínimo para o seu progresso funcionar em qualquer aparelho: a sua conta, o seu companheiro, as sessões de foco e o total diário de tempo de tela, se você permitir. Quais apps você usou e por quanto tempo fica só no celular. O app nunca lê mensagens, conteúdo de tela ou o que você digita, e não tem anúncios. Política completa: baru.lhcx.tech/privacidade',
   'termsBody':
       'Você usa o Baru para sessões de foco e um habitat. Ele nunca morre, nunca perde progresso e nunca te culpa. Esta versão é gratuita. Trocar o idioma e a meta não apaga o habitat.',
   'tabs': ['Habitat', 'Trilha', 'Missões', 'Ajustes'],
@@ -1547,7 +1547,7 @@ const _en = <String, Object>{
   'repFreezeMany':
       '{n} freezes left this week. If you miss a day, it waits for you.',
   'privacyBody':
-      'Baru keeps only the minimum on the server so your progress works on any device: your account, your companion, your focus sessions and the daily screen-time total, if you allow it. Which apps you used and for how long stays on your phone. The app never reads messages, screen content or what you type, and has no ads. Full policy: lhcx.tech/solucoes/baru/privacidade',
+      'Baru keeps only the minimum on the server so your progress works on any device: your account, your companion, your focus sessions and the daily screen-time total, if you allow it. Which apps you used and for how long stays on your phone. The app never reads messages, screen content or what you type, and has no ads. Full policy: baru.lhcx.tech/privacidade',
   'termsBody':
       'You use Baru for focus sessions and a habitat. It never dies, never loses progress, and never blames you. This version is free. Changing language or goal does not wipe the habitat.',
   'tabs': ['Habitat', 'Path', 'Missions', 'Settings'],
@@ -2044,7 +2044,7 @@ const _es = <String, Object>{
   'repFreezeMany':
       'Quedan {n} congelamientos esta semana. Si faltas un día, te espera.',
   'privacyBody':
-      'Baru guarda en el servidor solo lo mínimo para que tu progreso funcione en cualquier aparato: tu cuenta, tu compañero, las sesiones de enfoque y el total diario de tiempo de pantalla, si lo permites. Qué apps usaste y por cuánto tiempo queda solo en el teléfono. La app nunca lee mensajes, contenido de pantalla ni lo que escribes, y no tiene anuncios. Política completa: lhcx.tech/solucoes/baru/privacidade',
+      'Baru guarda en el servidor solo lo mínimo para que tu progreso funcione en cualquier aparato: tu cuenta, tu compañero, las sesiones de enfoque y el total diario de tiempo de pantalla, si lo permites. Qué apps usaste y por cuánto tiempo queda solo en el teléfono. La app nunca lee mensajes, contenido de pantalla ni lo que escribes, y no tiene anuncios. Política completa: baru.lhcx.tech/privacidade',
   'termsBody':
       'Usas Baru para sesiones de enfoque y un hábitat. Nunca muere, nunca pierde progreso y nunca te culpa. Esta versión es gratuita. Cambiar idioma o meta no borra el hábitat.',
   'tabs': ['Hábitat', 'Camino', 'Misiones', 'Ajustes'],
@@ -2505,7 +2505,7 @@ const _zh = <String, Object>{
   'streakOne': '1 天的根',
   'repFreezeMany': '本周还有 {n} 次冻结。如果你缺一天，它会等你。',
   'privacyBody':
-      'Baru 只在服务器上保存让进度在任何设备上可用的最少数据：你的账户、你的伙伴、专注时段，以及你允许时的每日屏幕总时长。你用了哪些应用、用了多久只留在手机上。应用从不读取消息、屏幕内容或你输入的文字，也没有广告。完整政策：lhcx.tech/solucoes/baru/privacidade',
+      'Baru 只在服务器上保存让进度在任何设备上可用的最少数据：你的账户、你的伙伴、专注时段，以及你允许时的每日屏幕总时长。你用了哪些应用、用了多久只留在手机上。应用从不读取消息、屏幕内容或你输入的文字，也没有广告。完整政策：baru.lhcx.tech/privacidade',
   'termsBody':
       '你用 Baru 做专注时段、照料栖息地。它不会死，不会丢掉进度，也不会责怪你。这个版本免费。改语言或目标不会清空栖息地。',
   'tabs': ['栖息地', '路径', '任务', '设置'],

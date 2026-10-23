@@ -38,6 +38,7 @@ class AuthScreen extends StatefulWidget {
   static const chaveBiometria = Key('auth-biometria');
   static const chaveDigitar = Key('auth-digitar');
   static const chaveOutraConta = Key('auth-outra-conta');
+  static const chaveEsqueci = Key('auth-esqueci');
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -50,6 +51,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _confirm = TextEditingController();
   bool _loading = false;
   String? _error;
+  String? _recado;
 
   late final Cofre _cofre = widget.cofre ?? CofreSeguro();
   late final Biometria _bio = widget.biometria ?? BiometriaDoAparelho();
@@ -185,10 +187,7 @@ class _AuthScreenState extends State<AuthScreen> {
           password: password,
         );
       } else {
-        await BaruSupabase.instance.signUp(
-          email: email,
-          password: password,
-        );
+        await BaruSupabase.instance.signUp(email: email, password: password);
         if (!BaruSupabase.instance.hasSession) {
           setState(() => _error = t.authConfirmEmail);
           return;
@@ -232,6 +231,37 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  /// "Esqueci a senha" na porta de entrada: quem esqueceu não consegue
+  /// chegar em Sua conta, onde o mesmo pedido já existia. Usa o e-mail
+  /// digitado; o link do e-mail abre lhcx.tech/solucoes/baru/conta/, onde a
+  /// senha nova é escolhida.
+  Future<void> _recuperar() async {
+    final email = _email.text.trim();
+    setState(() {
+      _error = null;
+      _recado = null;
+    });
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _error = t.authEmailInvalid);
+      return;
+    }
+    if (!BaruSupabase.instance.attached) {
+      setState(() => _error = t.authAttachFail);
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await BaruSupabase.instance.recuperaSenha(email);
+      if (!mounted) return;
+      setState(() => _recado = t.fill(t.contaRecuperarOk, {'e': email}));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = translateAuthError(e, widget.lang));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -266,17 +296,18 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 10),
         Text(
           email,
-          style: nunito(size: 16, weight: FontWeight.w700, color: AppColors.green),
+          style: nunito(
+            size: 16,
+            weight: FontWeight.w700,
+            color: AppColors.green,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           _podeBiometria ? t.authBiometriaSub : t.authLembrarSub,
           style: nunito(size: 15, height: 1.5, color: AppColors.inkA(0.62)),
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 16),
-          _aviso(_error!),
-        ],
+        if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
         const SizedBox(height: 28),
         if (_podeBiometria)
           PrimaryButton(
@@ -307,99 +338,115 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  /// Confirmação neutra (não é erro): mesmo formato do aviso, em tinta.
+  Widget _recadoOk(String texto) => Container(
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+    decoration: BoxDecoration(
+      color: AppColors.inkA(0.06),
+      borderRadius: BorderRadius.circular(AppRadii.chip),
+    ),
+    child: Text(
+      texto,
+      style: nunito(size: 13.5, height: 1.45, color: AppColors.inkA(0.8)),
+    ),
+  );
+
   Widget _aviso(String texto) => Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(
-          color: AppColors.orangeA(0.14),
-          borderRadius: BorderRadius.circular(AppRadii.chip),
-        ),
-        child: Text(
-          texto,
-          style: nunito(size: 13.5, height: 1.45, color: AppColors.orangeText),
-        ),
-      );
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+    decoration: BoxDecoration(
+      color: AppColors.orangeA(0.14),
+      borderRadius: BorderRadius.circular(AppRadii.chip),
+    ),
+    child: Text(
+      texto,
+      style: nunito(size: 13.5, height: 1.45, color: AppColors.orangeText),
+    ),
+  );
 
   Widget _corpoFormulario() {
     final isLogin = _mode == AuthMode.login;
     return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 12),
-              Text(
-                isLogin ? t.authLoginTitle : t.authSignupTitle,
-                style: nunito(
-                  size: 27,
-                  weight: FontWeight.w800,
-                  height: 1.2,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                isLogin ? t.authLoginSub : t.authSignupSub,
-                style: nunito(size: 15.5, height: 1.5, color: AppColors.inkA(0.62)),
-              ),
-              const SizedBox(height: 28),
-              _field(
-                label: t.authEmail,
-                controller: _email,
-                keyboard: TextInputType.emailAddress,
-                autocorrect: false,
-              ),
-              const SizedBox(height: 14),
-              _field(
-                label: t.authPassword,
-                controller: _password,
-                obscure: true,
-              ),
-              if (!isLogin) ...[
-                const SizedBox(height: 14),
-                _field(
-                  label: t.authPasswordConfirm,
-                  controller: _confirm,
-                  obscure: true,
-                ),
-              ],
-              const SizedBox(height: 18),
-              // Lembrar é escolha explícita e reversível. O subtítulo diz
-              // onde o dado fica: "só neste aparelho, cifrado" — sem isso a
-              // pessoa tem que adivinhar se a senha foi para algum servidor.
-              _LinhaLembrar(
-                key: AuthScreen.chaveLembrar,
-                rotulo: t.authLembrar,
-                detalhe: _podeBiometria
-                    ? '${t.authLembrarSub} ${t.authBiometriaSub}'
-                    : t.authLembrarSub,
-                ligado: _lembrar,
-                aoTocar: () => setState(() => _lembrar = !_lembrar),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                _aviso(_error!),
-              ],
-              const SizedBox(height: 24),
-              PrimaryButton(
-                label: _loading
-                    ? t.authLoading
-                    : (isLogin ? t.authSignIn : t.authSignUp),
-                onTap: _loading ? null : _submit,
-                enabled: !_loading,
-                shadow: true,
-              ),
-              const SizedBox(height: 12),
-              TextAction(
-                label: isLogin ? t.authCreateAccount : t.authBackToLogin,
-                onTap: _loading
-                    ? () {}
-                    : () {
-                        setState(() {
-                          _mode =
-                              isLogin ? AuthMode.signup : AuthMode.login;
-                          _error = null;
-                          _confirm.clear();
-                        });
-                      },
-              ),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 12),
+        Text(
+          isLogin ? t.authLoginTitle : t.authSignupTitle,
+          style: nunito(
+            size: 27,
+            weight: FontWeight.w800,
+            height: 1.2,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          isLogin ? t.authLoginSub : t.authSignupSub,
+          style: nunito(size: 15.5, height: 1.5, color: AppColors.inkA(0.62)),
+        ),
+        const SizedBox(height: 28),
+        _field(
+          label: t.authEmail,
+          controller: _email,
+          keyboard: TextInputType.emailAddress,
+          autocorrect: false,
+        ),
+        const SizedBox(height: 14),
+        _field(label: t.authPassword, controller: _password, obscure: true),
+        if (!isLogin) ...[
+          const SizedBox(height: 14),
+          _field(
+            label: t.authPasswordConfirm,
+            controller: _confirm,
+            obscure: true,
+          ),
+        ],
+        const SizedBox(height: 18),
+        // Lembrar é escolha explícita e reversível. O subtítulo diz
+        // onde o dado fica: "só neste aparelho, cifrado" — sem isso a
+        // pessoa tem que adivinhar se a senha foi para algum servidor.
+        _LinhaLembrar(
+          key: AuthScreen.chaveLembrar,
+          rotulo: t.authLembrar,
+          detalhe: _podeBiometria
+              ? '${t.authLembrarSub} ${t.authBiometriaSub}'
+              : t.authLembrarSub,
+          ligado: _lembrar,
+          aoTocar: () => setState(() => _lembrar = !_lembrar),
+        ),
+        if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
+        if (_recado != null) ...[
+          const SizedBox(height: 16),
+          _recadoOk(_recado!),
+        ],
+        const SizedBox(height: 24),
+        PrimaryButton(
+          label: _loading
+              ? t.authLoading
+              : (isLogin ? t.authSignIn : t.authSignUp),
+          onTap: _loading ? null : _submit,
+          enabled: !_loading,
+          shadow: true,
+        ),
+        const SizedBox(height: 12),
+        TextAction(
+          label: isLogin ? t.authCreateAccount : t.authBackToLogin,
+          onTap: _loading
+              ? () {}
+              : () {
+                  setState(() {
+                    _mode = isLogin ? AuthMode.signup : AuthMode.login;
+                    _error = null;
+                    _recado = null;
+                    _confirm.clear();
+                  });
+                },
+        ),
+        if (isLogin)
+          TextAction(
+            key: AuthScreen.chaveEsqueci,
+            label: t.contaRecuperar,
+            onTap: _loading ? () {} : _recuperar,
+          ),
         if (_guardada != null)
           TextAction(
             key: AuthScreen.chaveDigitar,
@@ -424,7 +471,11 @@ class _AuthScreenState extends State<AuthScreen> {
           padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
           child: Text(
             label,
-            style: nunito(size: 13, weight: FontWeight.w700, color: AppColors.inkA(0.55)),
+            style: nunito(
+              size: 13,
+              weight: FontWeight.w700,
+              color: AppColors.inkA(0.55),
+            ),
           ),
         ),
         TextField(

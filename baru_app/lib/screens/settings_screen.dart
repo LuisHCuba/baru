@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../cobranca.dart';
 import '../l10n.dart';
 import '../data/progressao.dart';
 import '../l10n_trilha.dart';
@@ -166,8 +167,11 @@ class SettingsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Sem cobrança na loja o cartão é só a porta para "Sua conta".
                     Text(
-                      app.trial
+                      !cobrancaNaLoja
+                          ? t.contaT
+                          : app.trial
                           ? t.fill(t.planTrial, {'n': app.trialDaysLeft})
                           : t.planNone,
                       maxLines: 2,
@@ -176,7 +180,9 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: Espaco.xxs),
                     Text(
-                      app.trial
+                      !cobrancaNaLoja
+                          ? t.contaSub
+                          : app.trial
                           ? t.fill(t.planTrialSub, {
                               'd': t.formatLongDate(app.paidPlanStart),
                             })
@@ -208,12 +214,13 @@ class SettingsScreen extends StatelessWidget {
         const SizedBox(height: Espaco.md),
         _Grupo(
           children: [
-            _Linha(
-              chave: null,
-              icone: Icons.restore_rounded,
-              rotulo: t.setRestore,
-              aoTocar: app.restorePurchases,
-            ),
+            if (cobrancaNaLoja)
+              _Linha(
+                chave: null,
+                icone: Icons.restore_rounded,
+                rotulo: t.setRestore,
+                aoTocar: app.restorePurchases,
+              ),
             _Linha(
               chave: null,
               icone: Icons.shield_outlined,
@@ -253,10 +260,10 @@ class SettingsScreen extends StatelessWidget {
       '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
 
   static String _rotuloDoSexo(T t, Sexo s) => switch (s) {
-        Sexo.naoDito => t.setSexoNao,
-        Sexo.macho => t.setSexoM,
-        Sexo.femea => t.setSexoF,
-      };
+    Sexo.naoDito => t.setSexoNao,
+    Sexo.macho => t.setSexoM,
+    Sexo.femea => t.setSexoF,
+  };
 
   // --- folhas --------------------------------------------------------------
 
@@ -347,10 +354,9 @@ class SettingsScreen extends StatelessWidget {
             else
               _OpcaoTravada(
                 rotulo: t.animalName(e.name),
-                detalhe: t.fill(
-                  t.s('trilhaAbreNoPasso'),
-                  {'n': ProgressoDaTrilha.passoQueAbre(e) ?? 0},
-                ),
+                detalhe: t.fill(t.s('trilhaAbreNoPasso'), {
+                  'n': ProgressoDaTrilha.passoQueAbre(e) ?? 0,
+                }),
               ),
         ],
       ),
@@ -659,10 +665,7 @@ class _Chave extends StatelessWidget {
                     detalhe,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: estilo(
-                      Tipo.corpoPequeno,
-                      color: Cores.tintaA(0.5),
-                    ),
+                    style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.5)),
                   ),
                 ],
               ),
@@ -758,7 +761,6 @@ class _Passo extends StatelessWidget {
     );
   }
 }
-
 
 /// Uma espécie que a trilha ainda não abriu.
 ///

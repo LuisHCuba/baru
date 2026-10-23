@@ -1,3 +1,4 @@
+import 'package:baru_app/cobranca.dart';
 import 'package:baru_app/data/tempo_de_tela.dart';
 import 'package:baru_app/l10n.dart';
 import 'package:baru_app/l10n_sobreposicao.dart';
@@ -142,7 +143,7 @@ void main() {
       // A última fecha o onboarding mesmo com tudo recusado: recusar é
       // caminho suportado (contrato de produto §3), não beco sem saída.
       expect(app.companionshipStarted, isTrue);
-      expect(app.screen, AppScreen.paywall);
+      expect(app.screen, cobrancaNaLoja ? AppScreen.paywall : AppScreen.home);
     });
 
     testWidgets('a sobreposição é pedida — era ela que ficava de fora', (

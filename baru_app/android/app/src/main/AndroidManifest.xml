@@ -28,6 +28,11 @@
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
+    <!-- O plugin usage_stats declara DUMP, permissao so de sistema: o app
+         nunca a recebe e ela so chamaria atencao na revisao da Play. -->
+    <uses-permission
+        android:name="android.permission.DUMP"
+        tools:node="remove" />
     <!-- O companheiro aparece por cima do app que estourou o tempo. O
          usuario tem de ligar na mao, na tela do sistema: nao ha como
          conceder por codigo. -->

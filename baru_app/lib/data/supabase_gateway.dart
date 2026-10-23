@@ -329,6 +329,29 @@ class BaruSupabase {
     return falharam;
   }
 
+  /// Apaga o login do usuário (migration `baru_excluir_minha_conta`). As
+  /// tabelas do app caem junto pelo `on delete cascade`. Depois disso a
+  /// sessão não vale mais, então sai também.
+  ///
+  /// Devolve falso se o servidor recusou.
+  Future<bool> excluiConta() async {
+    final client = _client;
+    if (!_ready || _uid == null || client == null) return false;
+    try {
+      await client.rpc('baru_excluir_minha_conta');
+    } catch (e) {
+      debugPrint('Baru: nao apagou a conta — $e');
+      return false;
+    }
+    try {
+      await client.auth.signOut();
+    } catch (_) {
+      // O login já não existe; a sessão local some do mesmo jeito.
+    }
+    _ready = false;
+    return true;
+  }
+
   Future<void> signOut() async {
     await _client?.auth.signOut();
     _ready = false;

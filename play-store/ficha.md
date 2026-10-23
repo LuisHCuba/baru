@@ -60,7 +60,7 @@ As folhas viram itens que caem na cena. Às 22h a lua sobe, o céu escurece e a 
 🔒 SEUS DADOS
 • Do tempo de tela, só o total do dia sai do aparelho. O detalhe por app é recalculado no celular e não é guardado no servidor.
 • O app nunca lê mensagens, conteúdo de tela ou o que você digita.
-• "Apagar meus dados", em Ajustes → Sua conta, apaga os dados do app no aparelho e no servidor.
+• "Apagar meus dados", em Ajustes → Sua conta, apaga os dados do app e a sua conta, no aparelho e no servidor.
 
 🌎 Em português, inglês, espanhol e chinês.
 
@@ -119,7 +119,7 @@ Leaves become items that drop into the scene. At 10 pm the moon rises, the sky d
 🔒 YOUR DATA
 • From screen time, only the daily total leaves your phone. The per-app breakdown is recomputed on the device and never stored on the server.
 • The app never reads messages, screen content or what you type.
-• "Delete my data", under Settings → Your account, erases your app data on the device and on the server.
+• "Delete my data", under Settings → Your account, erases your app data and your account, on the device and on the server.
 
 🌎 In English, Portuguese, Spanish and Chinese.
 
@@ -178,7 +178,7 @@ Las hojas se vuelven objetos que caen en la escena. A las 22 h sale la luna, el 
 🔒 TUS DATOS
 • Del tiempo de pantalla, solo el total del día sale del móvil. El detalle por app se recalcula en el dispositivo y no se guarda en el servidor.
 • La app nunca lee mensajes, contenido de pantalla ni lo que escribes.
-• "Borrar mis datos", en Ajustes → Tu cuenta, borra los datos de la app en el dispositivo y en el servidor.
+• "Borrar mis datos", en Ajustes → Tu cuenta, borra los datos de la app y tu cuenta, en el dispositivo y en el servidor.
 
 🌎 En español, portugués, inglés y chino.
 
@@ -204,6 +204,8 @@ Hecho por LHCX en São Paulo, Brasil.
 | Recurso gráfico | `loja/<idioma>/destaque-1024x500.png` (PNG 24 bits, sem alfa) |
 | Capturas do telefone | `loja/<idioma>/captura-1.png` … `captura-8.png` (1080 × 1920, 9:16) |
 | Vídeo | URL do YouTube do `video/saida/baru-horizontal.mp4` (público ou não listado, sem anúncios, sem restrição de idade) |
+| Pacote | `tech.lhcx.baru` |
+| Preço | Gratuito (sem compras no app: o paywall fica desligado até o Play Billing existir, `lib/cobranca.dart`) |
 
 ### Antes de enviar — o que o Console vai perguntar
 
@@ -212,18 +214,29 @@ Hecho por LHCX en São Paulo, Brasil.
   progresso), e o total diário de tempo de tela. Tudo vai para o Supabase,
   criptografado em trânsito; o usuário pode pedir exclusão (no app ou pela URL
   acima). Nada é compartilhado com terceiros para publicidade.
-- **Permissões sensíveis.** O manifesto declara `FOREGROUND_SERVICE_SPECIAL_USE`
-  (o vigia da sessão) — a Play pede a declaração do tipo de serviço em primeiro
-  plano com a justificativa e um vídeo curto mostrando o uso. Também declara
-  `SYSTEM_ALERT_WINDOW`, `PACKAGE_USAGE_STATS` e `SCHEDULE_EXACT_ALARM`:
-  confira no Console, no momento do envio, se alguma delas pede formulário.
-- **Exclusão de conta dentro do app (bloqueia o envio).** A Play exige que
-  quem cria conta no app consiga pedir a exclusão **da conta** por dentro
-  dele. Hoje "Apagar meus dados" apaga as linhas das tabelas do app no
-  Supabase, mas não o usuário em `auth.users` (o login continua existindo).
-  Até isso mudar, a página `/solucoes/baru/excluir-conta/` cobre o pedido
-  por e-mail — mas o caminho dentro do app precisa apagar o login também
-  (ex.: uma Edge Function com a `service_role` chamada pelo botão).
+- **Permissões sensíveis** (manifesto final do release). Justificativas
+  prontas para colar:
+  - `FOREGROUND_SERVICE_SPECIAL_USE` — tipo "Uso especial". "Durante uma
+    sessão de foco escolhida pelo usuário, um serviço em primeiro plano
+    mantém a contagem regressiva na barra de notificações e percebe quando a
+    pessoa sai do app, para o companheiro chamá-la de volta. Termina quando
+    a sessão acaba ou a pessoa desiste." A Play pede um vídeo curto (pode ser
+    gravado da tela) mostrando: iniciar uma sessão, a notificação com a
+    contagem, sair do app e o Baru aparecer por cima.
+  - `PACKAGE_USAGE_STATS` — "Tempo de tela: o recurso central do app soma o
+    tempo de tela do dia por categoria de app para comparar com a meta que a
+    pessoa definiu. Só o total diário vai para o servidor; o detalhe por app
+    fica no aparelho. A permissão é pedida numa tela própria e pode ser
+    recusada."
+  - `SYSTEM_ALERT_WINDOW` — "Mostrar o companheiro por cima de outros apps
+    quando a pessoa sai do Baru durante uma sessão de foco que ela mesma
+    iniciou."
+  - `SCHEDULE_EXACT_ALARM` — "Avisar o fim da sessão de foco na hora exata
+    escolhida pelo usuário. Se negada, o app usa agendamento inexato."
+- **Exclusão de conta dentro do app — resolvida.** "Apagar meus dados" (Sua
+  conta) apaga os dados e o login (`baru_excluir_minha_conta`, migration
+  `20261023120000`, aplicada no Supabase e testada de ponta a ponta em
+  2026-10-23). A URL acima cobre quem não consegue entrar.
 - **Classificação indicativa:** questionário IARC (app sem violência, sem
   conteúdo gerado por usuários, sem compras por enquanto).
 - **Público-alvo:** 13+ é o que a política de privacidade declara.

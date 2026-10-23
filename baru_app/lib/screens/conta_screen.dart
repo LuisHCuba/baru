@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../cobranca.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -107,9 +108,7 @@ class _ContaScreenState extends State<ContaScreen> {
                 ),
                 const SizedBox(height: Espaco.md),
                 CartaoBaru(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Espaco.md,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
                   child: Column(
                     children: [
                       _Acao(
@@ -167,51 +166,55 @@ class _ContaScreenState extends State<ContaScreen> {
                 const SizedBox(height: Espaco.sm),
                 _Aviso(texto: _aviso!, erro: _avisoEhErro),
               ],
-              const SizedBox(height: Espaco.md),
-              CartaoBaru(
-                cor: Cores.primariaA(0.10),
-                elevado: false,
-                onTap: () => app.go(AppScreen.paywall),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.workspace_premium_outlined,
-                      size: 20,
-                      color: Cores.primariaEscura,
-                    ),
-                    const SizedBox(width: Espaco.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            app.trial
-                                ? t.fill(t.planTrial, {'n': app.trialDaysLeft})
-                                : t.planNone,
-                            style: estilo(Tipo.subtitulo),
-                          ),
-                          Text(
-                            app.trial
-                                ? t.fill(t.planTrialSub, {
-                                    'd': t.formatLongDate(app.paidPlanStart),
-                                  })
-                                : t.planNoneSub,
-                            style: estilo(
-                              Tipo.corpoPequeno,
-                              color: Cores.tintaA(0.6),
-                            ),
-                          ),
-                        ],
+              if (cobrancaNaLoja) ...[
+                const SizedBox(height: Espaco.md),
+                CartaoBaru(
+                  cor: Cores.primariaA(0.10),
+                  elevado: false,
+                  onTap: () => app.go(AppScreen.paywall),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.workspace_premium_outlined,
+                        size: 20,
+                        color: Cores.primariaEscura,
                       ),
-                    ),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      size: 18,
-                      color: Cores.primariaEscura,
-                    ),
-                  ],
+                      const SizedBox(width: Espaco.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              app.trial
+                                  ? t.fill(t.planTrial, {
+                                      'n': app.trialDaysLeft,
+                                    })
+                                  : t.planNone,
+                              style: estilo(Tipo.subtitulo),
+                            ),
+                            Text(
+                              app.trial
+                                  ? t.fill(t.planTrialSub, {
+                                      'd': t.formatLongDate(app.paidPlanStart),
+                                    })
+                                  : t.planNoneSub,
+                              style: estilo(
+                                Tipo.corpoPequeno,
+                                color: Cores.tintaA(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: Cores.primariaEscura,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: Espaco.md),
               CartaoBaru(
                 padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
@@ -354,17 +357,13 @@ class _ContaScreenState extends State<ContaScreen> {
                   const SizedBox(height: Espaco.sm),
                   Text(
                     nota,
-                    style: estilo(
-                      Tipo.corpoPequeno,
-                      color: Cores.tintaA(0.55),
-                    ),
+                    style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.55)),
                   ),
                 ],
                 const SizedBox(height: Espaco.md),
                 PrimaryButton(
                   label: t.contaSalvar,
-                  onTap: () =>
-                      Navigator.of(sheetContext).pop(controlador.text),
+                  onTap: () => Navigator.of(sheetContext).pop(controlador.text),
                 ),
               ],
             ),
@@ -408,8 +407,8 @@ class _Acao extends StatelessWidget {
     final cor = perigo
         ? Cores.dispersivo
         : apagado
-            ? Cores.tintaA(0.5)
-            : Cores.tinta;
+        ? Cores.tintaA(0.5)
+        : Cores.tinta;
     return Semantics(
       button: true,
       enabled: ativo,

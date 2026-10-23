@@ -154,7 +154,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     expect(
-      find.textContaining('só o total de tempo de tela'),
+      find.textContaining('o total diário de tempo de tela'),
       findsOneWidget,
     );
   });

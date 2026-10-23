@@ -1,3 +1,4 @@
+import 'package:baru_app/cobranca.dart';
 import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/data/repositories.dart';
 import 'package:baru_app/models.dart';
@@ -81,7 +82,7 @@ void main() {
     s.restartOnboarding();
     s.onb = 5;
     s.nextOnb();
-    expect(s.screen, AppScreen.paywall);
+    expect(s.screen, cobrancaNaLoja ? AppScreen.paywall : AppScreen.home);
     expect(s.leaves, 80);
     expect(s.owned, ['lily']);
   });

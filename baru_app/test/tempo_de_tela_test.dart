@@ -117,7 +117,7 @@ void main() {
     });
 
     test('o próprio Baru', () {
-      expect(ex.excluido('com.lhcx.baru_app'), isTrue);
+      expect(ex.excluido('tech.lhcx.baru'), isTrue);
     });
 
     test('um app de verdade não é excluído', () {

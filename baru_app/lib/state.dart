@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:uuid/uuid.dart';
 
+import 'cobranca.dart';
 import 'data/app_snapshot.dart';
 import 'data/cofre.dart';
 import 'data/descanso_do_dia.dart';
@@ -654,8 +655,13 @@ class AppState extends ChangeNotifier {
     await cofre.esquece();
     await repos?.clearSnapshot();
 
-    // 3. O servidor.
+    // 3. O servidor: os dados e, por último, o próprio login (a Play exige
+    //    que apagar seja apagar a conta, não só o conteúdo dela).
     final falharam = await BaruSupabase.instance.apagaTudoDoUsuario();
+    if (!(falharam.length == 1 && falharam.first == 'sem_sessao') &&
+        !await BaruSupabase.instance.excluiConta()) {
+      falharam.add('conta');
+    }
 
     // 4. O estado em memória volta ao zero, senão o próximo `notifyListeners`
     //    grava o que ainda está aqui dentro.
@@ -1185,7 +1191,7 @@ class AppState extends ChangeNotifier {
   void nextOnb() {
     if (onb >= 5) {
       if (!companionshipStarted) startCompanionship();
-      go(AppScreen.paywall);
+      go(cobrancaNaLoja ? AppScreen.paywall : AppScreen.home);
       return;
     }
     if (onb == 2) {

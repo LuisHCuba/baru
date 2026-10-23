@@ -609,7 +609,7 @@ const _pt = <String, Object>{
   'trilhaBloqueado': 'A caminho',
   'nivelRotulo': 'Nível {n}',
   'contaT': 'Sua conta',
-  'contaSub': 'E-mail, senha e plano.',
+  'contaSub': 'E-mail, senha e seus dados.',
   'contaEmail': 'E-mail',
   'contaEmailNaoConfirmado': 'ainda não confirmado',
   'contaTrocarEmail': 'Trocar e-mail',
@@ -818,7 +818,7 @@ const _pt = <String, Object>{
   'quizVoltar': 'Voltar uma',
   'revealTrocar': 'Prefere outro?',
   'contaApagar': 'Apagar meus dados',
-  'contaApagarSub': 'Some com tudo: sessões, folhas, habitat, trilha e respostas. Aqui e no servidor.',
+  'contaApagarSub': 'Some com tudo: sessões, folhas, habitat, trilha, respostas e a sua conta. Aqui e no servidor.',
   'contaApagarConfirma': 'Isso não tem volta. Tudo o que você construiu com {n} vai embora, deste aparelho e da nuvem.',
   'contaApagarBotao': 'Apagar tudo',
   'contaApagarCancelar': 'Cancelar',
@@ -1051,9 +1051,9 @@ const _pt = <String, Object>{
   'repFreezeMany':
       'Restam {n} congelamentos nesta semana. Se você faltar um dia, ele te espera.',
   'privacyBody':
-      'O Baru lê só o total de tempo de tela do dia, se você permitir. Nunca quais apps, nunca o conteúdo. Nada disso sai do aparelho nesta fase. Sessões, folhas e o habitat ficam no telefone. A assinatura desta versão é um teste local — a compra pela loja vem depois.',
+      'O Baru guarda no servidor só o mínimo para o seu progresso funcionar em qualquer aparelho: a sua conta, o seu companheiro, as sessões de foco e o total diário de tempo de tela, se você permitir. Quais apps você usou e por quanto tempo fica só no celular. O app nunca lê mensagens, conteúdo de tela ou o que você digita, e não tem anúncios. Política completa: lhcx.tech/solucoes/baru/privacidade',
   'termsBody':
-      'Você usa o Baru para sessões de foco e um habitat. Ele nunca morre, nunca perde progresso e nunca te culpa. O teste de 7 dias desta versão não cobra na loja. Restaurar compras só marca o teste local. Trocar o idioma e a meta não apaga o habitat.',
+      'Você usa o Baru para sessões de foco e um habitat. Ele nunca morre, nunca perde progresso e nunca te culpa. Esta versão é gratuita. Trocar o idioma e a meta não apaga o habitat.',
   'tabs': ['Habitat', 'Trilha', 'Missões', 'Ajustes'],
 };
 
@@ -1115,7 +1115,7 @@ const _en = <String, Object>{
   'trilhaBloqueado': 'Ahead',
   'nivelRotulo': 'Level {n}',
   'contaT': 'Your account',
-  'contaSub': 'Email, password and plan.',
+  'contaSub': 'Email, password and your data.',
   'contaEmail': 'Email',
   'contaEmailNaoConfirmado': 'not confirmed yet',
   'contaTrocarEmail': 'Change email',
@@ -1324,7 +1324,7 @@ const _en = <String, Object>{
   'quizVoltar': 'Back one',
   'revealTrocar': 'Prefer another?',
   'contaApagar': 'Delete my data',
-  'contaApagarSub': 'Wipes everything: sessions, leaves, habitat, trail and answers. Here and on the server.',
+  'contaApagarSub': 'Wipes everything: sessions, leaves, habitat, trail, answers and your account. Here and on the server.',
   'contaApagarConfirma': 'There is no undo. Everything you built with {n} goes, from this device and from the cloud.',
   'contaApagarBotao': 'Delete everything',
   'contaApagarCancelar': 'Cancel',
@@ -1547,9 +1547,9 @@ const _en = <String, Object>{
   'repFreezeMany':
       '{n} freezes left this week. If you miss a day, it waits for you.',
   'privacyBody':
-      'Baru reads only the daily screen-time total, if you allow it. Never which apps, never content. Nothing leaves your device in this phase. Sessions, leaves, and the habitat stay on the phone. The subscription here is a local trial — store billing comes later.',
+      'Baru keeps only the minimum on the server so your progress works on any device: your account, your companion, your focus sessions and the daily screen-time total, if you allow it. Which apps you used and for how long stays on your phone. The app never reads messages, screen content or what you type, and has no ads. Full policy: lhcx.tech/solucoes/baru/privacidade',
   'termsBody':
-      'You use Baru for focus sessions and a habitat. It never dies, never loses progress, and never blames you. The 7-day trial in this build does not charge through the store. Restore purchases only marks the local trial. Changing language or goal does not wipe the habitat.',
+      'You use Baru for focus sessions and a habitat. It never dies, never loses progress, and never blames you. This version is free. Changing language or goal does not wipe the habitat.',
   'tabs': ['Habitat', 'Path', 'Missions', 'Settings'],
 };
 
@@ -1611,7 +1611,7 @@ const _es = <String, Object>{
   'trilhaBloqueado': 'Por venir',
   'nivelRotulo': 'Nivel {n}',
   'contaT': 'Tu cuenta',
-  'contaSub': 'Correo, contraseña y plan.',
+  'contaSub': 'Correo, contraseña y tus datos.',
   'contaEmail': 'Correo',
   'contaEmailNaoConfirmado': 'aún sin confirmar',
   'contaTrocarEmail': 'Cambiar correo',
@@ -1820,7 +1820,7 @@ const _es = <String, Object>{
   'quizVoltar': 'Volver una',
   'revealTrocar': '¿Prefieres otro?',
   'contaApagar': 'Borrar mis datos',
-  'contaApagarSub': 'Borra todo: sesiones, hojas, hábitat, camino y respuestas. Aquí y en el servidor.',
+  'contaApagarSub': 'Borra todo: sesiones, hojas, hábitat, camino, respuestas y tu cuenta. Aquí y en el servidor.',
   'contaApagarConfirma': 'Esto no tiene vuelta. Todo lo que construiste con {n} se va, de este dispositivo y de la nube.',
   'contaApagarBotao': 'Borrar todo',
   'contaApagarCancelar': 'Cancelar',
@@ -2044,9 +2044,9 @@ const _es = <String, Object>{
   'repFreezeMany':
       'Quedan {n} congelamientos esta semana. Si faltas un día, te espera.',
   'privacyBody':
-      'Baru solo lee el total diario de tiempo de pantalla, si lo permites. Nunca qué apps ni el contenido. Nada sale del aparato en esta fase. Sesiones, hojas y el hábitat quedan en el teléfono. La suscripción de esta versión es una prueba local — el cobro en la tienda llega después.',
+      'Baru guarda en el servidor solo lo mínimo para que tu progreso funcione en cualquier aparato: tu cuenta, tu compañero, las sesiones de enfoque y el total diario de tiempo de pantalla, si lo permites. Qué apps usaste y por cuánto tiempo queda solo en el teléfono. La app nunca lee mensajes, contenido de pantalla ni lo que escribes, y no tiene anuncios. Política completa: lhcx.tech/solucoes/baru/privacidade',
   'termsBody':
-      'Usas Baru para sesiones de enfoque y un hábitat. Nunca muere, nunca pierde progreso y nunca te culpa. La prueba de 7 días de esta versión no cobra en la tienda. Restaurar compras solo marca la prueba local. Cambiar idioma o meta no borra el hábitat.',
+      'Usas Baru para sesiones de enfoque y un hábitat. Nunca muere, nunca pierde progreso y nunca te culpa. Esta versión es gratuita. Cambiar idioma o meta no borra el hábitat.',
   'tabs': ['Hábitat', 'Camino', 'Misiones', 'Ajustes'],
 };
 
@@ -2108,7 +2108,7 @@ const _zh = <String, Object>{
   'trilhaBloqueado': '即将到来',
   'nivelRotulo': '等级 {n}',
   'contaT': '你的账号',
-  'contaSub': '邮箱、密码与套餐。',
+  'contaSub': '邮箱、密码与你的数据。',
   'contaEmail': '邮箱',
   'contaEmailNaoConfirmado': '尚未验证',
   'contaTrocarEmail': '更换邮箱',
@@ -2311,7 +2311,7 @@ const _zh = <String, Object>{
   'quizVoltar': '返回上一题',
   'revealTrocar': '想换一个？',
   'contaApagar': '删除我的数据',
-  'contaApagarSub': '清空全部：专注记录、叶子、栖息地、旅程和答案。本机和服务器都清。',
+  'contaApagarSub': '清空全部：专注记录、叶子、栖息地、旅程、答案和你的账户。本机和服务器都清。',
   'contaApagarConfirma': '无法撤销。你和{n}一起建立的一切都会消失，本机和云端都是。',
   'contaApagarBotao': '全部删除',
   'contaApagarCancelar': '取消',
@@ -2505,8 +2505,8 @@ const _zh = <String, Object>{
   'streakOne': '1 天的根',
   'repFreezeMany': '本周还有 {n} 次冻结。如果你缺一天，它会等你。',
   'privacyBody':
-      '如果你允许，Baru 只读取当天的屏幕总时长。不看具体应用，也不看内容。这一阶段数据不离开你的设备。专注时段、叶子和栖息地都留在手机上。这里的订阅是本地试用，商店扣款稍后才会接入。',
+      'Baru 只在服务器上保存让进度在任何设备上可用的最少数据：你的账户、你的伙伴、专注时段，以及你允许时的每日屏幕总时长。你用了哪些应用、用了多久只留在手机上。应用从不读取消息、屏幕内容或你输入的文字，也没有广告。完整政策：lhcx.tech/solucoes/baru/privacidade',
   'termsBody':
-      '你用 Baru 做专注时段、照料栖息地。它不会死，不会丢掉进度，也不会责怪你。这个版本的 7 天试用不会通过商店扣款。恢复购买只标记本地试用。改语言或目标不会清空栖息地。',
+      '你用 Baru 做专注时段、照料栖息地。它不会死，不会丢掉进度，也不会责怪你。这个版本免费。改语言或目标不会清空栖息地。',
   'tabs': ['栖息地', '路径', '任务', '设置'],
 };

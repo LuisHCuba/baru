@@ -94,7 +94,9 @@ class IntervaloDeUso {
 /// Nenhum deles é "uso": são a moldura do sistema, ou o próprio Baru — contar
 /// o tempo que a pessoa passa **no app que mede o tempo** seria absurdo.
 class ExclusoesDeContagem {
-  const ExclusoesDeContagem({this.proprioPacote = 'com.lhcx.baru_app'});
+  /// O `applicationId` do Android (build.gradle.kts), não o pacote do código
+  /// Kotlin, que continua `com.lhcx.baru_app`.
+  const ExclusoesDeContagem({this.proprioPacote = 'tech.lhcx.baru'});
 
   final String proprioPacote;
 

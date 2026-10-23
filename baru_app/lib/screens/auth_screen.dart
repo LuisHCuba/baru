@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data/auth_errors.dart';
 import '../data/biometria.dart';
@@ -6,8 +7,10 @@ import '../data/cofre.dart';
 import '../data/supabase_gateway.dart';
 import '../l10n.dart';
 import '../l10n_codigo.dart';
+import '../models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/pet.dart';
 
 enum AuthMode { login, signup }
 
@@ -219,6 +222,8 @@ class _AuthScreenState extends State<AuthScreen> {
         // só não há o que destravar.
         comBiometria: _podeBiometria,
       );
+      // Fecha o contexto de preenchimento: o Android oferece salvar a senha.
+      TextInput.finishAutofillContext();
       await widget.onAuthenticated();
     } catch (e) {
       if (!mounted) return;
@@ -333,6 +338,8 @@ class _AuthScreenState extends State<AuthScreen> {
           comBiometria: _podeBiometria,
         );
       }
+      // Fecha o contexto de preenchimento: o Android oferece salvar a senha.
+      TextInput.finishAutofillContext();
       await widget.onAuthenticated();
     } catch (e) {
       if (mounted) setState(() => _error = translateAuthError(e, widget.lang));
@@ -368,70 +375,71 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _corpoCodigo() {
     garanteTextosDoCodigo();
     final senha = _codigo == _Codigo.senha;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 40),
-        Text(
-          t.s(senha ? 'codTituloSenha' : 'codTituloCadastro'),
-          style: nunito(
-            size: 27,
-            weight: FontWeight.w800,
-            height: 1.2,
-            letterSpacing: -0.5,
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _cabecalho(
+            titulo: t.s(senha ? 'codTituloSenha' : 'codTituloCadastro'),
+            sub: t.fill(t.s('codSub'), {'e': _email.text.trim()}),
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          t.fill(t.s('codSub'), {'e': _email.text.trim()}),
-          style: nunito(size: 15.5, height: 1.5, color: AppColors.inkA(0.62)),
-        ),
-        const SizedBox(height: 28),
-        _field(
-          label: t.s('codCampo'),
-          controller: _campoCodigo,
-          keyboard: TextInputType.number,
-          autocorrect: false,
-        ),
-        if (senha) ...[
-          const SizedBox(height: 14),
           _field(
-            label: t.s('codNovaSenha'),
-            controller: _password,
-            obscure: true,
+            label: t.s('codCampo'),
+            controller: _campoCodigo,
+            icone: Icons.pin_outlined,
+            keyboard: TextInputType.number,
+            autocorrect: false,
+            autofill: const [AutofillHints.oneTimeCode],
+            acao: senha ? TextInputAction.next : TextInputAction.done,
+            aoEnviar: senha ? null : _confirmaCodigo,
           ),
-          const SizedBox(height: 14),
-          _field(
-            label: t.s('codConfirmaSenha'),
-            controller: _confirm,
-            obscure: true,
+          if (senha) ...[
+            const SizedBox(height: 12),
+            _field(
+              label: t.s('codNovaSenha'),
+              controller: _password,
+              icone: Icons.lock_outline_rounded,
+              obscure: true,
+              autofill: const [AutofillHints.newPassword],
+              acao: TextInputAction.next,
+            ),
+            const SizedBox(height: 12),
+            _field(
+              label: t.s('codConfirmaSenha'),
+              controller: _confirm,
+              icone: Icons.lock_outline_rounded,
+              obscure: true,
+              autofill: const [AutofillHints.newPassword],
+              acao: TextInputAction.done,
+              aoEnviar: _confirmaCodigo,
+            ),
+          ],
+          if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
+          if (_recado != null) ...[
+            const SizedBox(height: 16),
+            _recadoOk(_recado!),
+          ],
+          const SizedBox(height: 24),
+          PrimaryButton(
+            label: _loading
+                ? t.authLoading
+                : t.s(senha ? 'codBotaoSenha' : 'codBotaoCadastro'),
+            onTap: _loading ? null : _confirmaCodigo,
+            enabled: !_loading,
+            shadow: true,
+          ),
+          const SizedBox(height: 12),
+          TextAction(
+            key: AuthScreen.chaveReenviar,
+            label: t.s('codReenviar'),
+            onTap: _loading ? () {} : _reenviaCodigo,
+          ),
+          TextAction(
+            label: t.s('codVoltar'),
+            onTap: _loading ? () {} : _fechaCodigo,
           ),
         ],
-        if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
-        if (_recado != null) ...[
-          const SizedBox(height: 16),
-          _recadoOk(_recado!),
-        ],
-        const SizedBox(height: 24),
-        PrimaryButton(
-          label: _loading
-              ? t.authLoading
-              : t.s(senha ? 'codBotaoSenha' : 'codBotaoCadastro'),
-          onTap: _loading ? null : _confirmaCodigo,
-          enabled: !_loading,
-          shadow: true,
-        ),
-        const SizedBox(height: 12),
-        TextAction(
-          key: AuthScreen.chaveReenviar,
-          label: t.s('codReenviar'),
-          onTap: _loading ? () {} : _reenviaCodigo,
-        ),
-        TextAction(
-          label: t.s('codVoltar'),
-          onTap: _loading ? () {} : _fechaCodigo,
-        ),
-      ],
+      ),
     );
   }
 
@@ -488,29 +496,19 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 40),
-        Text(
-          t.authOla,
-          style: nunito(
-            size: 27,
-            weight: FontWeight.w800,
-            height: 1.2,
-            letterSpacing: -0.5,
-          ),
+        _cabecalho(
+          titulo: t.authOla,
+          sub: _podeBiometria ? t.authBiometriaSub : t.authLembrarSub,
+          humor: Mood.radiant,
         ),
-        const SizedBox(height: 10),
         Text(
           email,
+          textAlign: TextAlign.center,
           style: nunito(
             size: 16,
-            weight: FontWeight.w700,
-            color: AppColors.green,
+            weight: FontWeight.w800,
+            color: AppColors.greenDeep,
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          _podeBiometria ? t.authBiometriaSub : t.authLembrarSub,
-          style: nunito(size: 15, height: 1.5, color: AppColors.inkA(0.62)),
         ),
         if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
         const SizedBox(height: 28),
@@ -568,132 +566,272 @@ class _AuthScreenState extends State<AuthScreen> {
     ),
   );
 
-  Widget _corpoFormulario() {
-    final isLogin = _mode == AuthMode.login;
+  /// Topo comum das telas de entrada: o companheiro, o título e uma linha.
+  ///
+  /// Antes era só texto num fundo creme — a porta do app não tinha nada do
+  /// app. O bicho é o mesmo `PetView` da casa, parado, no humor da tela.
+  Widget _cabecalho({
+    required String titulo,
+    required String sub,
+    Mood humor = Mood.content,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
+        Center(
+          child: SizedBox(
+            height: 132,
+            child: PetView(
+              species: Species.capybara,
+              mood: humor,
+              activity: Activity.idle,
+              coat: 0,
+              scale: 0.82,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
         Text(
-          isLogin ? t.authLoginTitle : t.authSignupTitle,
+          titulo,
+          textAlign: TextAlign.center,
           style: nunito(
-            size: 27,
+            size: 26,
             weight: FontWeight.w800,
             height: 1.2,
             letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Text(
-          isLogin ? t.authLoginSub : t.authSignupSub,
-          style: nunito(size: 15.5, height: 1.5, color: AppColors.inkA(0.62)),
+          sub,
+          textAlign: TextAlign.center,
+          style: nunito(size: 15, height: 1.45, color: AppColors.inkA(0.6)),
         ),
-        const SizedBox(height: 28),
-        _field(
-          label: t.authEmail,
-          controller: _email,
-          keyboard: TextInputType.emailAddress,
-          autocorrect: false,
-        ),
-        const SizedBox(height: 14),
-        _field(label: t.authPassword, controller: _password, obscure: true),
-        if (!isLogin) ...[
-          const SizedBox(height: 14),
-          _field(
-            label: t.authPasswordConfirm,
-            controller: _confirm,
-            obscure: true,
-          ),
-        ],
-        const SizedBox(height: 18),
-        // Lembrar é escolha explícita e reversível. O subtítulo diz
-        // onde o dado fica: "só neste aparelho, cifrado" — sem isso a
-        // pessoa tem que adivinhar se a senha foi para algum servidor.
-        _LinhaLembrar(
-          key: AuthScreen.chaveLembrar,
-          rotulo: t.authLembrar,
-          detalhe: _podeBiometria
-              ? '${t.authLembrarSub} ${t.authBiometriaSub}'
-              : t.authLembrarSub,
-          ligado: _lembrar,
-          aoTocar: () => setState(() => _lembrar = !_lembrar),
-        ),
-        if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
-        if (_recado != null) ...[
-          const SizedBox(height: 16),
-          _recadoOk(_recado!),
-        ],
-        const SizedBox(height: 24),
-        PrimaryButton(
-          label: _loading
-              ? t.authLoading
-              : (isLogin ? t.authSignIn : t.authSignUp),
-          onTap: _loading ? null : _submit,
-          enabled: !_loading,
-          shadow: true,
-        ),
-        const SizedBox(height: 12),
-        TextAction(
-          label: isLogin ? t.authCreateAccount : t.authBackToLogin,
-          onTap: _loading
-              ? () {}
-              : () {
-                  setState(() {
-                    _mode = isLogin ? AuthMode.signup : AuthMode.login;
-                    _error = null;
-                    _recado = null;
-                    _confirm.clear();
-                  });
-                },
-        ),
-        if (isLogin)
-          TextAction(
-            key: AuthScreen.chaveEsqueci,
-            label: t.contaRecuperar,
-            onTap: _loading ? () {} : _recuperar,
-          ),
-        if (_guardada != null)
-          TextAction(
-            key: AuthScreen.chaveDigitar,
-            label: t.authBiometria,
-            onTap: () => setState(() => _entrada = _Entrada.desbloqueio),
-          ),
+        const SizedBox(height: 26),
       ],
     );
   }
 
+  Widget _corpoFormulario() {
+    garanteTextosDoCodigo();
+    final isLogin = _mode == AuthMode.login;
+    void trocaModo() {
+      if (_loading) return;
+      setState(() {
+        _mode = isLogin ? AuthMode.signup : AuthMode.login;
+        _error = null;
+        _recado = null;
+        _confirm.clear();
+      });
+    }
+
+    // AutofillGroup: o gerenciador de senhas do Google oferece e guarda o
+    // login. Sem ele a pessoa digitava tudo à mão toda vez.
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _cabecalho(
+            titulo: isLogin ? t.authLoginTitle : t.authSignupTitle,
+            sub: t.s(isLogin ? 'codLoginSub' : 'codCadastroSub'),
+          ),
+          _field(
+            label: t.authEmail,
+            controller: _email,
+            icone: Icons.mail_outline_rounded,
+            keyboard: TextInputType.emailAddress,
+            autocorrect: false,
+            autofill: const [AutofillHints.email, AutofillHints.username],
+            acao: TextInputAction.next,
+          ),
+          const SizedBox(height: 12),
+          _field(
+            label: t.authPassword,
+            controller: _password,
+            icone: Icons.lock_outline_rounded,
+            obscure: true,
+            autofill: [
+              isLogin ? AutofillHints.password : AutofillHints.newPassword,
+            ],
+            acao: isLogin ? TextInputAction.done : TextInputAction.next,
+            aoEnviar: isLogin ? _submit : null,
+          ),
+          if (isLogin)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                key: AuthScreen.chaveEsqueci,
+                onPressed: _loading ? null : _recuperar,
+                child: Text(
+                  t.s('codEsqueci'),
+                  style: nunito(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: AppColors.greenDeep,
+                  ),
+                ),
+              ),
+            )
+          else ...[
+            const SizedBox(height: 12),
+            _field(
+              label: t.authPasswordConfirm,
+              controller: _confirm,
+              icone: Icons.lock_outline_rounded,
+              obscure: true,
+              autofill: const [AutofillHints.newPassword],
+              acao: TextInputAction.done,
+              aoEnviar: _submit,
+            ),
+            const SizedBox(height: 8),
+          ],
+          // Lembrar é escolha explícita e reversível. O subtítulo diz onde o
+          // dado fica — sem isso a pessoa tem que adivinhar se a senha foi
+          // para algum servidor.
+          _LinhaLembrar(
+            key: AuthScreen.chaveLembrar,
+            rotulo: t.s('codLembrar'),
+            detalhe: _podeBiometria ? t.s('codLembrarSub') : t.authLembrarSub,
+            ligado: _lembrar,
+            aoTocar: () => setState(() => _lembrar = !_lembrar),
+          ),
+          if (_error != null) ...[const SizedBox(height: 14), _aviso(_error!)],
+          if (_recado != null) ...[
+            const SizedBox(height: 14),
+            _recadoOk(_recado!),
+          ],
+          const SizedBox(height: 20),
+          PrimaryButton(
+            label: _loading
+                ? t.authLoading
+                : (isLogin ? t.authSignIn : t.authSignUp),
+            onTap: _loading ? null : _submit,
+            enabled: !_loading,
+            shadow: true,
+          ),
+          if (_guardada != null && isLogin) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: AuthScreen.chaveDigitar,
+              onPressed: () => setState(() => _entrada = _Entrada.desbloqueio),
+              icon: const Icon(Icons.fingerprint_rounded, size: 22),
+              label: Text(
+                t.authBiometria,
+                style: nunito(size: 15.5, weight: FontWeight.w700),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.greenDeep,
+                minimumSize: const Size.fromHeight(52),
+                side: BorderSide(color: AppColors.greenA(0.45), width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadii.button),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 22),
+          // Trocar entre entrar e criar conta numa linha só, no rodapé: era
+          // um texto cinza solto no meio de outros dois iguais.
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                t.s(isLogin ? 'codSemConta' : 'codComConta'),
+                style: nunito(size: 15, color: AppColors.inkA(0.6)),
+              ),
+              TextButton(
+                onPressed: _loading ? null : trocaModo,
+                child: Text(
+                  isLogin ? t.authCreateAccount : t.authSignIn,
+                  style: nunito(
+                    size: 15,
+                    weight: FontWeight.w800,
+                    color: AppColors.greenDeep,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Controladores de senha que estão à mostra (o olho do campo).
+  final _senhasVisiveis = <TextEditingController>{};
+
+  /// Campo de entrada no visual do app: cartão claro, ícone, um rótulo só
+  /// (antes o rótulo aparecia duas vezes, em cima e dentro do campo) e o
+  /// olho para conferir a senha digitada.
   Widget _field({
     required String label,
     required TextEditingController controller,
+    IconData? icone,
     TextInputType keyboard = TextInputType.text,
     bool obscure = false,
     bool autocorrect = true,
+    Iterable<String>? autofill,
+    TextInputAction acao = TextInputAction.done,
+    Future<void> Function()? aoEnviar,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-          child: Text(
-            label,
-            style: nunito(
-              size: 13,
-              weight: FontWeight.w700,
-              color: AppColors.inkA(0.55),
-            ),
-          ),
+    final escondida = obscure && !_senhasVisiveis.contains(controller);
+    final borda = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadii.input),
+      borderSide: BorderSide(color: AppColors.inkA(0.10)),
+    );
+    return TextField(
+      controller: controller,
+      keyboardType: keyboard,
+      obscureText: escondida,
+      autocorrect: autocorrect && !obscure,
+      enableSuggestions: !obscure,
+      autofillHints: autofill,
+      textInputAction: acao,
+      style: nunito(size: 16, weight: FontWeight.w600),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: nunito(size: 15, color: AppColors.inkA(0.5)),
+        floatingLabelStyle: nunito(
+          size: 14,
+          weight: FontWeight.w700,
+          color: AppColors.greenDeep,
         ),
-        TextField(
-          controller: controller,
-          keyboardType: keyboard,
-          obscureText: obscure,
-          autocorrect: autocorrect,
-          enableSuggestions: !obscure,
-          style: nunito(size: 16, weight: FontWeight.w600),
-          decoration: InputDecoration(hintText: label),
-          onSubmitted: (_) => _loading ? null : _submit(),
+        filled: true,
+        fillColor: AppColors.card,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 18,
         ),
-      ],
+        prefixIcon: icone == null
+            ? null
+            : Icon(icone, color: AppColors.inkA(0.45), size: 22),
+        suffixIcon: !obscure
+            ? null
+            : IconButton(
+                tooltip: t.s(escondida ? 'codMostrar' : 'codEsconder'),
+                icon: Icon(
+                  escondida
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: AppColors.inkA(0.45),
+                ),
+                onPressed: () => setState(() {
+                  if (escondida) {
+                    _senhasVisiveis.add(controller);
+                  } else {
+                    _senhasVisiveis.remove(controller);
+                  }
+                }),
+              ),
+        border: borda,
+        enabledBorder: borda,
+        focusedBorder: borda.copyWith(
+          borderSide: const BorderSide(color: AppColors.green, width: 2),
+        ),
+      ),
+      onSubmitted: aoEnviar == null || _loading ? null : (_) => aoEnviar(),
     );
   }
 }

@@ -5,6 +5,7 @@ import '../data/biometria.dart';
 import '../data/cofre.dart';
 import '../data/supabase_gateway.dart';
 import '../l10n.dart';
+import '../l10n_codigo.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
@@ -16,6 +17,9 @@ enum AuthMode { login, signup }
 /// dizendo quem é e oferecendo o desbloqueio do aparelho. Digitar continua a
 /// um toque de distância — o caminho manual nunca some.
 enum _Entrada { formulario, desbloqueio }
+
+/// De que e-mail veio o código que a pessoa vai digitar.
+enum _Codigo { senha, cadastro }
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({
@@ -39,6 +43,7 @@ class AuthScreen extends StatefulWidget {
   static const chaveDigitar = Key('auth-digitar');
   static const chaveOutraConta = Key('auth-outra-conta');
   static const chaveEsqueci = Key('auth-esqueci');
+  static const chaveReenviar = Key('auth-reenviar');
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -52,6 +57,10 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _loading = false;
   String? _error;
   String? _recado;
+
+  /// Tela do código de e-mail: nula = fora dela.
+  _Codigo? _codigo;
+  final _campoCodigo = TextEditingController();
 
   late final Cofre _cofre = widget.cofre ?? CofreSeguro();
   late final Biometria _bio = widget.biometria ?? BiometriaDoAparelho();
@@ -135,6 +144,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void dispose() {
     _email.dispose();
+    _campoCodigo.dispose();
     _password.dispose();
     _confirm.dispose();
     super.dispose();
@@ -189,7 +199,8 @@ class _AuthScreenState extends State<AuthScreen> {
       } else {
         await BaruSupabase.instance.signUp(email: email, password: password);
         if (!BaruSupabase.instance.hasSession) {
-          setState(() => _error = t.authConfirmEmail);
+          // Conta criada, falta confirmar: o código do e-mail entra aqui mesmo.
+          _abreCodigo(_Codigo.cadastro);
           return;
         }
       }
@@ -225,16 +236,208 @@ class _AuthScreenState extends State<AuthScreen> {
           _password.clear();
         });
       }
+      // Senha certa mas e-mail sem confirmar: em vez de só avisar, manda um
+      // código novo e abre o campo para digitá-lo.
+      if (!doCofre && _mode == AuthMode.login && _emailSemConfirmar(e)) {
+        try {
+          await BaruSupabase.instance.reenviaConfirmacao(email);
+        } catch (_) {
+          // O código do e-mail anterior continua valendo; a tela abre igual.
+        }
+        if (!mounted) return;
+        _abreCodigo(_Codigo.cadastro);
+        return;
+      }
       setState(() => _error = translateAuthError(e, widget.lang));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  static bool _emailSemConfirmar(Object e) {
+    final texto = '$e'.toLowerCase();
+    return texto.contains('email_not_confirmed') ||
+        texto.contains('email not confirmed');
+  }
+
+  void _abreCodigo(_Codigo tipo) {
+    setState(() {
+      _codigo = tipo;
+      _error = null;
+      _recado = null;
+      _campoCodigo.clear();
+      _password.clear();
+      _confirm.clear();
+    });
+  }
+
+  void _fechaCodigo() {
+    setState(() {
+      _codigo = null;
+      _error = null;
+      _recado = null;
+      _campoCodigo.clear();
+      _password.clear();
+      _confirm.clear();
+      _mode = AuthMode.login;
+    });
+  }
+
+  /// Valida o código; na recuperação grava a senha nova antes de entrar.
+  Future<void> _confirmaCodigo() async {
+    final email = _email.text.trim();
+    final codigo = _campoCodigo.text.replaceAll(RegExp(r'\D'), '');
+    final senha = _password.text;
+    setState(() {
+      _error = null;
+      _recado = null;
+    });
+    if (codigo.length < 6) {
+      setState(() => _error = t.s('codCurto'));
+      return;
+    }
+    if (_codigo == _Codigo.senha) {
+      if (senha.length < 6) {
+        setState(() => _error = t.authPasswordShort);
+        return;
+      }
+      if (senha != _confirm.text) {
+        setState(() => _error = t.authPasswordMismatch);
+        return;
+      }
+    }
+    setState(() => _loading = true);
+    try {
+      await BaruSupabase.instance.verificaCodigo(
+        email: email,
+        codigo: codigo,
+        recuperacao: _codigo == _Codigo.senha,
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _error = t.s('codInvalido');
+          _loading = false;
+        });
+      }
+      return;
+    }
+    try {
+      if (_codigo == _Codigo.senha) {
+        await BaruSupabase.instance.trocaSenha(senha);
+        await aplicaLembranca(
+          _cofre,
+          lembrar: _lembrar,
+          email: email,
+          senha: senha,
+          comBiometria: _podeBiometria,
+        );
+      }
+      await widget.onAuthenticated();
+    } catch (e) {
+      if (mounted) setState(() => _error = translateAuthError(e, widget.lang));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _reenviaCodigo() async {
+    final email = _email.text.trim();
+    setState(() {
+      _error = null;
+      _recado = null;
+      _loading = true;
+    });
+    try {
+      if (_codigo == _Codigo.senha) {
+        await BaruSupabase.instance.recuperaSenha(email);
+      } else {
+        await BaruSupabase.instance.reenviaConfirmacao(email);
+      }
+      if (mounted) {
+        setState(() => _recado = t.fill(t.s('codReenviado'), {'e': email}));
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = translateAuthError(e, widget.lang));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Onde entra o código de 8 dígitos do e-mail (cadastro ou senha).
+  Widget _corpoCodigo() {
+    garanteTextosDoCodigo();
+    final senha = _codigo == _Codigo.senha;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 40),
+        Text(
+          t.s(senha ? 'codTituloSenha' : 'codTituloCadastro'),
+          style: nunito(
+            size: 27,
+            weight: FontWeight.w800,
+            height: 1.2,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          t.fill(t.s('codSub'), {'e': _email.text.trim()}),
+          style: nunito(size: 15.5, height: 1.5, color: AppColors.inkA(0.62)),
+        ),
+        const SizedBox(height: 28),
+        _field(
+          label: t.s('codCampo'),
+          controller: _campoCodigo,
+          keyboard: TextInputType.number,
+          autocorrect: false,
+        ),
+        if (senha) ...[
+          const SizedBox(height: 14),
+          _field(
+            label: t.s('codNovaSenha'),
+            controller: _password,
+            obscure: true,
+          ),
+          const SizedBox(height: 14),
+          _field(
+            label: t.s('codConfirmaSenha'),
+            controller: _confirm,
+            obscure: true,
+          ),
+        ],
+        if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
+        if (_recado != null) ...[
+          const SizedBox(height: 16),
+          _recadoOk(_recado!),
+        ],
+        const SizedBox(height: 24),
+        PrimaryButton(
+          label: _loading
+              ? t.authLoading
+              : t.s(senha ? 'codBotaoSenha' : 'codBotaoCadastro'),
+          onTap: _loading ? null : _confirmaCodigo,
+          enabled: !_loading,
+          shadow: true,
+        ),
+        const SizedBox(height: 12),
+        TextAction(
+          key: AuthScreen.chaveReenviar,
+          label: t.s('codReenviar'),
+          onTap: _loading ? () {} : _reenviaCodigo,
+        ),
+        TextAction(
+          label: t.s('codVoltar'),
+          onTap: _loading ? () {} : _fechaCodigo,
+        ),
+      ],
+    );
+  }
+
   /// "Esqueci a senha" na porta de entrada: quem esqueceu não consegue
   /// chegar em Sua conta, onde o mesmo pedido já existia. Usa o e-mail
-  /// digitado; o link do e-mail abre lhcx.tech/solucoes/baru/conta/, onde a
-  /// senha nova é escolhida.
+  /// digitado e abre a tela do código, onde a senha nova é escolhida.
   Future<void> _recuperar() async {
     final email = _email.text.trim();
     setState(() {
@@ -253,7 +456,7 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       await BaruSupabase.instance.recuperaSenha(email);
       if (!mounted) return;
-      setState(() => _recado = t.fill(t.contaRecuperarOk, {'e': email}));
+      _abreCodigo(_Codigo.senha);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = translateAuthError(e, widget.lang));
@@ -269,7 +472,9 @@ class _AuthScreenState extends State<AuthScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(26, 28, 26, 34),
-          child: _entrada == _Entrada.desbloqueio
+          child: _codigo != null
+              ? _corpoCodigo()
+              : _entrada == _Entrada.desbloqueio
               ? _corpoDesbloqueio()
               : _corpoFormulario(),
         ),

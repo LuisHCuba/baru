@@ -508,7 +508,12 @@ class AppState extends ChangeNotifier {
   /// escreva neste campo** — o botão que a virava saiu junto com o painel de
   /// depuração. Num APK de release a sessão de 25 minutos dura 25 minutos,
   /// sem caminho de volta.
-  bool debugFast = kDebugMode;
+  ///
+  /// `--dart-define=BARU_RELOGIO_REAL=true` desliga a compressão num build de
+  /// depuração: é o que permite testar num aparelho o que só acontece com o
+  /// tempo correndo de verdade, como o companheiro aparecer sobre outro app.
+  bool debugFast =
+      kDebugMode && !const bool.fromEnvironment('BARU_RELOGIO_REAL');
   bool usageAccess = false;
   bool companionshipStarted = false;
   List<WeekDayKind> week = freshWeek();

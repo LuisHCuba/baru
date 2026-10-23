@@ -173,6 +173,35 @@ class BaruSupabase {
     return resp;
   }
 
+  /// Valida o código de 8 dígitos do e-mail e abre a sessão.
+  ///
+  /// [recuperacao] verdadeiro = e-mail de "Esqueci a senha"; falso = e-mail
+  /// de confirmação de cadastro. Funciona sem o link, que abre no navegador.
+  Future<AuthResponse> verificaCodigo({
+    required String email,
+    required String codigo,
+    required bool recuperacao,
+  }) async {
+    _ensureAttached();
+    final resp = await _client!.auth.verifyOTP(
+      email: email.trim(),
+      token: codigo.trim(),
+      type: recuperacao ? OtpType.recovery : OtpType.signup,
+    );
+    if (resp.session == null) {
+      throw const AuthException('otp_expired');
+    }
+    _deviceId = await _ensureDeviceId();
+    await _refreshReady();
+    return resp;
+  }
+
+  /// Manda de novo o e-mail de confirmação de cadastro (com outro código).
+  Future<void> reenviaConfirmacao(String email) async {
+    _ensureAttached();
+    await _client!.auth.resend(type: OtpType.signup, email: email.trim());
+  }
+
   Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -235,11 +264,10 @@ class BaruSupabase {
     String tabela,
     Map<String, dynamic> linha,
     Set<String> ausentes,
-  ) =>
-      {
-        for (final e in linha.entries)
-          if (!ausentes.contains('$tabela.${e.key}')) e.key: e.value,
-      };
+  ) => {
+    for (final e in linha.entries)
+      if (!ausentes.contains('$tabela.${e.key}')) e.key: e.value,
+  };
 
   /// Grava uma linha tolerando coluna que este banco ainda não tem.
   ///
@@ -454,7 +482,10 @@ class BaruSupabase {
     final uid = _uid;
     final client = _client;
     if (!_ready || uid == null || client == null) return;
-    await _upsertTolerante('baru_pets', _codec.petRow(userId: uid, s: snapshot));
+    await _upsertTolerante(
+      'baru_pets',
+      _codec.petRow(userId: uid, s: snapshot),
+    );
   }
 
   Future<void> pushShop(AppSnapshot snapshot) async {
@@ -472,8 +503,10 @@ class BaruSupabase {
 
     // Some com o que saiu do inventário numa chamada só, em vez de ler tudo e
     // apagar item a item.
-    final apaga =
-        client.from('baru_inventory_items').delete().eq('user_id', uid);
+    final apaga = client
+        .from('baru_inventory_items')
+        .delete()
+        .eq('user_id', uid);
     if (owned.isEmpty) {
       await apaga;
     } else {
@@ -495,17 +528,14 @@ class BaruSupabase {
     // existe: colocar e tirar um item já comprado nunca chegaria ao remoto.
     // Daí a segunda, que manda só `equipped` — o upsert atualiza apenas as
     // colunas presentes no corpo, então `acquired_at` continua intacto.
-    await client.from('baru_inventory_items').upsert(
-          [
-            for (final r in rows)
-              {
-                'user_id': r['user_id'],
-                'item_id': r['item_id'],
-                'acquired_at': r['acquired_at'],
-              },
-          ],
-          ignoreDuplicates: true,
-        );
+    await client.from('baru_inventory_items').upsert([
+      for (final r in rows)
+        {
+          'user_id': r['user_id'],
+          'item_id': r['item_id'],
+          'acquired_at': r['acquired_at'],
+        },
+    ], ignoreDuplicates: true);
 
     if (_colunasSemRemoto.contains(_equipped)) return;
     try {
@@ -546,16 +576,18 @@ class BaruSupabase {
 
     // Reclassificações de app. Some do remoto o que o usuário desfez.
     final ajustes = snapshot.ajustesDeCategoria;
-    final apaga =
-        client.from('baru_app_categories').delete().eq('user_id', uid);
+    final apaga = client
+        .from('baru_app_categories')
+        .delete()
+        .eq('user_id', uid);
     if (ajustes.isEmpty) {
       await apaga;
     } else {
       final lista = ajustes.keys.map((p) => '"$p"').join(',');
       await apaga.not('package_name', 'in', '($lista)');
-      await client.from('baru_app_categories').upsert(
-            _codec.appCategoryRows(userId: uid, s: snapshot),
-          );
+      await client
+          .from('baru_app_categories')
+          .upsert(_codec.appCategoryRows(userId: uid, s: snapshot));
     }
   }
 
@@ -567,9 +599,9 @@ class BaruSupabase {
       'baru_streaks',
       _codec.streakRow(userId: uid, s: snapshot),
     );
-    await client.from('baru_week_calendar').upsert(
-          _codec.weekRows(userId: uid, s: snapshot),
-        );
+    await client
+        .from('baru_week_calendar')
+        .upsert(_codec.weekRows(userId: uid, s: snapshot));
     await _upsertTolerante(
       'baru_daily_progress',
       _codec.dailyProgressRow(userId: uid, s: snapshot),
@@ -611,7 +643,9 @@ class BaruSupabase {
     if (!_ready || uid == null || client == null) return;
     if (sessions.isEmpty) return;
     // Uma chamada, não uma por sessão: o snapshot guarda até 80.
-    await client.from('baru_sessions').upsert(
+    await client
+        .from('baru_sessions')
+        .upsert(
           sessions.map((s) => _codec.sessionRow(userId: uid, s: s)).toList(),
         );
   }
@@ -635,7 +669,8 @@ class BaruSupabase {
 
       final profileMap = Map<String, dynamic>.from(profile);
 
-      if (profileMap.containsKey('species') || profileMap.containsKey('leaves')) {
+      if (profileMap.containsKey('species') ||
+          profileMap.containsKey('leaves')) {
         final legacy = await _pullLegacy(uid, profileMap);
         return RemotePullResult(snapshot: legacy);
       }

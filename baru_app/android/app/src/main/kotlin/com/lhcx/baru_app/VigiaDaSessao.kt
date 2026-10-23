@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import org.json.JSONObject
 
@@ -156,6 +157,7 @@ object ContagemDaBarra {
 class VigiaDaSessao : Service() {
 
     companion object {
+        const val TAG_LOG = "BaruVigia"
         const val ACAO_COMECA = "com.lhcx.baru_app.VIGIA_COMECA"
         const val ACAO_PARA = "com.lhcx.baru_app.VIGIA_PARA"
 
@@ -226,6 +228,16 @@ class VigiaDaSessao : Service() {
     private val laco = Handler(Looper.getMainLooper())
     private var rodando = false
     private var ultimaAparicao = 0L
+
+    /**
+     * O ultimo app visto na frente, entre rodadas.
+     *
+     * `queryEvents` so devolve o que aconteceu dentro de [JANELA_MS]. Quem
+     * abre o Instagram e fica nele nao gera evento novo, e depois de 10 s a
+     * janela vinha vazia: o vigia deixava de "ver" o app da frente e o
+     * companheiro nunca mais aparecia naquela fuga. Lembrar o ultimo resolve.
+     */
+    private var ultimoNaFrente: String? = null
 
     private var fala: String? = null
     private var pelo = 0xFFB07A4E.toInt()
@@ -304,8 +316,10 @@ class VigiaDaSessao : Service() {
     }
 
     private fun comeca() {
+        Log.i(TAG_LOG, "vigia comeca (ja rodando=$rodando)")
         if (rodando) return
         rodando = true
+        ultimoNaFrente = null
         // A primeira rodada ja vale: a pessoa pode ter saido no instante em
         // que a sessao comecou.
         laco.post(rodada)
@@ -340,25 +354,39 @@ class VigiaDaSessao : Service() {
             if (!rodando) return
             try {
                 olha()
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // Sem acesso ao uso, sem servico do sistema, aparelho
                 // exotico: nada disso pode derrubar a sessao da pessoa.
+                // Mas fica no log: engolir calado escondia por que a
+                // sobreposicao nao aparecia.
+                Log.w(TAG_LOG, "rodada falhou", e)
             }
             if (rodando) laco.postDelayed(this, INTERVALO_MS)
         }
     }
 
     private fun olha() {
-        val naFrente = pacoteDaFrente() ?: return
+        val naFrente = pacoteDaFrente()
+        if (naFrente == null) {
+            Log.d(TAG_LOG, "sem app na frente (sem acesso ao uso ou sem eventos)")
+            return
+        }
         if (naFrente == packageName) return
         // Launcher e telas do sistema nao sao fuga: sao o caminho.
-        if (ehDoSistema(naFrente)) return
+        if (ehDoSistema(naFrente)) {
+            Log.d(TAG_LOG, "na frente: $naFrente (sistema, ignorado)")
+            return
+        }
 
         val agora = System.currentTimeMillis()
         if (agora - ultimaAparicao < DESCANSO_MS) return
         ultimaAparicao = agora
 
-        if (!OverlayDoBaru.temPermissao(this)) return
+        if (!OverlayDoBaru.temPermissao(this)) {
+            Log.w(TAG_LOG, "na frente: $naFrente, mas sem permissao de sobreposicao")
+            return
+        }
+        Log.i(TAG_LOG, "na frente: $naFrente -> mostra o Baru")
         startService(
             Intent(this, OverlayDoBaru::class.java).apply {
                 action = OverlayDoBaru.ACAO_MOSTRAR
@@ -424,7 +452,8 @@ class VigiaDaSessao : Service() {
                 ultimo = e.packageName
             }
         }
-        return ultimo
+        if (ultimo != null) ultimoNaFrente = ultimo
+        return ultimo ?: ultimoNaFrente
     }
 
     private fun ehDoSistema(pacote: String): Boolean {

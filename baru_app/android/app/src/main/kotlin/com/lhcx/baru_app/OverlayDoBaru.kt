@@ -13,6 +13,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import android.os.IBinder
 import android.provider.Settings
 import android.view.Gravity
@@ -76,6 +77,7 @@ class OverlayDoBaru : Service() {
 
     private fun mostra(intent: Intent?) {
         if (!temPermissao(this)) {
+            Log.w(VigiaDaSessao.TAG_LOG, "overlay: sem permissao de sobreposicao")
             stopSelf()
             return
         }
@@ -132,7 +134,14 @@ class OverlayDoBaru : Service() {
             y = dp(96)
         }
 
-        wm.addView(v, lp)
+        try {
+            wm.addView(v, lp)
+        } catch (e: Exception) {
+            Log.e(VigiaDaSessao.TAG_LOG, "overlay: addView falhou", e)
+            stopSelf()
+            return
+        }
+        Log.i(VigiaDaSessao.TAG_LOG, "overlay: Baru na tela")
         janela = wm
         vista = v
         v.entra()

@@ -69,7 +69,7 @@ class CartaoDaRaiz extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: estilo(
                     Tipo.numeroHeroi,
-                    color: Cores.primariaEscura,
+                    color: Cores.raiz600,
                     tabular: true,
                   ),
                 ),
@@ -84,7 +84,7 @@ class CartaoDaRaiz extends StatelessWidget {
                 Expanded(
                   child: RaizViva(
                     dias: dias,
-                    cor: Cores.primariaEscura,
+                    cor: Cores.raiz600,
                     corDaTerra: const Color(0x14000000),
                   ),
                 ),

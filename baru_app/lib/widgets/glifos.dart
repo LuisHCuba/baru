@@ -35,7 +35,8 @@ class GlifoFolha extends StatelessWidget {
       );
 }
 
-/// A raiz, a sequência de dias: uma semente brotando, com a raiz embaixo.
+/// A raiz, a sequência de dias: um broto num montinho de terra, com a raiz
+/// embaixo.
 class GlifoRaiz extends StatelessWidget {
   const GlifoRaiz({super.key, this.tamanho = 16, this.cor = Cores.raiz600});
 
@@ -153,48 +154,53 @@ class _PintorDaRaiz extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..strokeWidth = 2.1;
     final cheio = Paint()..color = cor;
-    // Duas folhas em V, pequenas: o glifo é sobre o que está embaixo.
+    // A raiz por baixo: três fios saindo da base do montinho, o do meio
+    // mais fundo. Desenhada antes, para a terra cobrir a emenda.
     canvas.drawPath(
       Path()
-        ..moveTo(11.6, 7.6)
-        ..quadraticBezierTo(6.4, 7.6, 5.2, 2.6)
-        ..quadraticBezierTo(10.6, 2.6, 11.6, 7.6)
+        ..moveTo(12, 13)
+        ..cubicTo(12.6, 16, 11.2, 18.6, 12, 21.8),
+      traco,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(10.4, 13)
+        ..cubicTo(9.4, 15.6, 7, 16.4, 5.6, 19.6),
+      traco,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(13.6, 13)
+        ..cubicTo(14.6, 15.6, 17, 16.4, 18.4, 19.6),
+      traco,
+    );
+    // O montinho de terra: uma cúpula cheia, não um traço — uma linha de
+    // chão cruzando o caule fazia o glifo ler como um bonequinho
+    // (auditoria do item 10, 4).
+    canvas.drawPath(
+      Path()
+        ..moveTo(3.4, 13.6)
+        ..cubicTo(5, 9.2, 19, 9.2, 20.6, 13.6)
+        ..close(),
+      Paint()..color = Color.lerp(cor, const Color(0xFFFFFBF2), 0.45)!,
+    );
+    // O broto em cima da terra: caule curto e duas folhas em V.
+    canvas.drawLine(const Offset(12, 10.4), const Offset(12, 6.6), traco);
+    canvas.drawPath(
+      Path()
+        ..moveTo(11.6, 7.4)
+        ..quadraticBezierTo(6.6, 7.4, 5.4, 2.6)
+        ..quadraticBezierTo(10.6, 2.6, 11.6, 7.4)
         ..close(),
       cheio,
     );
     canvas.drawPath(
       Path()
-        ..moveTo(12.4, 7.6)
-        ..quadraticBezierTo(17.6, 7.6, 18.8, 2.6)
-        ..quadraticBezierTo(13.4, 2.6, 12.4, 7.6)
+        ..moveTo(12.4, 7.4)
+        ..quadraticBezierTo(17.4, 7.4, 18.6, 2.6)
+        ..quadraticBezierTo(13.4, 2.6, 12.4, 7.4)
         ..close(),
       cheio,
-    );
-    canvas.drawLine(const Offset(12, 9.4), const Offset(12, 6.6), traco);
-    // A semente, de onde tudo sai. Sem linha de chão: um traço horizontal
-    // cruzando o caule fazia o glifo ler como um bonequinho.
-    canvas.drawOval(
-      Rect.fromCenter(center: const Offset(12, 11), width: 5.2, height: 4.2),
-      cheio,
-    );
-    // A raiz: três fios abrindo em leque, o do meio mais fundo.
-    canvas.drawPath(
-      Path()
-        ..moveTo(12, 12.4)
-        ..cubicTo(12.6, 15.6, 11.2, 18.4, 12, 21.6),
-      traco,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(10.6, 12.2)
-        ..cubicTo(9.6, 15, 6.6, 15.8, 5.2, 19.2),
-      traco,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(13.4, 12.2)
-        ..cubicTo(14.4, 15, 17.4, 15.8, 18.8, 19.2),
-      traco,
     );
   }
 

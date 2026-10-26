@@ -168,12 +168,13 @@ class PaywallScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Cores.mel400,
+                  // Tinta, não mel: mel é só recompensa (ADR-027).
+                  color: Cores.tinta,
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: Text(
                   badge.toUpperCase(),
-                  style: nunito(size: 10.5, weight: FontWeight.w800, height: 1.4, letterSpacing: 0.5, color: Cores.tinta),
+                  style: nunito(size: 10.5, weight: FontWeight.w800, height: 1.4, letterSpacing: 0.5, color: Cores.tintaClara),
                 ),
               ),
             ),

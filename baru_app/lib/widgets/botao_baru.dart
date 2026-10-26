@@ -82,7 +82,8 @@ class BotaoBaru extends StatefulWidget {
   });
 
   static const alturaPadrao = 56.0;
-  static const alturaCompacta = 44.0;
+  /// 48 e não menos: é o alvo mínimo de toque.
+  static const alturaCompacta = 48.0;
 
   final String rotulo;
   final VoidCallback? aoTocar;
@@ -136,13 +137,18 @@ class _BotaoBaruState extends State<BotaoBaru> {
     );
     final tamanho = widget.tamanhoDoTexto ?? (widget.altura >= 48 ? 17.0 : 15.0);
 
-    final rotulo = Text(
-      widget.rotulo,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.center,
-      style: estilo(Tipo.subtitulo, color: corDoTexto, weight: FontWeight.w800)
-          .copyWith(fontSize: tamanho, height: 1.2),
+    // Encolhe em vez de cortar: "Teste ativo — contin…" com fonte grande
+    // escondia justamente o verbo (auditoria do item 10, 1).
+    final rotulo = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        widget.rotulo,
+        maxLines: 1,
+        textAlign: TextAlign.center,
+        style:
+            estilo(Tipo.subtitulo, color: corDoTexto, weight: FontWeight.w800)
+                .copyWith(fontSize: tamanho, height: 1.2),
+      ),
     );
     final conteudo = Row(
       mainAxisSize: MainAxisSize.min,
@@ -162,7 +168,7 @@ class _BotaoBaruState extends State<BotaoBaru> {
     final faceDoBotao = AnimatedContainer(
       duration: const Duration(milliseconds: 90),
       height: widget.altura - labio,
-      padding: const EdgeInsets.symmetric(horizontal: Espaco.lg),
+      padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
       decoration: BoxDecoration(color: face, borderRadius: raio),
       // `widthFactor: 1` deixa o botão do tamanho do rótulo quando não
       // expande; `alignment` no container o esticaria até a borda.

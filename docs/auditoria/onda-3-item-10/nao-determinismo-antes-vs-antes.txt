@@ -1,0 +1,7 @@
+DIFF   1.378% maxd=194 2026-08-27/atividade-ocio-raposa-5.png
+DIFF   1.219% maxd=194 2026-08-27/atividade-pasto-tartaruga-5.png
+DIFF   1.222% maxd=194 2026-08-27/atividade-pasto-tartaruga-7.png
+DIFF   1.368% maxd=204 2026-08-27/atividade-petisco-lontra-8.png
+DIFF  15.195% maxd=255 2026-08-27/reacao-4-espreguica.png
+DIFF   6.327% maxd=255 2026-08-27/reacao-5-sacode.png
+DIFF  10.178% maxd=255 2026-08-27/reacao-6-olha-em-volta.png

@@ -87,7 +87,10 @@ class Cores {
 
   /// Erro e ação que não tem volta. Vermelho-tijolo, para não ser lido como
   /// a raiz.
-  static const alerta = Color(0xFFA8433A);
+  ///
+  /// Distinto do [dispersivo] (que é categoria, não erro): mais vermelho e
+  /// um pouco mais escuro.
+  static const alerta = Color(0xFF9E3434);
 
   // --- primária ----------------------------------------------------------
   static const primaria = Color(0xFF5C8A4E);

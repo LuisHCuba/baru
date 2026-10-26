@@ -423,7 +423,7 @@ class CartaoDoDescanso extends StatelessWidget {
       return BotaoBaru(
         key: chaveDoColher,
         rotulo: t.missaoResgatar,
-        altura: 46,
+        altura: BotaoBaru.alturaCompacta,
         aoTocar: () => abreATocaDoDescanso(context, app),
         papel: PapelDoBotao.recompensa,
       );
@@ -435,7 +435,7 @@ class CartaoDoDescanso extends StatelessWidget {
       return BotaoBaru(
         key: chaveDoParar,
         rotulo: t.mqDescansoParar,
-        altura: 46,
+        altura: BotaoBaru.alturaCompacta,
         icone: const Icon(Icons.stop_circle_outlined),
         aoTocar: app.desisteDoDescanso,
         papel: PapelDoBotao.secundario,
@@ -444,7 +444,7 @@ class CartaoDoDescanso extends StatelessWidget {
     return BotaoBaru(
       key: chaveDoComecar,
       rotulo: t.descansoComecar,
-      altura: 46,
+      altura: BotaoBaru.alturaCompacta,
       aoTocar: app.comecaODescanso,
     );
   }
@@ -655,6 +655,10 @@ class _Recompensa extends StatelessWidget {
           ).copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(width: Espaco.xs),
+        if (!apagada) ...[
+          const GlifoXp(tamanho: 13),
+          const SizedBox(width: 3),
+        ],
         Text(
           '+$xp XP',
           style: estilo(

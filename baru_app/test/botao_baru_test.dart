@@ -48,6 +48,24 @@ void main() {
     expect(hapticos, ['HapticFeedbackType.lightImpact']);
   });
 
+  testWidgets('arrastar o dedo para fora cancela: a face volta e não toca',
+      (t) async {
+    var tocou = 0;
+    await t.pumpWidget(_app(BotaoBaru(rotulo: 'Focar', aoTocar: () => tocou++)));
+    final emCima = _topoDaFace(t);
+    final dedo = await t.startGesture(t.getCenter(find.text('Focar')));
+    // O `onTapDown` espera o prazo de toque (100 ms) para firmar.
+    await t.pump(const Duration(milliseconds: 150));
+    await t.pump(const Duration(milliseconds: 100));
+    expect(_topoDaFace(t), greaterThan(emCima));
+    await dedo.moveBy(const Offset(0, 300));
+    await t.pump();
+    await dedo.up();
+    await t.pump(const Duration(milliseconds: 200));
+    expect(_topoDaFace(t), emCima, reason: 'sem onTapCancel ficava afundado');
+    expect(tocou, 0);
+  });
+
   testWidgets('desabilitado: sem lábio, sem toque, sem háptico', (t) async {
     var tocou = 0;
     await t.pumpWidget(_app(

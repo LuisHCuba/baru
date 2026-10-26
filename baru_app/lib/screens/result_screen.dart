@@ -469,10 +469,15 @@ class _BarraDeXp extends StatelessWidget {
               style: nunito(
                 size: 13,
                 weight: FontWeight.w800,
-                color: AppColors.greenDeep,
+                color: Cores.mel700,
               ),
             ),
             const Spacer(),
+            Opacity(
+              opacity: sessao > 0 ? 1 : 0,
+              child: const GlifoXp(tamanho: 14),
+            ),
+            const SizedBox(width: 4),
             Opacity(
               opacity: sessao > 0 ? 1 : 0,
               child: Text(
@@ -504,9 +509,9 @@ class _BarraDeXp extends StatelessWidget {
         BarraAnimada(
           fracao: fracao,
           altura: 10,
-          cor: resumo.xpDaRaiz > 0 && raiz > 0
-              ? Cores.raiz500
-              : Cores.folha600,
+          // Progresso é verde até o fim; o bônus da raiz fica no texto
+          // terracota ao lado (a barra inteira em raiz500 dava 2,5:1).
+          cor: Cores.folha600,
           duracao: Duration.zero,
         ),
       ],

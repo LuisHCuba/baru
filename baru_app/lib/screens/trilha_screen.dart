@@ -7,6 +7,7 @@ import '../l10n_trilha.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/componentes.dart';
+import '../widgets/glifos.dart';
 import '../widgets/habitat.dart';
 
 /// A trilha: a tela que responde "por que eu volto amanhã".
@@ -344,7 +345,8 @@ class CartaoNivel extends StatelessWidget {
     return CartaoBaru(
       key: chave,
       padding: EdgeInsets.all(compacto ? Espaco.md : Espaco.lg),
-      cor: Cores.primariaA(0.10),
+      // Nível e XP são conquista: mel (ADR-027). A barra segue verde.
+      cor: Cores.mel400.withValues(alpha: 0.18),
       elevado: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,14 +358,16 @@ class CartaoNivel extends StatelessWidget {
                   t.fill(t.nivelRotulo, {'n': app.nivel}),
                   style: estilo(
                     compacto ? Tipo.subtitulo : Tipo.tituloGrande,
-                    color: Cores.primariaEscura,
                   ),
                 ),
               ),
+              const GlifoXp(tamanho: 15),
+              const SizedBox(width: 4),
               ContadorAnimado(
                 valor: app.xp,
                 sufixo: ' ${t.xpRotulo}',
-                estiloTexto: estilo(Tipo.rotulo, color: Cores.primariaEscura),
+                estiloTexto: estilo(Tipo.rotulo, color: Cores.mel700)
+                    .copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -372,7 +376,6 @@ class CartaoNivel extends StatelessWidget {
             fracao: app.progressoNoNivel,
             altura: compacto ? 8 : 10,
             cor: Cores.folha600,
-            fundo: Cores.primariaA(0.16),
           ),
           const SizedBox(height: Espaco.xs),
           Text(
@@ -382,7 +385,7 @@ class CartaoNivel extends StatelessWidget {
                     'x': app.xpParaProximoNivel,
                     'n': app.nivel + 1,
                   }),
-            style: estilo(Tipo.corpoPequeno, color: Cores.primariaEscura),
+            style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
           ),
           // O vínculo só aparece depois do primeiro afago: uma linha zerada
           // seria só uma coisa a mais para ler.

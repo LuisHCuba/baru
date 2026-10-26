@@ -30,7 +30,12 @@ class Toca extends StatefulWidget {
     required this.rotuloDoPremio,
     this.icone = const GlifoFolha(tamanho: 34),
     this.cor = Cores.folha600,
+    this.corDoRotulo,
   });
+
+  /// A cor do nome do prêmio. Por padrão a do prêmio; sobre o véu escuro
+  /// da celebração, creme — verde ou mel sobre o véu dava 1,5:1.
+  final Color? corDoRotulo;
 
   /// Chamado uma vez, quando a terra abre.
   final VoidCallback aoAbrir;
@@ -147,6 +152,7 @@ class _TocaState extends State<Toca> with TickerProviderStateMixin {
                           key: Toca.chaveDoPremio,
                           rotulo: widget.rotuloDoPremio,
                           icone: widget.icone,
+                          corDoRotulo: widget.corDoRotulo ?? widget.cor,
                           cor: widget.cor,
                         ),
                       ),
@@ -168,11 +174,13 @@ class _Premio extends StatelessWidget {
     required this.rotulo,
     required this.icone,
     required this.cor,
+    required this.corDoRotulo,
   });
 
   final String rotulo;
   final Widget icone;
   final Color cor;
+  final Color corDoRotulo;
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +209,7 @@ class _Premio extends StatelessWidget {
           ),
         ),
         const SizedBox(height: Espaco.xs),
-        Text(rotulo, style: estilo(Tipo.subtitulo, color: cor)),
+        Text(rotulo, style: estilo(Tipo.subtitulo, color: corDoRotulo)),
       ],
     );
   }

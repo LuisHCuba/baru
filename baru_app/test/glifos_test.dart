@@ -20,7 +20,11 @@ void main() {
     final achados = <String>[];
     for (final (caminho, texto) in _codigo()) {
       if (caminho.endsWith('glifos.dart')) continue;
-      if (RegExp(r'Icons\.eco').hasMatch(texto)) achados.add('$caminho: Icons.eco');
+      // A folha do Material com outro nome também é folha paralela.
+      for (final m in RegExp(r'Icons\.(eco|spa|energy_savings_leaf|grass)\w*')
+          .allMatches(texto)) {
+        achados.add('$caminho: ${m.group(0)}');
+      }
       if (texto.contains('LeafMark')) achados.add('$caminho: LeafMark');
     }
     expect(achados, isEmpty);
@@ -61,7 +65,9 @@ void main() {
     // Tinta a 30–69% sobre o creme dava de 1,9:1 a 4,4:1. O tom opaco
     // `Cores.tinta700` passa; a regra pega a recaída em estilos de texto.
     final translucida = RegExp(
-      r'(nunito|estilo|TextStyle)\([^;]{0,160}?color:\s*(AppColors\.inkA|Cores\.tintaA)\(0?\.[3-6]\d*\)',
+      r'(nunito|estilo|TextStyle)\([^;]{0,160}?color:\s*'
+      r'((AppColors\.inkA|Cores\.tintaA)\(0?\.[3-6]\d*\)'
+      r'|(Cores\.tinta|AppColors\.ink)\.withValues\(alpha:\s*0?\.[3-6]\d*\))',
       dotAll: true,
     );
     final achados = <String>[];
@@ -69,6 +75,40 @@ void main() {
       if (caminho.contains('pet.dart')) continue;
       for (final m in translucida.allMatches(texto)) {
         achados.add('$caminho:${texto.substring(0, m.start).split('\n').length}');
+      }
+    }
+    expect(achados, isEmpty);
+  });
+
+  test('mel nunca é cor de texto: ele é face, e texto em mel dá 1,7:1', () {
+    final melComoTexto = RegExp(
+      r'(nunito|estilo|TextStyle)\([^;]{0,160}?color:\s*Cores\.mel(400|600)\b',
+      dotAll: true,
+    );
+    final achados = <String>[];
+    for (final (caminho, texto) in _codigo()) {
+      for (final m in melComoTexto.allMatches(texto)) {
+        achados.add('$caminho:${texto.substring(0, m.start).split('\n').length}');
+      }
+    }
+    expect(achados, isEmpty);
+  });
+
+  test('laranja só na raiz: o acento antigo saiu da interface', () {
+    // A arte (bicho, cenário, modelos de item) ainda usa o laranja como
+    // pigmento; as telas e os componentes, não.
+    const arte = {'pet.dart', 'habitat.dart', 'icone_arte.dart'};
+    final laranja = RegExp(
+      r'AppColors\.orange\w*|Cores\.acento\w*|orangeA\(|acentoA\(',
+    );
+    final achados = <String>[];
+    for (final (caminho, texto) in _codigo()) {
+      if (!caminho.contains('/screens/') && !caminho.contains('/widgets/')) {
+        continue;
+      }
+      if (arte.any(caminho.endsWith)) continue;
+      for (final m in laranja.allMatches(texto)) {
+        achados.add('$caminho: ${m.group(0)}');
       }
     }
     expect(achados, isEmpty);

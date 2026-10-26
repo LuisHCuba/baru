@@ -1,0 +1,7 @@
+All tests passed!                                                                                                                                                                            
+en 320dp x1.25 payCtaActive "Trial active — continue": antes=cabe depois=CORTA
+es 320dp x1.25 payCtaActive "Prueba activa — continuar": antes=cabe depois=CORTA
+es 320dp x1.25 sairFicar "Quedarme un poco más": antes=cabe depois=CORTA
+es 320dp x1.25 shareBtn "Compartir el hábitat": antes=cabe depois=CORTA
+pt 320dp x1.25 payCtaActive "Teste ativo — continuar": antes=cabe depois=CORTA
+pt 320dp x1.25 shareBtn "Compartilhar o habitat": antes=cabe depois=CORTA

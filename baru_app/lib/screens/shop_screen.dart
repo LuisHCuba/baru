@@ -664,7 +664,7 @@ class _CartaoDeItem extends StatelessWidget {
                           : Icons.inventory_2_outlined,
                       cor: emUso
                           ? Cores.folha600
-                          : Cores.tinta.withValues(alpha: 0.55),
+                          : Cores.tinta.withValues(alpha: 0.86),
                     ),
                   ),
               ],
@@ -736,7 +736,7 @@ class _CartaoDeCenario extends StatelessWidget {
                         : Icons.inventory_2_outlined,
                     cor: emUso
                         ? Cores.folha600
-                        : Cores.tinta.withValues(alpha: 0.55),
+                        : Cores.tinta.withValues(alpha: 0.86),
                   ),
                 ),
             ],

@@ -29,7 +29,8 @@ class RaizViva extends StatelessWidget {
   const RaizViva({
     super.key,
     required this.dias,
-    this.cor = Cores.primariaEscura,
+    // Terracota em todo lugar: a raiz tem uma cor só (ADR-027).
+    this.cor = Cores.raiz600,
     this.corDaTerra = const Color(0xFFEDE3D2),
     this.mostraTerra = true,
     this.diasExatos,

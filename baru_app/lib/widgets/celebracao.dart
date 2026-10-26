@@ -135,6 +135,7 @@ class _CelebracaoState extends State<Celebracao>
                   rotuloDoPremio: widget.subtitulo,
                   icone: Icon(widget.icone),
                   cor: widget.cor,
+                  corDoRotulo: Cores.tintaClara,
                   aoAbrir: () {
                     if (!mounted) return;
                     setState(() => _aberta = true);

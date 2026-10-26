@@ -307,6 +307,31 @@ class AppState extends ChangeNotifier {
     streak = 0;
   }
 
+  /// As missões que a última sessão fechou, para a cena "Missão cumprida!".
+  ///
+  /// Em memória, como [raizACelebrar]: a festa é do momento em que fechou.
+  List<MissaoTocada> missoesCumpridas = const [];
+
+  /// As que ainda esperam colheita. Colhida por outro caminho (a tela de
+  /// missões) não volta a ganhar festa.
+  List<Missao> get missoesACumprir {
+    if (missoesCumpridas.isEmpty) return const [];
+    final atuais = {
+      for (final m in [...missoes, if (missaoDeRetomada case final r?) r])
+        m.id: m,
+    };
+    return [
+      for (final c in missoesCumpridas)
+        if (atuais[c.depois.id] case final m? when m.resgatavel) m,
+    ];
+  }
+
+  /// "Colher" na cena: paga as missões e passa para a próxima conquista.
+  void colheAsCumpridas() {
+    resgataTodas(missoesACumprir);
+    celebrou();
+  }
+
   /// A chegada do dia ainda não foi comemorada.
   ///
   /// Abrir o app é o gesto que o Baru mais espera, e ele passava em
@@ -320,6 +345,7 @@ class AppState extends ChangeNotifier {
   /// nível quer ver o nível, não "bom te ver".
   bool get temCelebracaoPendente =>
       raizACelebrar != null ||
+      missoesACumprir.isNotEmpty ||
       cresceuSemCelebrar ||
       subiuDeNivel ||
       marcosACelebrar.isNotEmpty ||
@@ -341,6 +367,16 @@ class AppState extends ChangeNotifier {
       raizRecorde = false;
       notifyListeners();
       return;
+    }
+    // Logo depois da raiz: colher pode dar o XP que sobe o nível, e o
+    // nível então vem na sequência, e não antes do prêmio que o causou.
+    if (missoesCumpridas.isNotEmpty) {
+      final havia = missoesACumprir.isNotEmpty;
+      missoesCumpridas = const [];
+      if (havia) {
+        notifyListeners();
+        return;
+      }
     }
     if (cresceuSemCelebrar) {
       estagioCelebrado = {
@@ -1254,7 +1290,7 @@ class AppState extends ChangeNotifier {
   ///
   /// `{p}` vira ele/ela, `{P}` a versão com maiúscula, `{d}` dele/dela.
   String frase(String bruto, [Map<String, Object> vars = const {}]) =>
-      t.comPronome(bruto, sexo, vars);
+      t.comPronome(bruto, sexo, vars, displayName);
 
   String get streakText => t.streakLabel(streak);
 
@@ -2333,6 +2369,14 @@ class AppState extends ChangeNotifier {
       xpDaRaiz: primeiraDoDia ? Balanco.xpPorDiaDeSequencia : 0,
       missoes: ResumoDaSessao.tocadas(missoesAntes, quadro()),
     );
+    // Só no dia em que fechou: a sessão de ontem concluída na abertura de
+    // hoje já foi colhida na virada.
+    if (dateOnly(em) == dateOnly(DateTime.now())) {
+      missoesCumpridas = [
+        for (final m in ultimoResumo!.missoes)
+          if (m.fechou) m,
+      ];
+    }
     if (navega) {
       _empilha(AppScreen.result);
       // A tela de resultado tem o primeiro segundo de palco: a raiz, o

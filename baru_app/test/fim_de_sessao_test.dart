@@ -12,6 +12,7 @@ import 'package:baru_app/screens/result_screen.dart';
 import 'package:baru_app/screens/shop_screen.dart';
 import 'package:baru_app/services/som_service.dart';
 import 'package:baru_app/state.dart';
+import 'package:baru_app/widgets/cena_da_missao.dart';
 import 'package:baru_app/widgets/common.dart';
 import 'package:baru_app/widgets/loja_vitrine.dart';
 import 'package:flutter/material.dart';
@@ -212,6 +213,110 @@ void main() {
     expect(find.text('Pronta para colher'), findsNWidgets(fechou.length));
     expect(find.byKey(const Key('resultado-fecho')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
+  });
+
+  group('missão cumprida', () {
+    test('a sessão que fecha missão acende a cena, logo depois da raiz', () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      final fechadas =
+          s.ultimoResumo!.missoes.where((m) => m.fechou).toList();
+      expect(fechadas, isNotEmpty,
+          reason: 'a primeira sessão fecha ao menos a missão de uma sessão');
+      expect(s.missoesACumprir.map((m) => m.id),
+          fechadas.map((m) => m.depois.id));
+      expect(s.raizACelebrar, isNotNull);
+      s.celebrou(); // a raiz
+      expect(s.raizACelebrar, isNull);
+      expect(s.temCelebracaoPendente, isTrue);
+      expect(s.missoesACumprir, isNotEmpty, reason: 'a missão vem a seguir');
+
+      final folhas = s.leaves;
+      final paga =
+          s.missoesACumprir.fold<int>(0, (t, m) => t + m.folhas);
+      s.colheAsCumpridas();
+      expect(s.leaves, folhas + paga);
+      expect(s.missoesACumprir, isEmpty);
+      expect(s.missoesCumpridas, isEmpty);
+    });
+
+    test('colhida pela tela de missões, a cena não aparece', () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      s.celebrou(); // a raiz
+      s.resgataTodas(s.missoesACumprir);
+      expect(s.missoesACumprir, isEmpty);
+      // A lista velha não pode engolir a próxima conquista da fila: fechar
+      // a cena que estiver na frente consome essa, e só essa.
+      s.chegadaACelebrar = true;
+      final cresceu = s.cresceuSemCelebrar;
+      final nivel = s.subiuDeNivel;
+      final marcos = s.marcosACelebrar.length;
+      s.celebrou();
+      expect(s.missoesCumpridas, isEmpty);
+      if (cresceu) {
+        expect(s.cresceuSemCelebrar, isFalse);
+        expect(s.subiuDeNivel, nivel);
+      } else if (nivel) {
+        expect(s.subiuDeNivel, isFalse);
+        expect(s.marcosACelebrar.length, marcos);
+      } else if (marcos > 0) {
+        expect(s.marcosACelebrar.length, marcos - 1);
+        expect(s.chegadaACelebrar, isTrue);
+      } else {
+        expect(s.chegadaACelebrar, isFalse);
+      }
+    });
+
+    testWidgets('a cena mostra a missão e o prêmio, e "Colher" chama quem paga',
+        (tester) async {
+      var colheu = 0, fechou = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Stack(
+            children: [
+              CenaDaMissao(
+                missoes: const [
+                  MissaoNaCena(titulo: 'Faça uma sessão', de: 0, folhas: 12, xp: 10),
+                ],
+                bicho: const SizedBox(width: 80, height: 80),
+                titulo: 'Missão cumprida!',
+                rotuloColher: 'Colher agora',
+                rotuloDepois: 'Colho depois',
+                aoColher: () => colheu++,
+                aoFechar: () => fechou++,
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.text('Missão cumprida!'), findsOneWidget);
+      expect(find.text('Faça uma sessão'), findsOneWidget);
+      expect(find.textContaining('12'), findsWidgets);
+      await tester.tap(find.byKey(CenaDaMissao.chaveColher));
+      await tester.pump();
+      expect((colheu, fechou), (1, 0));
+      await tester.tap(find.text('Colho depois'));
+      await tester.pump();
+      expect(fechou, 1);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    test('"Depois" fecha a cena sem pagar; o prêmio segue na tela de missões',
+        () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      s.celebrou(); // a raiz
+      final folhas = s.leaves;
+      s.celebrou(); // "Colho depois"
+      expect(s.leaves, folhas);
+      expect(s.missoesCumpridas, isEmpty);
+      expect(s.missoesResgataveis, greaterThan(0));
+    });
   });
 
   test('reabrir o app não volta para a tela de resultado', () {

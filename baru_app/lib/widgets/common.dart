@@ -5,6 +5,7 @@ import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import 'app_icons.dart';
+import 'arte_dos_itens.dart';
 import 'componentes.dart';
 import 'glifos.dart';
 
@@ -424,44 +425,43 @@ class ItemSwatch extends StatelessWidget {
         ),
       );
     }
-    final xs = item.parts.map((p) => p.x);
-    final ys = item.parts.map((p) => p.y);
-    final x0 = xs.reduce((a, b) => a < b ? a : b);
-    final y0 = ys.reduce((a, b) => a < b ? a : b);
-    final bw = item.parts.map((p) => p.x + p.w).reduce((a, b) => a > b ? a : b) - x0;
-    final bh = item.parts.map((p) => p.y + p.h).reduce((a, b) => a > b ? a : b) - y0;
-    final k = [maxW / bw, maxH / bh, 1.0].reduce((a, b) => a < b ? a : b);
+    final caixa = caixaDaArte(item.id, item.parts);
+    final k = [maxW / caixa.width, maxH / caixa.height, 1.0]
+        .reduce((a, b) => a < b ? a : b);
     return SizedBox(
       width: maxW,
       height: maxH,
       child: Center(
-        child: Transform.scale(
-          scale: k,
-          child: SizedBox(
-            width: bw,
-            height: bh,
-            child: Stack(
-              children: [
-                for (final p in item.parts)
-                  Positioned(
-                    left: p.x - x0,
-                    top: p.y - y0,
-                    child: Container(
-                      width: p.w,
-                      height: p.h,
-                      decoration: BoxDecoration(
-                        color: p.c,
-                        borderRadius: BorderRadius.circular(p.r),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+        child: SizedBox(
+          width: caixa.width * k,
+          height: caixa.height * k,
+          child: CustomPaint(painter: _AmostraDoItem(item, caixa, k)),
         ),
       ),
     );
   }
+}
+
+/// A arte do objeto, sozinha, enquadrada na caixa dela.
+class _AmostraDoItem extends CustomPainter {
+  const _AmostraDoItem(this.item, this.caixa, this.k);
+
+  final ShopItemDef item;
+  final Rect caixa;
+  final double k;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(k);
+    canvas.translate(-caixa.left, -caixa.top);
+    pintaItem(canvas, item.id, item.parts);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _AmostraDoItem old) =>
+      old.item != item || old.k != k;
 }
 
 class BottomTabs extends StatelessWidget {

@@ -19,6 +19,7 @@ import '../data/crescimento.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import 'arte_dos_itens.dart';
 import 'habitat.dart';
 import 'pet.dart';
 
@@ -34,7 +35,11 @@ class CenaEmMiniatura extends CustomPainter {
     required this.luz,
     required this.recorte,
     this.pecas = const [],
+    this.idDoItem,
   });
+
+  /// Com o id, a peça sai com a arte do objeto (a mesma do habitat).
+  final String? idDoItem;
 
   final LuzDaCena luz;
 
@@ -220,6 +225,10 @@ class CenaEmMiniatura extends CustomPainter {
   }
 
   void _itens(Canvas canvas) {
+    if (idDoItem case final id?) {
+      pintaItem(canvas, id, pecas);
+      return;
+    }
     for (final p in pecas) {
       final r = RRect.fromRectAndRadius(
         Rect.fromLTWH(p.x, p.y, p.w, p.h),
@@ -239,7 +248,10 @@ class CenaEmMiniatura extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CenaEmMiniatura old) =>
-      old.luz != luz || old.recorte != recorte || old.pecas != pecas;
+      old.luz != luz ||
+      old.recorte != recorte ||
+      old.pecas != pecas ||
+      old.idDoItem != idDoItem;
 }
 
 /// A miniatura de um item da loja, já recortada e arredondada.
@@ -293,6 +305,7 @@ class MiniaturaDaLoja extends StatelessWidget {
                 luz: luzDoCartao,
                 recorte: recorte,
                 pecas: item.parts,
+                idDoItem: item.id,
               ),
               child: item.categoria == CategoriaDeItem.roupa
                   ? _BichoVestido(item: item)

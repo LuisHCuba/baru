@@ -217,6 +217,7 @@ class T {
   String get resWonSub => s('resWonSub');
   String get resLost => s('resLost');
   String get resLostSub => s('resLostSub');
+  String get resDeNovo => s('resDeNovo');
   String get reward => s('reward');
   String get leavesLbl => s('leavesLbl');
   String get presentLbl => s('presentLbl');
@@ -334,11 +335,21 @@ class T {
   }
 
   /// Preenche `{p}` e `{P}` com o pronome do companheiro, junto do resto.
+  ///
+  /// Sem o sexo dito, português e espanhol não têm pronome neutro: "ele"
+  /// para a Nina é erro, e a pessoa vê. Aí entra o [nome] — "Nina espera a
+  /// próxima" serve a qualquer bicho. Inglês tem "they"; chinês, "它".
   String comPronome(
     String texto,
     Sexo sexo, [
     Map<String, Object> vars = const {},
+    String nome = '',
   ]) {
+    if (sexo == Sexo.naoDito &&
+        nome.isNotEmpty &&
+        (lang == 'pt' || lang == 'es')) {
+      return fill(texto, {...vars, 'p': nome, 'P': nome, 'd': 'de $nome'});
+    }
     final p = pronome(sexo);
     final capital =
         p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}';
@@ -513,6 +524,10 @@ class T {
   String get resMissoesT => s('resMissoesT');
   String get resPronta => s('resPronta');
   String get resColher => s('resColher');
+  String get missaoCumprida => s('missaoCumprida');
+  String get missoesCumpridas => s('missoesCumpridas');
+  String get colherAgora => s('colherAgora');
+  String get colherDepois => s('colherDepois');
   String get compraT => s('compraT');
   String get compraSubObjeto => s('compraSubObjeto');
   String get compraSubRoupa => s('compraSubRoupa');
@@ -808,6 +823,10 @@ const _pt = <String, Object>{
   'resMissoesT': 'MISSÕES QUE ANDARAM',
   'resPronta': 'Pronta para colher',
   'resColher': 'Colher',
+  'missaoCumprida': 'Missão cumprida!',
+  'missoesCumpridas': 'Missões cumpridas!',
+  'colherAgora': 'Colher agora',
+  'colherDepois': 'Colho depois',
   'compraT': 'É seu!',
   'compraSubObjeto': 'No habitat a partir de agora: {i}.',
   'compraSubRoupa': '{a} já está vestindo.',
@@ -1060,7 +1079,8 @@ const _pt = <String, Object>{
       '{n} nadou bastante e saiu para secar. Bem-vindo de volta.',
   'resLost': '{n} sentiu sua falta.',
   'resLostSub':
-      'Sem folhas desta vez, e nada foi perdido. {P} continua aqui.',
+      'Sem folhas desta vez, e nada foi perdido. Quando quiser, é só recomeçar.',
+  'resDeNovo': 'Focar de novo · {m} min',
   'reward': '+{k} folhas',
   'leavesLbl': 'Folhas',
   'presentLbl': 'Presente',
@@ -1369,6 +1389,10 @@ const _en = <String, Object>{
   'resMissoesT': 'MISSIONS THAT MOVED',
   'resPronta': 'Ready to collect',
   'resColher': 'Collect',
+  'missaoCumprida': 'Quest complete!',
+  'missoesCumpridas': 'Quests complete!',
+  'colherAgora': 'Collect now',
+  'colherDepois': 'Later',
   'compraT': 'It\'s yours!',
   'compraSubObjeto': 'Now in your habitat: {i}.',
   'compraSubRoupa': '{a} is already wearing it.',
@@ -1612,7 +1636,8 @@ const _en = <String, Object>{
       '{n} had a long swim and came out to dry off. Welcome back.',
   'resLost': '{n} missed you.',
   'resLostSub':
-      'No leaves this time, and nothing taken away. {P} is still here.',
+      'No leaves this time, and nothing taken away. Start again whenever you like.',
+  'resDeNovo': 'Focus again · {m} min',
   'reward': '+{k} leaves',
   'leavesLbl': 'Leaves',
   'presentLbl': 'Present',
@@ -1920,6 +1945,10 @@ const _es = <String, Object>{
   'resMissoesT': 'MISIONES QUE AVANZARON',
   'resPronta': 'Lista para recoger',
   'resColher': 'Recoger',
+  'missaoCumprida': '¡Misión cumplida!',
+  'missoesCumpridas': '¡Misiones cumplidas!',
+  'colherAgora': 'Recoger ahora',
+  'colherDepois': 'Luego',
   'compraT': '¡Es tuyo!',
   'compraSubObjeto': 'Ahora en tu hábitat: {i}.',
   'compraSubRoupa': '{a} ya lo lleva puesto.',
@@ -2163,7 +2192,9 @@ const _es = <String, Object>{
   'resWon': '{m} minutos completados.',
   'resWonSub': '{n} nadó a gusto y salió a secarse. Bienvenido de vuelta.',
   'resLost': '{n} te echó de menos.',
-  'resLostSub': 'Sin hojas esta vez, y nada se perdió. {P} sigue aquí.',
+  'resLostSub':
+      'Sin hojas esta vez, y nada se perdió. Cuando quieras, vuelve a empezar.',
+  'resDeNovo': 'Enfocar otra vez · {m} min',
   'reward': '+{k} hojas',
   'leavesLbl': 'Hojas',
   'presentLbl': 'Presente',
@@ -2472,6 +2503,10 @@ const _zh = <String, Object>{
   'resMissoesT': '有进展的任务',
   'resPronta': '可以收取了',
   'resColher': '收取',
+  'missaoCumprida': '任务完成！',
+  'missoesCumpridas': '任务都完成了！',
+  'colherAgora': '现在收取',
+  'colherDepois': '稍后',
   'compraT': '归你了！',
   'compraSubObjeto': '已放进栖息地：{i}。',
   'compraSubRoupa': '{a} 已经穿上了。',
@@ -2694,7 +2729,8 @@ const _zh = <String, Object>{
   'resWon': '完成 {m} 分钟。',
   'resWonSub': '{n} 游了很久，上岸晒干了。欢迎回来。',
   'resLost': '{n} 有点想你。',
-  'resLostSub': '这次没有叶子，但也没有任何损失。{P}还在。',
+  'resLostSub': '这次没有叶子，但也没有任何损失。随时可以重新开始。',
+  'resDeNovo': '再专注一次 · {m} 分钟',
   'reward': '+{k} 片叶子',
   'leavesLbl': '叶子',
   'presentLbl': '陪伴',

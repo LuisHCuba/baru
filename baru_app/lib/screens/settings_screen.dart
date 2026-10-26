@@ -67,7 +67,7 @@ class SettingsScreen extends StatelessWidget {
               chave: null,
               icone: Icons.palette_outlined,
               rotulo: t.coat,
-              valor: '${app.color + 1}',
+              amostra: AppColors.coatDe(app.species)[app.color],
               aoTocar: () => _abreAparencia(context, app),
             ),
           ],
@@ -575,8 +575,12 @@ class _Linha extends StatelessWidget {
     required this.rotulo,
     required this.aoTocar,
     this.valor,
+    this.amostra,
     this.apagado = false,
   });
+
+  /// Uma cor no lugar do valor: a pelagem se mostra, não vira número.
+  final Color? amostra;
 
   /// Chave para o teste apontar a linha certa. Nula quando a linha não é
   /// alvo de nenhum teste.
@@ -615,6 +619,16 @@ class _Linha extends StatelessWidget {
                 Text(
                   valor!,
                   style: estilo(Tipo.rotulo, color: Cores.tinta700),
+                ),
+              if (amostra case final cor?)
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: cor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Cores.tintaA(0.15), width: 1.5),
+                  ),
                 ),
               const SizedBox(width: Espaco.xxs),
               Icon(

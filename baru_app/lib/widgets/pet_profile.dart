@@ -11,10 +11,15 @@ class PetNameField extends StatefulWidget {
     super.key,
     required this.initial,
     required this.onChanged,
+    this.compacto = false,
   });
 
   final String initial;
   final ValueChanged<String> onChanged;
+
+  /// No cartão de Ajustes: alinhado à esquerda, com o lápis que diz que
+  /// dá para editar. O campo cinza centralizado parecia botão desligado.
+  final bool compacto;
 
   @override
   State<PetNameField> createState() => _PetNameFieldState();
@@ -39,6 +44,30 @@ class _PetNameFieldState extends State<PetNameField> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.compacto) {
+      return TextField(
+        controller: _c,
+        onChanged: widget.onChanged,
+        maxLength: 18,
+        style: nunito(size: 22, weight: FontWeight.w800),
+        cursorColor: AppColors.green,
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: AppColors.cream,
+          suffixIcon: Icon(Icons.edit_rounded, size: 18, color: Cores.tinta500),
+          border: OutlineInputBorder(
+            borderRadius: Raio.todos(Raio.campo),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: Espaco.sm,
+            vertical: Espaco.xs,
+          ),
+          counterText: '',
+        ),
+      );
+    }
     return TextField(
       controller: _c,
       onChanged: widget.onChanged,
@@ -202,6 +231,7 @@ class CompanionCard extends StatelessWidget {
     final app = AppScope.of(context);
     final t = app.t;
     final sp = t.species(app.speciesKey);
+    if (!completo) return _cartaoCompacto(app, sp[0]);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
       decoration: BoxDecoration(
@@ -260,6 +290,75 @@ class CompanionCard extends StatelessWidget {
               speciesLabel: (s) => t.animalName(s.name),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  /// Ajustes: o bicho numa janelinha do habitat, e ao lado quem ele é.
+  Widget _cartaoCompacto(AppState app, String especie) {
+    return Container(
+      padding: const EdgeInsets.all(Espaco.md),
+      decoration: BoxDecoration(
+        color: AppColors.greenA(0.10),
+        borderRadius: Raio.todos(Raio.cartaoGrande),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 104,
+            height: 104,
+            decoration: BoxDecoration(
+              borderRadius: Raio.todos(Raio.campo),
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFF4E6CB), Color(0xFFFAF1E3), Color(0xFFC5D8B6)],
+                stops: [0, 0.62, 0.62],
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            alignment: Alignment.bottomCenter,
+            child: PetView(
+              species: app.species,
+              mood: app.mood,
+              activity: app.atividadeForaDaAgua,
+              coat: app.color,
+              estagio: app.estagioVisivel,
+              roupas: app.roupasDoBicho,
+              roupaDeCabeca: app.roupaDeCabeca,
+              scale: 0.62,
+              alignment: Alignment.bottomCenter,
+            ),
+          ),
+          const SizedBox(width: Espaco.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PetNameField(
+                  key: ValueKey('${app.speciesKey}-${app.displayName}'),
+                  initial: app.displayName,
+                  onChanged: app.setName,
+                  compacto: true,
+                ),
+                const SizedBox(height: Espaco.xs),
+                Text(
+                  especie,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: estilo(Tipo.corpo, color: Cores.tinta700),
+                ),
+                const SizedBox(height: Espaco.xxs),
+                Text(
+                  app.streakText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: estilo(Tipo.rotulo, color: Cores.raiz600),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

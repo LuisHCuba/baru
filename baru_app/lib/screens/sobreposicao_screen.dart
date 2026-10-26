@@ -143,7 +143,7 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
                       Tipo.rotuloPequeno,
                       color: concedidas == daPlataforma.length
                           ? Cores.primariaEscura
-                          : Cores.alerta,
+                          : Cores.tinta700,
                     ),
                   ),
                 ],
@@ -287,7 +287,11 @@ class CartaoDePermissao extends StatelessWidget {
               key: chaveDoBotao(permissao),
               rotulo: concedida == null ? t.sobPermPermitir : t.sobPermDeNovo,
               aoTocar: aoPedir,
-              papel: PapelDoBotao.secundario,
+              // Conceder é a ação da tela; o vermelho do "Sem ela" já diz o
+              // que se perde. O botão creme parecia opcional.
+              papel: concedida == null
+                  ? PapelDoBotao.primario
+                  : PapelDoBotao.secundario,
             ),
           ],
         ],

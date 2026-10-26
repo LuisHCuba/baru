@@ -11,6 +11,7 @@ import '../services/som_service.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/habitat.dart';
 import '../widgets/pet.dart';
 import 'missoes_screen.dart' show tituloDaMissao;
 
@@ -42,59 +43,80 @@ class ResultScreen extends StatelessWidget {
 }
 
 /// Desistir não custa nada (§1): o bicho continua contente, a tela é curta.
+/// Desistiu: o bicho continua no habitat dele, e a porta segue aberta.
+///
+/// Era um bicho solto num fundo creme vazio, com "Ele continua aqui" mesmo
+/// para a Nina. Agora é a mesma cena da home, contente — cara de pena aqui
+/// seria cobrança —, e o caminho de volta ao foco fica a um toque.
 class _Desistencia extends StatelessWidget {
   const _Desistencia();
+
+  static const chaveDeNovo = Key('resultado-de-novo');
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final t = app.t;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(26, 20, 26, 34),
-      child: Column(
+    return LayoutBuilder(
+      builder: (context, c) => Column(
         children: [
+          HabitatScene(
+            height: (c.maxHeight * 0.50).clamp(260.0, 460.0),
+            moldura: false,
+            atividade: Activity.idle,
+            humor: Mood.content,
+          ),
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                PetView(
-                  species: app.species,
-                  // Contente, não triste — cara de pena aqui seria cobrança.
-                  mood: Mood.content,
-                  activity: Activity.idle,
-                  coat: app.color,
-                  estagio: app.estagioVisivel,
-                  roupas: app.roupasDoBicho,
-                  roupaDeCabeca: app.roupaDeCabeca,
-                  scale: 1.15,
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  t.fill(t.resLost, {'n': app.displayName}),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: nunito(
-                    size: 26,
-                    weight: FontWeight.w800,
-                    height: 1.2,
-                    letterSpacing: -0.4,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Espaco.xl,
+                Espaco.xl,
+                Espaco.xl,
+                Espaco.lg,
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    t.fill(t.resLost, {'n': app.displayName}),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: nunito(
+                      size: 26,
+                      weight: FontWeight.w800,
+                      height: 1.2,
+                      letterSpacing: -0.4,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  app.frase(t.resLostSub),
-                  textAlign: TextAlign.center,
-                  style: nunito(
-                    size: 15,
-                    height: 1.5,
-                    color: Cores.tinta700,
+                  const SizedBox(height: Espaco.sm),
+                  Text(
+                    t.resLostSub,
+                    textAlign: TextAlign.center,
+                    style: nunito(
+                      size: 15,
+                      height: 1.5,
+                      color: Cores.tinta700,
+                    ),
                   ),
-                ),
-              ],
+                  const Spacer(),
+                  BotaoBaru(
+                    key: chaveDeNovo,
+                    rotulo: t.fill(t.resDeNovo, {'m': app.dur}),
+                    aoTocar: () {
+                      app.voltar();
+                      app.startSession();
+                    },
+                  ),
+                  const SizedBox(height: Espaco.sm),
+                  BotaoBaru(
+                    rotulo: t.back,
+                    papel: PapelDoBotao.secundario,
+                    aoTocar: app.voltar,
+                  ),
+                ],
+              ),
             ),
           ),
-          BotaoBaru(rotulo: t.back, aoTocar: app.voltar),
         ],
       ),
     );

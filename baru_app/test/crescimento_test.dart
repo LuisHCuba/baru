@@ -94,6 +94,8 @@ void main() {
       s.xp = 100000;
 
       s.celebrou(); // a raiz do dia vem primeiro (ver raiz_cena_test)
+      // Depois, a missão que a sessão fechou (ver fim_de_sessao_test).
+      if (s.missoesACumprir.isNotEmpty) s.celebrou();
       expect(s.cresceuSemCelebrar, isTrue);
       s.celebrou();
       expect(s.cresceuSemCelebrar, isFalse);

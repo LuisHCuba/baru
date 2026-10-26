@@ -7,6 +7,7 @@ import '../l10n_humor.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import 'arte_dos_itens.dart';
 import 'pet.dart';
 
 /// O desenho de um habitat da trilha: que terra é aquela.
@@ -554,9 +555,15 @@ class _HabitatSceneState extends State<HabitatScene>
                           ),
                         ),
                       ),
+                      // A luz do período tinge o mundo, não o bicho: por
+                      // cima de tudo, ela lavava o companheiro de laranja.
+                      IgnorePointer(
+                        child: CustomPaint(
+                          painter: _LuzAmbiente(luz: luz),
+                        ),
+                      ),
                       for (final item in possuidos)
-                        for (final p in item.parts)
-                          _peca(item.id, p, sx, sy),
+                        _objeto(item, sx, sy, fase),
                       // O companheiro ocupa o lugar da cena que combina com
                       // o que está fazendo: dentro d'água ao nadar, na
                       // margem ao pastar, na areia ao cochilar.
@@ -609,11 +616,10 @@ class _HabitatSceneState extends State<HabitatScene>
                           ),
                         ),
                       ),
-                      IgnorePointer(
-                        child: CustomPaint(
-                          painter: _LuzEVinheta(luz: luz),
+                      if (widget.moldura)
+                        const IgnorePointer(
+                          child: CustomPaint(painter: _Vinheta()),
                         ),
-                      ),
                       if (_textoDoPremio != null)
                         AnimatedPositioned(
                           duration: _mudaDeLugar,
@@ -669,40 +675,65 @@ class _HabitatSceneState extends State<HabitatScene>
     }
   }
 
-  /// Uma peça de item. Entra caindo com mola quando é comprada.
-  Widget _peca(String itemId, ShapePart p, double sx, double sy) {
-    final chegada = _chegadas[itemId];
+  /// Um objeto da cena, com a arte dele. Entra caindo com mola quando é
+  /// comprado.
+  Widget _objeto(ShopItemDef item, double sx, double sy, double fase) {
+    final chegada = _chegadas[item.id];
     final t = chegada == null
         ? 1.0
         : Curves.easeOutBack.transform(chegada.value.clamp(0.0, 1.0));
-    final queda = (1 - t) * 26 * sy;
-    return Positioned(
-      left: p.x * sx,
-      top: p.y * sy - queda,
+    return IgnorePointer(
       child: Opacity(
         opacity: t.clamp(0.0, 1.0),
-        child: Transform.scale(
-          scale: 0.6 + 0.4 * t,
-          child: Container(
-            width: p.w * sx,
-            height: p.h * sy,
-            decoration: BoxDecoration(
-              color: p.c,
-              borderRadius: Raio.todos(p.r * sx),
-              // Sombra curta: sem ela a peça parece adesivo colado no fundo.
-              boxShadow: [
-                BoxShadow(
-                  color: Cores.tintaA(0.13),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+        child: CustomPaint(
+          painter: _ObjetoPintado(
+            item: item,
+            sx: sx,
+            sy: sy,
+            fase: widget.animado ? fase : 0,
+            chegada: t,
           ),
         ),
       ),
     );
   }
+}
+
+class _ObjetoPintado extends CustomPainter {
+  const _ObjetoPintado({
+    required this.item,
+    required this.sx,
+    required this.sy,
+    required this.fase,
+    required this.chegada,
+  });
+
+  final ShopItemDef item;
+  final double sx, sy, fase, chegada;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final caixa = caixaDasPecas(item.parts);
+    canvas.save();
+    canvas.scale(sx, sy);
+    if (chegada < 1) {
+      // Cai de 26 unidades e cresce de 60% até o tamanho, pelo centro.
+      canvas.translate(caixa.center.dx, caixa.center.dy - (1 - chegada) * 26);
+      final k = 0.6 + 0.4 * chegada;
+      canvas.scale(k, k);
+      canvas.translate(-caixa.center.dx, -caixa.center.dy);
+    }
+    pintaItem(canvas, item.id, item.parts, fase: fase);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _ObjetoPintado old) =>
+      old.item != item ||
+      old.sx != sx ||
+      old.sy != sy ||
+      old.fase != fase ||
+      old.chegada != chegada;
 }
 
 /// A silhueta de uma colina, de duna a pico.
@@ -1076,24 +1107,17 @@ class MiniaturaDoHabitat extends StatelessWidget {
 }
 
 /// Vinheta e luz ambiente por cima de tudo — é o que dá profundidade.
-class _LuzEVinheta extends CustomPainter {
-  const _LuzEVinheta({required this.luz});
+/// A luz do período sobre o mundo: o tom do ar e o halo do astro.
+class _LuzAmbiente extends CustomPainter {
+  const _LuzAmbiente({required this.luz});
 
   final LuzDaCena luz;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rrect = RRect.fromRectAndRadius(
-      Offset.zero & size,
-      const Radius.circular(Raio.cena),
-    );
-    canvas.save();
-    canvas.clipRRect(rrect);
-
     if (luz.sombraAmbiente.a > 0) {
       canvas.drawRect(Offset.zero & size, Paint()..color = luz.sombraAmbiente);
     }
-
     // Luz difusa vinda do astro, no canto superior direito.
     canvas.drawRect(
       Offset.zero & size,
@@ -1104,7 +1128,25 @@ class _LuzEVinheta extends CustomPainter {
           colors: [luz.haloAstro.withValues(alpha: 0.22), const Color(0x00000000)],
         ).createShader(Offset.zero & size),
     );
+  }
 
+  @override
+  bool shouldRepaint(covariant _LuzAmbiente old) => old.luz != luz;
+}
+
+/// A vinheta do cartão. Só com moldura: na tela cheia ela escurecia cantos
+/// que não existem.
+class _Vinheta extends CustomPainter {
+  const _Vinheta();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(Raio.cena),
+    );
+    canvas.save();
+    canvas.clipRRect(rrect);
     canvas.drawRRect(
       rrect,
       Paint()
@@ -1117,7 +1159,7 @@ class _LuzEVinheta extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _LuzEVinheta old) => old.luz != luz;
+  bool shouldRepaint(covariant _Vinheta old) => false;
 }
 
 /// O ganho de um afago, subindo e sumindo.

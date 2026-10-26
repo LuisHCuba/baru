@@ -33,6 +33,7 @@ import 'state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 import 'widgets/celebracao.dart';
+import 'widgets/cena_da_missao.dart';
 import 'widgets/cena_da_raiz.dart';
 import 'widgets/crescimento.dart';
 import 'widgets/pet.dart';
@@ -355,6 +356,28 @@ class _Casca extends StatelessWidget {
         key: ValueKey('raiz-$raiz'),
         dias: raiz,
         recorde: app.raizRecorde,
+        aoFechar: app.celebrou,
+      );
+    }
+    final cumpridas = app.missoesACumprir;
+    if (cumpridas.isNotEmpty) {
+      final antes = {for (final c in app.missoesCumpridas) c.antes.id: c.antes};
+      return CenaDaMissao(
+        key: ValueKey('missao-${cumpridas.map((m) => m.id).join()}'),
+        missoes: [
+          for (final m in cumpridas)
+            MissaoNaCena(
+              titulo: tituloDaMissao(app, m),
+              de: antes[m.id]?.fracao ?? 0,
+              folhas: m.folhas,
+              xp: m.xp,
+            ),
+        ],
+        bicho: _bichoComemorando(app),
+        titulo: cumpridas.length == 1 ? t.missaoCumprida : t.missoesCumpridas,
+        rotuloColher: t.colherAgora,
+        rotuloDepois: t.colherDepois,
+        aoColher: app.colheAsCumpridas,
         aoFechar: app.celebrou,
       );
     }

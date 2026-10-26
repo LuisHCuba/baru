@@ -167,11 +167,11 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 14),
               Row(
                 children: [
-                  for (var i = 0; i < 7; i++)
+                  for (final (i, marca) in app.ultimos7Dias)
                     Expanded(
                       child: Column(
                         children: [
-                          _dot(app.week[i]),
+                          _dot(marca),
                           const SizedBox(height: 7),
                           Text(t.days[i], style: nunito(size: 10.5, weight: FontWeight.w600, color: AppColors.inkA(0.42))),
                         ],

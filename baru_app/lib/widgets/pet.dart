@@ -1158,10 +1158,12 @@ class _PetPainter extends CustomPainter {
     switch (mood) {
       case Mood.radiant:
         return Color.lerp(coat, Cores.superficie, 0.10)!;
+      // Escurecer o pelo lia como bicho doente ou largado; a saudade e o sono
+      // se dizem pelo rosto e pela postura, não pela cor.
       case Mood.sleepy:
-        return Color.lerp(coat, Cores.tinta, 0.10)!;
+        return Color.lerp(coat, Cores.tinta, 0.04)!;
       case Mood.missingYou:
-        return Color.lerp(coat, Cores.tinta, 0.14)!;
+        return coat;
       case Mood.neutral:
         return Color.lerp(coat, Cores.tinta, 0.05)!;
       case Mood.content:
@@ -1366,7 +1368,6 @@ class _PetPainter extends CustomPainter {
       _folhaDoSono(canvas, size);
     }
     if (feliz) _brilhos(canvas, size);
-    if (triste) _pingo(canvas, size);
     if (pose.animado && pose.toque > 0) _coracoes(canvas, size);
     if (pose.gosto > 0) _afago(canvas, size);
   }
@@ -3602,23 +3603,42 @@ class _PetPainter extends CustomPainter {
       _p(Colors.white70),
     );
 
-    // Pálpebra caída quando neutro ou triste.
+    // Pálpebra caída quando neutro ou triste, **espelhada por olho**.
+    //
+    // O lado de dentro é o que fica virado para o meio da cara. Antes as duas
+    // pálpebras eram desenhadas com a mesma inclinação: num olho a ponta de
+    // dentro subia (tristeza), no outro descia (raiva), e a "saudade" lia
+    // como bicho bravo nas nove espécies. Triste é a ponta de **fora** caída e
+    // a de dentro erguida; neutro é uma pálpebra reta, só um pouco baixa.
+    final dentro = o.dx < 0 ? 1.0 : -1.0;
     if (mood == Mood.neutral || triste) {
+      final yDentro = o.dy - r * (triste ? 0.82 : 0.42);
+      final yFora = o.dy - r * (triste ? 0.30 : 0.42);
       canvas.drawPath(
         Path()
-          ..moveTo(o.dx - r * 1.05, o.dy - r * (triste ? 0.35 : 0.15))
-          ..lineTo(o.dx + r * 1.05, o.dy - r * (triste ? 0.75 : 0.55))
-          ..lineTo(o.dx + r * 1.05, o.dy - r * 1.35)
-          ..lineTo(o.dx - r * 1.05, o.dy - r * 1.35)
+          ..moveTo(o.dx + dentro * r * 1.05, yDentro)
+          ..lineTo(o.dx - dentro * r * 1.05, yFora)
+          ..lineTo(o.dx - dentro * r * 1.05, o.dy - r * 1.35)
+          ..lineTo(o.dx + dentro * r * 1.05, o.dy - r * 1.35)
           ..close(),
         _p(pelo),
       );
     }
 
+    // A sobrancelha "pidona": a ponta de dentro sobe, a de fora desce — o que
+    // o músculo da testa faz num cão pedindo alguma coisa (AU1+AU4 no FACS).
     if (triste && sobrancelha) {
-      canvas.drawLine(
-        o + Offset(-r * 0.9, -r * 1.5),
-        o + Offset(r * 0.5, -r * 1.1),
+      final interna = o + Offset(dentro * r * 0.35, -r * 1.85);
+      final externa = o + Offset(-dentro * r * 0.95, -r * 1.25);
+      canvas.drawPath(
+        Path()
+          ..moveTo(interna.dx, interna.dy)
+          ..quadraticBezierTo(
+            o.dx - dentro * r * 0.25,
+            o.dy - r * 1.80,
+            externa.dx,
+            externa.dy,
+          ),
         _traco(sombraForte, 1.8),
       );
     }
@@ -3989,22 +4009,6 @@ class _PetPainter extends CustomPainter {
         ..cubicTo(o.dx - s * k, o.dy - s * k, o.dx - s * k, o.dy - s * k, o.dx, o.dy - s)
         ..close(),
       _p(cor),
-    );
-  }
-
-  /// Uma lágrima que desce devagar e some.
-  void _pingo(Canvas canvas, Size size) {
-    final fase = (pose.boia + 1) / 2;
-    final o = Offset(size.width * 0.30, size.height * 0.46 + fase * 16);
-    final a = (1 - fase) * 0.55;
-    if (a <= 0.02) return;
-    canvas.drawPath(
-      Path()
-        ..moveTo(o.dx, o.dy - 5)
-        ..cubicTo(o.dx + 4, o.dy + 1, o.dx + 3, o.dy + 6, o.dx, o.dy + 6)
-        ..cubicTo(o.dx - 3, o.dy + 6, o.dx - 4, o.dy + 1, o.dx, o.dy - 5)
-        ..close(),
-      _p(const Color(0xFF7FA9C9).withValues(alpha: a)),
     );
   }
 

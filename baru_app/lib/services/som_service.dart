@@ -8,9 +8,12 @@
 ///
 /// 1. O usuário pode desligar. Um app de foco que faz barulho sem permissão é
 ///    um app de distração.
-/// 2. Silencioso do sistema ganha do app — o `audioplayers` já respeita o
-///    perfil no Android e a chave lateral no iOS quando o contexto é de
-///    "sonification", que é o que configuramos.
+/// 2. Silencioso do sistema ganha do app, e a música de quem está ouvindo
+///    não para. Por isso o contexto de áudio é declarado em [_contexto]: o
+///    padrão do `audioplayers` é tocar como **mídia pedindo foco
+///    permanente**, e o Android tira o Spotify do ar a cada toque no bicho.
+///    (O comentário antigo dizia que já era "sonification"; não era —
+///    nenhum contexto era configurado.)
 /// 3. Falha de áudio nunca sobe. Não ter alto-falante, estar num teste sem
 ///    plugin, o arquivo faltar — nada disso pode derrubar uma sessão de foco.
 library;
@@ -163,9 +166,34 @@ class SomService {
     }
   }
 
+  /// Efeito de interface, não mídia.
+  ///
+  /// Android: uso `assistanceSonification` (sai pelo volume do sistema, que o
+  /// modo silencioso e o vibrar calam) e **nenhum** pedido de foco de áudio,
+  /// então quem está tocando música continua tocando. iOS: categoria
+  /// `ambient`, que obedece a chave lateral e mistura com o que estiver
+  /// tocando.
+  static final _contexto = AudioContext(
+    android: const AudioContextAndroid(
+      isSpeakerphoneOn: false,
+      stayAwake: false,
+      contentType: AndroidContentType.sonification,
+      usageType: AndroidUsageType.assistanceSonification,
+      audioFocus: AndroidAudioFocus.none,
+    ),
+    iOS: AudioContextIOS(
+      category: AVAudioSessionCategory.ambient,
+      options: const {AVAudioSessionOptions.mixWithOthers},
+    ),
+  );
+
   Future<void> _tocaDeVerdade(SomDoBaru som) async {
     if (!_armado) return;
-    final p = _player ??= AudioPlayer();
+    var p = _player;
+    if (p == null) {
+      p = _player = AudioPlayer();
+      await p.setAudioContext(_contexto);
+    }
     await p.setReleaseMode(ReleaseMode.stop);
     await p.setPlayerMode(PlayerMode.lowLatency);
     await p.play(AssetSource(som.arquivo), volume: 0.55);

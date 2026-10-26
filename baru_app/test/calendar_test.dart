@@ -39,32 +39,37 @@ void main() {
       expect(s.todayIndex, 1);
     });
 
-    test('a semana zera na virada de domingo para segunda', () {
+    test('a faixa não zera na segunda: mostra os últimos 7 dias', () {
       // Uso real: abre o app e faz uma sessão todo dia, de segunda a domingo.
       final s = _em(segunda);
+      s.completedToday = 1;
       for (var d = terca;
           !d.isAfter(domingo);
           d = d.add(const Duration(days: 1))) {
         s.applyCalendar(d);
         s.completedToday = 1;
       }
-      expect(
-        s.week.sublist(0, 6),
-        everyElement(WeekDayKind.present),
-        reason: 'seis dias presentes antes da virada',
-      );
-      expect(s.week[6], WeekDayKind.today);
 
-      // domingo -> segunda: semana nova
+      // domingo -> segunda: a faixa anda, não apaga. Antes a segunda zerava
+      // tudo e uma raiz de vários dias aparecia com um ponto só.
       s.applyCalendar(segundaSeguinte);
       expect(s.todayIndex, 0);
-      expect(s.week[0], WeekDayKind.today);
+      final faixa = s.ultimos7Dias;
+      expect(faixa.map((d) => d.$1).toList(), [1, 2, 3, 4, 5, 6, 0],
+          reason: 'do mais antigo (terça) até hoje (segunda)');
       expect(
-        s.week.sublist(1),
-        everyElement(WeekDayKind.empty),
-        reason: 'a faixa diz "esta semana": marcas da semana passada não podem '
-            'sobreviver à virada',
+        faixa.sublist(0, 6).map((d) => d.$2),
+        everyElement(WeekDayKind.present),
+        reason: 'os seis dias anteriores continuam marcados',
       );
+      expect(faixa.last.$2, WeekDayKind.today);
+    });
+
+    test('hoje vira presente assim que há uma sessão, não à meia-noite', () {
+      final s = _em(terca, comSessao: false);
+      expect(s.ultimos7Dias.last.$2, WeekDayKind.today);
+      s.completedToday = 1;
+      expect(s.ultimos7Dias.last.$2, WeekDayKind.present);
     });
 
     test('o congelamento recarrega na segunda', () {

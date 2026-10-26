@@ -131,10 +131,16 @@ class Carteira {
       totalGasto == 0;
 
   /// O item mais barato que ainda não foi comprado — o alvo natural do saldo.
+  ///
+  /// Mais barato de verdade: a primeira versão devolvia o primeiro da lista
+  /// do catálogo, e a tela sugeria o Bambuzal (70) com o Chapéu de palha
+  /// (60) ainda na vitrine. No empate de preço, vale a ordem do catálogo.
   ShopItemDef? get proximoItem {
+    ShopItemDef? melhor;
     for (final i in shopItems) {
-      if (!snapshot.owned.contains(i.id)) return i;
+      if (snapshot.owned.contains(i.id)) continue;
+      if (melhor == null || i.price < melhor.price) melhor = i;
     }
-    return null;
+    return melhor;
   }
 }

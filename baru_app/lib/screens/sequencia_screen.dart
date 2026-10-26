@@ -61,11 +61,11 @@ class SequenciaScreen extends StatelessWidget {
                     const SizedBox(height: Espaco.md),
                     Row(
                       children: [
-                        for (var i = 0; i < 7; i++)
+                        for (final (i, marca) in app.ultimos7Dias)
                           Expanded(
                             child: Column(
                               children: [
-                                _Ponto(tipo: app.week[i]),
+                                _Ponto(tipo: marca),
                                 const SizedBox(height: Espaco.xs),
                                 Text(
                                   t.days[i],

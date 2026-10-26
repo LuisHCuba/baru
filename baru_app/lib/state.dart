@@ -517,6 +517,22 @@ class AppState extends ChangeNotifier {
   bool usageAccess = false;
   bool companionshipStarted = false;
   List<WeekDayKind> week = freshWeek();
+
+  /// A faixa da home e da tela da raiz: os últimos 7 dias, do mais antigo a
+  /// hoje, com o índice do dia da semana (para a letra) e a marca.
+  ///
+  /// Hoje vira presente **assim que** há uma sessão concluída — a ação do dia
+  /// tem eco na hora, não à meia-noite, quando `_advanceDay` grava a marca.
+  List<(int, WeekDayKind)> get ultimos7Dias => [
+        for (var k = 6; k >= 0; k--)
+          (() {
+            final i = (todayIndex - k + 7) % 7;
+            final marca = k == 0 && completedToday >= 1
+                ? WeekDayKind.present
+                : week[i];
+            return (i, marca);
+          })(),
+      ];
   int todayIndex = weekdayIndex();
   int freezesLeft = 1;
   DateTime? trialStartedAt;
@@ -2095,12 +2111,12 @@ class AppState extends ChangeNotifier {
       streak = 0;
     }
 
-    // Segunda-feira abre uma semana nova: a faixa mostra "esta semana", então
-    // as marcas da semana anterior não podem sobreviver à virada.
-    if (iPara == 0) {
-      week = List<WeekDayKind>.filled(7, WeekDayKind.empty);
-      freezesLeft = 1;
-    }
+    // Segunda-feira recarrega o congelamento da semana, mas **não apaga a
+    // faixa**. A faixa mostra os últimos 7 dias (ver [ultimos7Dias]): cada
+    // posição de `week` guarda a última vez que aquele dia da semana passou,
+    // e o dia de hoje sobrescreve a marca de sete dias atrás. Antes a segunda
+    // zerava tudo, e uma raiz de 4 dias aparecia com um ponto só.
+    if (iPara == 0) freezesLeft = 1;
 
     todayIndex = iPara;
     week[iPara] = WeekDayKind.today;

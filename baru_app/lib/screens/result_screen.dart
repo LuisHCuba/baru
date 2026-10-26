@@ -24,7 +24,9 @@ class ResultScreen extends StatelessWidget {
               children: [
                 PetView(
                   species: app.species,
-                  mood: won ? Mood.radiant : Mood.missingYou,
+                  // Desistir não custa nada (§1): o bicho continua contente,
+                  // não triste — cara de pena aqui seria cobrança.
+                  mood: won ? Mood.radiant : Mood.content,
                   activity: Activity.idle,
                   coat: app.color,
                   scale: 1.15,

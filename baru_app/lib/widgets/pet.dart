@@ -1288,6 +1288,24 @@ class _PetPainter extends CustomPainter {
   /// A escala do fôlego deste quadro, (largura, altura).
   (double, double) _folego = (1, 1);
 
+  /// Dois pulinhos seguidos e um descanso, por volta do ócio.
+  ///
+  /// Era um seno contínuo — subia e descia a cada 2,5 s sem parar, e lia
+  /// como flutuar (auditoria da Onda 3, 11a-B1). Pulo de alegria é rajada:
+  /// hop, hop, e para.
+  double get _pulinhos {
+    const janela = 0.28;
+    if (pose.ciclo >= janela) return 0;
+    final u = pose.ciclo / janela;
+    return math.max(0.0, math.sin(u * math.pi * 4)) * 5;
+  }
+
+  /// O traço do olho fechado: tinta, ou creme sobre o pelo escuro, onde a
+  /// tinta sumia (buldogue preto, lontra escura dormindo).
+  Color get _tracoDoOlho => pelo.computeLuminance() < 0.08
+      ? Color.lerp(Cores.superficie, pelo, 0.30)!
+      : Cores.tinta;
+
   /// Desfaz o fôlego no espaço da cabeça: o peito respira, o rosto não.
   void _cabecaSemFolego(Canvas canvas) {
     canvas.scale(1 / _folego.$1, 1 / _folego.$2);
@@ -1537,10 +1555,7 @@ class _PetPainter extends CustomPainter {
       // O radiante dá pulinhos de vez em quando: três por volta do ócio,
       // só a parte de cima do seno, para pousar e não afundar.
       AcaoDoBicho.ocioso => boia * 1.2 -
-          _porHumor((m) => m == Mood.radiant ? 1 : 0) *
-              math.max(0.0, math.sin(pose.ciclo * math.pi * 6)) *
-              4 *
-              amp,
+          _porHumor((m) => m == Mood.radiant ? 1 : 0) * _pulinhos * amp,
     };
 
     if (nadando) _rastro(canvas, size, linhaDagua);
@@ -4562,7 +4577,7 @@ class _PetPainter extends CustomPainter {
         feliz ? math.pi + 0.3 : 0.28,
         math.pi - (feliz ? 0.6 : 0.56),
         false,
-        _traco(Cores.tinta, 2.2),
+        _traco(_tracoDoOlho, 2.2),
       );
       return;
     }

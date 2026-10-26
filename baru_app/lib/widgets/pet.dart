@@ -1308,7 +1308,7 @@ class _PetPainter extends CustomPainter {
 
   /// Desfaz o fôlego no espaço da cabeça: o peito respira, o rosto não.
   void _cabecaSemFolego(Canvas canvas) {
-    canvas.scale(1 / _folego.$1, 1 / _folego.$2);
+    canvas.scale(1 / _folego.$1, 1 / (_folego.$2 * _feitio));
   }
 
   /// Um valor do corpo que depende do humor, já interpolado na troca.
@@ -1366,22 +1366,36 @@ class _PetPainter extends CustomPainter {
   /// topo do quadro.
   double get _porte => switch (estagio) {
         EstagioDoBicho.inicio => 0.52,
-        EstagioDoBicho.filhote => 0.62,
-        EstagioDoBicho.jovem => 0.78,
+        EstagioDoBicho.filhote => 0.63,
+        EstagioDoBicho.jovem => 0.80,
         EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+      };
+
+  /// O feitio do corpo, por cima do porte: quanto ele estica na altura.
+  ///
+  /// Filhote e jovem eram o mesmo desenho 10% maior — e com a cabeça do
+  /// filhote compensada, as duas cabeças saíam quase do mesmo tamanho
+  /// (simulador da Fase 4, alto 5). Agora a silhueta conta a idade: o
+  /// filhote é atarracado e cabeçudo, o jovem é espichado, de pernas e
+  /// tronco compridos, como todo adolescente. A cabeça desfaz o esticão em
+  /// [_cabecaSemFolego] e não deforma.
+  double get _feitio => switch (estagio) {
+        EstagioDoBicho.filhote => 0.95,
+        EstagioDoBicho.jovem => 1.14,
+        _ => 1.0,
       };
 
   /// Escala da cabeça, por cima do porte.
   double get _cabecaDoEstagio => switch (estagio) {
-        EstagioDoBicho.inicio || EstagioDoBicho.filhote => 1.24,
-        EstagioDoBicho.jovem => 1.10,
+        EstagioDoBicho.inicio || EstagioDoBicho.filhote => 1.30,
+        EstagioDoBicho.jovem => 1.04,
         EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
       };
 
   /// Escala do olho, por cima da cabeça.
   double get _olhoDoEstagio => switch (estagio) {
-        EstagioDoBicho.inicio || EstagioDoBicho.filhote => 1.16,
-        EstagioDoBicho.jovem => 1.07,
+        EstagioDoBicho.inicio || EstagioDoBicho.filhote => 1.20,
+        EstagioDoBicho.jovem => 1.04,
         EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
       };
 
@@ -1609,12 +1623,16 @@ class _PetPainter extends CustomPainter {
     // ficava com a água nos olhos (auditoria da Onda 2, 6.1). Pela linha,
     // o que estava acima dela continua acima.
     final porte = _porte;
-    if (porte != 1) {
+    final feitio = _feitio;
+    if (porte != 1 || feitio != 1) {
       final pivo = nadando ? linhaDagua - corpoY : _pes;
       canvas.translate(0, pivo);
-      canvas.scale(porte);
+      canvas.scale(porte, porte * feitio);
       canvas.translate(0, -pivo);
     }
+    // O novo estágio é visto boiando, não afogado: o filhote e o jovem
+    // boiam mais alto, com o corpo à vista (simulador da Fase 4, alto 5).
+    if (nadando && feitio != 1) canvas.translate(0, -9);
     canvas.rotate(giro);
 
     // Respiração como squash/stretch, mais o quique do toque e o alongamento

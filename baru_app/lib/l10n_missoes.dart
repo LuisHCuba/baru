@@ -32,6 +32,7 @@ const textosDeMissoes = <String, Map<String, String>>{
     'mqDescansoParar': 'Parar por agora',
     'mqQuantasColher': '{n} para colher',
     'mqColherTudo': 'Colher as {n} de uma vez',
+    'mqGuardadas': 'Guardei para você o que ficou pronto ontem: +{k} folhas.',
     'mqColherTudoSub': '+{f} folhas, uma toca só',
 
     // --- os tipos novos --------------------------------------------------
@@ -74,6 +75,7 @@ const textosDeMissoes = <String, Map<String, String>>{
     'mqDescansoParar': 'Stop for now',
     'mqQuantasColher': '{n} to collect',
     'mqColherTudo': 'Collect all {n} at once',
+    'mqGuardadas': 'I saved what was ready yesterday: +{k} leaves.',
     'mqColherTudoSub': '+{f} leaves, one burrow',
     'msFocoGanha': 'More focus than scrolling today',
     'comoFocoGanha': "Stack up focus minutes until they pass today's time in "
@@ -113,6 +115,7 @@ const textosDeMissoes = <String, Map<String, String>>{
     'mqDescansoParar': 'Parar por ahora',
     'mqQuantasColher': '{n} para recoger',
     'mqColherTudo': 'Recoger las {n} a la vez',
+    'mqGuardadas': 'Te guardé lo que quedó listo ayer: +{k} hojas.',
     'mqColherTudoSub': '+{f} hojas, una sola madriguera',
     'msFocoGanha': 'Más enfoque que scroll hoy',
     'comoFocoGanha': 'Suma minutos de enfoque hasta pasar el tiempo de hoy en '
@@ -153,6 +156,7 @@ const textosDeMissoes = <String, Map<String, String>>{
     'mqDescansoParar': '先停下',
     'mqQuantasColher': '{n} 项可收',
     'mqColherTudo': '一次收下全部 {n} 项',
+    'mqGuardadas': '昨天准备好的我替你收好了：+{k} 片叶子。',
     'mqColherTudoSub': '+{f} 片叶子，只挖一次',
     'msFocoGanha': '今天专注多过刷手机',
     'comoFocoGanha': '累积专注分钟数，直到超过今天在消遣类应用上的时间。',
@@ -192,6 +196,7 @@ extension TextosDeMissoes on T {
   String get mqDescansoParar => s('mqDescansoParar');
   String get mqQuantasColher => s('mqQuantasColher');
   String get mqColherTudo => s('mqColherTudo');
+  String get mqGuardadas => s('mqGuardadas');
   String get mqColherTudoSub => s('mqColherTudoSub');
   String get msFocoGanha => s('msFocoGanha');
   String get comoFocoGanha => s('comoFocoGanha');

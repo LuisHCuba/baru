@@ -9,6 +9,7 @@ import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/folhas_voando.dart';
 import '../widgets/toca.dart';
 
 /// Missões diárias e semanais.
@@ -786,6 +787,17 @@ Future<void> _abreAToca(
               rotuloDoPremio: t.fill(t.missaoGanhou, {'n': folhas}),
               aoAbrir: () {
                 aoAbrir();
+                // As folhas saem do prêmio e voam até o saldo, por cima da
+                // folha da toca — depois de o prêmio subir e ser visto.
+                Future.delayed(const Duration(milliseconds: 320), () {
+                  if (!folha.mounted || !context.mounted) return;
+                  final de = centroDe(folha, Toca.chaveDoPremio) ??
+                      centroDe(folha, Toca.chave);
+                  final para = centroDe(context, LeafBadge.chave);
+                  if (de != null && para != null) {
+                    voaFolhas(folha, de: de, para: para);
+                  }
+                });
                 // Um respiro para a cena ser vista antes de a folha sair.
                 Future.delayed(const Duration(milliseconds: 900), () {
                   if (folha.mounted) Navigator.of(folha).pop();

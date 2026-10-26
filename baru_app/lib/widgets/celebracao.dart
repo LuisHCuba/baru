@@ -25,7 +25,13 @@ class Celebracao extends StatefulWidget {
     this.cor = Cores.mel400,
     this.precisaCavar = false,
     this.som = SomDoBaru.conquista,
+    this.bicho,
   });
+
+  /// O bicho da pessoa, comemorando junto. Quando vem, ele ocupa o lugar do
+  /// ícone: a conquista é dos dois, e um ícone genérico num círculo não é de
+  /// ninguém (laudo 01, U11; laudo 03, 4.9).
+  final Widget? bicho;
 
   final String titulo;
   final String subtitulo;
@@ -188,27 +194,60 @@ class _CelebracaoState extends State<Celebracao>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              width: 92,
-                              height: 92,
-                              decoration: BoxDecoration(
-                                color: widget.cor,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: widget.cor.withValues(alpha: 0.5),
-                                    blurRadius: 40 * amplitude,
-                                    spreadRadius: 6 * amplitude,
-                                  ),
-                                ],
+                            if (widget.bicho != null)
+                              SizedBox(
+                                width: 180,
+                                height: 150,
+                                child: Stack(
+                                  alignment: Alignment.bottomCenter,
+                                  children: [
+                                    // O halo da conquista atrás dele.
+                                    Positioned(
+                                      bottom: 6,
+                                      child: Container(
+                                        width: 128,
+                                        height: 128,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: widget.cor
+                                              .withValues(alpha: 0.30),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: widget.cor
+                                                  .withValues(alpha: 0.45),
+                                              blurRadius: 40 * amplitude,
+                                              spreadRadius: 6 * amplitude,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    widget.bicho!,
+                                  ],
+                                ),
+                              )
+                            else
+                              Container(
+                                width: 92,
+                                height: 92,
+                                decoration: BoxDecoration(
+                                  color: widget.cor,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: widget.cor.withValues(alpha: 0.5),
+                                      blurRadius: 40 * amplitude,
+                                      spreadRadius: 6 * amplitude,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  widget.icone,
+                                  size: 42,
+                                  // Tinta sobre o mel, creme sobre o vínculo.
+                                  color: Cores.textoSobre(widget.cor),
+                                ),
                               ),
-                              child: Icon(
-                                widget.icone,
-                                size: 42,
-                                // Tinta sobre o mel, creme sobre o vínculo.
-                                color: Cores.textoSobre(widget.cor),
-                              ),
-                            ),
                             const SizedBox(height: Espaco.lg),
                             Text(
                               widget.titulo,

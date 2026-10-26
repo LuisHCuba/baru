@@ -22,6 +22,7 @@ import 'data/tempo_de_tela.dart';
 import 'l10n.dart';
 import 'l10n_descanso.dart';
 import 'l10n_humor.dart';
+import 'l10n_missoes.dart';
 import 'l10n_sobreposicao.dart';
 import 'theme.dart';
 import 'models.dart';
@@ -435,6 +436,10 @@ class AppState extends ChangeNotifier {
   /// O presente de retorno já creditado, esperando virar recado na tela.
   VoltaAoNinho? voltaPendente;
 
+  /// Folhas de missões prontas que a virada do dia colheu sozinha, para o
+  /// recado da abertura. Transitório: a colheita roda na abertura.
+  int guardadasNaVirada = 0;
+
   /// Sessoes, minutos e dias abaixo da meta da semana corrente.
   int sessoesNaSemana = 0;
   int minutosNaSemana = 0;
@@ -547,6 +552,40 @@ class AppState extends ChangeNotifier {
     unawaited(SomService.instance.toca(SomDoBaru.resgate));
     _markSync(_syncProgresso | _syncShop | _syncSession);
     notifyListeners();
+  }
+
+  /// Prêmio pronto nunca se perde (laudo 01, U12; regra 1 do produto).
+  ///
+  /// Missão pronta e não colhida expirava à meia-noite: a pessoa fez o
+  /// trabalho e perdia as folhas por não ter voltado ao app. Na virada,
+  /// antes de o dia zerar, o app colhe por ela — as diárias sempre, as da
+  /// semana quando a semana vira — e conta na abertura.
+  void _colheAsEsquecidas({required bool viraASemana}) {
+    var folhas = 0;
+    final quadro = [...missoes, if (missaoDeRetomada case final r?) r];
+    for (final m in quadro) {
+      if (!m.resgatavel) continue;
+      if (m.ritmo != RitmoDaMissao.diaria && !viraASemana) continue;
+      final chave = QuadroDeMissoes.chaveDeResgate(m.definicao, lastOpenDate);
+      if (missoesResgatadas.contains(chave)) continue;
+      missoesResgatadas = {...missoesResgatadas, chave};
+      leaves += m.folhas;
+      ganhaXp(m.xp);
+      folhas += m.folhas;
+    }
+    final descanso = missaoDoDescanso;
+    if (descanso.resgatavel) {
+      final chave = MissaoDoDescanso.chaveDeResgate(lastOpenDate);
+      if (!missoesResgatadas.contains(chave)) {
+        missoesResgatadas = {...missoesResgatadas, chave};
+        leaves += descanso.folhas;
+        ganhaXp(descanso.xp);
+        folhas += descanso.folhas;
+      }
+    }
+    if (folhas == 0) return;
+    guardadasNaVirada += folhas;
+    _markSync(_syncProgresso | _syncShop | _syncSession);
   }
 
   /// Consome o aviso de missao concluida depois de a tela anima-lo.
@@ -2440,6 +2479,10 @@ class AppState extends ChangeNotifier {
   void applyCalendar(DateTime now, {bool persist = true}) {
     final today = dateOnly(now);
     final desde = dateOnly(lastOpenDate);
+    if (desde.isBefore(today) && companionshipStarted) {
+      _colheAsEsquecidas(viraASemana: weekdayIndex(today) == 0 ||
+          today.difference(desde).inDays >= 7);
+    }
     var cursor = desde;
     var steps = 0;
     while (cursor.isBefore(today) && steps < maxDiasReconstruidos) {
@@ -2531,6 +2574,11 @@ class AppState extends ChangeNotifier {
     if (v != null) {
       voltaPendente = null;
       onUserMessage?.call(recadoDaVolta(t, v));
+    }
+    if (guardadasNaVirada > 0) {
+      final k = guardadasNaVirada;
+      guardadasNaVirada = 0;
+      onUserMessage?.call(t.fill(t.mqGuardadas, {'k': k}));
     }
   }
 

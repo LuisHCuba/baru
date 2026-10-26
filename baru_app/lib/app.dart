@@ -35,6 +35,7 @@ import 'widgets/common.dart';
 import 'widgets/celebracao.dart';
 import 'widgets/cena_da_raiz.dart';
 import 'widgets/crescimento.dart';
+import 'widgets/pet.dart';
 import 'widgets/saida.dart';
 import 'widgets/share_sheet.dart';
 
@@ -323,6 +324,20 @@ class _Casca extends StatelessWidget {
     );
   }
 
+  /// O bicho da pessoa — espécie, pelagem, estágio e roupa — radiante.
+  Widget _bichoComemorando(AppState app) => PetView(
+        species: app.species,
+        mood: Mood.radiant,
+        activity: Activity.idle,
+        coat: app.color,
+        estagio: app.estagio,
+        roupas: app.roupasDoBicho,
+        roupaDeCabeca: app.roupaDeCabeca,
+        interativo: false,
+        width: 180,
+        height: 150,
+      );
+
   /// Conquista aparece por cima de qualquer tela, inclusive da sessão.
   Widget _celebracao(AppState app) {
     final t = app.t;
@@ -350,9 +365,11 @@ class _Casca extends StatelessWidget {
         titulo: t.fill(t.celebNivel, {'n': app.nivel}),
         subtitulo: t.fill(t.celebNivelSub, {'a': app.displayName}),
         icone: Icons.local_florist_rounded,
-        cor: Cores.folha600,
+        // Nível é conquista: mel (ADR-027).
+        cor: Cores.mel400,
         // Nível é recompensa: sai da toca, cavada.
         precisaCavar: true,
+        bicho: _bichoComemorando(app),
         aoFechar: app.celebrou,
       );
     }
@@ -364,6 +381,7 @@ class _Casca extends StatelessWidget {
         subtitulo: t.fill(t.celebChegadaSub, {'a': app.displayName}),
         icone: Icons.favorite_rounded,
         cor: Cores.afeto,
+        bicho: _bichoComemorando(app),
         som: SomDoBaru.chegada,
         aoFechar: app.celebrou,
       );
@@ -373,6 +391,7 @@ class _Casca extends StatelessWidget {
       titulo: t.celebMarco,
       subtitulo: tituloDoMarco(app, marco),
       cor: Cores.mel400,
+      bicho: _bichoComemorando(app),
       // Marco da trilha também é recompensa. A saudação da chegada, logo
       // acima, não é — e por isso continua chegando sozinha.
       precisaCavar: true,

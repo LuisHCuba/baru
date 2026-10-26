@@ -108,6 +108,14 @@ void main() {
       s.lastOpenDate = dateOnly(
         DateTime.now().subtract(const Duration(days: 12)),
       );
+      // A missão que ficou pronta no último dia aberto é colhida na virada
+      // (U12: prêmio pronto não se perde). Doze dias atravessam a semana,
+      // então as semanais prontas entram também.
+      final colhidas = [
+        ...s.missoes,
+        if (s.missaoDeRetomada case final r?) r,
+      ].where((m) => m.resgatavel).fold<int>(0, (a, m) => a + m.folhas) +
+          (s.missaoDoDescanso.resgatavel ? s.missaoDoDescanso.folhas : 0);
       s.applyCalendar(DateTime.now());
       // O presente de retorno (RD-03) entra aqui também: doze dias fora
       // atravessam a régua dele. Somá-lo mantém a asserção sobre o que este
@@ -122,7 +130,7 @@ void main() {
       // foco, e o passo 1 da corrente é exatamente isso.
       expect(
         s.leaves,
-        AppState.underGoalBonus + (volta?.folhas ?? 0),
+        AppState.underGoalBonus + (volta?.folhas ?? 0) + colhidas,
         reason: 'dias sem o app têm usage sintético em 0 — pagar por eles '
             'seria inventar medição; só o primeiro conta',
       );

@@ -5,6 +5,8 @@
 // andam do valor antigo ao novo; com várias prontas, uma toca colhe todas.
 import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/data/resumo_da_sessao.dart';
+import 'package:baru_app/data/missoes.dart';
+import 'package:baru_app/l10n_missoes.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/screens/result_screen.dart';
 import 'package:baru_app/screens/shop_screen.dart';
@@ -15,7 +17,7 @@ import 'package:baru_app/widgets/loja_vitrine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-AppState _app() => AppState()
+AppState _app([void Function(String)? recado]) => AppState(onUserMessage: recado)
   ..onb = 9
   ..companionshipStarted = true
   ..petName = 'Nina'
@@ -116,6 +118,47 @@ void main() {
 
       s.resgataTodas(prontas);
       expect(s.leaves, antes + soma, reason: 'colher de novo não paga de novo');
+    });
+  });
+
+  group('nada pronto se perde à meia-noite (U12)', () {
+    test('a virada do dia colhe o que ficou pronto e conta na abertura', () {
+      final recados = <String>[];
+      final s = _app(recados.add);
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      final prontas = [
+        ...s.missoes.where((m) => m.resgatavel),
+      ];
+      expect(prontas, isNotEmpty);
+      final diarias = prontas.where((m) => m.ritmo == RitmoDaMissao.diaria);
+      final soma = diarias.fold<int>(0, (a, m) => a + m.folhas);
+      final antes = s.leaves;
+
+      s.applyCalendar(DateTime.now().add(const Duration(days: 1)));
+      expect(s.leaves, greaterThanOrEqualTo(antes + soma));
+      final guardei = s.t.mqGuardadas.split('{').first;
+      expect(recados.where((r) => r.startsWith(guardei)), hasLength(1));
+
+      // Abrir de novo no mesmo dia não paga de novo.
+      final depois = s.leaves;
+      s.applyCalendar(DateTime.now().add(const Duration(days: 1)));
+      expect(s.leaves, depois);
+    });
+
+    test('colhida à mão, a virada não paga outra vez', () {
+      final recados = <String>[];
+      final s = _app(recados.add);
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      s.resgataTodas(s.missoes.where((m) => m.resgatavel).toList());
+      s.resgataODescanso();
+      final antes = s.leaves;
+      recados.clear();
+      s.applyCalendar(DateTime.now().add(const Duration(days: 1)));
+      final guardei = s.t.mqGuardadas.split('{').first;
+      expect(recados.where((r) => r.startsWith(guardei)), isEmpty);
+      expect(s.leaves, greaterThanOrEqualTo(antes));
     });
   });
 

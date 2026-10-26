@@ -645,11 +645,17 @@ class BottomTabs extends StatelessWidget {
         child: Row(
           children: List.generate(4, (i) {
             final on = app.screen == ids[i];
+            // O que está pronto para colher aparece na aba, de qualquer
+            // tela: prêmio parado sem ninguém ver é prêmio perdido.
+            final aColher =
+                ids[i] == AppScreen.missoes ? app.missoesResgataveis : 0;
             return Expanded(
               child: Semantics(
                 button: true,
                 selected: on,
-                label: app.t.tabs[i],
+                label: aColher > 0
+                    ? '${app.t.tabs[i]}, $aColher'
+                    : app.t.tabs[i],
                 child: GestureDetector(
                   onTap: () => app.go(ids[i]),
                   behavior: HitTestBehavior.opaque,
@@ -659,10 +665,48 @@ class BottomTabs extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         ExcludeSemantics(
-                          child: AppIcon(
-                            on ? tabGlyphs[i].on : tabGlyphs[i].off,
-                            size: 22,
-                            color: on ? AppColors.green : AppColors.inkA(0.4),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              AppIcon(
+                                on ? tabGlyphs[i].on : tabGlyphs[i].off,
+                                size: 22,
+                                color:
+                                    on ? AppColors.green : AppColors.inkA(0.4),
+                              ),
+                              if (aColher > 0)
+                                Positioned(
+                                  key: const Key('aba-missoes-a-colher'),
+                                  right: -9,
+                                  top: -5,
+                                  child: Container(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.orange,
+                                      borderRadius: BorderRadius.circular(99),
+                                      border: Border.all(
+                                        color: AppColors.cream,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '$aColher',
+                                      style: nunito(
+                                        size: 10,
+                                        weight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 5),

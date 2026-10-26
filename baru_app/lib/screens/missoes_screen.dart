@@ -160,6 +160,8 @@ class MissoesScreen extends StatelessWidget {
               ? null
               : t.fill(t.mqQuantasColher, {'n': aColher.length}),
           filhos: [
+            if (aColher.length >= 2)
+              _ColherTudo(app: app, missoes: aColher),
             for (final m in aColher) CartaoDeMissao(app: app, missao: m),
           ],
         ),
@@ -641,6 +643,60 @@ class _Recompensa extends StatelessWidget {
           style: estilo(Tipo.rotuloPequeno, color: cor.withValues(alpha: 0.8)),
         ),
       ],
+    );
+  }
+}
+
+/// Um cartão só para colher tudo o que está pronto, numa toca só.
+class _ColherTudo extends StatelessWidget {
+  const _ColherTudo({required this.app, required this.missoes});
+
+  final AppState app;
+  final List<Missao> missoes;
+
+  static const chave = Key('colher-tudo');
+
+  @override
+  Widget build(BuildContext context) {
+    final t = app.t;
+    final folhas = missoes.fold<int>(0, (s, m) => s + m.folhas);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Espaco.sm),
+      child: CartaoBaru(
+        key: chave,
+        cor: Cores.acentoA(0.16),
+        onTap: () => _abreAToca(
+          context,
+          app,
+          folhas: folhas,
+          aoAbrir: () => app.resgataTodas(missoes),
+        ),
+        child: Row(
+          children: [
+            const LeafMark(size: 22, color: Cores.acento),
+            const SizedBox(width: Espaco.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t.fill(t.mqColherTudo, {'n': missoes.length}),
+                    style: estilo(Tipo.corpoForte, color: Cores.acentoTexto),
+                  ),
+                  Text(
+                    t.fill(t.mqColherTudoSub, {'f': folhas}),
+                    style: estilo(
+                      Tipo.corpoPequeno,
+                      color: Cores.tintaA(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Cores.acentoTexto),
+          ],
+        ),
+      ),
     );
   }
 }

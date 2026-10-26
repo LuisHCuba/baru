@@ -1,0 +1,208 @@
+// O fim da sessão em sequência, colher tudo e o indicador na aba (item 8).
+//
+// Aceite do laudo 01 (U7, U11, U12): a tela anima a partir do retrato
+// "antes"; as cenas de conquista esperam a vez dela; as missões tocadas
+// andam do valor antigo ao novo; com várias prontas, uma toca colhe todas.
+import 'package:baru_app/data/resumo_da_sessao.dart';
+import 'package:baru_app/models.dart';
+import 'package:baru_app/screens/result_screen.dart';
+import 'package:baru_app/screens/shop_screen.dart';
+import 'package:baru_app/services/som_service.dart';
+import 'package:baru_app/state.dart';
+import 'package:baru_app/widgets/common.dart';
+import 'package:baru_app/widgets/loja_vitrine.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+AppState _app() => AppState()
+  ..onb = 9
+  ..companionshipStarted = true
+  ..petName = 'Nina'
+  ..debugFast = false;
+
+void _concluiUmaSessao(AppState s) {
+  s.startSession();
+  s.sessionEndsAt = DateTime.now().subtract(const Duration(seconds: 1));
+  s.reconcileSession();
+}
+
+void main() {
+  late List<SomDoBaru> tocados;
+
+  setUp(() {
+    tocados = [];
+    SomService.espiao = tocados;
+    // Cada som chega um segundo depois do anterior: o limitador do serviço
+    // é de relógio de parede, e o `pump` do teste não o faz andar.
+    var relogio = DateTime(2026, 10, 26, 9);
+    SomService.instance
+      ..esqueceOsUltimos()
+      ..agora = (() => relogio = relogio.add(const Duration(seconds: 1)))
+      ..tocador = (_) async {};
+  });
+
+  tearDown(() {
+    SomService.espiao = null;
+    SomService.instance
+      ..tocador = null
+      ..agora = DateTime.now;
+  });
+
+  group('o retrato da sessão', () {
+    test('guarda o antes e o que a sessão trouxe', () {
+      final s = _app()..leaves = 40;
+      addTearDown(s.dispose);
+      final xpAntes = s.xp;
+      _concluiUmaSessao(s);
+
+      final r = s.ultimoResumo!;
+      expect(r.folhasAntes, 40);
+      expect(r.folhasDaSessao, s.reward);
+      expect(r.xpAntes, xpAntes);
+      expect(r.xpDaRaiz, greaterThan(0), reason: '1ª do dia: bônus da raiz');
+      expect(r.missoes, isNotEmpty, reason: 'alguma missão de foco andou');
+      for (final m in r.missoes) {
+        expect(m.depois.progresso, isNot(m.antes.progresso));
+      }
+    });
+
+    test('a segunda sessão do dia não repete o bônus da raiz', () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      _concluiUmaSessao(s);
+      expect(s.ultimoResumo!.xpDaRaiz, 0);
+    });
+  });
+
+  group('a vez das cenas', () {
+    test('as conquistas esperam a tela de resultado', () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      expect(s.screen, AppScreen.result);
+      expect(s.temCelebracaoPendente, isTrue);
+      expect(s.celebracoesEmEspera, isTrue);
+      s.liberaCelebracoes();
+      expect(s.celebracoesEmEspera, isFalse);
+    });
+
+    test('sair da tela de resultado solta a espera sozinho', () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      s.voltar();
+      expect(s.celebracoesEmEspera, isFalse,
+          reason: 'trava esquecida calaria as conquistas do dia');
+    });
+  });
+
+  group('colher tudo', () {
+    test('credita todas, uma vez cada, com um som só', () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      _concluiUmaSessao(s);
+      final prontas = s.missoes.where((m) => m.resgatavel).toList();
+      expect(prontas.length, greaterThanOrEqualTo(1));
+      final antes = s.leaves;
+      final soma = prontas.fold<int>(0, (a, m) => a + m.folhas);
+      tocados.clear();
+
+      s.resgataTodas(prontas);
+      expect(s.leaves, antes + soma);
+      expect(tocados, [SomDoBaru.resgate]);
+
+      s.resgataTodas(prontas);
+      expect(s.leaves, antes + soma, reason: 'colher de novo não paga de novo');
+    });
+  });
+
+  testWidgets('a aba Missões mostra quantas há para colher', (tester) async {
+    final s = _app();
+    addTearDown(s.dispose);
+    _concluiUmaSessao(s);
+    s.voltar();
+    await tester.pumpWidget(AppScope(
+      state: s,
+      child: const MaterialApp(home: Scaffold(body: BottomTabs())),
+    ));
+    final n = s.missoesResgataveis;
+    expect(n, greaterThan(0));
+    expect(find.byKey(const Key('aba-missoes-a-colher')), findsOneWidget);
+    expect(find.text('$n'), findsOneWidget);
+  });
+
+  testWidgets('a sequência: saldo contando, depois as missões andando',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(412, 892));
+    final s = _app()..leaves = 40;
+    addTearDown(s.dispose);
+    _concluiUmaSessao(s);
+    final r = s.ultimoResumo!;
+    await tester.pumpWidget(AppScope(
+      state: s,
+      child: const MaterialApp(home: Scaffold(body: ResultScreen())),
+    ));
+
+    // Começo: o saldo ainda é o de antes.
+    expect(find.text('40'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 2200));
+    // O selo conta entre os passos por conta própria (`ContadorAnimado`).
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(find.text('${40 + r.folhasDaSessao}'), findsOneWidget);
+    expect(s.celebracoesEmEspera, isFalse, reason: 'a E1 acabou: vez das cenas');
+    expect(tocados, contains(SomDoBaru.folhas));
+
+    // As cenas passam; então as barras andam.
+    while (s.temCelebracaoPendente) {
+      s.celebrou();
+      await tester.pump();
+    }
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1000));
+    final fechou = r.missoes.where((m) => m.fechou);
+    expect(fechou, isNotEmpty);
+    expect(find.text('Pronta para colher'), findsNWidgets(fechou.length));
+    expect(find.byKey(const Key('resultado-fecho')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  test('missão já colhida não entra no retrato', () {
+    final s = _app();
+    addTearDown(s.dispose);
+    final antes = s.missoes;
+    expect(ResumoDaSessao.tocadas(antes, antes), isEmpty);
+  });
+
+  testWidgets('comprar abre a compra celebrada, e ela leva ao habitat',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(412, 892));
+    final s = _app()..leaves = 500;
+    addTearDown(s.dispose);
+    s.go(AppScreen.shop);
+    await tester.pumpWidget(AppScope(
+      state: s,
+      child: const MaterialApp(home: Scaffold(body: ShopScreen())),
+    ));
+    await tester.pump();
+    // Qualquer item à venda: a pílula com o preço em número.
+    final preco = find
+        .byWidgetPredicate((w) =>
+            w is PilulaDaLoja && w.ativo && int.tryParse(w.rotulo) != null)
+        .first;
+    await tester.ensureVisible(preco);
+    final antes = s.owned.length;
+    await tester.tap(preco);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1000));
+    expect(s.owned.length, antes + 1);
+    expect(find.text('É seu!'), findsOneWidget);
+    expect(tocados, contains(SomDoBaru.compra));
+
+    await tester.tap(find.text('Ver no habitat'));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(s.screen, AppScreen.home);
+    await tester.pumpWidget(const SizedBox());
+  });
+}

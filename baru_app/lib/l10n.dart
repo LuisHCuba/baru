@@ -502,6 +502,18 @@ class T {
   String get raizGalhoSub => s('raizGalhoSub');
   String get raizDiaRotulo => s('raizDiaRotulo');
   String get raizDiasRotulo => s('raizDiasRotulo');
+  String get resXp => s('resXp');
+  String get resRaizXp => s('resRaizXp');
+  String get resMissoesT => s('resMissoesT');
+  String get resPronta => s('resPronta');
+  String get resColher => s('resColher');
+  String get compraT => s('compraT');
+  String get compraSubObjeto => s('compraSubObjeto');
+  String get compraSubRoupa => s('compraSubRoupa');
+  String get compraVer => s('compraVer');
+  String get compraSeguir => s('compraSeguir');
+  String get resDiaFeito => s('resDiaFeito');
+  String get resProximo => s('resProximo');
   String get celebChegadaSub => s('celebChegadaSub');
   String get trilhaVaziaT => s('trilhaVaziaT');
   String get trilhaVaziaB => s('trilhaVaziaB');
@@ -784,6 +796,18 @@ const _pt = <String, Object>{
   'raizGalhoSub': '{n} dias de raiz. Isso só o tempo constrói.',
   'raizDiaRotulo': 'dia',
   'raizDiasRotulo': 'dias',
+  'resXp': '+{n} XP',
+  'resRaizXp': '+{n} da raiz',
+  'resMissoesT': 'MISSÕES QUE ANDARAM',
+  'resPronta': 'Pronta para colher',
+  'resColher': 'Colher',
+  'compraT': 'É seu!',
+  'compraSubObjeto': '{i} já está no habitat.',
+  'compraSubRoupa': '{a} já está vestindo.',
+  'compraVer': 'Ver no habitat',
+  'compraSeguir': 'Continuar na loja',
+  'resDiaFeito': 'Dia feito. Pode largar o telefone: {a} cuida do resto.',
+  'resProximo': 'Próximo: "{m}" ({p}/{t}), +{f} folhas.',
   'celebChegadaSub': '{a} passou o dia esperando por isso.',
   'trilhaVaziaT': 'A trilha começa amanhã',
   'trilhaVaziaB': 'Termine o onboarding e o primeiro passo aparece aqui.',
@@ -1324,6 +1348,18 @@ const _en = <String, Object>{
   'raizGalhoSub': '{n} days of roots. Only time builds this.',
   'raizDiaRotulo': 'day',
   'raizDiasRotulo': 'days',
+  'resXp': '+{n} XP',
+  'resRaizXp': '+{n} from roots',
+  'resMissoesT': 'MISSIONS THAT MOVED',
+  'resPronta': 'Ready to collect',
+  'resColher': 'Collect',
+  'compraT': 'It\'s yours!',
+  'compraSubObjeto': '{i} is already in the habitat.',
+  'compraSubRoupa': '{a} is already wearing it.',
+  'compraVer': 'See it in the habitat',
+  'compraSeguir': 'Keep shopping',
+  'resDiaFeito': 'Day done. You can put the phone down — {a} takes it from here.',
+  'resProximo': 'Next: "{m}" ({p}/{t}), +{f} leaves.',
   'celebChegadaSub': '{a} spent the day waiting for this.',
   'trilhaVaziaT': 'The path starts tomorrow',
   'trilhaVaziaB': 'Finish onboarding and the first step shows up here.',
@@ -1854,6 +1890,18 @@ const _es = <String, Object>{
   'raizGalhoSub': '{n} días de raíz. Eso solo lo construye el tiempo.',
   'raizDiaRotulo': 'día',
   'raizDiasRotulo': 'días',
+  'resXp': '+{n} XP',
+  'resRaizXp': '+{n} de la raíz',
+  'resMissoesT': 'MISIONES QUE AVANZARON',
+  'resPronta': 'Lista para recoger',
+  'resColher': 'Recoger',
+  'compraT': '¡Es tuyo!',
+  'compraSubObjeto': '{i} ya está en el hábitat.',
+  'compraSubRoupa': '{a} ya lo lleva puesto.',
+  'compraVer': 'Verlo en el hábitat',
+  'compraSeguir': 'Seguir en la tienda',
+  'resDiaFeito': 'Día hecho. Puedes dejar el teléfono: {a} se encarga del resto.',
+  'resProximo': 'Siguiente: "{m}" ({p}/{t}), +{f} hojas.',
   'celebChegadaSub': '{a} pasó el día esperando esto.',
   'trilhaVaziaT': 'El camino empieza mañana',
   'trilhaVaziaB': 'Termina el onboarding y el primer paso aparece aquí.',
@@ -2385,6 +2433,18 @@ const _zh = <String, Object>{
   'raizGalhoSub': '{n} 天的根。只有时间能造就这些。',
   'raizDiaRotulo': '天',
   'raizDiasRotulo': '天',
+  'resXp': '+{n} XP',
+  'resRaizXp': '根 +{n}',
+  'resMissoesT': '有进展的任务',
+  'resPronta': '可以收取了',
+  'resColher': '收取',
+  'compraT': '归你了！',
+  'compraSubObjeto': '{i} 已经放进栖息地了。',
+  'compraSubRoupa': '{a} 已经穿上了。',
+  'compraVer': '去栖息地看看',
+  'compraSeguir': '继续逛逛',
+  'resDiaFeito': '今天完成了。放下手机吧，剩下的交给 {a}。',
+  'resProximo': '下一个：“{m}”（{p}/{t}），+{f} 片叶子。',
   'celebChegadaSub': '{a} 等了一整天。',
   'trilhaVaziaT': '路径明天开始',
   'trilhaVaziaB': '完成引导后，第一步就会出现在这里。',

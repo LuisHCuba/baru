@@ -8,6 +8,7 @@ import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/habitat.dart';
+import '../widgets/compra_celebrada.dart';
 import '../widgets/loja_vitrine.dart';
 
 /// A loja do habitat.
@@ -809,6 +810,11 @@ class _AcaoDoItem extends StatelessWidget {
           // O háptico mora na tela, não no estado: é resposta ao dedo.
           HapticFeedback.mediumImpact();
           app.buy(item);
+          if (!app.owned.contains(item.id)) return;
+          // A luz depois da compra: um cenário comprado já acende o seu.
+          final luz = LuzDaCena.doCenario(app.cenarioAtivo?.id) ??
+              LuzDaCena.de(periodoDe(DateTime.now()));
+          mostraCompraCelebrada(context, app, item, luz);
         },
       );
     }

@@ -15,6 +15,7 @@ import 'data/baru_env.dart';
 import 'data/repositories.dart';
 import 'data/missoes.dart';
 import 'data/progressao.dart';
+import 'data/resumo_da_sessao.dart';
 import 'data/quiz.dart';
 import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
@@ -243,6 +244,25 @@ class AppState extends ChangeNotifier {
 
   /// Houve subida de nivel ainda nao comemorada?
   bool get subiuDeNivel => nivel > nivelCelebrado;
+
+  /// A última sessão concluída, para a tela de resultado animar.
+  ResumoDaSessao? ultimoResumo;
+
+  /// As cenas de conquista esperam a tela de resultado terminar a dela.
+  ///
+  /// Só vale **com a tela de resultado na frente**: saiu dela por qualquer
+  /// caminho (voltar, aba, sistema), a espera acaba sozinha — uma trava
+  /// esquecida aqui calaria todas as conquistas do dia.
+  bool get celebracoesEmEspera => _emEspera && screen == AppScreen.result;
+  bool _emEspera = false;
+  set celebracoesEmEspera(bool v) => _emEspera = v;
+
+  /// A tela de resultado mostrou o que tinha: as cenas podem entrar.
+  void liberaCelebracoes() {
+    if (!_emEspera) return;
+    _emEspera = false;
+    notifyListeners();
+  }
 
   /// A raiz cresceu hoje e a cena ainda não passou: os dias novos.
   ///
@@ -491,17 +511,27 @@ class AppState extends ChangeNotifier {
   ///
   /// Idempotente por construcao: a chave inclui o periodo e entra no conjunto
   /// antes de qualquer credito.
-  void resgataMissao(Missao m) {
-    if (!m.resgatavel) return;
-    final chave = QuadroDeMissoes.chaveDeResgate(m.definicao, lastOpenDate);
-    if (missoesResgatadas.contains(chave)) return;
-    missoesResgatadas = {...missoesResgatadas, chave};
-    _markSync(_syncProgresso);
-    leaves += m.folhas;
-    missoesACelebrar = [...missoesACelebrar, m.id];
-    ganhaXp(m.xp);
+  void resgataMissao(Missao m) => resgataTodas([m]);
+
+  /// Colhe várias de uma vez: uma toca, um som, um crédito por missão.
+  ///
+  /// Três prontas eram três folhas de cavar seguidas — nove gestos para
+  /// receber o que já estava pago (laudo 01, U12).
+  void resgataTodas(Iterable<Missao> ms) {
+    var algum = false;
+    for (final m in ms) {
+      if (!m.resgatavel) continue;
+      final chave = QuadroDeMissoes.chaveDeResgate(m.definicao, lastOpenDate);
+      if (missoesResgatadas.contains(chave)) continue;
+      missoesResgatadas = {...missoesResgatadas, chave};
+      leaves += m.folhas;
+      missoesACelebrar = [...missoesACelebrar, m.id];
+      ganhaXp(m.xp);
+      algum = true;
+    }
+    if (!algum) return;
     unawaited(SomService.instance.toca(SomDoBaru.resgate));
-    _markSync(_syncShop | _syncSession);
+    _markSync(_syncProgresso | _syncShop | _syncSession);
     notifyListeners();
   }
 
@@ -2000,6 +2030,11 @@ class AppState extends ChangeNotifier {
     _timer?.cancel();
     final minutos = sessionDur > 0 ? sessionDur : dur;
     final gained = sessionReward(minutos);
+    // O retrato "antes": a tela de resultado anima dele para o depois.
+    final folhasAntes = leaves;
+    final xpAntes = xp;
+    final missoesAntes = missoes;
+    final primeiraDoDia = completedToday == 0;
     remaining = 0;
     running = false;
     confirming = false;
@@ -2041,7 +2076,22 @@ class AppState extends ChangeNotifier {
     // registro da última sessão, que é o que a tela de resultado mostra.
     sessionStartedAt = null;
     sessionEndsAt = null;
-    if (navega) _empilha(AppScreen.result);
+    ultimoResumo = ResumoDaSessao(
+      minutos: minutos,
+      folhasAntes: folhasAntes,
+      folhasDaSessao: gained,
+      xpAntes: xpAntes,
+      xpDaSessao: Balanco.xpDeSessao(minutos),
+      xpDaRaiz: primeiraDoDia ? Balanco.xpPorDiaDeSequencia : 0,
+      missoes: ResumoDaSessao.tocadas(missoesAntes, missoes),
+    );
+    if (navega) {
+      _empilha(AppScreen.result);
+      // A tela de resultado tem o primeiro segundo de palco: a raiz, o
+      // bicho crescendo e o nível entram depois dela (laudo 01, §6.4), e
+      // não por cima.
+      celebracoesEmEspera = true;
+    }
     _markSync(_syncSession | _syncShop);
     // O aviso agendado já cumpriu (ou vai cumprir) o papel; o que sai é a
     // notificação fixa. Agendamento sem motivo tem de sumir.

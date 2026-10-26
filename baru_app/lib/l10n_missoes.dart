@@ -31,6 +31,8 @@ const textosDeMissoes = <String, Map<String, String>>{
     'mqFeitas': 'JÁ COLHIDAS',
     'mqDescansoParar': 'Parar por agora',
     'mqQuantasColher': '{n} para colher',
+    'mqColherTudo': 'Colher as {n} de uma vez',
+    'mqColherTudoSub': '+{f} folhas, uma toca só',
 
     // --- os tipos novos --------------------------------------------------
     'msFocoGanha': 'Mais foco do que rolagem hoje',
@@ -71,6 +73,8 @@ const textosDeMissoes = <String, Map<String, String>>{
     'mqFeitas': 'ALREADY COLLECTED',
     'mqDescansoParar': 'Stop for now',
     'mqQuantasColher': '{n} to collect',
+    'mqColherTudo': 'Collect all {n} at once',
+    'mqColherTudoSub': '+{f} leaves, one burrow',
     'msFocoGanha': 'More focus than scrolling today',
     'comoFocoGanha': "Stack up focus minutes until they pass today's time in "
         'distracting apps.',
@@ -108,6 +112,8 @@ const textosDeMissoes = <String, Map<String, String>>{
     'mqFeitas': 'YA RECOGIDAS',
     'mqDescansoParar': 'Parar por ahora',
     'mqQuantasColher': '{n} para recoger',
+    'mqColherTudo': 'Recoger las {n} a la vez',
+    'mqColherTudoSub': '+{f} hojas, una sola madriguera',
     'msFocoGanha': 'Más enfoque que scroll hoy',
     'comoFocoGanha': 'Suma minutos de enfoque hasta pasar el tiempo de hoy en '
         'apps dispersivas.',
@@ -146,6 +152,8 @@ const textosDeMissoes = <String, Map<String, String>>{
     'mqFeitas': '已经收下',
     'mqDescansoParar': '先停下',
     'mqQuantasColher': '{n} 项可收',
+    'mqColherTudo': '一次收下全部 {n} 项',
+    'mqColherTudoSub': '+{f} 片叶子，只挖一次',
     'msFocoGanha': '今天专注多过刷手机',
     'comoFocoGanha': '累积专注分钟数，直到超过今天在消遣类应用上的时间。',
     'msDiaCompleto': '把一天补完整：一次专注加上达标',
@@ -183,6 +191,8 @@ extension TextosDeMissoes on T {
   String get mqFeitas => s('mqFeitas');
   String get mqDescansoParar => s('mqDescansoParar');
   String get mqQuantasColher => s('mqQuantasColher');
+  String get mqColherTudo => s('mqColherTudo');
+  String get mqColherTudoSub => s('mqColherTudoSub');
   String get msFocoGanha => s('msFocoGanha');
   String get comoFocoGanha => s('comoFocoGanha');
   String get msDiaCompleto => s('msDiaCompleto');

@@ -306,7 +306,8 @@ class _Casca extends StatelessWidget {
           children: [
             navegador,
             if (app.sharing) const ShareSheet(),
-            if (app.temCelebracaoPendente) _celebracao(app),
+            if (app.temCelebracaoPendente && !app.celebracoesEmEspera)
+              _celebracao(app),
             if (app.pedindoParaSair) const FolhaDeSaida(),
           ],
         ),

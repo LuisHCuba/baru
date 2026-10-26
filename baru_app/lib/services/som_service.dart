@@ -127,15 +127,23 @@ class SomService {
   @visibleForTesting
   static List<SomDoBaru>? espiao;
 
-  AudioPlayer? _player;
+  /// Três vozes, em rodízio. Com um player só, o som seguinte cortava o
+  /// anterior no meio: as folhas aos 950 ms comiam a cauda do fim da
+  /// sessão (auditoria da Onda 2, S1). Três bastam para a sequência mais
+  /// densa do app (fim → folhas → cena).
+  static const vozes = 3;
+  final _players = <AudioPlayer>[];
+  int _proxima = 0;
   final _sorte = math.Random();
 
-  /// Para o som que estiver tocando. A cena que é pulada não pode deixar o
+  /// Para o que estiver tocando. A cena que é pulada não pode deixar o
   /// arpejo dela tocando sobre a tela seguinte.
   Future<void> para() async {
-    try {
-      await _player?.stop();
-    } catch (_) {}
+    for (final p in _players) {
+      try {
+        await p.stop();
+      } catch (_) {}
+    }
   }
 
   /// O app já subiu?
@@ -172,6 +180,20 @@ class SomService {
   /// global continua sendo a regra; a exceção é a lista.
   static const _percussivos = {SomDoBaru.cavar};
 
+  /// Sons de cena: cada um tem hora marcada na sua animação e não espera
+  /// a vez do limitador global. Com "reduzir movimento" a cena da raiz
+  /// toca a ~200 ms do fim da sessão, e o limitador a calava (auditoria da
+  /// Onda 2, R6). O limite **por som** continua valendo para eles.
+  static const _deCena = {
+    SomDoBaru.fim,
+    SomDoBaru.folhas,
+    SomDoBaru.raiz,
+    SomDoBaru.raizMarco,
+    SomDoBaru.crescimento,
+    SomDoBaru.conquista,
+    SomDoBaru.marco,
+  };
+
   static const _intervaloCurto = Duration(milliseconds: 90);
   DateTime? _ultimo;
 
@@ -203,6 +225,11 @@ class SomService {
       return anterior == null ||
           quando.difference(anterior) >= _intervaloCurto;
     }
+    if (som != null && _deCena.contains(som)) {
+      final anterior = _ultimoDe[som];
+      return anterior == null ||
+          quando.difference(anterior) >= _intervaloMinimo;
+    }
     final anterior = _ultimo;
     if (anterior != null && quando.difference(anterior) < _intervaloMinimo) {
       return false;
@@ -216,7 +243,9 @@ class SomService {
     _ultimoDe[som] = quando;
     // Um som percussivo não empurra o relógio global: senão três pancadas
     // de cavar deixariam o som seguinte — o do prêmio — mudo.
-    if (!_percussivos.contains(som)) _ultimo = quando;
+    if (!_percussivos.contains(som) && !_deCena.contains(som)) {
+      _ultimo = quando;
+    }
     espiao?.add(som);
 
     try {
@@ -257,8 +286,8 @@ class SomService {
 
   Future<void> _tocaDeVerdade(SomDoBaru som) async {
     if (!_armado) return;
-    var p = _player;
-    if (p == null) {
+    final AudioPlayer p;
+    if (_players.length < vozes) {
       // Só guarda o tocador depois de o contexto pegar. Guardado antes, uma
       // falha aqui deixava os sons seguintes tocando **sem** contexto — com
       // foco de áudio, que é justamente pausar a música da pessoa. Assim a
@@ -270,7 +299,11 @@ class SomService {
         unawaited(novo.dispose().catchError((_) {}));
         rethrow;
       }
-      p = _player = novo;
+      _players.add(novo);
+      p = novo;
+    } else {
+      p = _players[_proxima % _players.length];
+      _proxima++;
     }
     await p.setReleaseMode(ReleaseMode.stop);
     await p.setPlayerMode(PlayerMode.lowLatency);
@@ -282,16 +315,19 @@ class SomService {
   }
 
   Future<void> dispose() async {
-    try {
-      await _player?.dispose();
-    } catch (_) {}
-    _player = null;
+    for (final p in _players) {
+      try {
+        await p.dispose();
+      } catch (_) {}
+    }
+    _players.clear();
   }
 
   @visibleForTesting
   void reset() {
     _ultimo = null;
-    _player = null;
+    _ultimoDe.clear();
+    _players.clear();
     _armado = false;
   }
 }

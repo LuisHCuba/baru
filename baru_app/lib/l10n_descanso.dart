@@ -10,6 +10,7 @@ import 'data/descanso_do_dia.dart';
 import 'data/descanso_retencao.dart';
 import 'data/missoes.dart';
 import 'l10n.dart';
+import 'services/notification_service.dart';
 
 const textosDoDescanso = <String, Map<String, String>>{
   'pt': {
@@ -37,6 +38,22 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizCongelaTitulo': 'Seu congelamento entra hoje',
     'raizCongelaCorpo':
         'A raiz de {n} dias continua. É o único congelamento da semana.',
+    'descansoLembrete2Titulo': '{n} achou uma sombra boa',
+    'descansoLembrete2Corpo': 'Que tal {m} minutos longe da tela?',
+    'descansoLembrete3Titulo': 'Um respiro longe da tela?',
+    'descansoLembrete3Corpo': '{n} está esperando para descansar com você.',
+    'raizRisco2Titulo': 'Sua raiz de {n} dias ainda cresce hoje',
+    'raizRisco2Corpo': 'Uma sessão de foco basta.',
+    'raizRisco3Titulo': '{p} deixou a terra regada',
+    'raizRisco3Corpo': 'Falta só o seu foco de hoje para a raiz de {n} dias.',
+    'raizAmanhaTitulo': '{p} guardou um lugar para você',
+    'raizAmanhaCorpo': 'Uma sessão de foco hoje faz a raiz crescer.',
+    'canalNomeFim': 'Sessão concluída',
+    'canalNomeRaiz': 'Raiz',
+    'canalNomeConvite': 'Convite do dia',
+    'canalNomeRelatorio': 'Relatório da noite',
+    'canalNomeVolta': 'Quando você está longe',
+    'canalNomeConta': 'Conta e assinatura',
     'voltaTitulo': 'Você voltou',
     'voltaCorpo': '{d} dias fora. Guardei seu lugar. +{k} folhas.',
     'voltaCongelamento': 'E devolvi o congelamento da semana.',
@@ -67,6 +84,22 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizCongelaTitulo': 'Your freeze covers today',
     'raizCongelaCorpo':
         'The {n}-day roots hold. It is the only freeze this week.',
+    'descansoLembrete2Titulo': '{n} found a nice shady spot',
+    'descansoLembrete2Corpo': 'How about {m} minutes away from the screen?',
+    'descansoLembrete3Titulo': 'A breather away from the screen?',
+    'descansoLembrete3Corpo': '{n} is waiting to rest with you.',
+    'raizRisco2Titulo': 'Your {n}-day roots can still grow today',
+    'raizRisco2Corpo': 'One focus session is enough.',
+    'raizRisco3Titulo': '{p} watered the soil',
+    'raizRisco3Corpo': 'All your {n}-day roots need now is your focus today.',
+    'raizAmanhaTitulo': '{p} saved you a spot',
+    'raizAmanhaCorpo': 'One focus session today makes your roots grow.',
+    'canalNomeFim': 'Session finished',
+    'canalNomeRaiz': 'Roots',
+    'canalNomeConvite': 'Daily invite',
+    'canalNomeRelatorio': 'Evening report',
+    'canalNomeVolta': 'When you\'re away',
+    'canalNomeConta': 'Account and subscription',
     'voltaTitulo': 'You came back',
     'voltaCorpo': '{d} days away. I kept your spot. +{k} leaves.',
     'voltaCongelamento': 'And your weekly freeze is back.',
@@ -98,6 +131,22 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizCongelaTitulo': 'Tu congelamiento entra hoy',
     'raizCongelaCorpo':
         'La raíz de {n} días sigue. Es el único congelamiento de la semana.',
+    'descansoLembrete2Titulo': '{n} encontró una buena sombra',
+    'descansoLembrete2Corpo': '¿Qué tal {m} minutos lejos de la pantalla?',
+    'descansoLembrete3Titulo': '¿Un respiro lejos de la pantalla?',
+    'descansoLembrete3Corpo': '{n} te espera para descansar juntos.',
+    'raizRisco2Titulo': 'Tu raíz de {n} días todavía crece hoy',
+    'raizRisco2Corpo': 'Basta una sesión de foco.',
+    'raizRisco3Titulo': '{p} dejó la tierra regada',
+    'raizRisco3Corpo': 'Solo falta tu foco de hoy para la raíz de {n} días.',
+    'raizAmanhaTitulo': '{p} te guardó un lugar',
+    'raizAmanhaCorpo': 'Una sesión de foco hoy hace crecer tu raíz.',
+    'canalNomeFim': 'Sesión terminada',
+    'canalNomeRaiz': 'Raíz',
+    'canalNomeConvite': 'Invitación del día',
+    'canalNomeRelatorio': 'Informe de la noche',
+    'canalNomeVolta': 'Cuando estás lejos',
+    'canalNomeConta': 'Cuenta y suscripción',
     'voltaTitulo': 'Volviste',
     'voltaCorpo': '{d} días fuera. Te guardé el lugar. +{k} hojas.',
     'voltaCongelamento': 'Y te devolví el congelamiento de la semana.',
@@ -122,6 +171,22 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizRiscoMarco': '距离 {m} 天的里程碑还差 {d} 天。它会在午夜断掉。',
     'raizCongelaTitulo': '今天会用掉一次冻结',
     'raizCongelaCorpo': '{n} 天的根还在。这是本周唯一一次冻结。',
+    'descansoLembrete2Titulo': '{n} 找到了一片好树荫',
+    'descansoLembrete2Corpo': '离开屏幕 {m} 分钟怎么样？',
+    'descansoLembrete3Titulo': '离开屏幕歇一会儿？',
+    'descansoLembrete3Corpo': '{n} 在等你一起休息。',
+    'raizRisco2Titulo': '你的 {n} 天根今天还能长',
+    'raizRisco2Corpo': '一次专注就够了。',
+    'raizRisco3Titulo': '{p} 已经浇好了土',
+    'raizRisco3Corpo': '{n} 天的根只差你今天的一次专注。',
+    'raizAmanhaTitulo': '{p} 给你留了个位置',
+    'raizAmanhaCorpo': '今天专注一次，根就会长。',
+    'canalNomeFim': '专注完成',
+    'canalNomeRaiz': '根',
+    'canalNomeConvite': '每日邀请',
+    'canalNomeRelatorio': '晚间报告',
+    'canalNomeVolta': '你不在的时候',
+    'canalNomeConta': '账户与订阅',
     'voltaTitulo': '你回来了',
     'voltaCorpo': '离开了 {d} 天。我给你留着位置。+{k} 片叶子。',
     'voltaCongelamento': '本周的冻结也还给你了。',
@@ -154,6 +219,22 @@ extension TextosDoDescanso on T {
   String get raizRiscoMarco => s('raizRiscoMarco');
   String get raizCongelaTitulo => s('raizCongelaTitulo');
   String get raizCongelaCorpo => s('raizCongelaCorpo');
+  String get descansoLembrete2Titulo => s('descansoLembrete2Titulo');
+  String get descansoLembrete2Corpo => s('descansoLembrete2Corpo');
+  String get descansoLembrete3Titulo => s('descansoLembrete3Titulo');
+  String get descansoLembrete3Corpo => s('descansoLembrete3Corpo');
+  String get raizRisco2Titulo => s('raizRisco2Titulo');
+  String get raizRisco2Corpo => s('raizRisco2Corpo');
+  String get raizRisco3Titulo => s('raizRisco3Titulo');
+  String get raizRisco3Corpo => s('raizRisco3Corpo');
+  String get raizAmanhaTitulo => s('raizAmanhaTitulo');
+  String get raizAmanhaCorpo => s('raizAmanhaCorpo');
+  String get canalNomeFim => s('canalNomeFim');
+  String get canalNomeRaiz => s('canalNomeRaiz');
+  String get canalNomeConvite => s('canalNomeConvite');
+  String get canalNomeRelatorio => s('canalNomeRelatorio');
+  String get canalNomeVolta => s('canalNomeVolta');
+  String get canalNomeConta => s('canalNomeConta');
   String get voltaTitulo => s('voltaTitulo');
   String get voltaCorpo => s('voltaCorpo');
   String get voltaCongelamento => s('voltaCongelamento');
@@ -219,27 +300,44 @@ Map<TipoDeLembrete, TextoDeLembrete> textosDosLembretes(
   required String nomeDoPet,
   required int minutosDeDescanso,
   RaizEmRisco? risco,
+  DateTime? dia,
 }) {
   garanteTextosDoDescanso();
+  // Um texto por dia, girando: o mesmo recado todo dia é o que ensina a
+  // ignorar recado (laudo 01, §9.5 — a penalidade de recência do Duolingo,
+  // na versão que cabe no aparelho e não manda nada para servidor).
+  final giro = _giroDoDia(dia ?? DateTime.now());
+  final descansos = [
+    (t.descansoLembreteTitulo, t.descansoLembreteCorpo),
+    (t.descansoLembrete2Titulo, t.descansoLembrete2Corpo),
+    (t.descansoLembrete3Titulo, t.descansoLembrete3Corpo),
+  ];
+  final (tituloDoDescanso, corpoDoDescanso) =
+      descansos[giro % descansos.length];
+  final valores = {'n': nomeDoPet, 'm': minutosDeDescanso};
   final mapa = <TipoDeLembrete, TextoDeLembrete>{
     TipoDeLembrete.descanso: TextoDeLembrete(
-      titulo: t.descansoLembreteTitulo,
-      corpo: t.fill(t.descansoLembreteCorpo, {
-        'n': nomeDoPet,
-        'm': minutosDeDescanso,
-      }),
+      titulo: t.fill(tituloDoDescanso, valores),
+      corpo: t.fill(corpoDoDescanso, valores),
     ),
   };
 
   if (risco != null) {
     final marco = risco.proximoMarco;
     final falta = risco.faltaParaOMarco;
+    final raiz = {'n': risco.dias, 'p': nomeDoPet};
+    final riscos = [
+      (t.raizRiscoTitulo, t.raizRiscoCorpo),
+      (t.raizRisco2Titulo, t.raizRisco2Corpo),
+      (t.raizRisco3Titulo, t.raizRisco3Corpo),
+    ];
+    final (tituloDoRisco, corpoDoRisco) = riscos[giro % riscos.length];
     mapa[TipoDeLembrete.raizEmRisco] = risco.vaiQuebrar
         ? TextoDeLembrete(
-            titulo: t.fill(t.raizRiscoTitulo, {'n': risco.dias}),
+            titulo: t.fill(tituloDoRisco, raiz),
             corpo: risco.vesperaDeMarco && marco != null && falta != null
                 ? t.fill(t.raizRiscoMarco, {'d': falta, 'm': marco})
-                : t.raizRiscoCorpo,
+                : t.fill(corpoDoRisco, raiz),
           )
         : TextoDeLembrete(
             titulo: t.raizCongelaTitulo,
@@ -248,6 +346,35 @@ Map<TipoDeLembrete, TextoDeLembrete> textosDosLembretes(
   }
 
   return mapa;
+}
+
+/// O índice do dia no ano, para girar os textos.
+int _giroDoDia(DateTime d) =>
+    d.difference(DateTime(d.year)).inDays + d.year * 7;
+
+/// O aviso de amanhã para quem **não** sabe ainda como estará a raiz.
+///
+/// Sem número: amanhã a raiz pode ter crescido, segurado no congelamento ou
+/// recomeçado, e afirmar "raiz de 12 dias" seria apostar (laudo 01, A6).
+TextoDeLembrete textoDeAmanhaSemNumero(T t, {required String nomeDoPet}) {
+  garanteTextosDoDescanso();
+  return TextoDeLembrete(
+    titulo: t.fill(t.raizAmanhaTitulo, {'p': nomeDoPet}),
+    corpo: t.raizAmanhaCorpo,
+  );
+}
+
+/// Os nomes dos canais de recado, no idioma da pessoa.
+Map<String, String> nomesDosCanais(T t) {
+  garanteTextosDoDescanso();
+  return {
+    BaruNotifications.canalFim: t.canalNomeFim,
+    BaruNotifications.canalRaiz: t.canalNomeRaiz,
+    BaruNotifications.canalConvite: t.canalNomeConvite,
+    BaruNotifications.canalRelatorio: t.canalNomeRelatorio,
+    BaruNotifications.canalVolta: t.canalNomeVolta,
+    BaruNotifications.canalConta: t.canalNomeConta,
+  };
 }
 
 /// O recado de quem voltou (RD-03).

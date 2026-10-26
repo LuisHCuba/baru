@@ -163,7 +163,10 @@ RaizEmRisco? avaliaRaizEmRisco({
 int horaDoAvisoDaRaiz(
   HorarioDoHabito? habito, {
   int minima = 19,
-  int maxima = 22,
+  // 21h e não 22h: o alarme inexato do Android 12+ chega até uma hora
+  // depois do marcado, e recado de retenção depois das 22h30 é recado na
+  // hora de dormir (laudo 01, §9.2–9.3).
+  int maxima = 21,
   int semHabito = 21,
 }) {
   final base = habito == null ? semHabito : habito.hora + 1;
@@ -306,6 +309,7 @@ class LembreteDoDia {
 List<LembreteDoDia> planoDeLembretes({
   required HorarioDoHabito? habito,
   required bool descansoFeitoHoje,
+  bool presenteHoje = false,
   required RaizEmRisco? risco,
   required bool relatorioLigado,
   required int horaDoRelatorio,
@@ -344,7 +348,10 @@ List<LembreteDoDia> planoDeLembretes({
     // Minuto zero e não o minuto médio do histograma: precisão de quarto de
     // hora sobre algumas dezenas de amostras seria precisão falsa. E um
     // empurrão um pouco antes do hábito é melhor que um no meio dele.
-    final hora = habito?.hora ?? horaSemHabito;
+    // Dentro da janela de 8h a 21h: quem foca às 6h não quer o telefone
+    // tocando às 6h, e o alarme inexato ainda pode chegar uma hora depois
+    // (laudo 01, §9.3).
+    final hora = (habito?.hora ?? horaSemHabito).clamp(8, 21);
     if (cabe(hora)) {
       plano.add(
         LembreteDoDia(
@@ -352,7 +359,9 @@ List<LembreteDoDia> planoDeLembretes({
           hora: hora,
           minuto: 0,
           repeteTodoDia: true,
-          pulaHoje: descansoFeitoHoje,
+          // Dia cumprido é silêncio (laudo 01, §9.3): quem já fez a raiz
+          // crescer hoje não é chamado de novo hoje.
+          pulaHoje: descansoFeitoHoje || presenteHoje,
         ),
       );
       ocupadas.add(hora);

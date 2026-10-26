@@ -3,6 +3,7 @@
 // Aceite do laudo 01 (U7, U11, U12): a tela anima a partir do retrato
 // "antes"; as cenas de conquista esperam a vez dela; as missões tocadas
 // andam do valor antigo ao novo; com várias prontas, uma toca colhe todas.
+import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/data/resumo_da_sessao.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/screens/result_screen.dart';
@@ -150,7 +151,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 2200));
     // O selo conta entre os passos por conta própria (`ContadorAnimado`).
     await tester.pump(const Duration(milliseconds: 1200));
-    expect(find.text('${40 + r.folhasDaSessao}'), findsOneWidget);
+    // O saldo real: a sessão e o que mais ela pagou (um marco da trilha).
+    expect(s.leaves, greaterThanOrEqualTo(40 + r.folhasDaSessao));
+    expect(find.text('${s.leaves}'), findsOneWidget);
     expect(s.celebracoesEmEspera, isFalse, reason: 'a E1 acabou: vez das cenas');
     expect(tocados, contains(SomDoBaru.folhas));
 
@@ -166,6 +169,20 @@ void main() {
     expect(find.text('Pronta para colher'), findsNWidgets(fechou.length));
     expect(find.byKey(const Key('resultado-fecho')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
+  });
+
+  test('reabrir o app não volta para a tela de resultado', () {
+    // Sem o retrato da sessão ela mostrava "desistiu" a quem concluiu
+    // (auditoria da Onda 2, item 8, 7.1).
+    final s = _app();
+    addTearDown(s.dispose);
+    _concluiUmaSessao(s);
+    expect(s.screen, AppScreen.result);
+    final volta = AppState()
+      ..applySnapshotParaTeste(
+          AppSnapshot.fromJson(s.toSnapshot().toJson()));
+    addTearDown(volta.dispose);
+    expect(volta.screen, isNot(AppScreen.result));
   });
 
   test('missão já colhida não entra no retrato', () {

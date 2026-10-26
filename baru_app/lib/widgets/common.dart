@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n_missoes.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -649,12 +650,14 @@ class BottomTabs extends StatelessWidget {
             // tela: prêmio parado sem ninguém ver é prêmio perdido.
             final aColher =
                 ids[i] == AppScreen.missoes ? app.missoesResgataveis : 0;
+            if (aColher > 0) garanteTextosDeMissoes();
             return Expanded(
               child: Semantics(
                 button: true,
                 selected: on,
                 label: aColher > 0
-                    ? '${app.t.tabs[i]}, $aColher'
+                    ? '${app.t.tabs[i]}, '
+                        '${app.t.fill(app.t.mqQuantasColher, {'n': aColher})}'
                     : app.t.tabs[i],
                 child: GestureDetector(
                   onTap: () => app.go(ids[i]),

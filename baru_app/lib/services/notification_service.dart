@@ -54,7 +54,63 @@ class BaruNotifications {
 
   /// Canal separado: a sessão é persistente e silenciosa; os lembretes tocam.
   static const canalSessao = 'baru_sessao';
-  static const canalLembretes = 'baru_reminders';
+
+  /// Um canal por tipo de recado (laudo 01, §9.6; orientação do Android:
+  /// "crie um canal para cada tipo"). Com um só, quem quisesse calar o
+  /// lembrete da raiz calava junto o relatório que pediu.
+  static const canalRaiz = 'baru_raiz';
+  static const canalConvite = 'baru_convite';
+  static const canalRelatorio = 'baru_relatorio';
+  static const canalVolta = 'baru_volta';
+  static const canalConta = 'baru_conta';
+
+  /// A sessão que acabou com o app fechado.
+  static const canalFim = 'baru_fim';
+
+  /// O canal antigo, único. Sai na primeira abertura desta versão.
+  static const canalAntigo = 'baru_reminders';
+
+  /// Os canais de recado, na ordem em que aparecem nos ajustes do sistema.
+  static const canaisDeRecado = [
+    canalFim,
+    canalRaiz,
+    canalConvite,
+    canalRelatorio,
+    canalVolta,
+    canalConta,
+  ];
+
+  /// Para onde cada toque leva (o `payload`): a tela da ação, não a home
+  /// genérica.
+  static const rotaHome = 'home';
+  static const rotaMissoes = 'missoes';
+  static const rotaRelatorio = 'report';
+
+  /// Quem abre a rota de um toque. O `AppState` liga no arranque; antes
+  /// disso, a rota espera em [_rotaPendente].
+  void Function(String rota)? _aoAbrirRota;
+  String? _rotaPendente;
+
+  set aoAbrirRota(void Function(String rota)? f) {
+    _aoAbrirRota = f;
+    final r = _rotaPendente;
+    if (f != null && r != null) {
+      _rotaPendente = null;
+      f(r);
+    }
+  }
+
+  /// Um toque no corpo de uma notificação (não num botão dela).
+  @visibleForTesting
+  void recebeRota(String? rota) {
+    if (rota == null || rota.isEmpty) return;
+    final f = _aoAbrirRota;
+    if (f == null) {
+      _rotaPendente = rota;
+      return;
+    }
+    f(rota);
+  }
 
   /// Id da ação de desistir na notificação da sessão.
   static const acaoDesistir = 'baru_desistir';
@@ -211,8 +267,14 @@ class BaruNotifications {
     );
     await _plugin.initialize(
       settings: const InitializationSettings(android: android, iOS: ios),
-      onDidReceiveNotificationResponse: (resposta) =>
-          recebeAcaoDaBarra(resposta.actionId),
+      onDidReceiveNotificationResponse: (resposta) {
+        final acao = resposta.actionId;
+        if (acao != null && acao.isNotEmpty) {
+          recebeAcaoDaBarra(acao);
+        } else {
+          recebeRota(resposta.payload);
+        }
+      },
     );
 
     // O botão da notificação do serviço em primeiro plano não passa pelo
@@ -237,7 +299,13 @@ class BaruNotifications {
     try {
       final arranque = await _plugin.getNotificationAppLaunchDetails();
       if (arranque?.didNotificationLaunchApp ?? false) {
-        recebeAcaoDaBarra(arranque?.notificationResponse?.actionId);
+        final resposta = arranque?.notificationResponse;
+        final acao = resposta?.actionId;
+        if (acao != null && acao.isNotEmpty) {
+          recebeAcaoDaBarra(acao);
+        } else {
+          recebeRota(resposta?.payload);
+        }
       }
     } catch (_) {
       // Plataforma sem o plugin: nada a recuperar.
@@ -246,14 +314,20 @@ class BaruNotifications {
     if (defaultTargetPlatform == TargetPlatform.android) {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
-      await android?.createNotificationChannel(
-        const AndroidNotificationChannel(
-          canalLembretes,
-          'Lembretes Baru',
-          description: 'Relatório da noite e mensagens do pet',
-          importance: Importance.defaultImportance,
-        ),
-      );
+      // O canal único de antes sai uma vez. A preferência que a pessoa
+      // tinha nele se perde — aceitável uma vez, e dito na nota da versão.
+      await android?.deleteNotificationChannel(channelId: canalAntigo);
+      // Nomes provisórios: os traduzidos chegam por [nomeiaCanais] assim
+      // que o idioma da pessoa é conhecido.
+      for (final id in canaisDeRecado) {
+        await android?.createNotificationChannel(
+          AndroidNotificationChannel(
+            id,
+            id,
+            importance: Importance.defaultImportance,
+          ),
+        );
+      }
       // A sessão fica fixa na barra e não pode tocar nem vibrar: o usuário
       // está justamente tentando não ser interrompido.
       await android?.createNotificationChannel(
@@ -269,6 +343,24 @@ class BaruNotifications {
     }
 
     _ready = true;
+  }
+
+  /// Dá aos canais o nome no idioma da pessoa. O Android aceita renomear
+  /// canal existente; importância e som continuam sendo dela.
+  Future<void> nomeiaCanais(Map<String, String> nomes) async {
+    if (kIsWeb || !_ready) return;
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    for (final e in nomes.entries) {
+      await android?.createNotificationChannel(
+        AndroidNotificationChannel(
+          e.key,
+          e.value,
+          importance: Importance.defaultImportance,
+        ),
+      );
+    }
   }
 
   Future<bool> hasPermission() async {
@@ -594,14 +686,7 @@ class BaruNotifications {
     final quando = tz.TZDateTime.from(terminaEm, tz.local);
     if (!quando.isAfter(tz.TZDateTime.now(tz.local))) return;
 
-    const detalhes = NotificationDetails(
-      android: AndroidNotificationDetails(
-        canalLembretes,
-        'Lembretes Baru',
-        channelDescription: 'Sessão concluída',
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
+    final detalhes = _detalhesDeLembrete(canalFim);
 
     try {
       await _plugin.zonedSchedule(
@@ -679,6 +764,8 @@ class BaruNotifications {
   Future<void> sincronizaRetencao({
     required List<LembreteDoDia> plano,
     required Map<TipoDeLembrete, TextoDeLembrete> textos,
+    TextoDeLembrete? textoDeAmanha,
+    int? horaDeAmanha,
     DateTime? agora,
   }) async {
     if (kIsWeb || !_ready) return;
@@ -698,7 +785,13 @@ class BaruNotifications {
     }
 
     await _agendaDescanso(doTipo(TipoDeLembrete.descanso), textos, quandoAgora);
-    await _agendaRaiz(doTipo(TipoDeLembrete.raizEmRisco), textos, quandoAgora);
+    await _agendaRaiz(
+      doTipo(TipoDeLembrete.raizEmRisco),
+      textos,
+      quandoAgora,
+      textoDeAmanha: textoDeAmanha,
+      horaDeAmanha: horaDeAmanha,
+    );
   }
 
   Future<void> _cancelaRetencao() async {
@@ -731,47 +824,54 @@ class BaruNotifications {
         quando.hour,
         quando.minute,
       ),
-      notificationDetails: _detalhesDeLembrete('Hora do descanso'),
+      notificationDetails: _detalhesDeLembrete(canalConvite),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
+      // O descanso mora no cartão da principal, na tela de missões.
+      payload: rotaMissoes,
     );
   }
 
   Future<void> _agendaRaiz(
     LembreteDoDia? lembrete,
     Map<TipoDeLembrete, TextoDeLembrete> textos,
-    DateTime agora,
-  ) async {
+    DateTime agora, {
+    TextoDeLembrete? textoDeAmanha,
+    int? horaDeAmanha,
+  }) async {
+    final detalhes = _detalhesDeLembrete(canalRaiz);
     final texto = textos[TipoDeLembrete.raizEmRisco];
-    if (lembrete == null || texto == null) {
+
+    // Hoje: só se a raiz está em risco **hoje** (ninguém presente ainda).
+    if (lembrete != null && texto != null) {
+      final hoje = DateTime(
+        agora.year,
+        agora.month,
+        agora.day,
+        lembrete.hora,
+        lembrete.minuto,
+      );
+      if (hoje.isAfter(agora)) {
+        await _agendaEm(raizHojeId, hoje, texto, detalhes);
+      } else {
+        // A hora do aviso já passou. Mandar agora seria chegar depois do
+        // ponto em que ainda dava para fazer alguma coisa.
+        await _plugin.cancel(id: raizHojeId);
+      }
+    } else {
       await _plugin.cancel(id: raizHojeId);
+    }
+
+    // Amanhã: com o texto **de amanhã** (auditoria do laudo 01, A6). Antes
+    // ia o de hoje — o número de dias errado — e sumia para quem já tinha
+    // aparecido hoje, que é justamente quem pode esquecer amanhã.
+    final hora = horaDeAmanha ?? lembrete?.hora;
+    if (textoDeAmanha == null || hora == null) {
       await _plugin.cancel(id: raizAmanhaId);
       return;
     }
-
-    final detalhes = _detalhesDeLembrete('Raiz em risco');
-    final hoje = DateTime(
-      agora.year,
-      agora.month,
-      agora.day,
-      lembrete.hora,
-      lembrete.minuto,
-    );
-
-    if (hoje.isAfter(agora)) {
-      await _agendaEm(raizHojeId, hoje, texto, detalhes);
-    } else {
-      // A hora do aviso já passou. Mandar agora seria chegar depois do
-      // ponto em que ainda dava para fazer alguma coisa.
-      await _plugin.cancel(id: raizHojeId);
-    }
-
-    await _agendaEm(
-      raizAmanhaId,
-      hoje.add(const Duration(days: 1)),
-      texto,
-      detalhes,
-    );
+    final amanha = DateTime(agora.year, agora.month, agora.day + 1, hora);
+    await _agendaEm(raizAmanhaId, amanha, textoDeAmanha, detalhes);
   }
 
   Future<void> _agendaEm(
@@ -794,15 +894,15 @@ class BaruNotifications {
       ),
       notificationDetails: detalhes,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      payload: rotaHome,
     );
   }
 
-  NotificationDetails _detalhesDeLembrete(String descricao) => NotificationDetails(
-        android: AndroidNotificationDetails(
-          canalLembretes,
-          'Lembretes Baru',
-          channelDescription: descricao,
-        ),
+  /// Os detalhes de um recado, no canal do tipo dele. O nome que aparece
+  /// nos ajustes do sistema vem de [nomeiaCanais]; aqui vai o id, que o
+  /// Android só usa se o canal ainda não existir.
+  NotificationDetails _detalhesDeLembrete(String canal) => NotificationDetails(
+        android: AndroidNotificationDetails(canal, canal),
         iOS: const DarwinNotificationDetails(),
       );
 
@@ -874,15 +974,9 @@ class BaruNotifications {
       title: title,
       body: body,
       scheduledDate: quando,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'baru_reminders',
-          'Lembretes Baru',
-          channelDescription: 'Fim do teste',
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
+      notificationDetails: _detalhesDeLembrete(canalConta),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      payload: rotaHome,
     );
   }
 
@@ -910,16 +1004,10 @@ class BaruNotifications {
       title: title,
       body: body,
       scheduledDate: scheduled,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'baru_reminders',
-          'Lembretes Baru',
-          channelDescription: 'Relatório da noite',
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
+      notificationDetails: _detalhesDeLembrete(canalRelatorio),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
+      payload: rotaRelatorio,
     );
   }
 
@@ -932,14 +1020,8 @@ class BaruNotifications {
       id: _missedId,
       title: title,
       body: body,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'baru_reminders',
-          'Lembretes Baru',
-          channelDescription: 'Senti sua falta',
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
+      notificationDetails: _detalhesDeLembrete(canalVolta),
+      payload: rotaHome,
     );
     await prefs.setString(_lastMissedKey, today);
   }

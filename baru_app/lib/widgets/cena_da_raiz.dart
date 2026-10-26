@@ -191,7 +191,8 @@ class _CenaDaRaizState extends State<CenaDaRaiz>
                 reduzido ? q : _f(de, ate, c);
 
             final entrada = f(0, 400, Curves.easeOutCubic);
-            final gotaForma = f(400, 550);
+            // Sem movimento não há gota: ela só existe caindo.
+            final gotaForma = reduzido ? 0.0 : f(400, 550);
             final gotaCai = f(550, 750, Curves.easeIn);
             final clarao = reduzido ? 0.0 : _f(750, 900);
             final cresce = f(750, 1350, Curves.easeInOutCubic);
@@ -232,7 +233,9 @@ class _CenaDaRaizState extends State<CenaDaRaiz>
                               gotaCai: gotaCai,
                               clarao: clarao,
                               conta: conta,
-                              rotulo: n == 1
+                              // O rótulo acompanha o número à vista: "0 dias"
+                              // antes de girar, "1 dia" depois.
+                              rotulo: (conta < 0.5 ? n - 1 : n) == 1
                                   ? t.raizDiaRotulo
                                   : t.raizDiasRotulo,
                             ),
@@ -241,7 +244,9 @@ class _CenaDaRaizState extends State<CenaDaRaiz>
                       ),
                       Expanded(
                         flex: 36,
-                        child: Padding(
+                        // Rola: com fonte grande, num telefone pequeno, o
+                        // botão não pode ficar fora do alcance.
+                        child: SingleChildScrollView(
                           padding: const EdgeInsets.fromLTRB(24, 14, 24, 10),
                           child: Column(
                             children: [
@@ -279,7 +284,7 @@ class _CenaDaRaizState extends State<CenaDaRaiz>
                                 opacity: texto,
                                 child: _Faixa(app: app, hoje: hoje),
                               ),
-                              const Spacer(),
+                              const SizedBox(height: 18),
                               IgnorePointer(
                                 ignoring: botao < 0.5,
                                 child: Opacity(
@@ -363,7 +368,10 @@ class _CeuComBicho extends StatelessWidget {
               coat: app.color,
               roupas: app.roupasDoBicho,
               roupaDeCabeca: app.roupaDeCabeca,
-              estagio: app.estagio,
+              // O estágio já visto: se o bicho cresceu nesta mesma sessão, a
+              // cena do crescimento vem depois e é ela que revela a forma nova
+              // (auditoria da Onda 2, item 7, R4).
+              estagio: app.estagioJaVisto,
               interativo: false,
               width: 150,
               height: 120,

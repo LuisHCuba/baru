@@ -65,6 +65,9 @@ const _sincronizados = <String>{
 /// A razão é parte do teste: quem acrescentar um campo aqui tem de saber
 /// dizer por que ele não é do usuário-entre-aparelhos.
 const _locaisPorDesenho = <String, String>{
+  'recordeAnterior':
+      'só decide a linha "recorde" da cena da raiz; sem coluna, o maior '
+      'fica no fundeCom',
   'sessionStartedAt': 'sessão de foco não continua em outro aparelho',
   'sessionEndsAt': 'sessão de foco não continua em outro aparelho',
   'sessionDur': 'sessão de foco não continua em outro aparelho',

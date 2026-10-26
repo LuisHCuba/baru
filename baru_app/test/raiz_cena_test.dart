@@ -66,13 +66,44 @@ void main() {
       expect(s.raizACelebrar, 1);
       expect(s.raizRecorde, isFalse);
 
+      // A primeira raiz não é "recorde" todo dia: não há raiz anterior.
+      final primeira = _app();
+      addTearDown(primeira.dispose);
+      primeira
+        ..streak = 9
+        ..melhorSequencia = 9;
+      _concluiUmaSessao(primeira);
+      expect(primeira.raizRecorde, isFalse);
+
+      // Uma raiz de 9 quebrou; a de agora tem 9 e vai a 10: recorde, uma vez.
       final r = _app();
       addTearDown(r.dispose);
       r
+        ..recordeAnterior = 9
         ..streak = 9
         ..melhorSequencia = 9;
       _concluiUmaSessao(r);
       expect(r.raizRecorde, isTrue);
+
+      final depois = _app();
+      addTearDown(depois.dispose);
+      depois
+        ..recordeAnterior = 9
+        ..streak = 10
+        ..melhorSequencia = 10;
+      _concluiUmaSessao(depois);
+      expect(depois.raizRecorde, isFalse, reason: 'recorde é o dia de passar');
+    });
+
+    test('quebrar a raiz guarda a melhor como a marca a passar', () {
+      final s = _app()
+        ..streak = 6
+        ..melhorSequencia = 6
+        ..freezesLeft = 0;
+      addTearDown(s.dispose);
+      s.applyCalendar(s.lastOpenDate.add(const Duration(days: 2)));
+      expect(s.streak, 0);
+      expect(s.recordeAnterior, 6);
     });
 
     test('a raiz vem antes do bicho nascer na fila', () {

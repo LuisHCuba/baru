@@ -241,8 +241,12 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
           final chegaram = [
             for (var i = 0; i < _folhasNoVoo; i++) ms >= _chegadaDa(i),
           ].where((c) => c).length;
-          final saldo = r.folhasAntes +
-              (r.folhasDaSessao * chegaram / _folhasNoVoo).round();
+          // O destino é o saldo **real**: um marco da trilha pode ter pago
+          // junto, e a tela não pode parar num número que não existe
+          // (auditoria da Onda 2, item 8, 1.1).
+          final ganhoReal = app.leaves - r.folhasAntes;
+          final saldo =
+              r.folhasAntes + (ganhoReal * chegaram / _folhasNoVoo).round();
           final pulso = chegaram == 0 || chegaram == _folhasNoVoo
               ? 0.0
               : math.sin(((ms - 650) % 85) / 85 * math.pi);
@@ -307,19 +311,11 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                               sessao: xpSessao,
                               raiz: xpRaiz,
                             ),
-                            if (r.missoes.isNotEmpty) ...[
-                              const SizedBox(height: 18),
-                              _Missoes(
-                                app: app,
-                                missoes: r.missoes,
-                                t: _e3.value,
-                              ),
-                            ],
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
                             Opacity(
-                              opacity: r.missoes.isEmpty
-                                  ? _f(ms, 1800, 2100)
-                                  : _e3.value,
+                              // Logo abaixo do XP, à vista sem rolar: com quatro
+                              // missões na lista ele ficava atrás dos botões.
+                              opacity: _f(ms, 1800, 2100),
                               child: Text(
                                 _fecho(app),
                                 key: const Key('resultado-fecho'),
@@ -332,6 +328,14 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                                 ),
                               ),
                             ),
+                            if (r.missoes.isNotEmpty) ...[
+                              const SizedBox(height: 18),
+                              _Missoes(
+                                app: app,
+                                missoes: r.missoes,
+                                t: _e3.value,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -380,7 +384,11 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
         .where((m) => m.disponivel && !m.concluida && !m.resgatada)
         .toList()
       ..sort((a, b) => b.fracao.compareTo(a.fracao));
-    if (app.completedToday >= 1 && (principalOk || abertas.isEmpty)) {
+    // "Dia feito" só é verdade com a raiz crescida, a principal cumprida e
+    // nada pronto esperando colheita — prêmio parado não é dia fechado.
+    if (app.completedToday >= 1 &&
+        principalOk &&
+        app.missoesResgataveis == 0) {
       return t.fill(t.resDiaFeito, {'a': app.displayName});
     }
     if (abertas.isEmpty) return t.fill(t.resWonSub, {'n': app.displayName});
@@ -495,7 +503,9 @@ class _BarraDeXp extends StatelessWidget {
         BarraAnimada(
           fracao: fracao,
           altura: 10,
-          cor: raiz > 0 ? AppColors.orange : AppColors.green,
+          cor: resumo.xpDaRaiz > 0 && raiz > 0
+              ? AppColors.orange
+              : AppColors.green,
           duracao: Duration.zero,
         ),
       ],

@@ -160,8 +160,18 @@ class MissoesScreen extends StatelessWidget {
               ? null
               : t.fill(t.mqQuantasColher, {'n': aColher.length}),
           filhos: [
-            if (aColher.length >= 2)
-              _ColherTudo(app: app, missoes: aColher),
+            // A retomada tem bloco próprio, mas colhe junto: a aba conta as
+            // duas, e o "colher tudo" tem de bater com ela.
+            if ([...aColher, if (retomada?.resgatavel ?? false) retomada!]
+                    .length >=
+                2)
+              _ColherTudo(
+                app: app,
+                missoes: [
+                  ...aColher,
+                  if (retomada?.resgatavel ?? false) retomada!,
+                ],
+              ),
             for (final m in aColher) CartaoDeMissao(app: app, missao: m),
           ],
         ),

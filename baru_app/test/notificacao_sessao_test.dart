@@ -70,8 +70,8 @@ void main() {
     test('usa canal próprio, separado dos lembretes', () {
       expect(_androidDaSessao(fim).channelId, BaruNotifications.canalSessao);
       expect(
-        BaruNotifications.canalSessao,
-        isNot(BaruNotifications.canalLembretes),
+        BaruNotifications.canaisDeRecado,
+        isNot(contains(BaruNotifications.canalSessao)),
         reason: 'a sessão é silenciosa; os lembretes tocam',
       );
     });

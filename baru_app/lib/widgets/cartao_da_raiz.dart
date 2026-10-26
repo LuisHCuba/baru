@@ -199,10 +199,16 @@ class BotaoDeCompartilharRaizRaizState extends State<BotaoDeCompartilharRaiz> {
         // desenha.
         Positioned(
           left: -CartaoDaRaiz.largura * 2,
-          child: CartaoDaRaiz(
-            dias: app.streak,
-            nomeDoPet: app.displayName,
-            lang: app.lang,
+          // A chave que a captura procura. Sem ela o compartilhamento caía
+          // no texto puro, sem o cartão (auditoria da Onda 2, item 7, R2) —
+          // defeito que já existia na tela da sequência.
+          child: RepaintBoundary(
+            key: _borda,
+            child: CartaoDaRaiz(
+              dias: app.streak,
+              nomeDoPet: app.displayName,
+              lang: app.lang,
+            ),
           ),
         ),
         TextAction(

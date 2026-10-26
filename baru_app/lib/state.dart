@@ -277,6 +277,20 @@ class AppState extends ChangeNotifier {
   /// O dia de hoje bateu a melhor sequência de sempre.
   bool raizRecorde = false;
 
+  /// O tamanho da melhor raiz **anterior** à de agora: a que a raiz atual
+  /// tem de passar para ser recorde. Zero enquanto a primeira raiz não
+  /// quebrou — e por isso a primeira raiz não é "recorde" todo dia, o que
+  /// apagava a linha do galho perto e as outras (auditoria da Onda 2,
+  /// item 7, R5).
+  int recordeAnterior = 0;
+
+  void _raizQuebrou() {
+    if (streak > 0 && melhorSequencia > recordeAnterior) {
+      recordeAnterior = melhorSequencia;
+    }
+    streak = 0;
+  }
+
   /// A chegada do dia ainda não foi comemorada.
   ///
   /// Abrir o app é o gesto que o Baru mais espera, e ele passava em
@@ -864,6 +878,8 @@ class AppState extends ChangeNotifier {
     descansoNoApp = Duration.zero;
     _markSync(_syncSession);
     unawaited(VigiaService.instance.para());
+    // O convite do descanso de hoje pode ter perdido o motivo.
+    unawaited(_syncNotificationSchedules());
   }
 
   /// Reconcilia o descanso com o relógio e com o medidor de tela.
@@ -1217,6 +1233,13 @@ class AppState extends ChangeNotifier {
   /// `false` quer dizer "não há para onde voltar" — só então o sistema
   /// assume, e no Android isso fecha o app.
   bool voltar() {
+    // Uma cena de conquista na frente: o "voltar" do sistema a fecha. Sem
+    // isto a única saída era o botão da cena — e com fonte grande ele podia
+    // ficar fora da tela (auditoria da Onda 2, item 7, R1).
+    if (temCelebracaoPendente && !celebracoesEmEspera) {
+      celebrou();
+      return true;
+    }
     if (confirming) {
       confirming = false;
       notifyListeners();
@@ -1349,10 +1372,25 @@ class AppState extends ChangeNotifier {
   Future<void> initPlatformServices() async {
     if (kIsWeb) return;
     await BaruNotifications.instance.init();
+    // O toque numa notificação leva à tela da ação (laudo 01, §9.6).
+    BaruNotifications.instance.aoAbrirRota = abreRotaDeNotificacao;
     // Quem já tinha o app antes dos ícones por espécie nunca passou por
     // `pickSpecies`: sem isto ficaria com a capivara para sempre.
     unawaited(IconeService.instance.usa(species.name));
     await syncPermissionsFromOs(notify: false);
+  }
+
+  /// Para onde leva o toque numa notificação. Rota que não se conhece, ou
+  /// conta que ainda não terminou o começo, não leva a lugar nenhum.
+  void abreRotaDeNotificacao(String rota) {
+    if (!companionshipStarted || screen == AppScreen.session) return;
+    final destino = switch (rota) {
+      BaruNotifications.rotaMissoes => AppScreen.missoes,
+      BaruNotifications.rotaRelatorio => AppScreen.report,
+      BaruNotifications.rotaHome => AppScreen.home,
+      _ => null,
+    };
+    if (destino != null) go(destino);
   }
 
   /// Sincroniza toggles com permissões reais do SO e atualiza tempo de tela.
@@ -1526,26 +1564,70 @@ class AppState extends ChangeNotifier {
       sessions.map((s) => s.at),
       agora: DateTime.now(),
     );
+    final presente = completedToday > 0;
+    final agora = DateTime.now();
     final risco = avaliaRaizEmRisco(
       dias: streak,
-      presenteHoje: completedToday > 0,
+      presenteHoje: presente,
       congelamentos: freezesLeft,
       proximoMarco: RaizViva.proximoMarco(streak),
     );
+    final plano = planoDeLembretes(
+      habito: habito,
+      descansoFeitoHoje: missaoDoDescanso.concluida,
+      presenteHoje: presente,
+      risco: risco,
+      relatorioLigado: evening,
+      horaDoRelatorio: eveningHour,
+    );
+
+    // O aviso de amanhã, com o estado de amanhã (laudo 01, A6). Quem esteve
+    // presente hoje amanhã tem a raiz de hoje em risco — o número é certo.
+    // Quem não esteve, amanhã pode ter a raiz crescida, segurada ou
+    // recomeçada: o texto não leva número.
+    final amanha = DateTime(agora.year, agora.month, agora.day + 1);
+    final horaDeAmanha = horaDoAvisoDaRaiz(habito);
+    TextoDeLembrete? textoDeAmanha;
+    if (presente && streak > 0) {
+      final riscoAmanha = avaliaRaizEmRisco(
+        dias: streak,
+        presenteHoje: false,
+        // Segunda-feira traz o congelamento novo da semana.
+        congelamentos: weekdayIndex(amanha) == 0 ? 1 : freezesLeft,
+        proximoMarco: RaizViva.proximoMarco(streak),
+      );
+      textoDeAmanha = textosDosLembretes(
+        t,
+        nomeDoPet: displayName,
+        minutosDeDescanso: missaoDoDescanso.alvo,
+        risco: riscoAmanha,
+        dia: amanha,
+      )[TipoDeLembrete.raizEmRisco];
+    } else {
+      textoDeAmanha = textoDeAmanhaSemNumero(t, nomeDoPet: displayName);
+    }
+    // Teto de dois por dia e três horas de distância valem amanhã também:
+    // o convite do descanso se repete sozinho todo dia.
+    final convite = plano
+        .where((l) => l.tipo == TipoDeLembrete.descanso)
+        .map((l) => l.hora);
+    if (convite.any((h) => (h - horaDeAmanha).abs() < 3) ||
+        (evening && (eveningHour - horaDeAmanha).abs() < 3)) {
+      textoDeAmanha = null;
+    }
+
+    await BaruNotifications.instance.nomeiaCanais(nomesDosCanais(t));
     await BaruNotifications.instance.sincronizaRetencao(
-      plano: planoDeLembretes(
-        habito: habito,
-        descansoFeitoHoje: missaoDoDescanso.concluida,
-        risco: risco,
-        relatorioLigado: evening,
-        horaDoRelatorio: eveningHour,
-      ),
+      plano: plano,
       textos: textosDosLembretes(
         t,
         nomeDoPet: displayName,
         minutosDeDescanso: missaoDoDescanso.alvo,
         risco: risco,
+        dia: agora,
       ),
+      textoDeAmanha: textoDeAmanha,
+      horaDeAmanha: horaDeAmanha,
     );
   }
 
@@ -1612,6 +1694,7 @@ class AppState extends ChangeNotifier {
     sessoesPorEspecie = {};
     estagioCelebrado = {};
     melhorSequencia = 0;
+    recordeAnterior = 0;
     diasAbaixoDaMeta = 0;
     marcosResgatados = {};
     marcosACelebrar = [];
@@ -2033,7 +2116,10 @@ class AppState extends ChangeNotifier {
     // O retrato "antes": a tela de resultado anima dele para o depois.
     final folhasAntes = leaves;
     final xpAntes = xp;
-    final missoesAntes = missoes;
+    // A retomada fica fora do sorteio, mas anda com a sessão como as
+    // outras (auditoria da Onda 2, item 8, 4.1).
+    List<Missao> quadro() => [...missoes, if (missaoDeRetomada case final r?) r];
+    final missoesAntes = quadro();
     final primeiraDoDia = completedToday == 0;
     remaining = 0;
     running = false;
@@ -2043,13 +2129,18 @@ class AppState extends ChangeNotifier {
     leaves += gained;
     unawaited(SomService.instance.toca(SomDoBaru.fim));
     if (completedToday == 0) {
-      // Recorde só a partir do segundo dia: no primeiro, "a mais funda que
-      // você já teve" seria verdade vazia.
-      final recorde = streak + 1 > melhorSequencia && streak + 1 > 1;
+      // Recorde no dia em que a raiz de agora passa a melhor das que já
+      // quebraram — uma vez, e não todo dia da primeira raiz.
+      final recorde = recordeAnterior > 0 && streak == recordeAnterior;
       streak += 1;
       if (streak > melhorSequencia) melhorSequencia = streak;
-      raizACelebrar = streak;
-      raizRecorde = recorde;
+      // A cena diz "cresceu **hoje**": só cabe no dia em que a sessão
+      // acabou. A que terminou ontem com o app fechado conta como presença
+      // de ontem, mas não ganha festa hoje (auditoria da Onda 2, item 7, R3).
+      if (dateOnly(em) == dateOnly(DateTime.now())) {
+        raizACelebrar = streak;
+        raizRecorde = recorde;
+      }
       ganhaXp(Balanco.xpPorDiaDeSequencia);
     }
     completedToday += 1;
@@ -2083,7 +2174,7 @@ class AppState extends ChangeNotifier {
       xpAntes: xpAntes,
       xpDaSessao: Balanco.xpDeSessao(minutos),
       xpDaRaiz: primeiraDoDia ? Balanco.xpPorDiaDeSequencia : 0,
-      missoes: ResumoDaSessao.tocadas(missoesAntes, missoes),
+      missoes: ResumoDaSessao.tocadas(missoesAntes, quadro()),
     );
     if (navega) {
       _empilha(AppScreen.result);
@@ -2097,6 +2188,11 @@ class AppState extends ChangeNotifier {
     // notificação fixa. Agendamento sem motivo tem de sumir.
     unawaited(BaruNotifications.instance.encerraSessao());
     unawaited(VigiaService.instance.para());
+    // O dia pode ter acabado de ser cumprido: o aviso de raiz em risco de
+    // hoje tem de sumir **agora**, não na próxima abertura (laudo 01, A5 —
+    // "sua raiz quebra à meia-noite" depois do foco feito é a notificação
+    // mais falsa que este app poderia mandar).
+    unawaited(_syncNotificationSchedules());
     notifyListeners();
   }
 
@@ -2257,7 +2353,7 @@ class AppState extends ChangeNotifier {
       if (streak > melhorSequencia) melhorSequencia = streak;
     } else {
       week[iDe] = WeekDayKind.empty;
-      streak = 0;
+      _raizQuebrou();
     }
 
     // Segunda-feira recarrega o congelamento da semana, mas **não apaga a
@@ -2331,7 +2427,7 @@ class AppState extends ChangeNotifier {
       // Realinha a faixa com a data real em vez de deixar o índice à deriva.
       week = List<WeekDayKind>.filled(7, WeekDayKind.empty);
       freezesLeft = 1;
-      streak = 0;
+      _raizQuebrou();
       todayIndex = weekdayIndex(today);
       week[todayIndex] = WeekDayKind.today;
       steps += 1;
@@ -2467,6 +2563,7 @@ class AppState extends ChangeNotifier {
       sessoesPorEspecie: Map<String, int>.of(sessoesPorEspecie),
       estagioCelebrado: Map<String, int>.of(estagioCelebrado),
       melhorSequencia: melhorSequencia,
+      recordeAnterior: recordeAnterior,
       diasAbaixoDaMeta: diasAbaixoDaMeta,
       marcosResgatados: marcosResgatados.toList(),
       nivelCelebrado: nivelCelebrado,
@@ -2546,6 +2643,7 @@ class AppState extends ChangeNotifier {
     sessoesPorEspecie = Map<String, int>.of(s.sessoesPorEspecie);
     estagioCelebrado = Map<String, int>.of(s.estagioCelebrado);
     melhorSequencia = s.melhorSequencia;
+    recordeAnterior = s.recordeAnterior;
     diasAbaixoDaMeta = s.diasAbaixoDaMeta;
     marcosResgatados = s.marcosResgatados.toSet();
     nivelCelebrado = s.nivelCelebrado;

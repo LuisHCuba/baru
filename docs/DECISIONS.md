@@ -945,3 +945,24 @@ menor depois da atualização — aceito porque não há público ainda. Os
 limiares precisam de calibração com uso real. O detalhe do pleno é pequeno
 (um visitante ou um traço do auge por espécie); o redesenho da Onda 3 pode
 aprofundá-lo.
+
+## ADR-025 — Um canal de notificação por tipo de recado (2026-10-26)
+
+**Contexto.** Todos os recados (raiz, convite do descanso, relatório, volta,
+fim do teste, sessão concluída) iam num canal só, `baru_reminders`, com nome em
+português fixo. Quem quisesse calar um calava todos. O laudo 01 (§9) achou
+ainda: concluir a sessão não reprogramava os avisos (o "sua raiz quebra à
+meia-noite" podia chegar com o dia feito, A5) e o aviso de amanhã levava o
+texto de hoje (A6).
+
+**Decisão.** Canais `baru_fim`, `baru_raiz`, `baru_convite`, `baru_relatorio`,
+`baru_volta` e `baru_conta`, com nome no idioma da pessoa. O antigo é apagado
+uma vez — a preferência que a pessoa tinha nele se perde, e isso vai na nota
+da versão. Todo recado leva a rota da tela da ação (`payload`). Concluir a
+sessão e fechar o descanso reprogramam tudo; dia cumprido é silêncio; o aviso
+de amanhã é montado com o estado de amanhã (sem número quando não dá para
+saber); nada de retenção fora de 8h–21h; textos que giram por dia.
+
+**Consequências.** Quem tinha silenciado o canal antigo volta a receber
+recados até silenciar o novo. A regra "foco de 10 min conta" e a "raiz
+adormecida" seguem como decisão pendente do dono: nenhum texto as promete.

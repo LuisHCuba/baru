@@ -67,6 +67,7 @@ class AppSnapshot {
     this.missoesResgatadas = const [],
     this.sessoesPorEspecie = const {},
     this.estagioCelebrado = const {},
+    this.recordeAnterior = 0,
   });
 
   final AppScreen screen;
@@ -171,6 +172,10 @@ class AppSnapshot {
   /// `EstagioDoBicho`).
   final Map<String, int> estagioCelebrado;
 
+  /// A melhor raiz que já quebrou: a marca que a de agora tem de passar
+  /// para a cena dizer "recorde". Só no aparelho.
+  final int recordeAnterior;
+
   static Map<String, int> parseContadores(dynamic raw) => {
         if (raw is Map)
           for (final e in raw.entries)
@@ -240,6 +245,7 @@ class AppSnapshot {
         'missoesResgatadas': missoesResgatadas,
         'sessoesPorEspecie': sessoesPorEspecie,
         'estagioCelebrado': estagioCelebrado,
+        'recordeAnterior': recordeAnterior,
       };
 
   /// Um app recém-instalado.
@@ -365,6 +371,7 @@ class AppSnapshot {
               const [],
       sessoesPorEspecie: parseContadores(j['sessoesPorEspecie']),
       estagioCelebrado: parseContadores(j['estagioCelebrado']),
+      recordeAnterior: (j['recordeAnterior'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -429,6 +436,8 @@ class AppSnapshot {
           Crescimento.fundeMaior(sessoesPorEspecie, local.sessoesPorEspecie),
       estagioCelebrado:
           Crescimento.fundeMaior(estagioCelebrado, local.estagioCelebrado),
+      // Sem coluna: o remoto vem com zero e não pode apagar o do aparelho.
+      recordeAnterior: maior(recordeAnterior, local.recordeAnterior),
       // Do dia e da semana: **fica com o maior**, não com o local.
       //
       // Estes cinco deixaram de ser cegos ao remoto. Os quatro de foco são
@@ -468,7 +477,12 @@ class AppSnapshot {
   static AppScreen parseScreen(String? n) {
     for (final s in AppScreen.values) {
       if (s.name == n) {
-        if (s == AppScreen.session) return AppScreen.home;
+        // A tela de resultado também não volta: o retrato da sessão que ela
+        // anima não é gravado, e sem ele ela mostrava a versão de quem
+        // desistiu a quem tinha concluído (auditoria da Onda 2, item 8, 7.1).
+        if (s == AppScreen.session || s == AppScreen.result) {
+          return AppScreen.home;
+        }
         return s;
       }
     }
@@ -544,6 +558,7 @@ class AppSnapshot {
     List<String>? missoesResgatadas,
     Map<String, int>? sessoesPorEspecie,
     Map<String, int>? estagioCelebrado,
+    int? recordeAnterior,
     bool clearQuiz = false,
     bool clearTrialStart = false,
     bool clearSession = false,
@@ -615,6 +630,7 @@ class AppSnapshot {
       missoesResgatadas: missoesResgatadas ?? this.missoesResgatadas,
       sessoesPorEspecie: sessoesPorEspecie ?? this.sessoesPorEspecie,
       estagioCelebrado: estagioCelebrado ?? this.estagioCelebrado,
+      recordeAnterior: recordeAnterior ?? this.recordeAnterior,
     );
   }
 

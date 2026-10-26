@@ -153,8 +153,9 @@ void main() {
       );
       expect(
         horaDoAvisoDaRaiz(const HorarioDoHabito(hora: 23, amostras: 9)),
-        22,
-        reason: 'uma sessão curta ainda precisa caber antes da meia-noite',
+        21,
+        reason: 'o alarme inexato chega até 1 h depois: marcado às 21h, '
+            'chega até as 22h, ainda com tempo de uma sessão curta',
       );
     });
   });

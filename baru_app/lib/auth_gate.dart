@@ -202,7 +202,7 @@ class AuthGateState extends State<AuthGate> {
                   const SizedBox(height: 20),
                   Text(
                     _t.authBootstrapLoading,
-                    style: nunito(size: 15, color: AppColors.inkA(0.62)),
+                    style: nunito(size: 15, color: Cores.tinta700),
                   ),
                 ],
               ),
@@ -230,12 +230,12 @@ class AuthGateState extends State<AuthGate> {
                     Text(
                       _t.authAttachFail,
                       textAlign: TextAlign.center,
-                      style: nunito(size: 16, height: 1.5, color: AppColors.orangeText),
+                      style: nunito(size: 16, height: 1.5, color: Cores.alerta),
                     ),
                     const Spacer(),
-                    PrimaryButton(
-                      label: _t.authSignIn,
-                      onTap: () {
+                    BotaoBaru(
+                      rotulo: _t.authSignIn,
+                      aoTocar: () {
                         setState(() {
                           _attachError = null;
                           _checking = true;

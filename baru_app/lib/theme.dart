@@ -61,7 +61,7 @@ class AppColors {
   static const cream = Cores.superficie;
   static const canvas = Cores.canvas;
   static const ink = Cores.tinta;
-  static const green = Cores.primaria;
+  static const green = Cores.folha600;
   static const greenHover = Cores.primariaHover;
   static const greenDeep = Cores.primariaEscura;
   static const greenSoft = Cores.primariaClara;
@@ -179,7 +179,7 @@ class AppTheme {
       canvasColor: Cores.canvas,
       dividerColor: Cores.tintaA(0.08),
       colorScheme: const ColorScheme.light(
-        primary: Cores.primaria,
+        primary: Cores.folha600,
         onPrimary: Cores.tintaClara,
         surface: Cores.superficie,
         onSurface: Cores.tinta,

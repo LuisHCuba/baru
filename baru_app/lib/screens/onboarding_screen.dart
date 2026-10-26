@@ -54,10 +54,10 @@ class OnboardingScreen extends StatelessWidget {
 
   Widget _cta(AppState app) {
     if (app.onb == 0) {
-      return PrimaryButton(label: app.t.cont, onTap: app.nextOnb);
+      return BotaoBaru(rotulo: app.t.cont, aoTocar: app.nextOnb);
     }
     if (app.onb == 1) {
-      return PrimaryButton(label: app.t.start, onTap: app.nextOnb);
+      return BotaoBaru(rotulo: app.t.start, aoTocar: app.nextOnb);
     }
     if (app.onb == 2) {
       // Escolher já avança. O que sobra embaixo é o caminho de volta e, na
@@ -66,17 +66,17 @@ class OnboardingScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (app.quizDone)
-            PrimaryButton(label: app.t.quizCta, onTap: app.nextOnb),
+            BotaoBaru(rotulo: app.t.quizCta, aoTocar: app.nextOnb),
           if (app.perguntaAtual > 0)
             TextAction(label: app.t.quizVoltar, onTap: app.voltaPergunta),
         ],
       );
     }
     if (app.onb == 3) {
-      return PrimaryButton(label: app.t.revealCta, onTap: app.nextOnb);
+      return BotaoBaru(rotulo: app.t.revealCta, aoTocar: app.nextOnb);
     }
     if (app.onb == 4) {
-      return PrimaryButton(label: app.t.goalCta, onTap: app.nextOnb);
+      return BotaoBaru(rotulo: app.t.goalCta, aoTocar: app.nextOnb);
     }
     // O passo das permissões traz os próprios botões: eles mudam de rótulo a
     // cada permissão e precisam do estado do assistente, que não existe
@@ -109,7 +109,7 @@ class OnboardingScreen extends StatelessWidget {
                   style: nunito(
                     size: 15,
                     height: 1.5,
-                    color: AppColors.inkA(0.68),
+                    color: Cores.tinta700,
                   ),
                 ),
                 const SizedBox(height: 26),
@@ -156,7 +156,7 @@ class OnboardingScreen extends StatelessWidget {
                               weight: FontWeight.w700,
                               color: app.lang == l.id
                                   ? AppColors.green
-                                  : AppColors.inkA(0.4),
+                                  : Cores.tinta700,
                             ),
                           ),
                         ],
@@ -236,7 +236,7 @@ class OnboardingScreen extends StatelessWidget {
             size: 12.5,
             weight: FontWeight.w700,
             letterSpacing: 0.8,
-            color: AppColors.inkA(0.4),
+            color: Cores.tinta700,
           ),
         ),
         const SizedBox(height: 10),
@@ -295,7 +295,7 @@ class OnboardingScreen extends StatelessWidget {
         Text(
           sp[1],
           textAlign: TextAlign.center,
-          style: nunito(size: 14.5, height: 1.5, color: AppColors.inkA(0.65)),
+          style: nunito(size: 14.5, height: 1.5, color: Cores.tinta700),
         ),
         const SizedBox(height: 16),
         Center(
@@ -380,7 +380,7 @@ class OnboardingScreen extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           app.t.goalB,
-          style: nunito(size: 14.5, height: 1.5, color: AppColors.inkA(0.65)),
+          style: nunito(size: 14.5, height: 1.5, color: Cores.tinta700),
         ),
         const SizedBox(height: 24),
         Row(
@@ -426,7 +426,7 @@ class OnboardingScreen extends StatelessWidget {
                 style: nunito(
                   size: 13.5,
                   height: 1.5,
-                  color: AppColors.inkA(0.65),
+                  color: Cores.tinta700,
                 ),
               ),
             ],
@@ -576,7 +576,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
                   size: 12.5,
                   weight: FontWeight.w700,
                   letterSpacing: 0.8,
-                  color: AppColors.inkA(0.4),
+                  color: Cores.tinta700,
                 ),
               ),
               const SizedBox(height: 10),
@@ -595,7 +595,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
                 style: nunito(
                   size: 14.5,
                   height: 1.5,
-                  color: AppColors.inkA(0.65),
+                  color: Cores.tinta700,
                 ),
               ),
               const SizedBox(height: 20),
@@ -623,7 +623,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
                   style: nunito(
                     size: 12.5,
                     height: 1.5,
-                    color: AppColors.inkA(0.5),
+                    color: Cores.tinta700,
                   ),
                 ),
             ],
@@ -631,10 +631,10 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
         ),
         const SizedBox(height: 8),
         if (concedida)
-          PrimaryButton(
+          BotaoBaru(
             key: AssistenteDePermissoes.chaveContinuar,
-            label: ultima ? t.sobPermConcluir : t.cont,
-            onTap: _avanca,
+            rotulo: ultima ? t.sobPermConcluir : t.cont,
+            aoTocar: _avanca,
           )
         else
           TextAction(

@@ -191,7 +191,7 @@ class SettingsScreen extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: estilo(
                         Tipo.corpoPequeno,
-                        color: Cores.tintaA(0.6),
+                        color: Cores.tinta700,
                       ),
                     ),
                   ],
@@ -426,7 +426,7 @@ class SettingsScreen extends StatelessWidget {
                   'b': app.fmt(metaMaxima),
                 }),
                 textAlign: TextAlign.center,
-                style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.5)),
+                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
               ),
               const SizedBox(height: Espaco.md),
               Wrap(
@@ -469,7 +469,7 @@ class SettingsScreen extends StatelessWidget {
               Text(
                 t.setHorarioSub,
                 textAlign: TextAlign.center,
-                style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.55)),
+                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
               ),
               const SizedBox(height: Espaco.md),
               Wrap(
@@ -589,7 +589,7 @@ class _Linha extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = apagado ? Cores.tintaA(0.5) : Cores.tinta;
+    final cor = apagado ? Cores.tinta500 : Cores.tinta;
     return Semantics(
       key: chave,
       button: true,
@@ -614,13 +614,13 @@ class _Linha extends StatelessWidget {
               if (valor != null)
                 Text(
                   valor!,
-                  style: estilo(Tipo.rotulo, color: Cores.tintaA(0.55)),
+                  style: estilo(Tipo.rotulo, color: Cores.tinta700),
                 ),
               const SizedBox(width: Espaco.xxs),
               Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
-                color: Cores.tintaA(0.3),
+                color: Cores.tinta500,
               ),
             ],
           ),
@@ -665,7 +665,7 @@ class _Chave extends StatelessWidget {
                     detalhe,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.5)),
+                    style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
                   ),
                 ],
               ),
@@ -715,7 +715,7 @@ class _Opcao extends StatelessWidget {
                 const Icon(
                   Icons.check_rounded,
                   size: 20,
-                  color: Cores.primaria,
+                  color: Cores.folha600,
                 ),
             ],
           ),
@@ -787,18 +787,18 @@ class _OpcaoTravada extends StatelessWidget {
               Icon(
                 Icons.lock_outline_rounded,
                 size: 18,
-                color: Cores.tintaA(0.35),
+                color: Cores.tinta500,
               ),
               const SizedBox(width: Espaco.sm),
               Expanded(
                 child: Text(
                   rotulo,
-                  style: estilo(Tipo.corpo, color: Cores.tintaA(0.45)),
+                  style: estilo(Tipo.corpo, color: Cores.tinta700),
                 ),
               ),
               Text(
                 detalhe,
-                style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.4)),
+                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
               ),
             ],
           ),

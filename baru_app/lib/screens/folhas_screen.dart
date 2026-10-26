@@ -7,6 +7,7 @@ import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/componentes.dart';
+import '../widgets/glifos.dart';
 
 /// Suas folhas.
 ///
@@ -48,7 +49,7 @@ class FolhasScreen extends StatelessWidget {
               if (carteira.vazia) ...[
                 const SizedBox(height: Espaco.xl),
                 EstadoVazio(
-                  icone: Icons.eco_rounded,
+                  glifo: const GlifoFolha(tamanho: 30),
                   titulo: t.folhasVaziaT,
                   corpo: t.folhasVaziaB,
                 ),
@@ -94,7 +95,7 @@ class FolhasScreen extends StatelessWidget {
                           icone: Icons.park_rounded,
                           rotulo: _nomeDoItem(t, g.detalhe!),
                           valor: '${g.valor}',
-                          cor: Cores.tintaA(0.55),
+                          cor: Cores.tinta700,
                         ),
                     ],
                   ),
@@ -106,7 +107,7 @@ class FolhasScreen extends StatelessWidget {
                     filhos: [
                       for (final l in carteira.ganhosDeSessao.take(8))
                         LinhaDeValor(
-                          icone: Icons.eco_rounded,
+                          glifo: const GlifoFolha(tamanho: 18),
                           rotulo: t.fill(
                             t.folhasSessaoLinha,
                             {'m': int.parse(l.detalhe!)},
@@ -164,7 +165,7 @@ class _Saldo extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.eco_rounded, size: 30, color: Cores.primaria),
+              const GlifoFolha(tamanho: 32),
               const SizedBox(width: Espaco.sm),
               ContadorAnimado(
                 valor: app.leaves,
@@ -180,7 +181,7 @@ class _Saldo extends StatelessWidget {
             const SizedBox(height: Espaco.md),
             BarraAnimada(
               fracao: (app.leaves / proximo!.price).clamp(0.0, 1.0),
-              cor: Cores.primaria,
+              cor: Cores.folha600,
               fundo: Cores.primariaA(0.16),
             ),
             const SizedBox(height: Espaco.xs),
@@ -251,7 +252,7 @@ class _Bloco extends StatelessWidget {
         children: [
           Text(
             titulo,
-            style: estilo(Tipo.rotuloPequeno, color: Cores.tintaA(0.45)),
+            style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
           ),
           const SizedBox(height: Espaco.xs),
           ...filhos,
@@ -259,7 +260,7 @@ class _Bloco extends StatelessWidget {
             const SizedBox(height: Espaco.xs),
             Text(
               nota!,
-              style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.45)),
+              style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
             ),
           ],
         ],

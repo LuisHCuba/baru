@@ -993,3 +993,40 @@ interna nem o nome:
 **Fora desta decisão.** A troca da tartaruga-de-orelha-vermelha pelo tracajá
 (laudo 06) segue pendente do dono. **Consequências.** As capturas da Play
 precisam ser regeradas para mostrar os desenhos novos.
+
+## ADR-027 — Sistema visual: um glifo por moeda, paleta semântica AA e botão único (2026-10-26)
+
+**Contexto.** O laudo 03 (§1.4–1.7) mediu o "desconexo": a folha tinha
+quatro desenhos e três cores; laranja significava raiz, próximo passo,
+missão principal, "pronta para colher", dispersivo e "passou da meta"; dez
+pares de texto reprovavam no WCAG (creme no botão verde 3,6:1, rótulos de
+seção 2,3:1, "Resgatar" 2,3:1); e havia cinco botões, sem resposta ao toque.
+
+**Decisão.**
+
+- **Glifos** (`lib/widgets/glifos.dart`): `GlifoFolha` (verde `folha600`),
+  `GlifoRaiz` (`raiz600`, uma semente brotando com raiz) e `GlifoXp` (mel),
+  pintados numa grade de 24 com luz de cima-esquerda. `Icons.eco` e
+  `LeafMark` saíram; `test/glifos_test.dart` impede a volta.
+- **Paleta semântica** (`tokens.dart`): verde = ação, progresso e a moeda;
+  terracota = só a raiz; mel = só conquista e recompensa (XP, nível,
+  colher, a trilha); céu = congelamento; tijolo (`alerta`) = erro e o que
+  não tem volta. "Acima da meta" é neutro (`tinta500`), nunca alarme. Toda
+  barra de progresso é verde, até a da missão pronta: o "pronta" fica com a
+  etiqueta e o botão cor de mel. Texto secundário é `tinta700` opaco, não
+  tinta translúcida. `test/contraste_test.dart` recalcula cada par.
+- **Botão único** (`lib/widgets/botao_baru.dart`): face sobre um lábio de
+  4 dp que afunda sob o dedo (70 ms) e volta com um passo além (120 ms), com
+  háptico leve; sem movimento quando o sistema pede menos animação. Papéis:
+  primário, recompensa, raiz, secundário e destrutivo. Substitui
+  `PrimaryButton`, `GhostButton`, o botão do estado vazio e o "Colher" do
+  fim de sessão.
+- A arte (bicho e cenário) não muda com a paleta da interface: os tons de
+  ilustração ficam em tokens próprios (`terracotaDaArte`, `ferrugemDaArte`,
+  `primaria`).
+
+**Fora desta decisão.** A iconografia própria completa (R-V5, ~40 ícones)
+e a pílula de preço da loja como `BotaoBaru` (ela é uma pílula de 36 dp
+dentro da vitrine; virou glifo, não botão 3D). **Não verificado:** a leitura
+do glifo da raiz a 16–18 px com pessoas; é um desenho novo e ambíguo
+sozinho, e só se lê como "raiz" junto do rótulo.

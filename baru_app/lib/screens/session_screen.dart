@@ -89,7 +89,7 @@ class SessionScreen extends StatelessWidget {
                     t
                         .fill(t.petRotuloDaSessao(acao), {'m': app.sessionMinutes})
                         .toUpperCase(),
-                    style: nunito(size: 12, weight: FontWeight.w600, letterSpacing: 1.2, color: AppColors.inkA(0.45)),
+                    style: nunito(size: 12, weight: FontWeight.w600, letterSpacing: 1.2, color: Cores.tinta700),
                   ),
                 ),
                 Expanded(
@@ -171,7 +171,7 @@ class SessionScreen extends StatelessWidget {
                           t.petFazendoNoEstagio(acao, app.estagio, app.species),
                           {'n': app.displayName},
                         ),
-                        style: nunito(size: 15.5, color: AppColors.inkA(0.65)),
+                        style: nunito(size: 15.5, color: Cores.tinta700),
                       ),
                       const SizedBox(height: 34),
                       TrackFill(pct: pct, height: 8),
@@ -295,10 +295,10 @@ class _QuitSheet extends StatelessWidget {
               Text(
                 app.t.quitSub,
                 textAlign: TextAlign.center,
-                style: nunito(size: 14.5, height: 1.5, color: AppColors.inkA(0.65)),
+                style: nunito(size: 14.5, height: 1.5, color: Cores.tinta700),
               ),
               const SizedBox(height: 22),
-              PrimaryButton(label: app.t.stay, onTap: app.resume),
+              BotaoBaru(rotulo: app.t.stay, aoTocar: app.resume),
               TextAction(label: app.t.leave, onTap: app.abandon),
             ],
           ),

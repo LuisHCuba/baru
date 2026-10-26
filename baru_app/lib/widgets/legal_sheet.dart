@@ -60,14 +60,14 @@ void showLegalSheet(
                         style: nunito(
                           size: 14.5,
                           height: 1.5,
-                          color: AppColors.inkA(0.68),
+                          color: Cores.tinta700,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
-                PrimaryButton(label: close, onTap: () => Navigator.pop(ctx)),
+                BotaoBaru(rotulo: close, aoTocar: () => Navigator.pop(ctx)),
               ],
             ),
           );

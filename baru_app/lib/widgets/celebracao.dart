@@ -22,7 +22,7 @@ class Celebracao extends StatefulWidget {
     required this.subtitulo,
     required this.aoFechar,
     this.icone = Icons.auto_awesome_rounded,
-    this.cor = Cores.acento,
+    this.cor = Cores.mel400,
     this.precisaCavar = false,
     this.som = SomDoBaru.conquista,
   });
@@ -121,7 +121,7 @@ class _CelebracaoState extends State<Celebracao>
                 Toca(
                   key: Celebracao.chaveDaToca,
                   rotuloDoPremio: widget.subtitulo,
-                  icone: widget.icone,
+                  icone: Icon(widget.icone),
                   cor: widget.cor,
                   aoAbrir: () {
                     if (!mounted) return;

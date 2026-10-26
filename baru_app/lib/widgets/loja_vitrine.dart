@@ -344,7 +344,8 @@ class PilulaDaLoja extends StatelessWidget {
   const PilulaDaLoja({
     super.key,
     required this.rotulo,
-    required this.icone,
+    this.icone,
+    this.glifo,
     required this.ativo,
     required this.cor,
     required this.aoTocar,
@@ -353,7 +354,10 @@ class PilulaDaLoja extends StatelessWidget {
   });
 
   final String rotulo;
-  final IconData icone;
+  final IconData? icone;
+
+  /// No lugar de [icone]: a folha do preço.
+  final Widget? glifo;
   final bool ativo;
   final Color cor;
   final Color? corTexto;
@@ -362,7 +366,7 @@ class PilulaDaLoja extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final texto = corTexto ?? (ativo ? Cores.superficie : Cores.tintaA(0.45));
+    final texto = corTexto ?? (ativo ? Cores.superficie : Cores.tinta500);
     return Semantics(
       button: true,
       enabled: ativo,
@@ -382,7 +386,7 @@ class PilulaDaLoja extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icone, size: 15, color: texto),
+              glifo ?? Icon(icone, size: 15, color: texto),
               const SizedBox(width: Espaco.xxs),
               Flexible(
                 child: Text(

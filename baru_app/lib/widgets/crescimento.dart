@@ -103,7 +103,7 @@ class BarraDoCrescimento extends StatelessWidget {
                             style: nunito(
                               size: 12.5,
                               weight: FontWeight.w600,
-                              color: AppColors.inkA(0.62),
+                              color: Cores.tinta700,
                             ),
                           ),
                         ),
@@ -435,9 +435,9 @@ class _CenaDoCrescimentoState extends State<CenaDoCrescimento>
                                   ignoring: texto < 0.5,
                                   child: SizedBox(
                                     width: 220,
-                                    child: PrimaryButton(
-                                      label: t.cont,
-                                      onTap: widget.aoFechar,
+                                    child: BotaoBaru(
+                                      rotulo: t.cont,
+                                      aoTocar: widget.aoFechar,
                                     ),
                                   ),
                                 ),

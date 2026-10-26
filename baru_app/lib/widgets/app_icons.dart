@@ -28,7 +28,7 @@ class Chevron extends StatelessWidget {
     return AppIcon(
       Icons.chevron_right_rounded,
       size: size,
-      color: color ?? AppColors.inkA(0.3),
+      color: color ?? Cores.tinta500,
     );
   }
 }

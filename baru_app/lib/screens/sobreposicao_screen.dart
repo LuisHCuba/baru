@@ -116,7 +116,7 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
             children: [
               Text(
                 t.sobrePreview.toUpperCase(),
-                style: estilo(Tipo.rotuloPequeno, color: Cores.tintaA(0.45)),
+                style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
               ),
               const SizedBox(height: Espaco.sm),
               _Previa(app: app),
@@ -130,7 +130,7 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
                       t.sobPermT.toUpperCase(),
                       style: estilo(
                         Tipo.rotuloPequeno,
-                        color: Cores.tintaA(0.45),
+                        color: Cores.tinta700,
                       ),
                     ),
                   ),
@@ -143,7 +143,7 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
                       Tipo.rotuloPequeno,
                       color: concedidas == daPlataforma.length
                           ? Cores.primariaEscura
-                          : Cores.acentoTexto,
+                          : Cores.alerta,
                     ),
                   ),
                 ],
@@ -164,7 +164,7 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
                 _Nota(texto: t.sobreSoAndroid, cor: Cores.neutro),
               ],
               const SizedBox(height: Espaco.xs),
-              _Nota(texto: t.sobreComo, cor: Cores.tintaA(0.45)),
+              _Nota(texto: t.sobreComo, cor: Cores.tinta700),
 
               // --- o catálogo de apps ----------------------------------
               const SizedBox(height: Espaco.lg),
@@ -230,7 +230,7 @@ class CartaoDePermissao extends StatelessWidget {
               Icon(
                 ok ? Icons.check_circle_rounded : _icone,
                 size: 22,
-                color: ok ? Cores.primaria : Cores.tintaA(0.4),
+                color: ok ? Cores.folha600 : Cores.tinta500,
               ),
               const SizedBox(width: Espaco.sm),
               Expanded(
@@ -246,7 +246,7 @@ class CartaoDePermissao extends StatelessWidget {
                       ok ? t.sobPermLigada : t.sobPermFalta,
                       style: estilo(
                         Tipo.rotuloPequeno,
-                        color: ok ? Cores.primariaEscura : Cores.acentoTexto,
+                        color: ok ? Cores.primariaEscura : Cores.alerta,
                       ),
                     ),
                   ],
@@ -266,12 +266,12 @@ class CartaoDePermissao extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(Espaco.sm),
               decoration: BoxDecoration(
-                color: Cores.acento.withValues(alpha: 0.10),
+                color: Cores.alerta.withValues(alpha: 0.08),
                 borderRadius: Raio.todos(Raio.chip),
               ),
               child: Text.rich(
                 TextSpan(
-                  style: estilo(Tipo.corpoPequeno, color: Cores.acentoTexto),
+                  style: estilo(Tipo.corpoPequeno, color: Cores.alerta),
                   children: [
                     TextSpan(
                       text: '${t.sobPermSemIsso} ',
@@ -283,10 +283,11 @@ class CartaoDePermissao extends StatelessWidget {
               ),
             ),
             const SizedBox(height: Espaco.sm),
-            GhostButton(
+            BotaoBaru(
               key: chaveDoBotao(permissao),
-              label: concedida == null ? t.sobPermPermitir : t.sobPermDeNovo,
-              onTap: aoPedir,
+              rotulo: concedida == null ? t.sobPermPermitir : t.sobPermDeNovo,
+              aoTocar: aoPedir,
+              papel: PapelDoBotao.secundario,
             ),
           ],
         ],
@@ -333,7 +334,7 @@ class _CatalogoDeAppsState extends State<_CatalogoDeApps> {
       children: [
         Text(
           t.sobAppsT.toUpperCase(),
-          style: estilo(Tipo.rotuloPequeno, color: Cores.tintaA(0.45)),
+          style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
         ),
         const SizedBox(height: Espaco.xs),
         Text(
@@ -341,7 +342,7 @@ class _CatalogoDeAppsState extends State<_CatalogoDeApps> {
             'n': app.displayName,
             'q': pacotes.length,
           }),
-          style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.6)),
+          style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
         ),
         const SizedBox(height: Espaco.sm),
         for (final pacote in mostrados) ...[
@@ -406,7 +407,7 @@ class _LinhaDoCatalogo extends StatelessWidget {
           Icon(
             Icons.chevron_right_rounded,
             size: 18,
-            color: Cores.tintaA(0.3),
+            color: Cores.tinta500,
           ),
         ],
       ),
@@ -444,7 +445,7 @@ void _abreSeletor(
             const SizedBox(height: Espaco.xxs),
             Text(
               t.telaMudarCategoria,
-              style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.6)),
+              style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
             ),
             const SizedBox(height: Espaco.md),
             for (final c in CategoriaDeApp.values)
@@ -583,7 +584,7 @@ class _Balao extends StatelessWidget {
                   Expanded(
                     child: _BotaoFalso(
                       rotulo: t.sobreFechar,
-                      cor: Cores.primaria,
+                      cor: Cores.folha600,
                       texto: Cores.superficie,
                     ),
                   ),

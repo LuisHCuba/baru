@@ -58,12 +58,12 @@ class TrilhaScreen extends StatelessWidget {
                   'n': p.passoAtual,
                   't': p.totalDePassos,
                 }),
-          style: estilo(Tipo.corpoForte, color: Cores.acentoTexto),
+          style: estilo(Tipo.corpoForte, color: Cores.mel700),
         ),
         const SizedBox(height: Espaco.xxs),
         Text(
           t.trilhaSub,
-          style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+          style: estilo(Tipo.corpo, color: Cores.tinta700),
         ),
         const SizedBox(height: Espaco.md),
         CartaoNivel(app: app),
@@ -102,14 +102,16 @@ class CartaoProximoPasso extends StatelessWidget {
     final p = app.progresso;
     return CartaoBaru(
       key: chave,
-      cor: Cores.acentoA(0.10),
+      // Mel: a trilha é feita de conquistas. A barra continua verde porque
+      // é progresso, e progresso tem uma cor só no app.
+      cor: Cores.mel400.withValues(alpha: 0.20),
       elevado: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             t.trilhaProximo,
-            style: estilo(Tipo.rotuloPequeno, color: Cores.acentoTexto),
+            style: estilo(Tipo.rotuloPequeno, color: Cores.mel700),
           ),
           const SizedBox(height: Espaco.xxs),
           Text(tituloDoMarco(app, marco), style: estilo(Tipo.subtitulo)),
@@ -120,8 +122,6 @@ class CartaoProximoPasso extends StatelessWidget {
                 child: BarraAnimada(
                   fracao: p.fracaoDe(marco),
                   altura: 8,
-                  cor: Cores.acento,
-                  fundo: Cores.acentoA(0.18),
                 ),
               ),
               const SizedBox(width: Espaco.xs),
@@ -132,7 +132,7 @@ class CartaoProximoPasso extends StatelessWidget {
                 _placarDoCriterio(p, p.criterioMaisPerto(marco)),
                 style: estilo(
                   Tipo.rotuloPequeno,
-                  color: Cores.acentoTexto,
+                  color: Cores.tinta700,
                   tabular: true,
                 ),
               ),
@@ -146,12 +146,12 @@ class CartaoProximoPasso extends StatelessWidget {
           // usuário a adivinhar de que unidade é o número.
           Text(
             oQueFaltaNoMarco(app, marco),
-            style: estilo(Tipo.corpoForte, color: Cores.acentoForte),
+            style: estilo(Tipo.corpoForte),
           ),
           const SizedBox(height: Espaco.xxs),
           Text(
             premiosDoMarco(app, marco).join(' · '),
-            style: estilo(Tipo.corpoPequeno, color: Cores.acentoTexto),
+            style: estilo(Tipo.corpoPequeno, color: Cores.mel700),
           ),
         ],
       ),
@@ -186,7 +186,7 @@ class SeletorDeHabitat extends StatelessWidget {
         const SizedBox(height: Espaco.xxs),
         Text(
           t.fill(t.s('trilhaHabitatsSub'), {'a': app.displayName}),
-          style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.6)),
+          style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
         ),
         const SizedBox(height: Espaco.sm),
         // Rolagem horizontal: são seis lugares e vão ser mais. Empilhados,
@@ -256,7 +256,7 @@ class _CartaoDeHabitat extends StatelessWidget {
             color: emUso ? Cores.primariaA(0.14) : Cores.superficieElevada,
             borderRadius: Raio.todos(Raio.chip),
             border: Border.all(
-              color: emUso ? Cores.primaria : Cores.tintaA(0.10),
+              color: emUso ? Cores.folha600 : Cores.tintaA(0.10),
               width: emUso ? 2 : 1,
             ),
           ),
@@ -297,7 +297,7 @@ class _CartaoDeHabitat extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: estilo(
                   Tipo.corpoForte,
-                  color: liberado ? Cores.tinta : Cores.tintaA(0.5),
+                  color: liberado ? Cores.tinta : Cores.tinta700,
                 ),
               ),
               // `FittedBox`: "Abre no passo 11" não cabe nos 100 px do cartão
@@ -315,8 +315,8 @@ class _CartaoDeHabitat extends StatelessWidget {
                     color: emUso
                         ? Cores.primariaEscura
                         : liberado
-                            ? Cores.acentoTexto
-                            : Cores.tintaA(0.45),
+                            ? Cores.folha700
+                            : Cores.tinta700,
                   ),
                 ),
               ),
@@ -371,7 +371,7 @@ class CartaoNivel extends StatelessWidget {
           BarraAnimada(
             fracao: app.progressoNoNivel,
             altura: compacto ? 8 : 10,
-            cor: Cores.primaria,
+            cor: Cores.folha600,
             fundo: Cores.primariaA(0.16),
           ),
           const SizedBox(height: Espaco.xs),
@@ -390,10 +390,10 @@ class CartaoNivel extends StatelessWidget {
             const SizedBox(height: Espaco.xs),
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.favorite_rounded,
                   size: 14,
-                  color: Cores.acento,
+                  color: Cores.afeto,
                 ),
                 const SizedBox(width: Espaco.xxs),
                 Text(
@@ -529,10 +529,10 @@ class _RotuloDoNo extends StatelessWidget {
 
     final cor = switch (estado) {
       EstadoNaTrilha.conquistado => Cores.primariaEscura,
-      EstadoNaTrilha.atual => Cores.acentoForte,
+      EstadoNaTrilha.atual => Cores.tinta,
       // Apagado de verdade, não meio apagado: o degrau travado tem de
       // parecer o que é — ainda não chegou a vez dele.
-      EstadoNaTrilha.travado => Cores.tintaA(0.38),
+      EstadoNaTrilha.travado => Cores.tinta500,
     };
 
     return Positioned(
@@ -559,7 +559,7 @@ class _RotuloDoNo extends StatelessWidget {
                     aEsquerda ? Alignment.centerRight : Alignment.centerLeft,
                 child: Etiqueta(
                   texto: app.t.trilhaAqui,
-                  cor: Cores.acento,
+                  cor: Cores.mel400,
                   forte: true,
                 ),
               ),
@@ -590,7 +590,7 @@ class _RotuloDoNo extends StatelessWidget {
                 textAlign: aEsquerda ? TextAlign.right : TextAlign.left,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: estilo(Tipo.corpoPequeno, color: Cores.acentoTexto),
+                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
               )
             else if (marco.recompensa.folhas > 0)
               Text(
@@ -601,8 +601,8 @@ class _RotuloDoNo extends StatelessWidget {
                 style: estilo(
                   Tipo.corpoPequeno,
                   color: estado == EstadoNaTrilha.travado
-                      ? Cores.tintaA(0.34)
-                      : Cores.tintaA(0.45),
+                      ? Cores.tinta700
+                      : Cores.tinta700,
                 ),
               ),
           ],
@@ -630,7 +630,7 @@ class _LinhaDoCaminho extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = feito ? 7 : 6
         ..strokeCap = StrokeCap.round
-        ..color = feito ? Cores.primaria : Cores.tintaA(0.13);
+        ..color = feito ? Cores.folha600 : Cores.tintaA(0.13);
 
       // Curva suave em vez de reta: um caminho não tem quinas.
       final caminho = Path()
@@ -734,12 +734,15 @@ class _NoState extends State<_No> with SingleTickerProviderStateMixin {
     // Opaco também quando bloqueado: com fundo translúcido a linha tracejada
     // atravessava o miolo do nó e parecia rabisco por cima do ícone.
     final cor = feito
-        ? Cores.primaria
+        ? Cores.folha600
         : widget.ehAtual
-            ? Cores.acento
+            ? Cores.mel400
             : Color.alphaBlend(Cores.tintaA(0.14), Cores.superficie);
-    final corDoIcone =
-        feito || widget.ehAtual ? Cores.superficie : Cores.tintaA(0.42);
+    final corDoIcone = feito
+        ? Cores.superficie
+        : widget.ehAtual
+            ? Cores.tinta
+            : Cores.tinta500;
     final icone = switch (estado) {
       EstadoNaTrilha.conquistado => Icons.check_rounded,
       EstadoNaTrilha.atual => _iconeDoMarco(widget.marco.tipo),
@@ -780,7 +783,7 @@ class _NoState extends State<_No> with SingleTickerProviderStateMixin {
                       height: _Caminho.diametro * (0.92 + p * 0.14),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Cores.acentoA(0.22 - p * 0.10),
+                        color: Cores.mel400.withValues(alpha: 0.34 - p * 0.14),
                       ),
                     ),
                   // Anel de progresso de quem ainda não chegou.
@@ -793,7 +796,7 @@ class _NoState extends State<_No> with SingleTickerProviderStateMixin {
                         strokeWidth: 5,
                         backgroundColor: Cores.tintaA(0.10),
                         valueColor: AlwaysStoppedAnimation(
-                          widget.ehAtual ? Cores.acento : Cores.primariaClara,
+                          widget.ehAtual ? Cores.mel600 : Cores.primariaClara,
                         ),
                       ),
                     ),
@@ -865,12 +868,14 @@ void abreDetalheDoMarco(
                     height: 46,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: feito ? Cores.primaria : Cores.acentoA(0.16),
+                      color: feito
+                          ? Cores.folha600
+                          : Cores.mel400.withValues(alpha: 0.30),
                     ),
                     child: Icon(
                       feito ? Icons.check_rounded : _iconeDoMarco(m.tipo),
                       size: 22,
-                      color: feito ? Cores.superficie : Cores.acentoForte,
+                      color: feito ? Cores.superficie : Cores.mel700,
                     ),
                   ),
                   const SizedBox(width: Espaco.sm),
@@ -889,7 +894,7 @@ void abreDetalheDoMarco(
                           }),
                           style: estilo(
                             Tipo.corpoPequeno,
-                            color: Cores.tintaA(0.55),
+                            color: Cores.tinta700,
                           ),
                         ),
                       ],
@@ -899,11 +904,7 @@ void abreDetalheDoMarco(
               ),
               const SizedBox(height: Espaco.md),
               if (!feito) ...[
-                BarraAnimada(
-                  fracao: progresso.fracaoDe(m),
-                  cor: Cores.acento,
-                  fundo: Cores.acentoA(0.16),
-                ),
+                BarraAnimada(fracao: progresso.fracaoDe(m)),
                 const SizedBox(height: Espaco.xs),
                 // Aqui a fração aparece mesmo no degrau travado: quem abriu
                 // o detalhe perguntou de propósito. O que não pode é o
@@ -911,12 +912,12 @@ void abreDetalheDoMarco(
                 Text(
                   // Sem espaços, igual ao cartão do topo: "4/7".
                   _placarDoCriterio(progresso, criterio),
-                  style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+                  style: estilo(Tipo.corpo, color: Cores.tinta700),
                 ),
                 const SizedBox(height: Espaco.xs),
                 Text(
                   oQueFaltaNoMarco(app, m),
-                  style: estilo(Tipo.corpoForte, color: Cores.acentoForte),
+                  style: estilo(Tipo.corpoForte),
                 ),
                 // O segundo caminho só aparece aqui, no detalhe: no caminho
                 // ele seria uma segunda frase por degrau, e T-02 pede uma.
@@ -927,20 +928,20 @@ void abreDetalheDoMarco(
                     '${_criterioEmPalavras(app, m.alternativa!)}',
                     style: estilo(
                       Tipo.corpoPequeno,
-                      color: Cores.tintaA(0.55),
+                      color: Cores.tinta700,
                     ),
                   ),
                 ],
               ] else ...[
                 Etiqueta(
                   texto: t.trilhaFeito,
-                  cor: Cores.primaria,
+                  cor: Cores.folha600,
                   icone: Icons.check_rounded,
                 ),
                 const SizedBox(height: Espaco.xs),
                 Text(
                   t.s('trilhaJaSeu'),
-                  style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.6)),
+                  style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
                 ),
               ],
               const SizedBox(height: Espaco.md),
@@ -965,7 +966,7 @@ void abreDetalheDoMarco(
                       const Icon(
                         Icons.card_giftcard_rounded,
                         size: 16,
-                        color: Cores.acentoForte,
+                        color: Cores.mel700,
                       ),
                       const SizedBox(width: Espaco.xs),
                       // `Expanded`: o prêmio ganhou o nome do habitat e o da
@@ -975,7 +976,7 @@ void abreDetalheDoMarco(
                       Expanded(
                         child: Text(
                           premio,
-                          style: estilo(Tipo.corpo, color: Cores.acentoForte),
+                          style: estilo(Tipo.corpo, color: Cores.mel700),
                         ),
                       ),
                     ],

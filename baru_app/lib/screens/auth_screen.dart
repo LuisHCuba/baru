@@ -420,13 +420,12 @@ class _AuthScreenState extends State<AuthScreen> {
             _recadoOk(_recado!),
           ],
           const SizedBox(height: 24),
-          PrimaryButton(
-            label: _loading
+          BotaoBaru(
+            rotulo: _loading
                 ? t.authLoading
                 : t.s(senha ? 'codBotaoSenha' : 'codBotaoCadastro'),
-            onTap: _loading ? null : _confirmaCodigo,
-            enabled: !_loading,
-            shadow: true,
+            aoTocar: _loading ? null : _confirmaCodigo,
+            ativo: !_loading,
           ),
           const SizedBox(height: 12),
           TextAction(
@@ -513,14 +512,13 @@ class _AuthScreenState extends State<AuthScreen> {
         if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
         const SizedBox(height: 28),
         if (_podeBiometria)
-          PrimaryButton(
+          BotaoBaru(
             key: AuthScreen.chaveBiometria,
-            label: _pedindoBiometria || _loading
+            rotulo: _pedindoBiometria || _loading
                 ? t.authLoading
                 : t.authBiometria,
-            onTap: _pedindoBiometria || _loading ? null : _desbloqueia,
-            enabled: !_pedindoBiometria && !_loading,
-            shadow: true,
+            aoTocar: _pedindoBiometria || _loading ? null : _desbloqueia,
+            ativo: !_pedindoBiometria && !_loading,
           ),
         if (_podeBiometria) const SizedBox(height: 12),
         TextAction(
@@ -557,12 +555,12 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _aviso(String texto) => Container(
     padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
     decoration: BoxDecoration(
-      color: AppColors.orangeA(0.14),
+      color: Cores.alerta.withValues(alpha: 0.10),
       borderRadius: BorderRadius.circular(AppRadii.chip),
     ),
     child: Text(
       texto,
-      style: nunito(size: 13.5, height: 1.45, color: AppColors.orangeText),
+      style: nunito(size: 13.5, height: 1.45, color: Cores.alerta),
     ),
   );
 
@@ -606,7 +604,7 @@ class _AuthScreenState extends State<AuthScreen> {
         Text(
           sub,
           textAlign: TextAlign.center,
-          style: nunito(size: 15, height: 1.45, color: AppColors.inkA(0.6)),
+          style: nunito(size: 15, height: 1.45, color: Cores.tinta700),
         ),
         const SizedBox(height: 26),
       ],
@@ -702,13 +700,12 @@ class _AuthScreenState extends State<AuthScreen> {
             _recadoOk(_recado!),
           ],
           const SizedBox(height: 20),
-          PrimaryButton(
-            label: _loading
+          BotaoBaru(
+            rotulo: _loading
                 ? t.authLoading
                 : (isLogin ? t.authSignIn : t.authSignUp),
-            onTap: _loading ? null : _submit,
-            enabled: !_loading,
-            shadow: true,
+            aoTocar: _loading ? null : _submit,
+            ativo: !_loading,
           ),
           if (_guardada != null && isLogin) ...[
             const SizedBox(height: 12),
@@ -739,7 +736,7 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               Text(
                 t.s(isLogin ? 'codSemConta' : 'codComConta'),
-                style: nunito(size: 15, color: AppColors.inkA(0.6)),
+                style: nunito(size: 15, color: Cores.tinta700),
               ),
               TextButton(
                 onPressed: _loading ? null : trocaModo,
@@ -792,7 +789,7 @@ class _AuthScreenState extends State<AuthScreen> {
       style: nunito(size: 16, weight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: nunito(size: 15, color: AppColors.inkA(0.5)),
+        labelStyle: nunito(size: 15, color: Cores.tinta700),
         floatingLabelStyle: nunito(
           size: 14,
           weight: FontWeight.w700,
@@ -806,7 +803,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         prefixIcon: icone == null
             ? null
-            : Icon(icone, color: AppColors.inkA(0.45), size: 22),
+            : Icon(icone, color: Cores.tinta500, size: 22),
         suffixIcon: !obscure
             ? null
             : IconButton(
@@ -815,7 +812,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   escondida
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: AppColors.inkA(0.45),
+                  color: Cores.tinta500,
                 ),
                 onPressed: () => setState(() {
                   if (escondida) {
@@ -882,7 +879,7 @@ class _LinhaLembrar extends StatelessWidget {
                       style: nunito(
                         size: 12.5,
                         height: 1.35,
-                        color: AppColors.inkA(0.5),
+                        color: Cores.tinta700,
                       ),
                     ),
                   ],

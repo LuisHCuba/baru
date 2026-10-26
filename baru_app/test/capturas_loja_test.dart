@@ -9,6 +9,7 @@ import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/data/tempo_de_tela.dart';
 import 'package:baru_app/models.dart';
+import 'package:baru_app/services/som_service.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -175,6 +176,8 @@ const _nomes = {
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
+    // Sem plugin de áudio no teste: começar a sessão toca um som.
+    SomService.instance.tocador = (_) async {};
     // Sem registrante de plugins no teste, as notificações não têm
     // implementação e o arranque do app quebra depois da captura.
     AndroidFlutterLocalNotificationsPlugin.registerWith();

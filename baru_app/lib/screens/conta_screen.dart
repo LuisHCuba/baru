@@ -79,7 +79,7 @@ class _ContaScreenState extends State<ContaScreen> {
                         t.contaEmail.toUpperCase(),
                         style: estilo(
                           Tipo.rotuloPequeno,
-                          color: Cores.tintaA(0.45),
+                          color: Cores.tinta700,
                         ),
                       ),
                       const SizedBox(height: Espaco.xxs),
@@ -88,7 +88,7 @@ class _ContaScreenState extends State<ContaScreen> {
                         const SizedBox(height: Espaco.xxs),
                         Etiqueta(
                           texto: t.contaEmailNaoConfirmado,
-                          cor: Cores.acento,
+                          cor: Cores.alerta,
                           icone: Icons.mark_email_unread_outlined,
                         ),
                       ],
@@ -99,7 +99,7 @@ class _ContaScreenState extends State<ContaScreen> {
                           '${t.formatLongDate(app.contaCriadaEm!)}',
                           style: estilo(
                             Tipo.corpoPequeno,
-                            color: Cores.tintaA(0.55),
+                            color: Cores.tinta700,
                           ),
                         ),
                       ],
@@ -200,7 +200,7 @@ class _ContaScreenState extends State<ContaScreen> {
                                   : t.planNoneSub,
                               style: estilo(
                                 Tipo.corpoPequeno,
-                                color: Cores.tintaA(0.6),
+                                color: Cores.tinta700,
                               ),
                             ),
                           ],
@@ -248,7 +248,7 @@ class _ContaScreenState extends State<ContaScreen> {
               const SizedBox(height: Espaco.xs),
               Text(
                 t.contaApagarSub,
-                style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.45)),
+                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
               ),
             ],
           ),
@@ -277,18 +277,18 @@ class _ContaScreenState extends State<ContaScreen> {
               const SizedBox(height: Espaco.sm),
               Text(
                 t.fill(t.contaApagarConfirma, {'n': app.displayName}),
-                style: estilo(Tipo.corpo, color: Cores.tintaA(0.65)),
+                style: estilo(Tipo.corpo, color: Cores.tinta700),
               ),
               const SizedBox(height: Espaco.lg),
-              PrimaryButton(
-                label: t.contaApagarCancelar,
-                onTap: () => Navigator.of(sheetContext).pop(false),
+              BotaoBaru(
+                rotulo: t.contaApagarCancelar,
+                aoTocar: () => Navigator.of(sheetContext).pop(false),
               ),
               const SizedBox(height: Espaco.xs),
-              GhostButton(
-                label: t.contaApagarBotao,
-                destrutivo: true,
-                onTap: () => Navigator.of(sheetContext).pop(true),
+              BotaoBaru(
+                rotulo: t.contaApagarBotao,
+                aoTocar: () => Navigator.of(sheetContext).pop(true),
+                papel: PapelDoBotao.destrutivo,
               ),
             ],
           ),
@@ -357,13 +357,13 @@ class _ContaScreenState extends State<ContaScreen> {
                   const SizedBox(height: Espaco.sm),
                   Text(
                     nota,
-                    style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.55)),
+                    style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
                   ),
                 ],
                 const SizedBox(height: Espaco.md),
-                PrimaryButton(
-                  label: t.contaSalvar,
-                  onTap: () => Navigator.of(sheetContext).pop(controlador.text),
+                BotaoBaru(
+                  rotulo: t.contaSalvar,
+                  aoTocar: () => Navigator.of(sheetContext).pop(controlador.text),
                 ),
               ],
             ),
@@ -405,9 +405,9 @@ class _Acao extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cor = perigo
-        ? Cores.dispersivo
+        ? Cores.alerta
         : apagado
-        ? Cores.tintaA(0.5)
+        ? Cores.tinta500
         : Cores.tinta;
     return Semantics(
       button: true,
@@ -427,7 +427,7 @@ class _Acao extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
-                color: Cores.tintaA(0.3),
+                color: Cores.tinta500,
               ),
             ],
           ),
@@ -445,7 +445,7 @@ class _Aviso extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = erro ? Cores.dispersivo : Cores.primaria;
+    final cor = erro ? Cores.alerta : Cores.folha600;
     return Container(
       padding: const EdgeInsets.all(Espaco.md),
       decoration: BoxDecoration(

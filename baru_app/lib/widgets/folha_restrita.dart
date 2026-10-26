@@ -57,7 +57,7 @@ class FolhaRestrita extends StatelessWidget {
             const SizedBox(height: Espaco.sm),
             Text(
               t.restritoPor,
-              style: estilo(Tipo.corpo, color: Cores.tintaA(0.65)),
+              style: estilo(Tipo.corpo, color: Cores.tinta700),
             ),
             const SizedBox(height: Espaco.lg),
             for (var i = 0; i < passos.length; i++) ...[
@@ -65,10 +65,10 @@ class FolhaRestrita extends StatelessWidget {
               if (i < passos.length - 1) const SizedBox(height: Espaco.sm),
             ],
             const SizedBox(height: Espaco.lg),
-            PrimaryButton(
+            BotaoBaru(
               key: chaveAbrir,
-              label: t.restritoAbrir,
-              onTap: () {
+              rotulo: t.restritoAbrir,
+              aoTocar: () {
                 Navigator.of(context).pop();
                 openAppSettings();
               },

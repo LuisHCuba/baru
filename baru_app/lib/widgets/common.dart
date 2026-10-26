@@ -6,17 +6,19 @@ import '../state.dart';
 import '../theme.dart';
 import 'app_icons.dart';
 import 'componentes.dart';
+import 'glifos.dart';
 
 export 'app_frame.dart';
 export 'app_icons.dart';
+export 'botao_baru.dart';
 export 'componentes.dart';
+export 'glifos.dart';
 
 class _Hover extends StatefulWidget {
-  const _Hover({required this.builder, this.onTap, this.enabled = true});
+  const _Hover({required this.builder, this.onTap});
 
   final Widget Function(bool hover) builder;
   final VoidCallback? onTap;
-  final bool enabled;
 
   @override
   State<_Hover> createState() => _HoverState();
@@ -27,148 +29,15 @@ class _HoverState extends State<_Hover> {
 
   @override
   Widget build(BuildContext context) {
-    final live = widget.enabled && widget.onTap != null;
+    final live = widget.onTap != null;
     return MouseRegion(
       onEnter: live ? (_) => setState(() => hover = true) : null,
       onExit: live ? (_) => setState(() => hover = false) : null,
       cursor: live ? SystemMouseCursors.click : SystemMouseCursors.basic,
       child: GestureDetector(
-        onTap: widget.enabled ? widget.onTap : null,
+        onTap: widget.onTap,
         child: widget.builder(hover),
       ),
-    );
-  }
-}
-
-class PrimaryButton extends StatelessWidget {
-  const PrimaryButton({
-    super.key,
-    required this.label,
-    required this.onTap,
-    this.height = 56,
-    this.radius = 20,
-    this.weight = FontWeight.w700,
-    this.size = 17,
-    this.shadow = false,
-    this.enabled = true,
-  });
-
-  final String label;
-  final VoidCallback? onTap;
-  final double height;
-  final double radius;
-  final FontWeight weight;
-  final double size;
-  final bool shadow;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Hover(
-      enabled: enabled,
-      onTap: onTap,
-      builder: (hover) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          height: height,
-          decoration: BoxDecoration(
-            color: enabled
-                ? (hover ? AppColors.greenHover : AppColors.green)
-                : AppColors.inkA(0.07),
-            borderRadius: BorderRadius.circular(radius),
-            boxShadow: enabled && shadow ? AppShadows.cta : null,
-          ),
-          alignment: Alignment.center,
-          child: Semantics(
-            button: true,
-            enabled: enabled,
-            label: label,
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: nunito(
-                size: size,
-                weight: weight,
-                color: enabled ? AppColors.cream : AppColors.inkA(0.4),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class GhostButton extends StatelessWidget {
-  const GhostButton({
-    super.key,
-    required this.label,
-    required this.onTap,
-    this.height = 54,
-    this.icon,
-    this.destrutivo = false,
-  });
-
-  final String label;
-  final VoidCallback onTap;
-  final double height;
-  final IconData? icon;
-
-  /// Ação que não tem volta: apagar, remover, revogar.
-  ///
-  /// O cinza neutro do fantasma lê como desabilitado quando o botão do lado
-  /// é o verde cheio — na folha de "apagar meus dados", "Apagar tudo" saía
-  /// parecendo inerte. Aqui ele se declara em vermelho, e a primazia
-  /// continua sendo do caminho seguro.
-  final bool destrutivo;
-
-  @override
-  Widget build(BuildContext context) {
-    final tinta = destrutivo ? Cores.dispersivo : AppColors.ink;
-    return _Hover(
-      onTap: onTap,
-      builder: (hover) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          height: height,
-          decoration: BoxDecoration(
-            color: destrutivo
-                ? Cores.dispersivo.withValues(alpha: hover ? 0.16 : 0.10)
-                : AppColors.inkA(hover ? 0.10 : 0.06),
-            borderRadius: BorderRadius.circular(AppRadii.button),
-            border: destrutivo
-                ? Border.all(
-                    color: Cores.dispersivo.withValues(alpha: 0.32),
-                  )
-                : null,
-          ),
-          alignment: Alignment.center,
-          child: Semantics(
-            button: true,
-            label: label,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  AppIcon(icon!, size: 18, color: tinta),
-                  const SizedBox(width: 8),
-                ],
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: nunito(size: 16, weight: FontWeight.w700)
-                        .copyWith(color: tinta),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
@@ -205,7 +74,7 @@ class TextAction extends StatelessWidget {
               style: nunito(
                 size: 15,
                 weight: FontWeight.w600,
-                color: color ?? AppColors.inkA(0.55),
+                color: color ?? Cores.tinta700,
               ),
             ),
           ),
@@ -293,7 +162,7 @@ class SectionLabel extends StatelessWidget {
           size: 11.5,
           weight: FontWeight.w600,
           letterSpacing: 0.8,
-          color: color ?? AppColors.inkA(0.42),
+          color: color ?? Cores.tinta700,
         ),
       ),
     );
@@ -337,30 +206,6 @@ class SoftCard extends StatelessWidget {
   }
 }
 
-class LeafMark extends StatelessWidget {
-  const LeafMark({super.key, this.size = 15, this.color = AppColors.green});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(size * 0.53),
-          topRight: Radius.circular(size * 0.13),
-          bottomRight: Radius.circular(size * 0.53),
-          bottomLeft: Radius.circular(size * 0.13),
-        ),
-      ),
-    );
-  }
-}
-
 /// O saldo de folhas.
 ///
 /// O número **sobe animado**: recompensa que troca de valor sem transição some
@@ -394,7 +239,7 @@ class LeafBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const ExcludeSemantics(child: LeafMark()),
+            const GlifoFolha(),
             const SizedBox(width: 8),
             ExcludeSemantics(
               child: ContadorAnimado(
@@ -574,7 +419,7 @@ class ItemSwatch extends StatelessWidget {
                 ? Icons.checkroom_rounded
                 : Icons.wb_twilight_rounded,
             size: 30,
-            color: item.cor ?? AppColors.inkA(0.4),
+            color: item.cor ?? Cores.tinta500,
           ),
         ),
       );
@@ -675,7 +520,7 @@ class BottomTabs extends StatelessWidget {
                                 on ? tabGlyphs[i].on : tabGlyphs[i].off,
                                 size: 22,
                                 color:
-                                    on ? AppColors.green : AppColors.inkA(0.4),
+                                    on ? AppColors.green : Cores.tinta500,
                               ),
                               if (aColher > 0)
                                 Positioned(
@@ -692,7 +537,7 @@ class BottomTabs extends StatelessWidget {
                                     ),
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(
-                                      color: AppColors.orange,
+                                      color: Cores.mel400,
                                       borderRadius: BorderRadius.circular(99),
                                       border: Border.all(
                                         color: AppColors.cream,
@@ -704,7 +549,7 @@ class BottomTabs extends StatelessWidget {
                                       style: nunito(
                                         size: 10,
                                         weight: FontWeight.w800,
-                                        color: Colors.white,
+                                        color: Cores.tinta,
                                       ),
                                     ),
                                   ),
@@ -720,7 +565,7 @@ class BottomTabs extends StatelessWidget {
                           style: nunito(
                             size: 10.5,
                             weight: FontWeight.w700,
-                            color: on ? AppColors.green : AppColors.inkA(0.4),
+                            color: on ? AppColors.green : Cores.tinta700,
                           ),
                         ),
                       ],

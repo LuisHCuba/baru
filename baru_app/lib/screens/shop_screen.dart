@@ -113,7 +113,7 @@ class _ShopScreenState extends State<ShopScreen> {
               _comMargem(
                 Text(
                   t.shopNote,
-                  style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.45)),
+                  style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
                 ),
               ),
             ],
@@ -251,9 +251,10 @@ class _ShopScreenState extends State<ShopScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Espaco.xl),
       child: EstadoVazio(
-        icone: _filtro == _Filtro.meus
-            ? Icons.inventory_2_outlined
-            : Icons.eco_outlined,
+        icone: _filtro == _Filtro.meus ? Icons.inventory_2_outlined : null,
+        glifo: _filtro == _Filtro.meus
+            ? null
+            : const GlifoFolha(tamanho: 30),
         titulo:
             _filtro == _Filtro.meus ? t.lojaVazioMeusT : t.lojaVazioPossoT,
         corpo: _filtro == _Filtro.meus
@@ -280,7 +281,7 @@ class _Saldo extends StatelessWidget {
       onTap: () => app.go(AppScreen.folhas),
       child: Row(
         children: [
-          const Icon(Icons.eco_rounded, size: 24, color: Cores.primaria),
+          const GlifoFolha(tamanho: 26),
           const SizedBox(width: Espaco.sm),
           ContadorAnimado(
             valor: app.leaves,
@@ -445,7 +446,7 @@ class _Destaque extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: estilo(
                           Tipo.corpoPequeno,
-                          color: Cores.tintaA(0.55),
+                          color: Cores.tinta700,
                         ),
                       ),
                     ],
@@ -459,7 +460,7 @@ class _Destaque extends StatelessWidget {
           if (!podeComprar) ...[
             BarraAnimada(
               fracao: (app.leaves / item.price).clamp(0.0, 1.0),
-              cor: Cores.primaria,
+              cor: Cores.folha600,
               fundo: Cores.primariaA(0.16),
             ),
             const SizedBox(height: Espaco.sm),
@@ -497,7 +498,7 @@ class _CabecalhoDeSecao extends StatelessWidget {
               const SizedBox(height: Espaco.xxs),
               Text(
                 subtitulo,
-                style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.5)),
+                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
               ),
             ],
           ),
@@ -522,7 +523,7 @@ class _CabecalhoDeSecao extends StatelessWidget {
               child: BarraAnimada(
                 fracao: total == 0 ? 0 : possuidos / total,
                 altura: 4,
-                cor: Cores.primaria,
+                cor: Cores.folha600,
                 fundo: Cores.primariaA(0.16),
               ),
             ),
@@ -581,7 +582,7 @@ class _Prateleira extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: estilo(
                           Tipo.corpoPequeno,
-                          color: Cores.tintaA(0.45),
+                          color: Cores.tinta700,
                         ),
                       ),
                     ),
@@ -662,7 +663,7 @@ class _CartaoDeItem extends StatelessWidget {
                           ? Icons.check_rounded
                           : Icons.inventory_2_outlined,
                       cor: emUso
-                          ? Cores.primaria
+                          ? Cores.folha600
                           : Cores.tinta.withValues(alpha: 0.55),
                     ),
                   ),
@@ -734,7 +735,7 @@ class _CartaoDeCenario extends StatelessWidget {
                         ? Icons.check_rounded
                         : Icons.inventory_2_outlined,
                     cor: emUso
-                        ? Cores.primaria
+                        ? Cores.folha600
                         : Cores.tinta.withValues(alpha: 0.55),
                   ),
                 ),
@@ -759,7 +760,7 @@ class _CartaoDeCenario extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: estilo(
                           Tipo.corpoPequeno,
-                          color: Cores.tintaA(0.55),
+                          color: Cores.tinta700,
                         ),
                       ),
                     ],
@@ -803,9 +804,12 @@ class _AcaoDoItem extends StatelessWidget {
         rotulo: podeComprar
             ? '${item.price}'
             : t.fill(t.lojaFalta, {'n': falta}),
-        icone: podeComprar ? Icons.eco_rounded : Icons.lock_outline,
+        icone: podeComprar ? null : Icons.lock_outline,
+        glifo: podeComprar
+            ? const GlifoFolha(tamanho: 15, cor: Cores.tintaClara)
+            : null,
         ativo: podeComprar,
-        cor: Cores.primaria,
+        cor: Cores.folha600,
         aoTocar: () {
           // O háptico mora na tela, não no estado: é resposta ao dedo.
           HapticFeedback.mediumImpact();
@@ -824,7 +828,7 @@ class _AcaoDoItem extends StatelessWidget {
           ? Icons.check_circle_rounded
           : Icons.add_circle_outline_rounded,
       ativo: true,
-      cor: emUso ? Cores.tintaA(0.10) : Cores.primaria,
+      cor: emUso ? Cores.tintaA(0.10) : Cores.folha600,
       corTexto: emUso ? Cores.tinta : Cores.superficie,
       aoTocar: () => app.alternaEquipado(item),
     );

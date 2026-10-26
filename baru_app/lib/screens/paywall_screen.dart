@@ -41,7 +41,7 @@ class PaywallScreen extends StatelessWidget {
                 Text(
                   t.payB,
                   textAlign: TextAlign.center,
-                  style: nunito(size: 15, height: 1.5, color: AppColors.inkA(0.68)),
+                  style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
                 ),
                 const SizedBox(height: 18),
               ],
@@ -65,16 +65,16 @@ class PaywallScreen extends StatelessWidget {
             onTap: () => app.pickPay(PayPlan.monthly),
           ),
           const SizedBox(height: 18),
-          PrimaryButton(
-            label: app.trial ? t.payCtaActive : t.payCta,
-            onTap: app.startTrial,
-            height: 58,
+          BotaoBaru(
+            rotulo: app.trial ? t.payCtaActive : t.payCta,
+            aoTocar: app.startTrial,
+            altura: 58,
           ),
           const SizedBox(height: 10),
           Text(
             t.payRemind,
             textAlign: TextAlign.center,
-            style: nunito(size: 12.5, weight: FontWeight.w600, height: 1.5, color: AppColors.inkA(0.6)),
+            style: nunito(size: 12.5, weight: FontWeight.w600, height: 1.5, color: Cores.tinta700),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -111,7 +111,7 @@ class PaywallScreen extends StatelessWidget {
   Widget _link(String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Text(label, style: nunito(size: 12, color: AppColors.inkA(0.42))),
+      child: Text(label, style: nunito(size: 12, color: Cores.tinta700)),
     );
   }
 
@@ -157,7 +157,7 @@ class PaywallScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 5),
-                Text(note, style: nunito(size: 13.5, color: AppColors.inkA(0.65))),
+                Text(note, style: nunito(size: 13.5, color: Cores.tinta700)),
               ],
             ),
           ),
@@ -168,12 +168,12 @@ class PaywallScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.orange,
+                  color: Cores.mel400,
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: Text(
                   badge.toUpperCase(),
-                  style: nunito(size: 10.5, weight: FontWeight.w700, height: 1.4, letterSpacing: 0.5, color: Colors.white),
+                  style: nunito(size: 10.5, weight: FontWeight.w800, height: 1.4, letterSpacing: 0.5, color: Cores.tinta),
                 ),
               ),
             ),

@@ -55,7 +55,7 @@ class SequenciaScreen extends StatelessWidget {
                   children: [
                     Text(
                       t.seqSemana,
-                      style: estilo(Tipo.rotuloPequeno, color: Cores.tintaA(0.45)),
+                      style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
                     ),
                     const SizedBox(height: Espaco.md),
                     Row(
@@ -70,7 +70,7 @@ class SequenciaScreen extends StatelessWidget {
                                   t.days[i],
                                   style: estilo(
                                     Tipo.corpoPequeno,
-                                    color: Cores.tintaA(0.45),
+                                    color: Cores.tinta700,
                                   ),
                                 ),
                               ],
@@ -84,7 +84,7 @@ class SequenciaScreen extends StatelessWidget {
               if (proximo != null) ...[
                 const SizedBox(height: Espaco.md),
                 CartaoBaru(
-                  cor: Cores.acentoA(0.10),
+                  cor: Cores.raiz500.withValues(alpha: 0.10),
                   elevado: false,
                   onTap: () => app.go(AppScreen.trilha),
                   child: Row(
@@ -92,7 +92,7 @@ class SequenciaScreen extends StatelessWidget {
                       const Icon(
                         Icons.flag_rounded,
                         size: 18,
-                        color: Cores.acentoForte,
+                        color: Cores.raiz600,
                       ),
                       const SizedBox(width: Espaco.sm),
                       Expanded(
@@ -103,14 +103,14 @@ class SequenciaScreen extends StatelessWidget {
                           }),
                           style: estilo(
                             Tipo.corpo,
-                            color: Cores.acentoForte,
+                            color: Cores.raiz600,
                           ),
                         ),
                       ),
                       const Icon(
                         Icons.chevron_right_rounded,
                         size: 18,
-                        color: Cores.acentoForte,
+                        color: Cores.raiz600,
                       ),
                     ],
                   ),
@@ -173,14 +173,14 @@ class _Chama extends StatelessWidget {
     final zerada = app.streak == 0;
     return CartaoBaru(
       key: SequenciaScreen.chaveAtual,
-      cor: Cores.acentoA(0.12),
+      cor: Cores.raiz500.withValues(alpha: 0.12),
       elevado: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             t.seqAtual,
-            style: estilo(Tipo.rotuloPequeno, color: Cores.acentoForte),
+            style: estilo(Tipo.rotuloPequeno, color: Cores.raiz600),
           ),
           const SizedBox(height: Espaco.xs),
           Row(
@@ -197,8 +197,8 @@ class _Chama extends StatelessWidget {
                 height: 96,
                 child: RaizViva(
                   dias: app.streak,
-                  cor: Cores.acentoForte,
-                  corDaTerra: Cores.acentoA(0.10),
+                  cor: Cores.raiz600,
+                  corDaTerra: Cores.raiz500.withValues(alpha: 0.10),
                 ),
               ),
               const SizedBox(width: Espaco.sm),
@@ -206,7 +206,7 @@ class _Chama extends StatelessWidget {
                 valor: app.streak,
                 estiloTexto: estilo(
                   Tipo.display,
-                  color: Cores.acentoForte,
+                  color: Cores.raiz600,
                   tabular: true,
                 ),
               ),
@@ -215,7 +215,7 @@ class _Chama extends StatelessWidget {
           const SizedBox(height: Espaco.xs),
           Text(
             zerada ? t.seqVaziaB : app.streakText,
-            style: estilo(Tipo.corpo, color: Cores.acentoForte),
+            style: estilo(Tipo.corpo, color: Cores.raiz600),
           ),
         ],
       ),
@@ -231,9 +231,9 @@ class _Ponto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (cor, icone) = switch (tipo) {
-      WeekDayKind.present => (Cores.primaria, Icons.check_rounded),
-      WeekDayKind.frozen => (Cores.neutro, Icons.ac_unit_rounded),
-      WeekDayKind.today => (Cores.acento, null),
+      WeekDayKind.present => (Cores.folha600, Icons.check_rounded),
+      WeekDayKind.frozen => (Cores.ceu600, Icons.ac_unit_rounded),
+      WeekDayKind.today => (Cores.raiz500, null),
       WeekDayKind.empty => (Cores.tintaA(0.12), null),
     };
     return Container(

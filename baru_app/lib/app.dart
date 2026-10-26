@@ -350,7 +350,7 @@ class _Casca extends StatelessWidget {
         titulo: t.fill(t.celebNivel, {'n': app.nivel}),
         subtitulo: t.fill(t.celebNivelSub, {'a': app.displayName}),
         icone: Icons.local_florist_rounded,
-        cor: Cores.primaria,
+        cor: Cores.folha600,
         // Nível é recompensa: sai da toca, cavada.
         precisaCavar: true,
         aoFechar: app.celebrou,
@@ -363,7 +363,7 @@ class _Casca extends StatelessWidget {
         titulo: t.celebChegada,
         subtitulo: t.fill(t.celebChegadaSub, {'a': app.displayName}),
         icone: Icons.favorite_rounded,
-        cor: Cores.acento,
+        cor: Cores.afeto,
         som: SomDoBaru.chegada,
         aoFechar: app.celebrou,
       );
@@ -372,7 +372,7 @@ class _Casca extends StatelessWidget {
     return Celebracao(
       titulo: t.celebMarco,
       subtitulo: tituloDoMarco(app, marco),
-      cor: Cores.acento,
+      cor: Cores.mel400,
       // Marco da trilha também é recompensa. A saudação da chegada, logo
       // acima, não é — e por isso continua chegando sozinha.
       precisaCavar: true,

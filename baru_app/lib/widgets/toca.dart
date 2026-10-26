@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../services/som_service.dart';
 import '../theme.dart';
+import 'glifos.dart';
 
 /// A toca de onde sai a recompensa.
 ///
@@ -27,8 +28,8 @@ class Toca extends StatefulWidget {
     super.key,
     required this.aoAbrir,
     required this.rotuloDoPremio,
-    this.icone = Icons.eco_rounded,
-    this.cor = Cores.primaria,
+    this.icone = const GlifoFolha(tamanho: 34),
+    this.cor = Cores.folha600,
   });
 
   /// Chamado uma vez, quando a terra abre.
@@ -37,7 +38,8 @@ class Toca extends StatefulWidget {
   /// O que está lá dentro, já traduzido.
   final String rotuloDoPremio;
 
-  final IconData icone;
+  /// O prêmio dentro da toca. A folha, salvo outro.
+  final Widget icone;
   final Color cor;
 
   /// Quantos gestos até abrir.
@@ -169,7 +171,7 @@ class _Premio extends StatelessWidget {
   });
 
   final String rotulo;
-  final IconData icone;
+  final Widget icone;
   final Color cor;
 
   @override
@@ -190,7 +192,13 @@ class _Premio extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(icone, size: 34, color: cor),
+          child: SizedBox.square(
+            dimension: 34,
+            child: IconTheme.merge(
+              data: IconThemeData(size: 34, color: cor),
+              child: Center(child: icone),
+            ),
+          ),
         ),
         const SizedBox(height: Espaco.xs),
         Text(rotulo, style: estilo(Tipo.subtitulo, color: cor)),

@@ -134,13 +134,13 @@ class _CompraCelebradaState extends State<_CompraCelebrada>
                           textAlign: TextAlign.center,
                           style: estilo(
                             Tipo.corpo,
-                            color: Cores.tintaA(0.65),
+                            color: Cores.tinta700,
                           ),
                         ),
                         const SizedBox(height: Espaco.lg),
-                        PrimaryButton(
-                          label: t.compraVer,
-                          onTap: () {
+                        BotaoBaru(
+                          rotulo: t.compraVer,
+                          aoTocar: () {
                             Navigator.of(context).pop();
                             app.go(AppScreen.home);
                           },
@@ -189,7 +189,7 @@ class _Folhas extends CustomPainter {
           ..quadraticBezierTo(0, s * 0.7, -s, 0)
           ..close(),
         Paint()
-          ..color = (i.isEven ? Cores.primaria : Cores.acento)
+          ..color = (i.isEven ? Cores.folha600 : Cores.mel400)
               .withValues(alpha: some),
       );
       canvas.restore();

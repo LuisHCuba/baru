@@ -256,11 +256,11 @@ class ShopItemDef {
 ///   céu e na água da frente (y > 240).
 const shopItems = [
   ShopItemDef('lily', 40, [
-    ShapePart(8, 252, 42, 15, 8, AppColors.green),
+    ShapePart(8, 252, 42, 15, 8, Cores.primaria),
     ShapePart(54, 266, 28, 11, 6, AppColors.greenSoft),
   ], colecao: Colecao.agua),
   ShopItemDef('bamboo', 70, [
-    ShapePart(302, 98, 8, 82, 4, AppColors.green),
+    ShapePart(302, 98, 8, 82, 4, Cores.primaria),
     ShapePart(316, 116, 8, 64, 4, AppColors.greenSoft),
     ShapePart(290, 130, 7, 50, 4, AppColors.greenHover),
   ], colecao: Colecao.mata),
@@ -279,7 +279,7 @@ const shopItems = [
   ], colecao: Colecao.noite),
   ShopItemDef('tree', 240, [
     ShapePart(36, 120, 11, 66, 5, AppColors.woodDark),
-    ShapePart(6, 70, 58, 54, 27, AppColors.green),
+    ShapePart(6, 70, 58, 54, 27, Cores.primaria),
     ShapePart(34, 92, 10, 10, 5, AppColors.orange),
   ], colecao: Colecao.mata),
   ShopItemDef('boat', 300, [
@@ -310,7 +310,7 @@ const shopItems = [
     [],
     categoria: CategoriaDeItem.roupa,
     vestimenta: Vestimenta.cabeca,
-    cor: AppColors.green,
+    cor: Cores.primaria,
   ),
   ShopItemDef(
     'gorro',
@@ -381,7 +381,7 @@ const shopItems = [
   /// Junco na beira: o mato que só cresce com o pé na água. É o item barato
   /// que faz a margem deixar de ser uma faixa de areia lisa.
   ShopItemDef('juncos', 90, [
-    ShapePart(106, 138, 6, 39, 3, AppColors.green),
+    ShapePart(106, 138, 6, 39, 3, Cores.primaria),
     ShapePart(116, 130, 6, 47, 3, AppColors.greenSoft),
     ShapePart(126, 146, 6, 31, 3, AppColors.greenHover),
     ShapePart(113, 122, 9, 15, 4, AppColors.woodDark),
@@ -400,7 +400,7 @@ const shopItems = [
   /// escuro que o do bambu, senão a margem esquerda vira uma cor só.
   ShopItemDef('samambaia', 120, [
     ShapePart(64, 158, 34, 12, 6, AppColors.greenSoft),
-    ShapePart(72, 148, 28, 11, 5, AppColors.green),
+    ShapePart(72, 148, 28, 11, 5, Cores.primaria),
     ShapePart(60, 166, 42, 11, 5, AppColors.greenHover),
   ], colecao: Colecao.mata),
 
@@ -408,9 +408,9 @@ const shopItems = [
   /// sozinha, então a estação é uma coisa que se compra.
   ShopItemDef('folhas_de_outono', 130, [
     ShapePart(18, 232, 15, 8, 4, CoresDaLoja.outono),
-    ShapePart(44, 244, 13, 7, 3.5, AppColors.orangeText),
+    ShapePart(44, 244, 13, 7, 3.5, Cores.ferrugemDaArte),
     ShapePart(52, 224, 14, 8, 4, CoresDaLoja.outono),
-    ShapePart(88, 248, 11, 6, 3, AppColors.orangeText),
+    ShapePart(88, 248, 11, 6, 3, Cores.ferrugemDaArte),
   ], colecao: Colecao.estacoes),
 
   /// Pedras empilhadas na água rasa: o marco de quem passou por ali. Três

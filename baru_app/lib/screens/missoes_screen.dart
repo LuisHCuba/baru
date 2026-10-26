@@ -104,7 +104,7 @@ class MissoesScreen extends StatelessWidget {
         const SizedBox(height: Espaco.xxs),
         Text(
           t.missoesSub,
-          style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+          style: estilo(Tipo.corpo, color: Cores.tinta700),
         ),
         if (tudoFeito) ...[
           const SizedBox(height: Espaco.sm),
@@ -118,7 +118,7 @@ class MissoesScreen extends StatelessWidget {
                 const Icon(
                   Icons.check_circle_rounded,
                   size: 20,
-                  color: Cores.primaria,
+                  color: Cores.folha600,
                 ),
                 const SizedBox(width: Espaco.sm),
                 Expanded(
@@ -133,7 +133,7 @@ class MissoesScreen extends StatelessWidget {
                 const Icon(
                   Icons.chevron_right_rounded,
                   size: 20,
-                  color: Cores.primaria,
+                  color: Cores.folha600,
                 ),
               ],
             ),
@@ -155,7 +155,7 @@ class MissoesScreen extends StatelessWidget {
         // único que já está pago e só espera o gesto.
         _Bloco(
           rotulo: t.mqColher,
-          cor: Cores.acentoTexto,
+          cor: Cores.mel700,
           sufixo: aColher.isEmpty
               ? null
               : t.fill(t.mqQuantasColher, {'n': aColher.length}),
@@ -240,7 +240,7 @@ class _Bloco extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (filhos.isEmpty) return const SizedBox.shrink();
-    final tinta = cor ?? Cores.tintaA(0.45);
+    final tinta = cor ?? Cores.tinta700;
     return Padding(
       padding: const EdgeInsets.only(top: Espaco.lg),
       child: Column(
@@ -333,7 +333,7 @@ class CartaoDoDescanso extends StatelessWidget {
               children: [
                 Etiqueta(
                   texto: t.mqPrincipal,
-                  cor: Cores.acento,
+                  cor: Cores.folha600,
                   forte: !semPermissao,
                   icone: Icons.bedtime_rounded,
                 ),
@@ -353,7 +353,7 @@ class CartaoDoDescanso extends StatelessWidget {
             tituloDoDescanso(t, m),
             style: estilo(
               Tipo.titulo,
-              color: semPermissao ? Cores.tintaA(0.6) : Cores.tinta,
+              color: semPermissao ? Cores.tinta700 : Cores.tinta,
             ),
           ),
           const SizedBox(height: 2),
@@ -361,7 +361,7 @@ class CartaoDoDescanso extends StatelessWidget {
           // quanto se perdeu na fuga, e o melhor do dia guardado.
           Text(
             recadoDoDescanso(t, m),
-            style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.55)),
+            style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
           ),
           const SizedBox(height: Espaco.sm),
           Row(
@@ -370,7 +370,7 @@ class CartaoDoDescanso extends StatelessWidget {
                 child: BarraAnimada(
                   fracao: m.fracao,
                   altura: 10,
-                  cor: m.concluida ? Cores.acento : Cores.primaria,
+                  cor: Cores.folha600,
                 ),
               ),
               const SizedBox(width: Espaco.xs),
@@ -378,7 +378,7 @@ class CartaoDoDescanso extends StatelessWidget {
                 '${m.progresso}/${m.alvo}',
                 style: estilo(
                   Tipo.rotuloPequeno,
-                  color: Cores.tintaA(0.55),
+                  color: Cores.tinta700,
                   tabular: true,
                 ),
               ),
@@ -395,18 +395,18 @@ class CartaoDoDescanso extends StatelessWidget {
     if (m.estado == EstadoDaMissao.precisaPermissao) {
       return Row(
         children: [
-          const Icon(Icons.lock_clock_outlined, size: 17, color: Cores.acento),
+          const Icon(Icons.lock_clock_outlined, size: 17, color: Cores.tinta500),
           const SizedBox(width: Espaco.xs),
           Expanded(
             child: Text(
               t.missaoPrecisaPermissao,
-              style: estilo(Tipo.rotuloPequeno, color: Cores.acentoTexto),
+              style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
             ),
           ),
           const Icon(
             Icons.chevron_right_rounded,
             size: 20,
-            color: Cores.acento,
+            color: Cores.tinta500,
           ),
         ],
       );
@@ -414,35 +414,37 @@ class CartaoDoDescanso extends StatelessWidget {
     if (m.estado == EstadoDaMissao.resgatada) {
       return Etiqueta(
         texto: t.missaoResgatada,
-        cor: Cores.primaria,
+        cor: Cores.folha600,
         icone: Icons.check_rounded,
       );
     }
     if (m.resgatavel) {
-      return PrimaryButton(
+      return BotaoBaru(
         key: chaveDoColher,
-        label: t.missaoResgatar,
-        height: 46,
-        onTap: () => abreATocaDoDescanso(context, app),
+        rotulo: t.missaoResgatar,
+        altura: 46,
+        aoTocar: () => abreATocaDoDescanso(context, app),
+        papel: PapelDoBotao.recompensa,
       );
     }
     if (m.correndo) {
       // Enquanto corre não há botão verde: o que a tela pede é que a pessoa
       // saia dela. O único caminho oferecido é a saída honesta — desistir —,
       // e ela é fantasma para não competir com continuar descansando.
-      return GhostButton(
+      return BotaoBaru(
         key: chaveDoParar,
-        label: t.mqDescansoParar,
-        height: 46,
-        icon: Icons.stop_circle_outlined,
-        onTap: app.desisteDoDescanso,
+        rotulo: t.mqDescansoParar,
+        altura: 46,
+        icone: const Icon(Icons.stop_circle_outlined),
+        aoTocar: app.desisteDoDescanso,
+        papel: PapelDoBotao.secundario,
       );
     }
-    return PrimaryButton(
+    return BotaoBaru(
       key: chaveDoComecar,
-      label: t.descansoComecar,
-      height: 46,
-      onTap: app.comecaODescanso,
+      rotulo: t.descansoComecar,
+      altura: 46,
+      aoTocar: app.comecaODescanso,
     );
   }
 }
@@ -504,7 +506,7 @@ class CartaoDeMissao extends StatelessWidget {
                 const Icon(
                   Icons.lock_clock_outlined,
                   size: 18,
-                  color: Cores.acento,
+                  color: Cores.tinta500,
                 ),
                 const SizedBox(width: Espaco.xs),
               ],
@@ -515,7 +517,7 @@ class CartaoDeMissao extends StatelessWidget {
                     compacto ? Tipo.corpoPequeno : Tipo.corpoForte,
                     color: apagada ||
                             estado == EstadoDaMissao.precisaPermissao
-                        ? Cores.tintaA(0.5)
+                        ? Cores.tinta700
                         : Cores.tinta,
                     weight: compacto ? FontWeight.w700 : null,
                   ),
@@ -538,7 +540,7 @@ class CartaoDeMissao extends StatelessWidget {
             if (!apagada)
               Text(
                 comoDaMissao(app, missao),
-                style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.5)),
+                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
               ),
           ],
           SizedBox(height: compacto ? Espaco.xs : Espaco.xs),
@@ -556,7 +558,7 @@ class CartaoDeMissao extends StatelessWidget {
                 '${missao.progresso.clamp(0, missao.alvo)}/${missao.alvo}',
                 style: estilo(
                   Tipo.rotuloPequeno,
-                  color: Cores.tintaA(0.55),
+                  color: Cores.tinta700,
                   tabular: true,
                 ),
               ),
@@ -573,7 +575,7 @@ class CartaoDeMissao extends StatelessWidget {
                 if (missao.resgatavel)
                   Etiqueta(
                     texto: t.missaoResgatar,
-                    cor: Cores.acento,
+                    cor: Cores.mel400,
                     forte: true,
                     icone: Icons.redeem_rounded,
                   )
@@ -589,7 +591,7 @@ class CartaoDeMissao extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: estilo(
                         Tipo.rotuloPequeno,
-                        color: Cores.acentoTexto,
+                        color: Cores.tinta700,
                       ),
                     ),
                   ),
@@ -598,7 +600,7 @@ class CartaoDeMissao extends StatelessWidget {
                   missao.ritmo == RitmoDaMissao.diaria
                       ? t.missaoExpiraHoje
                       : t.missaoExpiraSemana,
-                  style: estilo(Tipo.rotuloPequeno, color: Cores.tintaA(0.4)),
+                  style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
                 ),
               ],
             ),
@@ -612,12 +614,13 @@ class CartaoDeMissao extends StatelessWidget {
     switch (e) {
       case EstadoDaMissao.resgatada:
         return Cores.tintaA(0.3);
+      // A barra é progresso, e progresso é verde até o fim; o "pronta para
+      // colher" fica com a etiqueta e o botão cor de mel.
       case EstadoDaMissao.concluida:
-        return Cores.acento;
       case EstadoDaMissao.emProgresso:
-        return Cores.primaria;
+        return Cores.folha600;
       case EstadoDaMissao.precisaPermissao:
-        return Cores.acento;
+        return Cores.tinta500;
     }
   }
 }
@@ -636,21 +639,27 @@ class _Recompensa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = apagada ? Cores.tintaA(0.35) : Cores.acentoTexto;
+    // Cada moeda no seu glifo e na sua cor; colhida, as duas apagam.
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        LeafMark(size: 12, color: cor),
+        GlifoFolha(tamanho: 14, cor: apagada ? Cores.tinta500 : Cores.folha600),
         const SizedBox(width: Espaco.xxs),
         Text(
           '$folhas',
-          style: estilo(Tipo.rotulo, color: cor, tabular: true)
-              .copyWith(fontWeight: FontWeight.w800),
+          style: estilo(
+            Tipo.rotulo,
+            color: apagada ? Cores.tinta500 : Cores.folha700,
+            tabular: true,
+          ).copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(width: Espaco.xs),
         Text(
           '+$xp XP',
-          style: estilo(Tipo.rotuloPequeno, color: cor.withValues(alpha: 0.8)),
+          style: estilo(
+            Tipo.rotuloPequeno,
+            color: apagada ? Cores.tinta500 : Cores.mel700,
+          ).copyWith(fontWeight: FontWeight.w800),
         ),
       ],
     );
@@ -674,7 +683,7 @@ class _ColherTudo extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: Espaco.sm),
       child: CartaoBaru(
         key: chave,
-        cor: Cores.acentoA(0.16),
+        cor: Cores.mel400.withValues(alpha: 0.28),
         onTap: () => _abreAToca(
           context,
           app,
@@ -683,7 +692,7 @@ class _ColherTudo extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const LeafMark(size: 22, color: Cores.acento),
+            const GlifoFolha(tamanho: 24),
             const SizedBox(width: Espaco.sm),
             Expanded(
               child: Column(
@@ -691,19 +700,19 @@ class _ColherTudo extends StatelessWidget {
                 children: [
                   Text(
                     t.fill(t.mqColherTudo, {'n': missoes.length}),
-                    style: estilo(Tipo.corpoForte, color: Cores.acentoTexto),
+                    style: estilo(Tipo.corpoForte),
                   ),
                   Text(
                     t.fill(t.mqColherTudoSub, {'f': folhas}),
                     style: estilo(
                       Tipo.corpoPequeno,
-                      color: Cores.tintaA(0.6),
+                      color: Cores.tinta700,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Cores.acentoTexto),
+            const Icon(Icons.chevron_right_rounded, color: Cores.mel700),
           ],
         ),
       ),
@@ -770,7 +779,7 @@ Future<void> _abreAToca(
             Text(
               t.tocaAjuda,
               textAlign: TextAlign.center,
-              style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+              style: estilo(Tipo.corpo, color: Cores.tinta700),
             ),
             const SizedBox(height: Espaco.sm),
             Toca(

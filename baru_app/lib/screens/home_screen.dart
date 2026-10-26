@@ -6,7 +6,6 @@ import '../models.dart';
 import '../state.dart';
 import 'trilha_screen.dart';
 import '../theme.dart';
-import '../widgets/raiz.dart';
 import '../widgets/common.dart';
 import '../widgets/crescimento.dart';
 import '../widgets/habitat.dart';
@@ -52,7 +51,7 @@ class HomeScreen extends StatelessWidget {
                       vertical: 9,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.orangeA(0.14),
+                      color: Cores.raiz500.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Row(
@@ -64,15 +63,10 @@ class HomeScreen extends StatelessWidget {
                         // contagem virou "raiz". Ver o mesmo desenho no
                         // topo da home e na tela da raiz é o que faz a
                         // pessoa reconhecer que são a mesma coisa.
-                        SizedBox(
-                          width: 12,
-                          height: 18,
-                          child: RaizViva(
-                            dias: app.streak,
-                            cor: AppColors.orange,
-                            mostraTerra: false,
-                          ),
-                        ),
+                        // O glifo da raiz, o mesmo do relatório e do cartão.
+                        // A raiz viva desenhada em 12 px virava um rabisco
+                        // (lido como "tênis" na auditoria visual).
+                        const GlifoRaiz(tamanho: 18),
                         const SizedBox(width: 7),
                         Flexible(
                           child: Text(
@@ -81,7 +75,7 @@ class HomeScreen extends StatelessWidget {
                             style: nunito(
                               size: 13,
                               weight: FontWeight.w700,
-                              color: AppColors.orangeText,
+                              color: Cores.raiz600,
                             ),
                           ),
                         ),
@@ -89,7 +83,7 @@ class HomeScreen extends StatelessWidget {
                         const AppIcon(
                           Icons.chevron_right_rounded,
                           size: 15,
-                          color: AppColors.orangeText,
+                          color: Cores.raiz600,
                         ),
                       ],
                     ),
@@ -124,7 +118,7 @@ class HomeScreen extends StatelessWidget {
         Text(
           app.frase(t.humorSub(fala), fala.valores),
           key: const Key('home-humor-sub'),
-          style: nunito(size: 15, height: 1.5, color: AppColors.inkA(0.66)),
+          style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
         ),
         const SizedBox(height: 16),
         GestureDetector(
@@ -156,7 +150,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(t.weekT.toUpperCase(), style: nunito(size: 11.5, weight: FontWeight.w600, letterSpacing: 0.8, color: AppColors.inkA(0.42))),
+                  Text(t.weekT.toUpperCase(), style: nunito(size: 11.5, weight: FontWeight.w600, letterSpacing: 0.8, color: Cores.tinta700)),
                   const Spacer(),
                   Flexible(
                     child: Text(
@@ -177,7 +171,7 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           _dot(marca),
                           const SizedBox(height: 7),
-                          Text(t.days[i], style: nunito(size: 10.5, weight: FontWeight.w600, color: AppColors.inkA(0.42))),
+                          Text(t.days[i], style: nunito(size: 10.5, weight: FontWeight.w600, color: Cores.tinta700)),
                         ],
                       ),
                     ),
@@ -212,13 +206,14 @@ class HomeScreen extends StatelessWidget {
                   app.usageShortLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: nunito(size: 13, weight: FontWeight.w600, color: AppColors.inkA(0.5)),
+                  style: nunito(size: 13, weight: FontWeight.w600, color: Cores.tinta700),
                 ),
               ),
               const SizedBox(height: 10),
               TrackFill(
                 pct: usagePct,
-                color: app.underGoal ? AppColors.green : AppColors.orange,
+                // Acima da meta é neutro, nunca alarme (laudo 03 §4.4).
+                color: app.underGoal ? AppColors.green : Cores.tinta500,
               ),
             ],
           ),
@@ -297,14 +292,11 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        PrimaryButton(
-          label: t.start,
-          onTap: app.startSession,
-          height: 64,
-          radius: 22,
-          weight: FontWeight.w800,
-          size: 18,
-          shadow: true,
+        BotaoBaru(
+          rotulo: t.start,
+          aoTocar: app.startSession,
+          altura: 64,
+          tamanhoDoTexto: 18,
         ),
         const SizedBox(height: 16),
       ],
@@ -325,7 +317,7 @@ class HomeScreen extends StatelessWidget {
           height: 13,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.orange, width: 2),
+            border: Border.all(color: Cores.ceu600, width: 2),
           ),
         );
       case WeekDayKind.today:
@@ -372,7 +364,7 @@ class _ResumoDeMissoes extends StatelessWidget {
           AppIcon(
             aResgatar > 0 ? Icons.redeem_rounded : Icons.flag_outlined,
             size: 18,
-            color: aResgatar > 0 ? AppColors.orange : AppColors.green,
+            color: aResgatar > 0 ? Cores.mel700 : AppColors.green,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -396,7 +388,7 @@ class _ResumoDeMissoes extends StatelessWidget {
           if (aResgatar > 0)
             Etiqueta(
               texto: t.missaoResgatar,
-              cor: AppColors.orange,
+              cor: Cores.mel400,
               forte: true,
             )
           else
@@ -405,7 +397,7 @@ class _ResumoDeMissoes extends StatelessWidget {
               style: nunito(
                 size: 13,
                 weight: FontWeight.w700,
-                color: AppColors.inkA(0.5),
+                color: Cores.tinta700,
                 tabular: true,
               ),
             ),

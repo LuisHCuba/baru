@@ -289,11 +289,11 @@ class _EspecieTravada extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.lock_outline_rounded, size: 15, color: Cores.tintaA(0.4)),
+            Icon(Icons.lock_outline_rounded, size: 15, color: Cores.tinta500),
             const SizedBox(width: 6),
             Text(
               rotulo,
-              style: estilo(Tipo.rotulo, color: Cores.tintaA(0.45)),
+              style: estilo(Tipo.rotulo, color: Cores.tinta700),
             ),
           ],
         ),

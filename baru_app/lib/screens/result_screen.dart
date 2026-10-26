@@ -86,13 +86,13 @@ class _Desistencia extends StatelessWidget {
                   style: nunito(
                     size: 15,
                     height: 1.5,
-                    color: AppColors.inkA(0.68),
+                    color: Cores.tinta700,
                   ),
                 ),
               ],
             ),
           ),
-          PrimaryButton(label: t.back, onTap: app.voltar),
+          BotaoBaru(rotulo: t.back, aoTocar: app.voltar),
         ],
       ),
     );
@@ -341,13 +341,14 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    GhostButton(
-                      label: t.shareBtn,
-                      onTap: app.openShare,
-                      icon: Icons.share_outlined,
+                    BotaoBaru(
+                      rotulo: t.shareBtn,
+                      aoTocar: app.openShare,
+                      icone: const Icon(Icons.share_outlined),
+                      papel: PapelDoBotao.secundario,
                     ),
                     const SizedBox(height: 10),
-                    PrimaryButton(label: t.back, onTap: app.voltar),
+                    BotaoBaru(rotulo: t.back, aoTocar: app.voltar),
                   ],
                 ),
               ),
@@ -415,20 +416,20 @@ class _Ganho extends StatelessWidget {
       key: _Sequencia.chaveDoGanho,
       padding: const EdgeInsets.fromLTRB(18, 12, 22, 12),
       decoration: BoxDecoration(
-        color: AppColors.orangeA(0.16),
+        color: Cores.folha600.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(99),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const LeafMark(size: 19, color: AppColors.orange),
+          const GlifoFolha(tamanho: 22),
           const SizedBox(width: 11),
           Text(
             t.fill(t.reward, {'k': valor}),
             style: nunito(
               size: 21,
               weight: FontWeight.w800,
-              color: AppColors.orangeDeep,
+              color: Cores.folha700,
             ),
           ),
         ],
@@ -479,7 +480,7 @@ class _BarraDeXp extends StatelessWidget {
                 style: nunito(
                   size: 13,
                   weight: FontWeight.w800,
-                  color: AppColors.green,
+                  color: Cores.mel700,
                 ),
               ),
             ),
@@ -492,7 +493,7 @@ class _BarraDeXp extends StatelessWidget {
                   style: nunito(
                     size: 13,
                     weight: FontWeight.w800,
-                    color: AppColors.orangeText,
+                    color: Cores.raiz600,
                   ),
                 ),
               ),
@@ -504,8 +505,8 @@ class _BarraDeXp extends StatelessWidget {
           fracao: fracao,
           altura: 10,
           cor: resumo.xpDaRaiz > 0 && raiz > 0
-              ? AppColors.orange
-              : AppColors.green,
+              ? Cores.raiz500
+              : Cores.folha600,
           duracao: Duration.zero,
         ),
       ],
@@ -535,7 +536,7 @@ class _Missoes extends StatelessWidget {
             size: 11.5,
             weight: FontWeight.w800,
             letterSpacing: 0.8,
-            color: AppColors.inkA(0.45),
+            color: Cores.tinta700,
           ),
         ),
         const SizedBox(height: 8),
@@ -568,7 +569,9 @@ class _MissaoQueAndou extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
       decoration: BoxDecoration(
-        color: pronta ? AppColors.orangeA(0.14) : AppColors.inkA(0.045),
+        color: pronta
+            ? Cores.mel400.withValues(alpha: 0.24)
+            : AppColors.inkA(0.045),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -587,7 +590,6 @@ class _MissaoQueAndou extends StatelessWidget {
                 BarraAnimada(
                   fracao: fracao,
                   altura: 7,
-                  cor: pronta ? AppColors.orange : AppColors.green,
                   duracao: Duration.zero,
                 ),
                 const SizedBox(height: 4),
@@ -596,7 +598,7 @@ class _MissaoQueAndou extends StatelessWidget {
                   style: nunito(
                     size: 11.5,
                     weight: FontWeight.w700,
-                    color: pronta ? AppColors.orangeText : AppColors.inkA(0.5),
+                    color: pronta ? Cores.mel700 : Cores.tinta700,
                   ),
                 ),
               ],
@@ -604,17 +606,14 @@ class _MissaoQueAndou extends StatelessWidget {
           ),
           if (pronta) ...[
             const SizedBox(width: 10),
-            TextButton(
+            BotaoBaru(
               key: Key('resultado-colher-${d.id}'),
-              onPressed: () => app.go(AppScreen.missoes),
-              child: Text(
-                tx.resColher,
-                style: nunito(
-                  size: 14,
-                  weight: FontWeight.w800,
-                  color: AppColors.orangeText,
-                ),
-              ),
+              rotulo: tx.resColher,
+              aoTocar: () => app.go(AppScreen.missoes),
+              papel: PapelDoBotao.recompensa,
+              altura: BotaoBaru.alturaCompacta,
+              expande: false,
+              tamanhoDoTexto: 14,
             ),
           ],
         ],
@@ -669,7 +668,8 @@ class _Voo extends CustomPainter {
           ..quadraticBezierTo(0, -s * 0.7, s, 0)
           ..quadraticBezierTo(0, s * 0.7, -s, 0)
           ..close(),
-        Paint()..color = AppColors.orange,
+        // A moeda voa na cor dela: é a mesma folha do saldo.
+        Paint()..color = Cores.folha600,
       );
       canvas.restore();
     }

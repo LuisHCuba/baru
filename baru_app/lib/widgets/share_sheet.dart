@@ -140,7 +140,7 @@ class _ShareSheetState extends State<ShareSheet> {
                                       app.t.shareMeta,
                                       style: nunito(
                                         size: 12.5,
-                                        color: AppColors.inkA(0.5),
+                                        color: Cores.tinta700,
                                       ),
                                     ),
                                   ],
@@ -159,7 +159,7 @@ class _ShareSheetState extends State<ShareSheet> {
                       Text(
                         app.t.shareNote,
                         textAlign: TextAlign.center,
-                        style: nunito(size: 12.5, height: 1.5, color: AppColors.inkA(0.5)),
+                        style: nunito(size: 12.5, height: 1.5, color: Cores.tinta700),
                       ),
                       const SizedBox(height: 16),
                       GestureDetector(

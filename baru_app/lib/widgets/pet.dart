@@ -2128,7 +2128,7 @@ class _PetPainter extends CustomPainter {
           ..cubicTo(lado * 29, -10, lado * 32, -6, lado * 32, 0)
           ..cubicTo(lado * 29, 4, lado * 24, 3, lado * 22, -1)
           ..close(),
-        _p(Color.lerp(Cores.acento, Cores.acentoForte, 0.35)!),
+        _p(Color.lerp(Cores.acento, Cores.terracotaDaArte, 0.35)!),
       );
     }
 
@@ -2666,7 +2666,7 @@ class _PetPainter extends CustomPainter {
           ..lineTo(4.5, 11)
           ..lineTo(0, 18.5)
           ..close(),
-        _p(Color.lerp(Cores.acentoForte, Cores.tinta, 0.35)!),
+        _p(Color.lerp(Cores.terracotaDaArte, Cores.tinta, 0.35)!),
       );
     }
     _naBoca(canvas, const Offset(0, 12), 18);

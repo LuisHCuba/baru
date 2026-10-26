@@ -32,7 +32,7 @@ class TempoScreen extends StatelessWidget {
                   corpo: t.telaSemPermissaoB,
                   rotuloAcao: t.permAllow,
                   acao: app.requestUsageAccessFromSettings,
-                  cor: Cores.acento,
+                  cor: Cores.folha600,
                 )
               : (resumo == null || resumo.vazio)
                   ? EstadoVazio(
@@ -75,7 +75,7 @@ class _Detalhamento extends StatelessWidget {
           padding: const EdgeInsets.only(left: Espaco.xxs, bottom: Espaco.sm),
           child: Text(
             t.telaPorApp.toUpperCase(),
-            style: estilo(Tipo.rotuloPequeno, color: Cores.tintaA(0.45)),
+            style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
           ),
         ),
         for (final e in resumo.appsPorTempo)
@@ -121,13 +121,14 @@ class _Destaque extends StatelessWidget {
           const SizedBox(height: Espaco.xxs),
           Text(
             t.telaContado.toUpperCase(),
-            style: estilo(Tipo.rotuloPequeno, color: Cores.tintaA(0.5)),
+            style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
           ),
           const SizedBox(height: Espaco.md),
           BarraAnimada(
             fracao: fracao,
             altura: 12,
-            cor: acima ? Cores.acento : Cores.primaria,
+            // Passar da meta é informação, não alarme.
+            cor: acima ? Cores.tinta500 : Cores.folha600,
           ),
           const SizedBox(height: Espaco.sm),
           Text(
@@ -135,7 +136,7 @@ class _Destaque extends StatelessWidget {
               'd': app.fmt(contado),
               't': app.fmt(total),
             }),
-            style: estilo(Tipo.corpo, color: Cores.tintaA(0.62)),
+            style: estilo(Tipo.corpo, color: Cores.tinta700),
           ),
         ],
       ),
@@ -214,7 +215,7 @@ class _Categorias extends StatelessWidget {
             textAlign: TextAlign.right,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: estilo(Tipo.rotulo, color: Cores.tintaA(0.6), tabular: true),
+            style: estilo(Tipo.rotulo, color: Cores.tinta700, tabular: true),
           ),
         ),
       ],
@@ -307,7 +308,7 @@ class _LinhaDeApp extends StatelessWidget {
                       app.fmt(tempo.inMinutes),
                       style: estilo(
                         Tipo.rotulo,
-                        color: Cores.tintaA(0.6),
+                        color: Cores.tinta700,
                         tabular: true,
                       ),
                     ),
@@ -337,7 +338,7 @@ class _LinhaDeApp extends StatelessWidget {
           Icon(
             Icons.chevron_right_rounded,
             size: 20,
-            color: Cores.tintaA(0.3),
+            color: Cores.tinta500,
           ),
         ],
       ),
@@ -364,7 +365,7 @@ class _LinhaDeApp extends StatelessWidget {
               const SizedBox(height: Espaco.xxs),
               Text(
                 app.t.telaMudarCategoria,
-                style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+                style: estilo(Tipo.corpo, color: Cores.tinta700),
               ),
               const SizedBox(height: Espaco.lg),
               for (final c in CategoriaDeApp.values)

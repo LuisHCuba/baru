@@ -110,21 +110,22 @@ class _FolhaDeSaidaState extends State<FolhaDeSaida>
                             textAlign: TextAlign.center,
                             style: estilo(
                               Tipo.corpo,
-                              color: Cores.tintaA(0.65),
+                              color: Cores.tinta700,
                             ),
                           ),
                           const SizedBox(height: Espaco.lg),
-                          PrimaryButton(
-                            label: t.sairFicar,
-                            onTap: app.cancelaSaida,
+                          BotaoBaru(
+                            rotulo: t.sairFicar,
+                            aoTocar: app.cancelaSaida,
                           ),
                           const SizedBox(height: Espaco.xs),
-                          GhostButton(
-                            label: t.sairSair,
-                            onTap: () {
+                          BotaoBaru(
+                            rotulo: t.sairSair,
+                            aoTocar: () {
                               app.cancelaSaida();
                               SystemNavigator.pop();
                             },
+                            papel: PapelDoBotao.secundario,
                           ),
                         ],
                       ),

@@ -35,6 +35,60 @@ class Cores {
   static const tinta = Color(0xFF3E2F23);
   static const tintaClara = Color(0xFFFAF1E3);
 
+  // --- paleta semântica (laudo 03 §4.4, ADR-027) ------------------------
+  //
+  // Cada família tem **um** papel, e o tom que carrega texto é escuro o
+  // bastante para passar no WCAG AA (`test/contraste_test.dart` recalcula).
+  // Antes, laranja queria dizer raiz, próximo passo, missão principal,
+  // "pronta para colher", dispersivo e "passou da meta" ao mesmo tempo; o
+  // texto creme no botão verde dava 3,6:1 e os rótulos de seção, 2,3:1.
+  //
+  //  - **folha** (verde): ação e a moeda.
+  //  - **raiz** (terracota): só a raiz, a sequência de dias.
+  //  - **mel**: só conquista e recompensa — XP, nível, "pronta para colher".
+  //  - **céu**: congelamento e informação.
+  //
+  // O 500 é para preenchimento grande e ilustração; o 600 é a face do botão
+  // e o tom de ícone; o 700 é o lábio do botão e o texto na cor.
+
+  static const folha500 = Color(0xFF5C8A4E);
+  static const folha600 = Color(0xFF3F7A34);
+  static const folha700 = Color(0xFF2F5C27);
+
+  static const raiz500 = Color(0xFFD86F32);
+  static const raiz600 = Color(0xFFA64C27);
+  static const raiz700 = Color(0xFF7A3A1E);
+
+  /// Face do botão de recompensa, com texto em [tinta]. Nunca como texto.
+  static const mel400 = Color(0xFFF2B33D);
+  static const mel600 = Color(0xFFD5900E);
+
+  /// "+10 XP" e todo texto na cor do mel.
+  static const mel700 = Color(0xFF865809);
+
+  static const ceu600 = Color(0xFF39658C);
+
+  /// Texto secundário. Substitui a tinta a 40–65% de opacidade, que sobre
+  /// o creme dava de 2,3:1 a 4,4:1.
+  static const tinta700 = Color(0xFF6B5A4A);
+
+  /// Só desabilitado, ou ícone de apoio (≥ 3:1). Texto comum, não.
+  static const tinta500 = Color(0xFF857563);
+
+  /// Fundo de barra de progresso.
+  static const trilho = Color(0xFFEADFCB);
+
+  /// Face e lábio do botão secundário.
+  static const creme = Color(0xFFF3E7D3);
+  static const cremeLabio = Color(0xFFDCCDB3);
+
+  /// O vínculo com o bicho (o coração do afago).
+  static const afeto = Color(0xFFC4566B);
+
+  /// Erro e ação que não tem volta. Vermelho-tijolo, para não ser lido como
+  /// a raiz.
+  static const alerta = Color(0xFFA8433A);
+
   // --- primária ----------------------------------------------------------
   static const primaria = Color(0xFF5C8A4E);
   static const primariaPressionada = Color(0xFF486D3D);
@@ -44,8 +98,15 @@ class Cores {
 
   // --- acento ------------------------------------------------------------
   static const acento = Color(0xFFEF8354);
-  static const acentoTexto = Color(0xFFB8502A);
-  static const acentoForte = Color(0xFFC25A26);
+  /// Texto na cor da raiz: é o [raiz600].
+  static const acentoTexto = raiz600;
+  static const acentoForte = raiz700;
+
+  /// Tons de ilustração (bicho e cenário) que eram os antigos `acentoForte`
+  /// e `acentoTexto`. Ficam fixos para o desenho não mudar quando a paleta
+  /// da interface muda: o texto passou a [raiz600], a arte continua aqui.
+  static const terracotaDaArte = Color(0xFFC25A26);
+  static const ferrugemDaArte = Color(0xFFB8502A);
 
   // --- cenário -----------------------------------------------------------
   static const areia = Color(0xFFC98A5B);
@@ -175,10 +236,38 @@ class Cores {
   // --- categorias de tempo de tela ---------------------------------------
   // Cores próprias: o usuário precisa reconhecer a categoria pela cor em
   // qualquer tela, sem ler o rótulo.
-  static const dispersivo = Color(0xFFE0714B);
-  static const neutro = Color(0xFF7C93B8);
-  static const produtivo = Color(0xFF5C8A4E);
-  static const passivo = Color(0xFFB39BC8);
+  //
+  // Escurecidas para o rótulo do chip (texto na cor cheia sobre ela a 10%)
+  // passar de 4,5:1; antes davam 2,2–2,6:1. O dispersivo é tijolo e não
+  // laranja: laranja é só a raiz.
+  static const dispersivo = Color(0xFFA8433A);
+  static const neutro = Color(0xFF48648F);
+  static const produtivo = Color(0xFF3A6F30);
+  static const passivo = Color(0xFF755591);
+
+  /// Contraste WCAG 2.x entre duas cores opacas.
+  static double contraste(Color a, Color b) {
+    final la = a.computeLuminance();
+    final lb = b.computeLuminance();
+    final claro = la > lb ? la : lb;
+    final escuro = la > lb ? lb : la;
+    return (claro + 0.05) / (escuro + 0.05);
+  }
+
+  /// [cor] escurecida, sem mudar o matiz, até ler sobre [fundo] com
+  /// [minimo]. Para rótulo na cor da etiqueta sobre ela mesma tingida.
+  static Color legivelSobre(Color cor, Color fundo, {double minimo = 4.5}) {
+    var h = HSLColor.fromColor(cor.withValues(alpha: 1));
+    while (contraste(h.toColor(), fundo) < minimo && h.lightness > 0.02) {
+      h = h.withLightness(h.lightness - 0.01);
+    }
+    return h.toColor();
+  }
+
+  /// Texto sobre uma face cheia de [cor]: tinta nas claras, creme nas
+  /// escuras.
+  static Color textoSobre(Color cor) =>
+      contraste(tinta, cor) >= contraste(tintaClara, cor) ? tinta : tintaClara;
 
   static Color tintaA(double a) => tinta.withValues(alpha: a);
   static Color primariaA(double a) => primaria.withValues(alpha: a);

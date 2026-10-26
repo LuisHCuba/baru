@@ -273,7 +273,7 @@ class _CenaDaRaizState extends State<CenaDaRaiz>
                                       textAlign: TextAlign.center,
                                       style: estilo(
                                         Tipo.corpoGrande,
-                                        color: AppColors.inkA(0.66),
+                                        color: Cores.tinta700,
                                       ),
                                     ),
                                   ],
@@ -293,9 +293,9 @@ class _CenaDaRaizState extends State<CenaDaRaiz>
                                     children: [
                                       if (widget.marco)
                                         BotaoDeCompartilharRaiz(app: app),
-                                      PrimaryButton(
-                                        label: t.cont,
-                                        onTap: widget.aoFechar,
+                                      BotaoBaru(
+                                        rotulo: t.cont,
+                                        aoTocar: widget.aoFechar,
                                       ),
                                     ],
                                   ),
@@ -469,7 +469,7 @@ class _Terra extends StatelessWidget {
                   style: nunito(
                     size: 14,
                     weight: FontWeight.w700,
-                    color: AppColors.inkA(0.55),
+                    color: Cores.tinta700,
                   ),
                 ),
               ],
@@ -492,7 +492,7 @@ class _Odometro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = Color.lerp(Cores.tinta, AppColors.orange, t.clamp(0.0, 1.0))!;
+    final cor = Color.lerp(Cores.tinta, Cores.raiz500, t.clamp(0.0, 1.0))!;
     final pulso = 1 + math.sin(t.clamp(0.0, 1.0) * math.pi) * 0.15;
     final estilo = nunito(size: 46, weight: FontWeight.w800, color: cor);
     return Transform.scale(
@@ -541,7 +541,7 @@ class _Gota extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final luz = AppColors.orange;
+    final luz = Cores.raiz500;
     if (forma > 0 && clarao == 0) {
       final origem = Offset(size.width / 2, chao);
       final p = Offset.lerp(origem, ponta, cai)!;
@@ -648,13 +648,13 @@ class _Faixa extends StatelessWidget {
                           scale: hoje,
                           child: const DecoratedBox(
                             decoration: BoxDecoration(
-                              color: AppColors.orange,
+                              color: Cores.raiz600,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.check_rounded,
                               size: 16,
-                              color: Colors.white,
+                              color: Cores.tintaClara,
                             ),
                           ),
                         )
@@ -675,7 +675,7 @@ class _Faixa extends StatelessWidget {
                   style: nunito(
                     size: 11,
                     weight: FontWeight.w700,
-                    color: AppColors.inkA(0.45),
+                    color: Cores.tinta700,
                   ),
                 ),
               ],

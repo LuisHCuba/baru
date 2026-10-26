@@ -43,7 +43,7 @@ class ReportScreen extends StatelessWidget {
                 style: nunito(size: 27, weight: FontWeight.w800, height: 1.2, letterSpacing: -0.5),
               ),
               const SizedBox(height: 6),
-              Text(t.repDate, style: nunito(size: 14, color: AppColors.inkA(0.55))),
+              Text(t.repDate, style: nunito(size: 14, color: Cores.tinta700)),
             ],
           ),
         ),
@@ -67,16 +67,16 @@ class ReportScreen extends StatelessWidget {
                       children: [
                         Text(app.fmt(app.usage), style: nunito(size: 25, weight: FontWeight.w800)),
                         const SizedBox(height: 4),
-                        Text(t.repUsed, style: nunito(size: 13, color: AppColors.inkA(0.55))),
+                        Text(t.repUsed, style: nunito(size: 13, color: Cores.tinta700)),
                       ],
                     ),
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(app.fmt(app.goal), style: nunito(size: 16, weight: FontWeight.w700, color: AppColors.inkA(0.6))),
+                      Text(app.fmt(app.goal), style: nunito(size: 16, weight: FontWeight.w700, color: Cores.tinta700)),
                       const SizedBox(height: 4),
-                      Text(t.repGoal, style: nunito(size: 13, color: AppColors.inkA(0.45))),
+                      Text(t.repGoal, style: nunito(size: 13, color: Cores.tinta700)),
                     ],
                   ),
                 ],
@@ -85,7 +85,7 @@ class ReportScreen extends StatelessWidget {
               TrackFill(
                 pct: usagePct,
                 height: 14,
-                color: app.underGoal ? AppColors.green : AppColors.orange,
+                color: app.underGoal ? AppColors.green : Cores.tinta500,
               ),
               const SizedBox(height: 16),
               Row(
@@ -93,7 +93,7 @@ class ReportScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       app.usageVerdict,
-                      style: nunito(size: 13.5, weight: FontWeight.w600, height: 1.45, color: AppColors.green),
+                      style: nunito(size: 13.5, weight: FontWeight.w600, height: 1.45, color: app.underGoal ? Cores.folha700 : Cores.tinta700),
                     ),
                   ),
                   const Chevron(),
@@ -141,7 +141,7 @@ class ReportScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       app.frase(t.humorSub(app.falaDoHumor), app.falaDoHumor.valores),
-                      style: nunito(size: 13, height: 1.4, color: AppColors.inkA(0.6)),
+                      style: nunito(size: 13, height: 1.4, color: Cores.tinta700),
                     ),
                   ],
                 ),
@@ -155,13 +155,13 @@ class ReportScreen extends StatelessWidget {
         _row(
           t.repBonus,
           app.underGoalQuestDone ? '+${AppState.underGoalBonus}' : '—',
-          color: AppColors.orange,
+          color: Cores.folha700,
         ),
         Divider(height: 1, color: AppColors.inkA(0.08)),
         _row(t.repPresent, app.streakText),
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 4, 4, 22),
-          child: Text(t.freezeNote(app.freezesLeft), style: nunito(size: 12.5, height: 1.5, color: AppColors.inkA(0.5))),
+          child: Text(t.freezeNote(app.freezesLeft), style: nunito(size: 12.5, height: 1.5, color: Cores.tinta700)),
         ),
       ],
     );

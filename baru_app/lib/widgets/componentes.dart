@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme.dart';
+import 'botao_baru.dart';
 
 /// Número que **sobe animado** em vez de saltar.
 ///
@@ -89,7 +90,7 @@ class BarraAnimada extends StatelessWidget {
       borderRadius: Raio.todos(Raio.pilula),
       child: Container(
         height: altura,
-        color: fundo ?? Cores.tintaA(0.09),
+        color: fundo ?? Cores.trilho,
         child: Align(
           alignment: Alignment.centerLeft,
           child: TweenAnimationBuilder<double>(
@@ -100,7 +101,7 @@ class BarraAnimada extends StatelessWidget {
               widthFactor: v,
               child: Container(
                 decoration: BoxDecoration(
-                  color: cor ?? Cores.primaria,
+                  color: cor ?? Cores.folha600,
                   borderRadius: Raio.todos(Raio.pilula),
                 ),
               ),
@@ -173,6 +174,14 @@ class _CartaoBaruState extends State<CartaoBaru> {
   }
 }
 
+/// A face cheia da [Etiqueta]: a própria cor quando creme ou tinta leem sobre
+/// ela; senão, a cor escurecida até o creme ler. Laranja médio, por exemplo,
+/// não passa com nenhum dos dois.
+Color faceDaEtiqueta(Color cor) =>
+    Cores.contraste(Cores.textoSobre(cor), cor) >= 4.5
+        ? cor
+        : Cores.legivelSobre(cor, Cores.tintaClara);
+
 /// Etiqueta curta e colorida — categoria, estado de missão, marco.
 class Etiqueta extends StatelessWidget {
   const Etiqueta({
@@ -192,14 +201,20 @@ class Etiqueta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = forte ? Cores.tintaClara : cor;
+    // O rótulo se ajusta à cor para passar de 4,5:1: creme ou tinta sobre
+    // a face cheia; a própria cor, escurecida, sobre ela tingida.
+    final tingido = cor.withValues(alpha: 0.12);
+    final face = faceDaEtiqueta(cor);
+    final fg = forte
+        ? Cores.textoSobre(face)
+        : Cores.legivelSobre(cor, Color.alphaBlend(tingido, Cores.superficie));
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: Espaco.sm,
         vertical: Espaco.xxs + 2,
       ),
       decoration: BoxDecoration(
-        color: forte ? cor : cor.withValues(alpha: 0.15),
+        color: forte ? face : tingido,
         borderRadius: Raio.todos(Raio.pilula),
       ),
       child: Row(
@@ -227,15 +242,19 @@ class Etiqueta extends StatelessWidget {
 class EstadoVazio extends StatelessWidget {
   const EstadoVazio({
     super.key,
-    required this.icone,
+    this.icone,
+    this.glifo,
     required this.titulo,
     required this.corpo,
     this.acao,
     this.rotuloAcao,
     this.cor,
-  });
+  }) : assert(icone != null || glifo != null);
 
-  final IconData icone;
+  final IconData? icone;
+
+  /// No lugar de [icone], um glifo próprio ([GlifoFolha] e irmãos).
+  final Widget? glifo;
   final String titulo;
   final String corpo;
   final VoidCallback? acao;
@@ -244,7 +263,7 @@ class EstadoVazio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = cor ?? Cores.primaria;
+    final c = cor ?? Cores.folha600;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(Espaco.xl),
@@ -258,7 +277,8 @@ class EstadoVazio extends StatelessWidget {
                 color: c.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icone, size: 28, color: c),
+              alignment: Alignment.center,
+              child: glifo ?? Icon(icone, size: 28, color: c),
             ),
             const SizedBox(height: Espaco.md),
             Text(
@@ -270,49 +290,18 @@ class EstadoVazio extends StatelessWidget {
             Text(
               corpo,
               textAlign: TextAlign.center,
-              style: estilo(Tipo.corpo, color: Cores.tintaA(0.62)),
+              style: estilo(Tipo.corpo, color: Cores.tinta700),
             ),
             if (acao != null && rotuloAcao != null) ...[
               const SizedBox(height: Espaco.lg),
-              _BotaoCompacto(rotulo: rotuloAcao!, onTap: acao!, cor: c),
+              BotaoBaru(
+                rotulo: rotuloAcao!,
+                aoTocar: acao,
+                expande: false,
+                altura: Toque.minimo,
+              ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BotaoCompacto extends StatelessWidget {
-  const _BotaoCompacto({
-    required this.rotulo,
-    required this.onTap,
-    required this.cor,
-  });
-
-  final String rotulo;
-  final VoidCallback onTap;
-  final Color cor;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: Container(
-        height: Toque.minimo,
-        padding: const EdgeInsets.symmetric(horizontal: Espaco.xl),
-        decoration: BoxDecoration(
-          color: cor,
-          borderRadius: Raio.todos(Raio.botao),
-          boxShadow: Elevacao.acaoPrimaria,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          rotulo,
-          style: estilo(Tipo.subtitulo, color: Cores.tintaClara),
         ),
       ),
     );
@@ -439,7 +428,7 @@ class CabecalhoDeDetalhe extends StatelessWidget {
               ),
               child: Text(
                 subtitulo!,
-                style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+                style: estilo(Tipo.corpo, color: Cores.tinta700),
               ),
             ),
         ],
@@ -455,6 +444,7 @@ class LinhaDeValor extends StatelessWidget {
     required this.rotulo,
     required this.valor,
     this.icone,
+    this.glifo,
     this.cor,
     this.detalhe,
   });
@@ -462,6 +452,9 @@ class LinhaDeValor extends StatelessWidget {
   final String rotulo;
   final String valor;
   final IconData? icone;
+
+  /// No lugar de [icone].
+  final Widget? glifo;
   final Color? cor;
   final String? detalhe;
 
@@ -472,8 +465,8 @@ class LinhaDeValor extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: Espaco.xs),
       child: Row(
         children: [
-          if (icone != null) ...[
-            Icon(icone, size: 17, color: c),
+          if (glifo != null || icone != null) ...[
+            glifo ?? Icon(icone, size: 17, color: c),
             const SizedBox(width: Espaco.sm),
           ],
           Expanded(
@@ -484,7 +477,7 @@ class LinhaDeValor extends StatelessWidget {
                 if (detalhe != null)
                   Text(
                     detalhe!,
-                    style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.55)),
+                    style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
                   ),
               ],
             ),

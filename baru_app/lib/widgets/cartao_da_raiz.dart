@@ -61,7 +61,7 @@ class CartaoDaRaiz extends StatelessWidget {
                 Text(
                   t.raizCartaoTitulo,
                   textAlign: TextAlign.center,
-                  style: estilo(Tipo.rotuloPequeno, color: Cores.tintaA(0.5)),
+                  style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -76,7 +76,7 @@ class CartaoDaRaiz extends StatelessWidget {
                 Text(
                   t.fill(t.raizCartaoDias, {'n': dias}),
                   textAlign: TextAlign.center,
-                  style: estilo(Tipo.corpo, color: Cores.tintaA(0.6)),
+                  style: estilo(Tipo.corpo, color: Cores.tinta700),
                 ),
                 const SizedBox(height: 8),
                 // A raiz ocupa o resto: ela é o assunto do cartão, não um
@@ -92,7 +92,7 @@ class CartaoDaRaiz extends StatelessWidget {
                 Text(
                   t.fill(t.raizCartaoRodape, {'a': nomeDoPet}),
                   textAlign: TextAlign.center,
-                  style: estilo(Tipo.corpoPequeno, color: Cores.tintaA(0.45)),
+                  style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
                 ),
               ],
             ),

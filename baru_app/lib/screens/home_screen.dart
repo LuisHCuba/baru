@@ -164,7 +164,8 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        if (!primeira) const SizedBox(height: 12),
+        if (!primeira)
         SoftCard(
           child: Column(
             children: [

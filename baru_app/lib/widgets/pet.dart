@@ -429,6 +429,14 @@ class _PetViewState extends State<PetView>
   int _toquesSeguidos = 0;
   Timer? _esfriaToques;
 
+  /// A troca de humor: o desenho antigo esmaece enquanto o novo aparece.
+  /// Trocar de cara num quadro só parecia um corte de edição.
+  late final AnimationController _transicao = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 350),
+  );
+  Mood? _humorAnterior;
+
   /// O quanto ele está gostando **agora**. Sobe com o dedo andando em cima
   /// dele e desce sozinho quando o dedo sai.
   late final AnimationController _gosto = AnimationController(
@@ -494,6 +502,12 @@ class _PetViewState extends State<PetView>
         antigo.species != widget.species ||
         antigo.estagio != widget.estagio) {
       _ajustaRitmo();
+    }
+    if (antigo.mood != widget.mood &&
+        widget.quadro == null &&
+        !Movimento.reduzido(context)) {
+      _humorAnterior = antigo.mood;
+      _transicao.forward(from: 0);
     }
   }
 
@@ -771,6 +785,7 @@ class _PetViewState extends State<PetView>
     _toque.dispose();
     _gesto.dispose();
     _gosto.dispose();
+    _transicao.dispose();
     super.dispose();
   }
 
@@ -791,46 +806,24 @@ class _PetViewState extends State<PetView>
           _toque,
           _gesto,
           _gosto,
+          _transicao,
         ]),
         builder: (context, _) {
-          return CustomPaint(
-            size: Size(widget.width, widget.height),
-            painter: _PetPainter(
-              species: widget.species,
-              mood: widget.mood,
-              activity: widget.activity,
-              coat: AppColors.pelagemDe(widget.species, widget.coat),
-              coatIndex: widget.coat,
-              roupas: widget.roupas,
-              roupaDeCabeca: widget.roupaDeCabeca,
-              estagio: widget.estagio,
-              pose: widget.quadro?._pose(_acao) ??
-                  _Pose(
-                    acao: _acao,
-                    // Cru, sem curva: o laço da atividade é uma fase que dá a
-                    // volta. Passá-lo por `easeInOut` como os contínuos criaria
-                    // um salto na emenda entre 1 e 0 — a braçada travava a cada
-                    // volta.
-                    ciclo: _ciclo.value,
-                    respiro: Curvas.organica.transform(_respiro.value) * 2 - 1,
-                    boia: Curvas.organica.transform(_flutua.value) * 2 - 1,
-                    cauda: Curvas.organica.transform(_cauda.value) * 2 - 1,
-                    pisca: _pisca.value,
-                    orelha: _orelha.value,
-                    toque: _toque.value,
-                    olhar: _gestoAtual == GestoOcioso.olhaEmVolta
-                        // Varredura da cabeça: dois lados e volta ao centro.
-                        ? Offset(math.sin(_gesto.value * math.pi * 2), -0.12)
-                        : _olhar,
-                    animado: _toquesSeguidos >= 3,
-                    amplitude: amplitude,
-                    gesto: _gestoAtual,
-                    gestoT: _gesto.value,
-                    dedo: _dedo,
-                    gosto: _gosto.value,
-                  ),
-            ),
-          );
+          final anterior = _humorAnterior;
+          if (anterior != null && _transicao.isAnimating) {
+            final t = Curves.easeInOut.transform(_transicao.value);
+            // Alinhamento sem direção: o bicho também é desenhado fora do app
+            // (widget da tela inicial, sobreposição), onde pode não haver
+            // `Directionality`.
+            return Stack(
+              alignment: Alignment.topLeft,
+              children: [
+                Opacity(opacity: 1 - t, child: _pintado(anterior, amplitude)),
+                Opacity(opacity: t, child: _pintado(widget.mood, amplitude)),
+              ],
+            );
+          }
+          return _pintado(widget.mood, amplitude);
         },
       ),
     );
@@ -846,6 +839,53 @@ class _PetViewState extends State<PetView>
     );
 
     if (!widget.interativo) return corpo;
+    return _comGestos(corpo);
+  }
+
+  /// O bicho num humor, com a pose deste quadro.
+  Widget _pintado(Mood humor, double amplitude) {
+    return CustomPaint(
+      size: Size(widget.width, widget.height),
+      painter: _PetPainter(
+        species: widget.species,
+        mood: humor,
+        activity: widget.activity,
+        coat: AppColors.pelagemDe(widget.species, widget.coat),
+        coatIndex: widget.coat,
+        roupas: widget.roupas,
+        roupaDeCabeca: widget.roupaDeCabeca,
+        estagio: widget.estagio,
+        pose: widget.quadro?._pose(_acao) ??
+            _Pose(
+              acao: _acao,
+              // Cru, sem curva: o laço da atividade é uma fase que dá a
+              // volta. Passá-lo por `easeInOut` como os contínuos criaria
+              // um salto na emenda entre 1 e 0 — a braçada travava a cada
+              // volta.
+              ciclo: _ciclo.value,
+              respiro: Curvas.organica.transform(_respiro.value) * 2 - 1,
+              boia: Curvas.organica.transform(_flutua.value) * 2 - 1,
+              cauda: Curvas.organica.transform(_cauda.value) * 2 - 1,
+              pisca: _pisca.value,
+              orelha: _orelha.value,
+              toque: _toque.value,
+              olhar: _gestoAtual == GestoOcioso.olhaEmVolta
+                  // Varredura da cabeça: dois lados e volta ao centro.
+                  ? Offset(math.sin(_gesto.value * math.pi * 2), -0.12)
+                  : _olhar,
+              animado: _toquesSeguidos >= 3,
+              amplitude: amplitude,
+              gesto: _gestoAtual,
+              gestoT: _gesto.value,
+              dedo: _dedo,
+              gosto: _gosto.value,
+            ),
+      ),
+    );
+  }
+
+  /// O toque e o afago, por cima do bicho.
+  Widget _comGestos(Widget corpo) {
     // `opaque`, não `deferToChild`: um CustomPaint sem filho não responde a
     // hit-test, então deferir ao filho deixaria o toque no bicho sem efeito.
     return RawGestureDetector(
@@ -1448,7 +1488,12 @@ class _PetPainter extends CustomPainter {
       AcaoDoBicho.cochilo => 6 + sopro * 2.6,
       AcaoDoBicho.pasto || AcaoDoBicho.petisco => boia * 1.2,
       AcaoDoBicho.brincadeira => pose.agacha - pose.pulo,
-      AcaoDoBicho.ocioso => boia * 1.2,
+      // O radiante dá pulinhos de vez em quando: três por volta do ócio,
+      // só a parte de cima do seno, para pousar e não afundar.
+      AcaoDoBicho.ocioso => boia * 1.2 -
+          (mood == Mood.radiant
+              ? math.max(0.0, math.sin(pose.ciclo * math.pi * 6)) * 4 * amp
+              : 0),
     };
 
     if (nadando) _rastro(canvas, size, linhaDagua);
@@ -1516,9 +1561,18 @@ class _PetPainter extends CustomPainter {
     final q = pose.quique * pose.amplitudeToque;
     final e = pose.estica;
     final fundura = dormindo ? 2.1 : 1.0;
+    // A postura do humor, pelos pés.
+    final (px, py) = _posturaDoHumor;
+    if (px != 1 || py != 1) {
+      canvas.translate(0, _pes);
+      canvas.scale(px, py);
+      canvas.translate(0, -_pes);
+    }
+    // O fôlego quase dobrou: a 1,8% ele não se via (laudo 05, R4); a 3,4% o
+    // peito sobe e desce sem virar pulo.
     canvas.scale(
-      1 + sopro * 0.018 * fundura + q * 0.07 + e * 0.07,
-      1 - sopro * 0.014 * fundura - q * 0.07 + e * 0.03,
+      1 + sopro * 0.034 * fundura + q * 0.07 + e * 0.07,
+      1 - sopro * 0.026 * fundura - q * 0.07 + e * 0.03,
     );
 
     switch (species) {
@@ -1670,6 +1724,7 @@ class _PetPainter extends CustomPainter {
 
   /// A cabeça acompanha um pouco o olhar, e varre ao levantar do pasto.
   double get _cabecaGiro =>
+      _inclinaDoHumor +
       pose.sacudida +
       pose.cocada +
       // Encosta a cabeça na mão.
@@ -1682,7 +1737,43 @@ class _PetPainter extends CustomPainter {
   /// Somado ao `translate` da cabeça de cada espécie. Fica num getter só
   /// porque a alternativa era repetir a mesma soma em oito lugares e
   /// esquecer de um.
-  double get _cabecaDesce => pose.cabecaDesce + pose.farejada;
+  double get _cabecaDesce =>
+      pose.cabecaDesce + pose.farejada + _cabecaDoHumor;
+
+  // --- humor no corpo -------------------------------------------------------
+  //
+  // O humor era só olho e boca: contente e saudade mudavam 2–3% dos pixels
+  // (laudo 06, rec. 6). Um bicho com saudade baixa a cabeça e a inclina, o
+  // corpo murcha; o radiante ergue a cabeça e o peito. São posturas, não
+  // movimento: valem com "reduzir movimento" também.
+
+  /// Quanto a cabeça desce pelo humor (negativo sobe).
+  double get _cabecaDoHumor => switch (mood) {
+        Mood.radiant => -3,
+        Mood.content => 0,
+        Mood.neutral => 2,
+        Mood.sleepy => 5,
+        Mood.missingYou => 7,
+      };
+
+  /// A inclinação da cabeça pelo humor: o "pidão" de lado na saudade.
+  double get _inclinaDoHumor => switch (mood) {
+        Mood.radiant => -0.05,
+        Mood.content => 0,
+        Mood.neutral => 0,
+        Mood.sleepy => 0.06,
+        Mood.missingYou => 0.12,
+      };
+
+  /// A postura do tronco: (largura, altura). Murcho na saudade e no sono,
+  /// esticado no radiante. Pivô nos pés.
+  (double, double) get _posturaDoHumor => switch (mood) {
+        Mood.radiant => (0.98, 1.04),
+        Mood.content => (1.0, 1.0),
+        Mood.neutral => (1.0, 0.98),
+        Mood.sleepy => (1.03, 0.94),
+        Mood.missingYou => (1.03, 0.93),
+      };
 
   // ======================================================================
   // CAPIVARA — de frente: cabeça grande e chata, focinho rombudo, corpo baixo

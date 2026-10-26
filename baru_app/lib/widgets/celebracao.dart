@@ -57,11 +57,12 @@ class _CelebracaoState extends State<Celebracao>
     with SingleTickerProviderStateMixin {
   /// `preserve`: com "reduzir movimento", a celebração encolhe de amplitude,
   /// mas não pode passar tão rápido que ninguém veja o que conquistou.
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: Tempo.celebracao,
-    animationBehavior: AnimationBehavior.preserve,
-  );
+  ///
+  /// Criado no `initState`, não preguiçoso: uma celebração que pede cavar
+  /// só toca o `_c` ao abrir, e fechada antes disso ("voltar") o criava no
+  /// `dispose` — com o widget já desativado, o que estoura a asserção de
+  /// ancestral (auditoria da Onda 2, V1).
+  late final AnimationController _c;
 
   final _particulas = List.generate(18, (i) {
     final sorte = math.Random(i * 977);
@@ -79,6 +80,11 @@ class _CelebracaoState extends State<Celebracao>
   @override
   void initState() {
     super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: Tempo.celebracao,
+      animationBehavior: AnimationBehavior.preserve,
+    );
     if (widget.precisaCavar) return;
     _explode();
   }
@@ -199,7 +205,8 @@ class _CelebracaoState extends State<Celebracao>
                               child: Icon(
                                 widget.icone,
                                 size: 42,
-                                color: Cores.tintaClara,
+                                // Tinta sobre o mel, creme sobre o vínculo.
+                                color: Cores.textoSobre(widget.cor),
                               ),
                             ),
                             const SizedBox(height: Espaco.lg),

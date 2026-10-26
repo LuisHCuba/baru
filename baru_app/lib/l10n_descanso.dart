@@ -34,7 +34,7 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizRiscoTitulo': 'Sua raiz de {n} dias',
     'raizRiscoCorpo': 'Ela quebra à meia-noite. Uma sessão curta segura.',
     'raizRiscoMarco':
-        'Faltam {d} dias para o marco de {m}. Ela quebra à meia-noite.',
+        'Faltam {d} dias para o marco de {m}. A raiz quebra à meia-noite.',
     'raizCongelaTitulo': 'Seu congelamento entra hoje',
     'raizCongelaCorpo':
         'A raiz de {n} dias continua. É o único congelamento da semana.',
@@ -80,7 +80,7 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizRiscoTitulo': 'Your {n}-day roots',
     'raizRiscoCorpo': 'They break at midnight. A short session holds them.',
     'raizRiscoMarco':
-        '{d} days to the {m}-day mark. They break at midnight.',
+        '{d} days to the {m}-day mark. The roots break at midnight.',
     'raizCongelaTitulo': 'Your freeze covers today',
     'raizCongelaCorpo':
         'The {n}-day roots hold. It is the only freeze this week.',
@@ -127,7 +127,7 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizRiscoTitulo': 'Tu raíz de {n} días',
     'raizRiscoCorpo': 'Se rompe a medianoche. Una sesión corta la sostiene.',
     'raizRiscoMarco':
-        'Faltan {d} días para el hito de {m}. Se rompe a medianoche.',
+        'Faltan {d} días para el hito de {m}. La raíz se rompe a medianoche.',
     'raizCongelaTitulo': 'Tu congelamiento entra hoy',
     'raizCongelaCorpo':
         'La raíz de {n} días sigue. Es el único congelamiento de la semana.',
@@ -168,7 +168,7 @@ const textosDoDescanso = <String, Map<String, String>>{
     'descansoLembreteCorpo': '{n} 为你留出了 {m} 分钟远离屏幕的时间。',
     'raizRiscoTitulo': '你的 {n} 天根',
     'raizRiscoCorpo': '它会在午夜断掉。一次短专注就能保住。',
-    'raizRiscoMarco': '距离 {m} 天的里程碑还差 {d} 天。它会在午夜断掉。',
+    'raizRiscoMarco': '距离 {m} 天的里程碑还差 {d} 天。根会在午夜断掉。',
     'raizCongelaTitulo': '今天会用掉一次冻结',
     'raizCongelaCorpo': '{n} 天的根还在。这是本周唯一一次冻结。',
     'descansoLembrete2Titulo': '{n} 找到了一片好树荫',

@@ -161,6 +161,24 @@ void main() {
       s.dispose();
     });
 
+    test('sessão que cruza a meia-noite com o app fechado não acende '
+        '"cresceu hoje"', () {
+      // 23:40 de ontem → 00:00:01 de hoje: a presença entra no dia da
+      // última abertura (ontem), então a cena da raiz de hoje mentiria
+      // (reauditoria da Onda 2, R3').
+      final hoje = dateOnly(DateTime.now());
+      final ontem = dateOnly(hoje.subtract(const Duration(hours: 12)));
+      final snap = _comSessao(
+        termina: hoje.add(const Duration(seconds: 1)),
+        ultimaAbertura: ontem,
+        leaves: 0,
+      );
+      final s = AppState(snapshot: snap);
+      expect(s.week[weekdayIndex(ontem)], WeekDayKind.present);
+      expect(s.raizACelebrar, isNull);
+      s.dispose();
+    });
+
     test('snapshot corrompido é descartado em vez de premiado', () {
       final snap = _comSessao(
         termina: DateTime.now().subtract(const Duration(minutes: 3)),

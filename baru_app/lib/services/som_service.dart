@@ -305,6 +305,14 @@ class SomService {
       p = _players[_proxima % _players.length];
       _proxima++;
     }
+    // `stop` antes de tocar, sempre. No `audioplayers_android` 5.2.1, em
+    // `lowLatency`, o SoundPool não avisa quando o som acaba: a voz fica
+    // marcada como "tocando" para sempre e o `play` seguinte não faz nada
+    // (`WrappedPlayer.play` só age com `!playing`; só `pause`/`stop` zeram).
+    // Sem isto, cada voz tocava o primeiro som e emudecia — o app inteiro
+    // calava depois do terceiro (auditoria da Onda 2, S1'). A voz parada é
+    // a mais antiga do rodízio, cujo som já terminou ou está no fim.
+    await p.stop();
     await p.setReleaseMode(ReleaseMode.stop);
     await p.setPlayerMode(PlayerMode.lowLatency);
     // Volume cheio: o nível de cada som foi decidido na masterização.

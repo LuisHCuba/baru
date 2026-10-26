@@ -168,10 +168,14 @@ int horaDoAvisoDaRaiz(
   // hora de dormir (laudo 01, §9.2–9.3).
   int maxima = 21,
   int semHabito = 21,
+  int? horaDoRelatorio,
 }) {
-  final base = habito == null ? semHabito : habito.hora + 1;
-  if (base < minima) return minima;
-  if (base > maxima) return maxima;
+  var base = habito == null ? semHabito : habito.hora + 1;
+  if (base < minima) base = minima;
+  if (base > maxima) base = maxima;
+  // Nunca no mesmo minuto do relatório da noite: dois recados juntos viram
+  // um só borrão na gaveta, e o da raiz é o que não pode passar batido.
+  if (base == horaDoRelatorio) base -= 1;
   return base;
 }
 
@@ -313,7 +317,10 @@ List<LembreteDoDia> planoDeLembretes({
   required RaizEmRisco? risco,
   required bool relatorioLigado,
   required int horaDoRelatorio,
-  int horaSemHabito = 19,
+  // 17h e não 19h: com o relatório no padrão (21h), um convite às 19h não
+  // cabia nas três horas de distância e nunca existia (auditoria, N2); às
+  // 17h ele cabe, e o aviso da raiz (20h) também.
+  int horaSemHabito = 17,
   int intervaloMinimoEmHoras = 3,
   int maximoPorDia = 2,
 }) {
@@ -324,7 +331,10 @@ List<LembreteDoDia> planoDeLembretes({
       ocupadas.every((h) => (h - hora).abs() >= intervaloMinimoEmHoras);
 
   if (risco != null && plano.length < maximoPorDia) {
-    final hora = horaDoAvisoDaRaiz(habito);
+    final hora = horaDoAvisoDaRaiz(
+      habito,
+      horaDoRelatorio: relatorioLigado ? horaDoRelatorio : null,
+    );
     // A raiz que vai quebrar entra mesmo colada no relatório da noite. O
     // relatório conta o dia que passou; este avisa que quarenta dias podem
     // acabar em três horas. Se um dos dois tem de tocar duas vezes seguidas,

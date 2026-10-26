@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -121,7 +120,6 @@ class BaruNotifications {
   /// Id da ação que só traz a pessoa de volta ao app.
   static const acaoVoltar = 'baru_voltar';
 
-  static const _lastMissedKey = 'baru_last_missed_notify';
 
   /// O canal para o lado nativo desenhar a **mesma** contagem.
   ///
@@ -915,7 +913,7 @@ class BaruNotifications {
     required String eveningBody,
     required String missedTitle,
     required String missedBody,
-    required int daysAway,
+    int horaDaVolta = 18,
     required bool trialActive,
     required DateTime? trialEndsAt,
     required String trialTitle,
@@ -941,9 +939,34 @@ class BaruNotifications {
       return;
     }
 
-    if (daysAway >= 2) {
-      await _maybeShowMissed(missedTitle, missedBody);
-    }
+    await _agendaVolta(missedTitle, missedBody, horaDaVolta);
+  }
+
+  /// O recado de volta, para **daqui a dois dias**.
+  ///
+  /// Antes ele era postado na hora em que o app abria depois de dois dias
+  /// fora — chegava justamente para quem tinha acabado de voltar, e dizia
+  /// "senti sua falta" (auditoria da Onda 2, N3). Agora cada abertura
+  /// empurra o recado dois dias para a frente: ele só toca se a pessoa
+  /// sumir, uma vez, e sem cobrança.
+  Future<void> _agendaVolta(String title, String body, int hora) async {
+    final now = tz.TZDateTime.now(tz.local);
+    final quando = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day + 2,
+      hora.clamp(8, 21),
+    );
+    await _plugin.zonedSchedule(
+      id: _missedId,
+      title: title,
+      body: body,
+      scheduledDate: quando,
+      notificationDetails: _detalhesDeLembrete(canalVolta),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      payload: rotaHome,
+    );
   }
 
   /// Aviso 24h antes do fim do teste — o contrato de produto §9 e a copy do
@@ -1010,22 +1033,4 @@ class BaruNotifications {
       payload: rotaRelatorio,
     );
   }
-
-  Future<void> _maybeShowMissed(String title, String body) async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = _dateKey(DateTime.now());
-    if (prefs.getString(_lastMissedKey) == today) return;
-
-    await _plugin.show(
-      id: _missedId,
-      title: title,
-      body: body,
-      notificationDetails: _detalhesDeLembrete(canalVolta),
-      payload: rotaHome,
-    );
-    await prefs.setString(_lastMissedKey, today);
-  }
-
-  String _dateKey(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }

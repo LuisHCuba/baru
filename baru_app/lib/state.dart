@@ -1232,11 +1232,14 @@ class AppState extends ChangeNotifier {
   ///
   /// `false` quer dizer "não há para onde voltar" — só então o sistema
   /// assume, e no Android isso fecha o app.
+  /// Há uma cena de conquista na tela agora.
+  bool get cenaNaFrente => temCelebracaoPendente && !celebracoesEmEspera;
+
   bool voltar() {
     // Uma cena de conquista na frente: o "voltar" do sistema a fecha. Sem
     // isto a única saída era o botão da cena — e com fonte grande ele podia
     // ficar fora da tela (auditoria da Onda 2, item 7, R1).
-    if (temCelebracaoPendente && !celebracoesEmEspera) {
+    if (cenaNaFrente) {
       celebrou();
       return true;
     }
@@ -1550,7 +1553,11 @@ class AppState extends ChangeNotifier {
       eveningBody: t.fill(t.notifEveningBody, {'n': displayName}),
       missedTitle: t.notifMissedTitle,
       missedBody: t.fill(t.notifMissedBody, {'n': displayName}),
-      daysAway: daysAway,
+      horaDaVolta: (horarioDoHabito(
+                sessions.map((s) => s.at),
+                agora: DateTime.now(),
+              )?.hora ??
+              17),
       trialActive: trial,
       trialEndsAt: trial ? paidPlanStart : null,
       trialTitle: t.notifTrialTitle,
@@ -1564,7 +1571,10 @@ class AppState extends ChangeNotifier {
       sessions.map((s) => s.at),
       agora: DateTime.now(),
     );
-    final presente = completedToday > 0;
+    // Uma sessão em curso já conta: o aviso "a raiz quebra à meia-noite"
+    // no meio do foco é o recado errado na hora errada, e se a sessão
+    // terminar com o processo parado ela é contada na volta (auditoria, N1).
+    final presente = completedToday > 0 || running;
     final agora = DateTime.now();
     final risco = avaliaRaizEmRisco(
       dias: streak,
@@ -1586,8 +1596,12 @@ class AppState extends ChangeNotifier {
     // Quem não esteve, amanhã pode ter a raiz crescida, segurada ou
     // recomeçada: o texto não leva número.
     final amanha = DateTime(agora.year, agora.month, agora.day + 1);
-    final horaDeAmanha = horaDoAvisoDaRaiz(habito);
+    final horaDeAmanha = horaDoAvisoDaRaiz(
+      habito,
+      horaDoRelatorio: evening ? eveningHour : null,
+    );
     TextoDeLembrete? textoDeAmanha;
+    var amanhaVaiQuebrar = false;
     if (presente && streak > 0) {
       final riscoAmanha = avaliaRaizEmRisco(
         dias: streak,
@@ -1596,6 +1610,7 @@ class AppState extends ChangeNotifier {
         congelamentos: weekdayIndex(amanha) == 0 ? 1 : freezesLeft,
         proximoMarco: RaizViva.proximoMarco(streak),
       );
+      amanhaVaiQuebrar = riscoAmanha?.vaiQuebrar ?? false;
       textoDeAmanha = textosDosLembretes(
         t,
         nomeDoPet: displayName,
@@ -1611,8 +1626,14 @@ class AppState extends ChangeNotifier {
     final convite = plano
         .where((l) => l.tipo == TipoDeLembrete.descanso)
         .map((l) => l.hora);
+    //
+    // A mesma regra de hoje (`planoDeLembretes`): a raiz que **vai quebrar**
+    // passa mesmo colada no relatório. Sem isso, na configuração padrão
+    // (relatório às 21h) o aviso de amanhã nunca saía (auditoria, N2).
     if (convite.any((h) => (h - horaDeAmanha).abs() < 3) ||
-        (evening && (eveningHour - horaDeAmanha).abs() < 3)) {
+        (evening &&
+            (eveningHour - horaDeAmanha).abs() < 3 &&
+            !amanhaVaiQuebrar)) {
       textoDeAmanha = null;
     }
 
@@ -2018,6 +2039,8 @@ class AppState extends ChangeNotifier {
     _iniciaTicker();
     unawaited(_anunciaSessao());
     unawaited(_comecaAVigiar());
+    // O aviso da raiz de hoje sai da agenda enquanto ela está sendo regada.
+    unawaited(_syncNotificationSchedules());
   }
 
   /// Põe de pé quem chama a pessoa de volta quando ela sai do app.
@@ -2137,7 +2160,13 @@ class AppState extends ChangeNotifier {
       // A cena diz "cresceu **hoje**": só cabe no dia em que a sessão
       // acabou. A que terminou ontem com o app fechado conta como presença
       // de ontem, mas não ganha festa hoje (auditoria da Onda 2, item 7, R3).
-      if (dateOnly(em) == dateOnly(DateTime.now())) {
+      //
+      // E só no dia em que ela é **contada**: a presença entra no dia de
+      // `lastOpenDate`. Uma sessão das 23:40 às 00:05 com o app fechado
+      // conta para ontem (o calendário só vira depois); acender "cresceu
+      // hoje" aí mentia sobre hoje, que segue sem presença (auditoria, R3').
+      final hoje = dateOnly(DateTime.now());
+      if (dateOnly(em) == hoje && dateOnly(lastOpenDate) == hoje) {
         raizACelebrar = streak;
         raizRecorde = recorde;
       }
@@ -2273,6 +2302,8 @@ class AppState extends ChangeNotifier {
     _markSync(_syncSession);
     unawaited(BaruNotifications.instance.encerraSessao());
     unawaited(VigiaService.instance.para());
+    // Desistiu: o aviso da raiz de hoje volta, se ainda fizer sentido.
+    unawaited(_syncNotificationSchedules());
     notifyListeners();
   }
 

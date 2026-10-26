@@ -26,6 +26,34 @@ void main() {
       }
     });
 
+    test('na configuração padrão (sem hábito, relatório às 21h) o convite '
+        'existe, e a raiz nunca cai no minuto do relatório', () {
+      // Reauditoria da Onda 2, N2: o convite das 19h não cabia a três horas
+      // do relatório e nunca era agendado.
+      final calmo = planoDeLembretes(
+        habito: null,
+        descansoFeitoHoje: false,
+        risco: null,
+        relatorioLigado: true,
+        horaDoRelatorio: 21,
+      );
+      expect(calmo.map((l) => l.tipo), [TipoDeLembrete.descanso]);
+      final emRisco = planoDeLembretes(
+        habito: null,
+        descansoFeitoHoje: false,
+        risco: avaliaRaizEmRisco(dias: 6, presenteHoje: false, congelamentos: 0),
+        relatorioLigado: true,
+        horaDoRelatorio: 21,
+      );
+      final raiz =
+          emRisco.firstWhere((l) => l.tipo == TipoDeLembrete.raizEmRisco);
+      expect(raiz.hora, isNot(21));
+      expect(
+        emRisco.map((l) => l.tipo),
+        containsAll([TipoDeLembrete.raizEmRisco, TipoDeLembrete.descanso]),
+      );
+    });
+
     test('nenhum lembrete fora de 8h–21h, qualquer que seja o hábito', () {
       for (var h = 0; h < 24; h++) {
         final plano = planoDeLembretes(
@@ -61,6 +89,21 @@ void main() {
               .titulo,
       };
       expect(titulos, hasLength(3));
+    });
+
+    test('o recado de volta não cobra (N3) e o do marco diz quem quebra (N4)',
+        () {
+      for (final lang in ['pt', 'en', 'es', 'zh']) {
+        final t = T(lang);
+        final volta = '${t.notifMissedTitle} ${t.notifMissedBody}'.toLowerCase();
+        for (final cobranca in ['falta', 'missed', 'echo de menos', '想你']) {
+          expect(volta, isNot(contains(cobranca)), reason: lang);
+        }
+        final marco = t.raizRiscoMarco;
+        for (final ambiguo in ['Ela quebra', 'They break', 'Se rompe', '它会']) {
+          expect(marco, isNot(contains(ambiguo)), reason: lang);
+        }
+      }
     });
 
     test('o aviso de amanhã sem número não afirma tamanho de raiz', () {

@@ -490,6 +490,18 @@ class T {
   String get crescFalta => s('crescFalta');
   String get crescNoAuge => s('crescNoAuge');
   String get crescRotulo => s('crescRotulo');
+  String get raizRecorde => s('raizRecorde');
+  String get raizFaltaGalho1 => s('raizFaltaGalho1');
+  String get raizFaltaGalho => s('raizFaltaGalho');
+  String get raizLinha1 => s('raizLinha1');
+  String get raizLinha2 => s('raizLinha2');
+  String get raizLinha3 => s('raizLinha3');
+  String get raizLinha4 => s('raizLinha4');
+  String get raizLinha5 => s('raizLinha5');
+  String get raizGalhoNovo => s('raizGalhoNovo');
+  String get raizGalhoSub => s('raizGalhoSub');
+  String get raizDiaRotulo => s('raizDiaRotulo');
+  String get raizDiasRotulo => s('raizDiasRotulo');
   String get celebChegadaSub => s('celebChegadaSub');
   String get trilhaVaziaT => s('trilhaVaziaT');
   String get trilhaVaziaB => s('trilhaVaziaB');
@@ -749,7 +761,7 @@ const _pt = <String, Object>{
   'crescCresceu': '{a} cresceu!',
   'crescAgora': 'Agora: {e}',
   'crescSubFilhote': 'Cada sessão de foco com você faz {a} crescer.',
-  'crescSubJovem': 'Cada vez mais forte. Sigam juntos.',
+  'crescSubJovem': 'Cada vez mais forte. Continue focando com {a}.',
   'crescSubAdulto': 'Crescimento completo. Agora é seguir firme.',
   'crescSubPleno': 'O auge. Nada disso se compra: foi o seu foco.',
   'crescFaltaNascer1': 'Falta 1 sessão de foco para {a} nascer',
@@ -760,6 +772,18 @@ const _pt = <String, Object>{
   'crescFalta': 'Faltam {n} sessões para crescer',
   'crescNoAuge': '{a} está no auge',
   'crescRotulo': 'Crescimento',
+  'raizRecorde': 'A mais funda que você já teve.',
+  'raizFaltaGalho1': 'Falta 1 dia para o próximo galho.',
+  'raizFaltaGalho': 'Faltam {n} dias para o próximo galho.',
+  'raizLinha1': 'Mais funda que ontem.',
+  'raizLinha2': 'Ficou mais firme.',
+  'raizLinha3': 'Mais um dia na terra.',
+  'raizLinha4': 'Ela segura o hábito por você.',
+  'raizLinha5': 'Cresceu enquanto você estava longe da tela.',
+  'raizGalhoNovo': 'Galho novo!',
+  'raizGalhoSub': '{n} dias de raiz. Isso só o tempo constrói.',
+  'raizDiaRotulo': 'dia',
+  'raizDiasRotulo': 'dias',
   'celebChegadaSub': '{a} passou o dia esperando por isso.',
   'trilhaVaziaT': 'A trilha começa amanhã',
   'trilhaVaziaB': 'Termine o onboarding e o primeiro passo aparece aqui.',
@@ -1277,7 +1301,7 @@ const _en = <String, Object>{
   'crescCresceu': '{a} grew!',
   'crescAgora': 'Now: {e}',
   'crescSubFilhote': 'Every focus session with you helps {a} grow.',
-  'crescSubJovem': 'Stronger every day. Keep going together.',
+  'crescSubJovem': 'Stronger every day. Keep focusing with {a}.',
   'crescSubAdulto': 'Fully grown. Now keep it steady.',
   'crescSubPleno': 'Their prime. None of this can be bought: it was your focus.',
   'crescFaltaNascer1': '1 focus session until {a} hatches',
@@ -1288,6 +1312,18 @@ const _en = <String, Object>{
   'crescFalta': '{n} sessions to grow',
   'crescNoAuge': '{a} is in their prime',
   'crescRotulo': 'Growth',
+  'raizRecorde': 'The deepest you\'ve ever had.',
+  'raizFaltaGalho1': '1 day until the next branch.',
+  'raizFaltaGalho': '{n} days until the next branch.',
+  'raizLinha1': 'Deeper than yesterday.',
+  'raizLinha2': 'A little firmer now.',
+  'raizLinha3': 'One more day in the soil.',
+  'raizLinha4': 'It holds the habit for you.',
+  'raizLinha5': 'It grew while you were away from the screen.',
+  'raizGalhoNovo': 'A new branch!',
+  'raizGalhoSub': '{n} days of roots. Only time builds this.',
+  'raizDiaRotulo': 'day',
+  'raizDiasRotulo': 'days',
   'celebChegadaSub': '{a} spent the day waiting for this.',
   'trilhaVaziaT': 'The path starts tomorrow',
   'trilhaVaziaB': 'Finish onboarding and the first step shows up here.',
@@ -1795,7 +1831,7 @@ const _es = <String, Object>{
   'crescCresceu': '¡{a} creció!',
   'crescAgora': 'Ahora: {e}',
   'crescSubFilhote': 'Cada sesión de foco contigo hace crecer a {a}.',
-  'crescSubJovem': 'Cada vez más fuerte. Sigan juntos.',
+  'crescSubJovem': 'Cada vez más fuerte. Sigue enfocándote con {a}.',
   'crescSubAdulto': 'Crecimiento completo. Ahora, a seguir firmes.',
   'crescSubPleno': 'En su mejor momento. Nada de esto se compra: fue tu foco.',
   'crescFaltaNascer1': 'Falta 1 sesión de foco para que {a} nazca',
@@ -1806,6 +1842,18 @@ const _es = <String, Object>{
   'crescFalta': 'Faltan {n} sesiones para crecer',
   'crescNoAuge': '{a} está en su mejor momento',
   'crescRotulo': 'Crecimiento',
+  'raizRecorde': 'La más profunda que has tenido.',
+  'raizFaltaGalho1': 'Falta 1 día para la próxima rama.',
+  'raizFaltaGalho': 'Faltan {n} días para la próxima rama.',
+  'raizLinha1': 'Más profunda que ayer.',
+  'raizLinha2': 'Quedó más firme.',
+  'raizLinha3': 'Un día más en la tierra.',
+  'raizLinha4': 'Sostiene el hábito por ti.',
+  'raizLinha5': 'Creció mientras estabas lejos de la pantalla.',
+  'raizGalhoNovo': '¡Rama nueva!',
+  'raizGalhoSub': '{n} días de raíz. Eso solo lo construye el tiempo.',
+  'raizDiaRotulo': 'día',
+  'raizDiasRotulo': 'días',
   'celebChegadaSub': '{a} pasó el día esperando esto.',
   'trilhaVaziaT': 'El camino empieza mañana',
   'trilhaVaziaB': 'Termina el onboarding y el primer paso aparece aquí.',
@@ -2306,7 +2354,7 @@ const _zh = <String, Object>{
   'estOvo': '蛋',
   'estNinho': '巢中',
   'estFilhote': '幼崽',
-  'estJovem': '少年',
+  'estJovem': '成长期',
   'estAdulto': '成年',
   'estPleno': '巅峰',
   'crescNasceu': '{a} 破壳了！',
@@ -2314,7 +2362,7 @@ const _zh = <String, Object>{
   'crescCresceu': '{a} 长大了！',
   'crescAgora': '现在：{e}',
   'crescSubFilhote': '和你一起的每次专注都让 {a} 成长。',
-  'crescSubJovem': '一天比一天强壮。继续一起努力。',
+  'crescSubJovem': '一天比一天强壮。继续和 {a} 一起专注吧。',
   'crescSubAdulto': '已经完全长大。接下来稳稳坚持。',
   'crescSubPleno': '巅峰状态。这些都买不到：是你的专注换来的。',
   'crescFaltaNascer1': '再专注 1 次，{a} 就会破壳',
@@ -2325,6 +2373,18 @@ const _zh = <String, Object>{
   'crescFalta': '再完成 {n} 次就会长大',
   'crescNoAuge': '{a} 正值巅峰',
   'crescRotulo': '成长',
+  'raizRecorde': '这是你扎得最深的一次根。',
+  'raizFaltaGalho1': '再坚持 1 天就会长出新枝。',
+  'raizFaltaGalho': '再坚持 {n} 天就会长出新枝。',
+  'raizLinha1': '比昨天更深了。',
+  'raizLinha2': '扎得更稳了。',
+  'raizLinha3': '又在土里多待了一天。',
+  'raizLinha4': '它替你守住了这个习惯。',
+  'raizLinha5': '你离开屏幕的时候，它在生长。',
+  'raizGalhoNovo': '长出新枝了！',
+  'raizGalhoSub': '{n} 天的根。只有时间能造就这些。',
+  'raizDiaRotulo': '天',
+  'raizDiasRotulo': '天',
   'celebChegadaSub': '{a} 等了一整天。',
   'trilhaVaziaT': '路径明天开始',
   'trilhaVaziaB': '完成引导后，第一步就会出现在这里。',

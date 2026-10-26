@@ -33,6 +33,7 @@ import 'state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 import 'widgets/celebracao.dart';
+import 'widgets/cena_da_raiz.dart';
 import 'widgets/crescimento.dart';
 import 'widgets/saida.dart';
 import 'widgets/share_sheet.dart';
@@ -152,8 +153,12 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     if (s != AppLifecycleState.resumed) {
       WidgetService.instance.atualiza(state.estadoDoWidget);
       // Pelo mesmo motivo, os quadros do bicho da sobreposição: ela só
-      // aparece com a pessoa noutro app, e é agora que ela sai.
-      unawaited(QuadrosDoBicho.instance.atualiza(state.aparenciaDoBicho));
+      // aparece com a pessoa noutro app, e é agora que ela sai. Só em
+      // `hidden` — a tela do app já saiu —, não em `inactive`, que também é
+      // a cortina de notificações aberta por cima do app ainda animando.
+      if (s == AppLifecycleState.hidden) {
+        unawaited(QuadrosDoBicho.instance.atualiza(state.aparenciaDoBicho));
+      }
       // Fecha a conta do tempo dentro do Baru. Sem isto, olhar o bicho
       // contaria como descanso — e a missão é justamente ficar longe.
       state.saiuDoApp();
@@ -320,6 +325,15 @@ class _Casca extends StatelessWidget {
   /// Conquista aparece por cima de qualquer tela, inclusive da sessão.
   Widget _celebracao(AppState app) {
     final t = app.t;
+    final raiz = app.raizACelebrar;
+    if (raiz != null) {
+      return CenaDaRaiz(
+        key: ValueKey('raiz-$raiz'),
+        dias: raiz,
+        recorde: app.raizRecorde,
+        aoFechar: app.celebrou,
+      );
+    }
     if (app.cresceuSemCelebrar) {
       return CenaDoCrescimento(
         // A chave muda com o estágio: duas viradas seguidas são duas cenas,
@@ -349,6 +363,7 @@ class _Casca extends StatelessWidget {
         subtitulo: t.fill(t.celebChegadaSub, {'a': app.displayName}),
         icone: Icons.favorite_rounded,
         cor: Cores.acento,
+        som: SomDoBaru.chegada,
         aoFechar: app.celebrou,
       );
     }
@@ -360,6 +375,7 @@ class _Casca extends StatelessWidget {
       // Marco da trilha também é recompensa. A saudação da chegada, logo
       // acima, não é — e por isso continua chegando sozinha.
       precisaCavar: true,
+      som: SomDoBaru.marco,
       aoFechar: app.celebrou,
     );
   }

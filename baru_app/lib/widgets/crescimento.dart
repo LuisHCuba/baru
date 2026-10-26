@@ -229,7 +229,7 @@ class _CenaDoCrescimentoState extends State<CenaDoCrescimento>
     if (!_revelou && t >= _clarao) {
       _revelou = true;
       HapticFeedback.heavyImpact();
-      unawaited(SomService.instance.toca(SomDoBaru.conquista));
+      unawaited(SomService.instance.toca(SomDoBaru.crescimento));
     }
   }
 
@@ -320,16 +320,33 @@ class _CenaDoCrescimentoState extends State<CenaDoCrescimento>
                 child: _bicho(app, widget.antes),
               );
             } else if (v < _piscaAte) {
-              // A forma pisca entre a antiga e a nova, acelerando de ~4 a
-              // ~12 vezes por segundo. Silhueta clara: o que importa aqui é
-              // o contorno mudando.
+              // A forma oscila entre a antiga e a nova, acelerando de 1 a
+              // 3 ciclos por segundo, num esmaecer suave e não em troca seca.
+              // A primeira versão trocava de silhueta até 30 vezes por
+              // segundo, creme sobre véu escuro — pisca-pisca acima do que
+              // as diretrizes de acessibilidade recomendam (auditoria da
+              // Onda 2, 6.4).
               final u = (v - _tremeAte) / (_piscaAte - _tremeAte);
-              final fase = u * (4 + 8 * u) * 2.6;
-              final nova = math.sin(fase * math.pi * 2) > 0;
-              palco = _bicho(
-                app,
-                nova ? widget.depois : widget.antes,
-                silhueta: Cores.superficie,
+              final segundos = (_piscaAte - _tremeAte) *
+                  CenaDoCrescimento.duracao.inMilliseconds /
+                  1000;
+              // Frequência 1 → 3 Hz: ciclos = ∫ (1 + 2u) dt.
+              final ciclos = segundos * (u + u * u);
+              final nova = 0.5 - 0.5 * math.cos(ciclos * math.pi * 2);
+              palco = Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
+                    opacity: 1 - nova,
+                    child: _bicho(app, widget.antes,
+                        silhueta: Cores.superficie),
+                  ),
+                  Opacity(
+                    opacity: nova,
+                    child: _bicho(app, widget.depois,
+                        silhueta: Cores.superficie),
+                  ),
+                ],
               );
             } else {
               final u = ((v - _piscaAte) / (1 - _piscaAte)).clamp(0.0, 1.0);

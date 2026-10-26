@@ -28,6 +28,7 @@ object QuadrosDoBicho {
     private const val K_CHAVE = "chave"
     private const val K_RESPIRO = "respiro"
     private const val K_PISCAR = "piscar"
+    private const val K_VERSAO = "versaoDoApp"
 
     /** Respiro em ordem (peito vazio → cheio) e o olho fechado. */
     class Quadros(val respiro: List<Bitmap>, val piscar: Bitmap)
@@ -51,13 +52,57 @@ object QuadrosDoBicho {
             Log.w(VigiaDaSessao.TAG_LOG, "quadros: recusados (faltam arquivos)")
             return false
         }
-        prefs(ctx).edit()
+        val p = prefs(ctx)
+        val antigos = caminhosGravados(p).toSet()
+        // As preferências trocam **depois** de os arquivos novos existirem
+        // (conferido acima) e num `commit` só: quem ler no meio vê o
+        // conjunto velho inteiro ou o novo inteiro, nunca metade de cada.
+        p.edit()
             .putString(K_CHAVE, chave)
             // Quebra de linha como separador: nenhum caminho do Android a tem.
             .putString(K_RESPIRO, respiro.joinToString("\n"))
             .putString(K_PISCAR, piscar)
-            .apply()
+            .putLong(K_VERSAO, versaoDoApp(ctx))
+            .commit()
+        // Os arquivos da aparência anterior saem. Uma sobreposição que
+        // esteja na tela já os decodificou; ninguém mais os lê.
+        for (velho in antigos - todos.toSet()) {
+            try {
+                File(velho).delete()
+            } catch (_: Exception) {
+            }
+        }
         return true
+    }
+
+    /**
+     * A chave dos quadros que estão valendo, ou `null`.
+     *
+     * Nula também quando o app foi atualizado desde a gravação: o desenho do
+     * bicho pode ter mudado, e quadros de uma versão velha mostrariam o
+     * bicho antigo por cima dos outros apps.
+     */
+    fun chaveAtual(ctx: Context): String? {
+        val p = prefs(ctx)
+        if (p.getLong(K_VERSAO, -1L) != versaoDoApp(ctx)) return null
+        return p.getString(K_CHAVE, null)
+    }
+
+    private fun caminhosGravados(p: SharedPreferences): List<String> =
+        (p.getString(K_RESPIRO, null)?.split("\n").orEmpty() +
+            listOfNotNull(p.getString(K_PISCAR, null)))
+            .filter { it.isNotEmpty() }
+
+    @Suppress("DEPRECATION")
+    private fun versaoDoApp(ctx: Context): Long = try {
+        val info = ctx.packageManager.getPackageInfo(ctx.packageName, 0)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            info.longVersionCode
+        } else {
+            info.versionCode.toLong()
+        }
+    } catch (_: Exception) {
+        0L
     }
 
     /**

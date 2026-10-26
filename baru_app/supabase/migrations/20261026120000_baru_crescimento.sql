@@ -1,4 +1,4 @@
--- 16 — O crescimento do bicho, por espécie.
+-- O crescimento do bicho, por espécie.
 --
 -- O bicho passou a nascer (ovo ou recém-nascido no ninho) e crescer em cinco
 -- estágios, e a régua é **quantas sessões de foco a pessoa concluiu com

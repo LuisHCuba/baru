@@ -24,6 +24,7 @@ class Celebracao extends StatefulWidget {
     this.icone = Icons.auto_awesome_rounded,
     this.cor = Cores.acento,
     this.precisaCavar = false,
+    this.som = SomDoBaru.conquista,
   });
 
   final String titulo;
@@ -40,6 +41,10 @@ class Celebracao extends StatefulWidget {
   /// te ver" e não um prêmio — fazer alguém cavar para receber um
   /// cumprimento seria pedágio.
   final bool precisaCavar;
+
+  /// O som da cena. Cada conquista tem o seu: o de herói gasto todo dia na
+  /// saudação deixava de dizer "conquista".
+  final SomDoBaru som;
 
   static const chave = Key('celebracao');
   static const chaveDaToca = Key('celebracao-toca');
@@ -81,7 +86,7 @@ class _CelebracaoState extends State<Celebracao>
   void _explode() {
     HapticFeedback.heavyImpact();
     // O som acompanha o háptico: os dois marcam o mesmo instante.
-    unawaited(SomService.instance.toca(SomDoBaru.conquista));
+    unawaited(SomService.instance.toca(widget.som));
     _c.forward();
     // Fecha sozinha: conquista não pode virar bloqueio.
     _c.addStatusListener((s) {

@@ -93,6 +93,8 @@ void main() {
       s.nivelCelebrado = 0;
       s.xp = 100000;
 
+      s.celebrou(); // a raiz do dia vem primeiro (ver raiz_cena_test)
+      expect(s.cresceuSemCelebrar, isTrue);
       s.celebrou();
       expect(s.cresceuSemCelebrar, isFalse);
       expect(s.subiuDeNivel, isTrue, reason: 'o nível espera a vez');
@@ -248,6 +250,71 @@ void main() {
         // "Extremamente visível": o filhote tem no máximo 3/4 da altura do
         // adulto.
         expect(f.altura, lessThan(a.altura * 0.75), reason: sp.name);
+      }
+    });
+
+    testWidgets('na água o filhote não afunda: fica com a mesma parte de '
+        'fora que o adulto', (tester) async {
+      // Auditoria da Onda 2 (6.1): o porte encolhia pelos pés e a linha
+      // d'água ficava onde estava — o filhote nadava com a água nos olhos.
+      Future<double> foraDagua(Species sp, EstagioDoBicho e) async {
+        final chave = GlobalKey();
+        await tester.pumpWidget(MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Center(
+            child: RepaintBoundary(
+              key: chave,
+              child: PetView(
+                species: sp,
+                mood: Mood.content,
+                activity: Activity.swim,
+                coat: 0,
+                interativo: false,
+                estagio: e,
+                width: 200,
+                height: 150,
+              ),
+            ),
+          ),
+        ));
+        final b = chave.currentContext!.findRenderObject()!
+            as RenderRepaintBoundary;
+        late double fracao;
+        await tester.runAsync(() async {
+          final img = await b.toImage();
+          final raw =
+              await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+          final w = img.width, h = img.height;
+          img.dispose();
+          final px = raw!.buffer.asUint8List();
+          final linha = PetView.linhaDaguaEm(h.toDouble()).floor();
+          var acima = 0, total = 0;
+          for (var y = 0; y < h; y++) {
+            for (var x = 0; x < w; x++) {
+              if (px[(y * w + x) * 4 + 3] > 200) {
+                total++;
+                if (y < linha) acima++;
+              }
+            }
+          }
+          fracao = acima / total;
+        });
+        return fracao;
+      }
+
+      for (final sp in [
+        Species.capybara,
+        Species.otter,
+        Species.tortoise,
+        Species.axolotl,
+        Species.penguin,
+      ]) {
+        final adulto = await foraDagua(sp, EstagioDoBicho.adulto);
+        for (final e in [EstagioDoBicho.filhote, EstagioDoBicho.jovem]) {
+          final f = await foraDagua(sp, e);
+          expect(f, greaterThan(adulto - 0.12),
+              reason: '${sp.name} ${e.name}: $f fora d\'água, adulto $adulto');
+        }
       }
     });
 

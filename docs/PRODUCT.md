@@ -79,6 +79,13 @@ pelagem própria de mais de um tom, desenho próprio em `widgets/pet.dart` e íc
 de app próprio. Travado por `test/l10n_especies_test.dart`,
 `test/especies_test.dart` e `test/manifest_release_test.dart`.
 
+**Crescimento (ADR-024).** O bicho nasce e cresce com as sessões de foco
+concluídas **com aquela espécie**: começo (ovo para coruja, pinguim,
+tartaruga e axolote; recém-nascido no ninho para os mamíferos) → filhote (1
+sessão) → jovem (5) → adulto (15) → pleno (40). Nunca regride, nunca se
+compra, e o último estágio é o auge, nunca a velhice. Cada estágio novo tem
+cena própria. Travado por `test/crescimento_test.dart`.
+
 ### 5. Economia — folhas
 
 | Sessão | Recompensa |

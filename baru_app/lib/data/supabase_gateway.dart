@@ -233,7 +233,7 @@ class BaruSupabase {
     'baru_onboarding_answers': {'respostas'},
     // migrations 9 e 14
     'baru_settings': {'evening_hour', 'evening_minute', 'som'},
-    // migrations 10, 15 e 16
+    // migrations 10, 15 e a do crescimento
     'baru_progression': {
       'sessoes_concluidas',
       'melhor_sequencia',
@@ -241,7 +241,7 @@ class BaruSupabase {
       'missoes_resgatadas',
       'dias_abaixo_na_semana',
       'semana_de',
-      // migration 16
+      // migration 20261026120000 (crescimento)
       'sessoes_por_especie',
       'estagio_celebrado',
     },

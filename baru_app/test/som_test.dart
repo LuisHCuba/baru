@@ -34,55 +34,68 @@ void main() {
   });
 
   group('os arquivos', () {
-    test('todo som do enum tem arquivo em disco', () {
-      for (final s in SomDoBaru.values) {
-        final f = File('assets/${s.arquivo}');
-        expect(f.existsSync(), isTrue, reason: s.arquivo);
-        expect(f.lengthSync(), greaterThan(1000), reason: '${s.arquivo} vazio');
+    final todos = [
+      for (final s in SomDoBaru.values)
+        for (final a in s.arquivos) (s, a),
+    ];
+
+    test('todo som do enum tem todas as tomadas em disco', () {
+      for (final (_, a) in todos) {
+        final f = File('assets/$a');
+        expect(f.existsSync(), isTrue, reason: a);
+        expect(f.lengthSync(), greaterThan(1000), reason: '$a vazio');
       }
     });
 
-    test('são WAV mono de verdade, e curtos', () {
-      for (final s in SomDoBaru.values) {
-        final b = File('assets/${s.arquivo}').readAsBytesSync();
-        expect(String.fromCharCodes(b.sublist(0, 4)), 'RIFF', reason: s.name);
-        expect(String.fromCharCodes(b.sublist(8, 12)), 'WAVE', reason: s.name);
+    test('são WAV mono 48 kHz, e do tamanho do papel de cada um', () {
+      for (final (s, a) in todos) {
+        final b = File('assets/$a').readAsBytesSync();
+        expect(String.fromCharCodes(b.sublist(0, 4)), 'RIFF', reason: a);
+        expect(String.fromCharCodes(b.sublist(8, 12)), 'WAVE', reason: a);
 
         final d = ByteData.sublistView(b);
         final canais = d.getUint16(22, Endian.little);
         final taxa = d.getUint32(24, Endian.little);
         final bits = d.getUint16(34, Endian.little);
-        expect(canais, 1, reason: '${s.name}: mono basta e pesa metade');
-        expect(taxa, 44100, reason: s.name);
-        expect(bits, 16, reason: s.name);
+        expect(canais, 1, reason: '$a: mono basta e pesa metade');
+        // 48 kHz: a taxa nativa do mixer do Android, sem reamostragem
+        // (laudo 04, §5.4).
+        expect(taxa, 48000, reason: a);
+        expect(bits, 16, reason: a);
 
-        // Duração pelo tamanho: cabeçalho de 44 bytes + PCM.
         final segundos = (b.length - 44) / (taxa * canais * (bits ~/ 8));
-        expect(
-          segundos,
-          lessThan(0.7),
-          reason: '${s.name} dura ${segundos}s — som de app não é música',
-        );
-        expect(segundos, greaterThan(0.03), reason: s.name);
+        // Gesto (toque, cavar) é curto; herói e cena podem respirar, mas som
+        // de app não é música.
+        final teto = switch (s) {
+          SomDoBaru.toque || SomDoBaru.cavar => 0.5,
+          _ => 3.0,
+        };
+        expect(segundos, lessThan(teto), reason: '$a dura ${segundos}s');
+        expect(segundos, greaterThan(0.03), reason: a);
       }
     });
 
     test('nenhum arquivo estoura em silêncio ou começa com clique', () {
-      for (final s in SomDoBaru.values) {
-        final b = File('assets/${s.arquivo}').readAsBytesSync();
+      for (final (_, a) in todos) {
+        final b = File('assets/$a').readAsBytesSync();
         final pcm = Int16List.sublistView(Uint8List.fromList(b.sublist(44)));
-        expect(pcm.length, greaterThan(100), reason: s.name);
+        expect(pcm.length, greaterThan(100), reason: a);
 
         // Primeira amostra perto de zero: começar num pico é o "clique".
-        expect(pcm.first.abs(), lessThan(2000), reason: '${s.name} estala ao começar');
+        expect(pcm.first.abs(), lessThan(2000), reason: '$a estala ao começar');
         // Última também: cortar no meio da onda estala ao terminar.
-        expect(pcm.last.abs(), lessThan(2000), reason: '${s.name} estala ao terminar');
+        expect(pcm.last.abs(), lessThan(2000), reason: '$a estala ao terminar');
 
-        // E não pode estar clipando.
+        // Pico ≤ −1 dBFS (laudo 04, §5.4), e não é silêncio.
         final pico = pcm.map((v) => v.abs()).reduce((a, b) => a > b ? a : b);
-        expect(pico, lessThan(32767), reason: '${s.name} clipa');
-        expect(pico, greaterThan(3000), reason: '${s.name} é silêncio');
+        expect(pico, lessThanOrEqualTo(29205), reason: '$a passa de −1 dBFS');
+        expect(pico, greaterThan(1000), reason: '$a é silêncio');
       }
+    });
+
+    test('o pubspec empacota a pasta dos sons', () {
+      final pub = File('pubspec.yaml').readAsStringSync();
+      expect(pub, contains('assets/sons/'));
     });
   });
 
@@ -172,9 +185,13 @@ void main() {
         ..debugFast = false
         ..dur = 25;
       s.startSession();
+      // A sessão dura: o som de início e o de fim não caem no mesmo
+      // instante, que o limitador do serviço calaria.
+      relogio = relogio.add(const Duration(minutes: 25));
       s.sessionEndsAt = DateTime.now().subtract(const Duration(seconds: 1));
       s.reconcileSession();
 
+      expect(SomService.espiao, contains(SomDoBaru.inicio));
       expect(SomService.espiao, contains(SomDoBaru.fim));
       s.dispose();
     });

@@ -930,16 +930,18 @@ sessões por espécie — e a síntese (`00-SINTESE.md`) escolheu a última.
    resultante conta como já celebrado. O app está em teste fechado; quem já
    usava vê o estágio real do bicho sem a cena de "nascer" de novo. Espécie
    liberada depois começa do zero — nunca foi vista crescida.
-6. **Persistência:** migration 16 (`20261026120000_baru_crescimento.sql`),
+6. **Persistência:** migration `20261026120000_baru_crescimento.sql`,
    aditiva — duas colunas jsonb em `baru_progression`, opcionais no gateway
    para o app novo funcionar contra banco ainda sem elas.
 7. **Desenho:** o `CustomPainter` continua a fonte única; o estágio muda
    porte (pelos pés), cabeça e olho (o esquema de bebê), penugem, tufo da
-   coruja e detalhes do pleno. O desenho de vitrine (seletor, loja,
-   paywall) segue adulto; só o bicho da pessoa passa o estágio dele.
+   coruja e detalhes do pleno. O desenho de vitrine (seletor de espécie,
+   onboarding) segue adulto. Onde aparece **o bicho da pessoa** — home,
+   sessão, resultado, paywall, widget, sobreposição — vai o estágio dele; a
+   prévia de roupa da loja mostra no mínimo o filhote, porque ovo não veste.
 
 **Consequências.** Quem tinha um bicho adulto com poucas sessões o vê
 menor depois da atualização — aceito porque não há público ainda. Os
-limiares precisam de calibração com uso real. O detalhe do pleno existe só
-na capivara (passarinho) e na coruja (sobrancelha de penas); as outras
-espécies ganham o delas no redesenho da Onda 3.
+limiares precisam de calibração com uso real. O detalhe do pleno é pequeno
+(um visitante ou um traço do auge por espécie); o redesenho da Onda 3 pode
+aprofundá-lo.

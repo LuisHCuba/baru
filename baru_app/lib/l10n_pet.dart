@@ -13,7 +13,9 @@
 /// prefixadas com `pet` e nenhuma disputa nome com o que já existe.
 library;
 
+import 'data/crescimento.dart';
 import 'l10n.dart';
+import 'models.dart';
 import 'widgets/pet.dart';
 
 const textosDoPet = <String, Map<String, String>>{
@@ -25,6 +27,8 @@ const textosDoPet = <String, Map<String, String>>{
     'petFazendo_petisco': '{n} está petiscando.',
     'petFazendo_cochilo': '{n} está dormindo.',
     'petFazendo_ocioso': '{n} está por aí.',
+    'petNoOvo': '{n} está no ovo, quase pronto para nascer.',
+    'petNoNinho': '{n} está dormindo no ninho.',
     'petSessao_nado': 'banho de {m} min',
     'petSessao_voo': 'voo de {m} min',
     'petSessao_brincadeira': 'brincadeira de {m} min',
@@ -38,6 +42,8 @@ const textosDoPet = <String, Map<String, String>>{
     'petFazendo_petisco': '{n} is having a snack.',
     'petFazendo_cochilo': '{n} is sleeping.',
     'petFazendo_ocioso': '{n} is hanging around.',
+    'petNoOvo': '{n} is in the egg, almost ready to hatch.',
+    'petNoNinho': '{n} is asleep in the nest.',
     'petSessao_nado': '{m} minute swim',
     'petSessao_voo': '{m} minute flight',
     'petSessao_brincadeira': '{m} minutes of play',
@@ -51,6 +57,8 @@ const textosDoPet = <String, Map<String, String>>{
     'petFazendo_petisco': '{n} está picando algo.',
     'petFazendo_cochilo': '{n} está durmiendo.',
     'petFazendo_ocioso': '{n} anda por ahí.',
+    'petNoOvo': '{n} está en el huevo, casi listo para nacer.',
+    'petNoNinho': '{n} duerme en el nido.',
     'petSessao_nado': 'baño de {m} min',
     'petSessao_voo': 'vuelo de {m} min',
     'petSessao_brincadeira': 'juego de {m} min',
@@ -64,6 +72,8 @@ const textosDoPet = <String, Map<String, String>>{
     'petFazendo_petisco': '{n} 正在吃点心。',
     'petFazendo_cochilo': '{n} 正在睡觉。',
     'petFazendo_ocioso': '{n} 就在旁边。',
+    'petNoOvo': '{n} 还在蛋里，快要破壳了。',
+    'petNoNinho': '{n} 正在巢里睡觉。',
     'petSessao_nado': '{m} 分钟游泳',
     'petSessao_voo': '{m} 分钟飞翔',
     'petSessao_brincadeira': '{m} 分钟玩耍',
@@ -82,6 +92,18 @@ extension TextosDoPet on T {
   /// troca, uma ação sem texto devolve a própria chave em vez de derrubar o
   /// app, que é o contrato de `T.s`.
   String petFazendo(AcaoDoBicho acao) => s('petFazendo_${acao.name}');
+
+  /// O que o bicho está fazendo, contando com o estágio: no começo da vida
+  /// ele não "está por aí" nem "dormindo" genérico — está no ovo, ou no
+  /// ninho.
+  String petFazendoNoEstagio(
+    AcaoDoBicho acao,
+    EstagioDoBicho estagio,
+    Species especie,
+  ) {
+    if (estagio != EstagioDoBicho.inicio) return petFazendo(acao);
+    return Crescimento.botaOvo(especie) ? s('petNoOvo') : s('petNoNinho');
+  }
 
   /// O rótulo da sessão de foco: "banho de 25 min", "voo de 25 min".
   ///

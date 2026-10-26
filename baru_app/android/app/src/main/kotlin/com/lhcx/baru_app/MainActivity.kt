@@ -272,6 +272,9 @@ class MainActivity : FlutterFragmentActivity() {
                     )
                 }
 
+                "quadrosChave" ->
+                    result.success(QuadrosDoBicho.chaveAtual(this))
+
                 "esconde" -> {
                     startService(
                         Intent(this, OverlayDoBaru::class.java).apply {

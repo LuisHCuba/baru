@@ -244,6 +244,19 @@ class AppState extends ChangeNotifier {
   /// Houve subida de nivel ainda nao comemorada?
   bool get subiuDeNivel => nivel > nivelCelebrado;
 
+  /// A raiz cresceu hoje e a cena ainda não passou: os dias novos.
+  ///
+  /// Em memória de propósito. A sessão que termina com o app fechado é
+  /// concluída na abertura seguinte (`reconcileSession`), e é aí que isto
+  /// acende — a cena chega quando a pessoa volta. Se o processo morrer
+  /// **depois** de concluir e antes da cena, ela se perde: a raiz cresceu
+  /// igual, só a festa não acontece. Gravar isto para o dia seguinte seria
+  /// comemorar ontem.
+  int? raizACelebrar;
+
+  /// O dia de hoje bateu a melhor sequência de sempre.
+  bool raizRecorde = false;
+
   /// A chegada do dia ainda não foi comemorada.
   ///
   /// Abrir o app é o gesto que o Baru mais espera, e ele passava em
@@ -256,6 +269,7 @@ class AppState extends ChangeNotifier {
   /// A ordem importa: conquista real vem antes da saudação. Quem subiu de
   /// nível quer ver o nível, não "bom te ver".
   bool get temCelebracaoPendente =>
+      raizACelebrar != null ||
       cresceuSemCelebrar ||
       subiuDeNivel ||
       marcosACelebrar.isNotEmpty ||
@@ -270,6 +284,14 @@ class AppState extends ChangeNotifier {
   /// O nível vem antes do marco: subir de nível é a conquista maior, e as duas
   /// costumam cair juntas.
   void celebrou() {
+    // A raiz primeiro: é o fato do dia. O crescimento do bicho, se vier
+    // junto, é o clímax e fica por último entre os dois.
+    if (raizACelebrar != null) {
+      raizACelebrar = null;
+      raizRecorde = false;
+      notifyListeners();
+      return;
+    }
     if (cresceuSemCelebrar) {
       estagioCelebrado = {
         ...estagioCelebrado,
@@ -1563,6 +1585,8 @@ class AppState extends ChangeNotifier {
     diasAbaixoDaMeta = 0;
     marcosResgatados = {};
     marcosACelebrar = [];
+    raizACelebrar = null;
+    raizRecorde = false;
     nivelCelebrado = 1;
     minutosDeFocoHoje = 0;
     melhorDescansoHoje = Duration.zero;
@@ -1809,6 +1833,8 @@ class AppState extends ChangeNotifier {
     owned = [...owned, item.id];
     // Recém-comprado já entra em cena: ninguém compra para deixar na gaveta.
     _equipa(item);
+    // Compra era muda: gastar folhas sem resposta nenhuma parecia erro.
+    unawaited(SomService.instance.toca(SomDoBaru.compra));
     _markSync(_syncShop);
     notifyListeners();
   }
@@ -1862,6 +1888,8 @@ class AppState extends ChangeNotifier {
 
   void startSession() {
     _timer?.cancel();
+    // O respiro antes do foco. Depois dele, silêncio até o fim da sessão.
+    unawaited(SomService.instance.toca(SomDoBaru.inicio));
     sessionDur = dur;
     sessionStartedAt = DateTime.now();
     sessionEndsAt = sessionStartedAt!.add(
@@ -1980,8 +2008,13 @@ class AppState extends ChangeNotifier {
     leaves += gained;
     unawaited(SomService.instance.toca(SomDoBaru.fim));
     if (completedToday == 0) {
+      // Recorde só a partir do segundo dia: no primeiro, "a mais funda que
+      // você já teve" seria verdade vazia.
+      final recorde = streak + 1 > melhorSequencia && streak + 1 > 1;
       streak += 1;
       if (streak > melhorSequencia) melhorSequencia = streak;
+      raizACelebrar = streak;
+      raizRecorde = recorde;
       ganhaXp(Balanco.xpPorDiaDeSequencia);
     }
     completedToday += 1;
@@ -2089,6 +2122,8 @@ class AppState extends ChangeNotifier {
     sessionEndsAt = null;
     sessionDur = minutos;
     _logSession(completed: false, gained: 0, minutos: minutos);
+    // Som resolvido e baixo: "tudo bem", não "você falhou" (laudo 04, F5).
+    unawaited(SomService.instance.toca(SomDoBaru.desistencia));
     _markSync(_syncSession);
     unawaited(BaruNotifications.instance.encerraSessao());
     unawaited(VigiaService.instance.para());

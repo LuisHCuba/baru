@@ -740,6 +740,9 @@ void main() {
     Future<AppState> abre(WidgetTester tester, Species sp) async {
       final app = AppState()..startCompanionship();
       app.species = sp;
+      // Bicho adulto: no ovo e no filhote a atividade muda de propósito
+      // (ver `acaoNoEstagio` e crescimento_test).
+      app.sessoesPorEspecie = {sp.name: 20};
       app.remaining = 25 * 60;
       addTearDown(app.dispose);
       await tester.pumpWidget(

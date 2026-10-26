@@ -78,12 +78,14 @@ void main() {
     late List<MethodCall> chamadas;
     late List<String> desenhados;
     var respostaDoNativo = true;
+    String? chaveNoNativo;
 
     setUp(() {
       q = QuadrosDoBicho.instance..zeraParaTeste();
       chamadas = [];
       desenhados = [];
       respostaDoNativo = true;
+      chaveNoNativo = null;
       q.rasteriza = (w, chave, tamanho) async {
         desenhados.add(chave);
         return '/dados/home_widget/$chave.png';
@@ -91,6 +93,7 @@ void main() {
       q.canal = const MethodChannel('teste/quadros');
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(q.canal, (c) async {
+        if (c.method == 'quadrosChave') return chaveNoNativo;
         chamadas.add(c);
         return respostaDoNativo;
       });
@@ -105,9 +108,12 @@ void main() {
     test('desenha seis quadros de fôlego e uma piscada, e manda os caminhos',
         () async {
       await q.atualiza(_base);
+      expect(desenhados, hasLength(7));
+      final prefixo = desenhados.first.substring(0, desenhados.first.length - 2);
+      expect(prefixo, startsWith('baru_bicho_'));
       expect(desenhados, [
-        for (var i = 0; i < 6; i++) 'baru_bicho_$i',
-        'baru_bicho_pisca',
+        for (var i = 0; i < 6; i++) '${prefixo}_$i',
+        '${prefixo}_pisca',
       ]);
       expect(chamadas, hasLength(1));
       final c = chamadas.single;
@@ -115,7 +121,28 @@ void main() {
       final args = c.arguments as Map;
       expect(args['chave'], _base.chave);
       expect(args['respiro'], hasLength(6));
-      expect(args['piscar'], '/dados/home_widget/baru_bicho_pisca.png');
+      expect(args['piscar'], '/dados/home_widget/${prefixo}_pisca.png');
+    });
+
+    test('se o Android já tem esta aparência, não desenha de novo', () async {
+      // A primeira saída de cada processo redesenhava sempre, por cima dos
+      // arquivos que a sobreposição podia estar lendo (auditoria 5.1).
+      chaveNoNativo = _base.chave;
+      await q.atualiza(_base);
+      expect(desenhados, isEmpty);
+      expect(chamadas, isEmpty);
+    });
+
+    test('cada leva grava em arquivos novos, nunca sobre os anteriores',
+        () async {
+      await q.atualiza(_base);
+      final primeira = desenhados.toSet();
+      desenhados.clear();
+      await q.atualiza(const AparenciaDoBicho(
+        especie: Species.owl,
+        pelagem: 2,
+      ));
+      expect(desenhados.toSet().intersection(primeira), isEmpty);
     });
 
     test('mesma aparência não redesenha; roupa nova redesenha', () async {

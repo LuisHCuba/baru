@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n.dart';
 import '../l10n_loja.dart';
@@ -804,7 +805,11 @@ class _AcaoDoItem extends StatelessWidget {
         icone: podeComprar ? Icons.eco_rounded : Icons.lock_outline,
         ativo: podeComprar,
         cor: Cores.primaria,
-        aoTocar: () => app.buy(item),
+        aoTocar: () {
+          // O háptico mora na tela, não no estado: é resposta ao dedo.
+          HapticFeedback.mediumImpact();
+          app.buy(item);
+        },
       );
     }
     return PilulaDaLoja(

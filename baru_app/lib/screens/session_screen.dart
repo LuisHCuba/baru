@@ -70,7 +70,7 @@ class SessionScreen extends StatelessWidget {
     garanteTextosDoPet();
     final app = AppScope.of(context);
     final t = app.t;
-    final acao = acaoDoBicho(app.species, atividade);
+    final acao = acaoNoEstagio(app.species, atividade, app.estagio);
     final total = app.sessionMinutes * 60;
     final pct = total == 0 ? 0.0 : ((total - app.remaining) / total).clamp(0.0, 1.0);
     final mm = (app.remaining ~/ 60).toString().padLeft(2, '0');
@@ -135,7 +135,11 @@ class SessionScreen extends StatelessWidget {
                             Semantics(
                               image: true,
                               label: t.fill(
-                                t.petFazendo(acao),
+                                t.petFazendoNoEstagio(
+                                  acao,
+                                  app.estagio,
+                                  app.species,
+                                ),
                                 {'n': app.displayName},
                               ),
                               child: PetView(
@@ -163,7 +167,10 @@ class SessionScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        t.fill(t.petFazendo(acao), {'n': app.displayName}),
+                        t.fill(
+                          t.petFazendoNoEstagio(acao, app.estagio, app.species),
+                          {'n': app.displayName},
+                        ),
                         style: nunito(size: 15.5, color: AppColors.inkA(0.65)),
                       ),
                       const SizedBox(height: 34),

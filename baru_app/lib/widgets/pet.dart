@@ -238,6 +238,32 @@ const _respiracaoNoEsforco = Duration(milliseconds: 2200);
   );
 }
 
+/// A ação da espécie, corrigida pelo estágio de vida.
+///
+/// No ovo e no ninho não há atividade: ovo não nada e recém-nascido não
+/// pasta. O ninho dorme; o ovo fica. E filhote não voa: a corujinha ainda
+/// não tem pena de voo — onde a adulta voaria, ela fica no poleiro.
+///
+/// Pública porque a tela da sessão escreve o que o bicho está fazendo, e o
+/// texto tem de bater com o desenho ("Nina está voando" num ovo era o que
+/// a auditoria da Onda 2 achou).
+AcaoDoBicho acaoNoEstagio(
+  Species especie,
+  Activity atividade,
+  EstagioDoBicho estagio,
+) {
+  if (estagio == EstagioDoBicho.inicio) {
+    return Crescimento.botaOvo(especie)
+        ? AcaoDoBicho.ocioso
+        : AcaoDoBicho.cochilo;
+  }
+  final acao = acaoDoBicho(especie, atividade);
+  if (acao == AcaoDoBicho.voo && estagio == EstagioDoBicho.filhote) {
+    return AcaoDoBicho.ocioso;
+  }
+  return acao;
+}
+
 class PetView extends StatefulWidget {
   const PetView({
     super.key,
@@ -471,23 +497,8 @@ class _PetViewState extends State<PetView>
     }
   }
 
-  /// No ovo e no ninho não há atividade: ovo não nada e recém-nascido não
-  /// pasta. O ninho dorme; o ovo fica.
-  ///
-  /// E filhote não voa: a corujinha ainda não tem pena de voo. Onde a
-  /// adulta voaria, ela fica no poleiro.
-  AcaoDoBicho get _acao {
-    if (widget.estagio == EstagioDoBicho.inicio) {
-      return Crescimento.botaOvo(widget.species)
-          ? AcaoDoBicho.ocioso
-          : AcaoDoBicho.cochilo;
-    }
-    final acao = acaoDoBicho(widget.species, widget.activity);
-    if (acao == AcaoDoBicho.voo && widget.estagio == EstagioDoBicho.filhote) {
-      return AcaoDoBicho.ocioso;
-    }
-    return acao;
-  }
+  AcaoDoBicho get _acao =>
+      acaoNoEstagio(widget.species, widget.activity, widget.estagio);
 
   Duration get _duracaoDoCiclo => switch (_acao) {
         AcaoDoBicho.nado => _cicloDoNado,
@@ -1461,14 +1472,12 @@ class _PetPainter extends CustomPainter {
     if (nadando) canvas.saveLayer(folga, Paint());
 
     canvas.save();
-    canvas.translate(
-      cx + pose.pesoNoPe,
-      cy +
-          balanco +
-          pose.quique * 7 * pose.amplitudeToque -
-          pose.estica * 4 -
-          pose.saltinho,
-    );
+    final corpoY = cy +
+        balanco +
+        pose.quique * 7 * pose.amplitudeToque -
+        pose.estica * 4 -
+        pose.saltinho;
+    canvas.translate(cx + pose.pesoNoPe, corpoY);
 
     final giro = switch (acao) {
       AcaoDoBicho.cochilo => -0.16,
@@ -1488,12 +1497,16 @@ class _PetPainter extends CustomPainter {
       AcaoDoBicho.ocioso =>
         triste ? 0.02 : boia * 0.012 + pose.pesoNoPe * 0.006,
     };
-    // O porte do estágio, pelos pés.
+    // O porte do estágio. Em terra, pelos pés: o filhote fica no chão. Na
+    // água, pela linha d'água: encolher pelos pés afundava o filhote, que
+    // ficava com a água nos olhos (auditoria da Onda 2, 6.1). Pela linha,
+    // o que estava acima dela continua acima.
     final porte = _porte;
     if (porte != 1) {
-      canvas.translate(0, _pes);
+      final pivo = nadando ? linhaDagua - corpoY : _pes;
+      canvas.translate(0, pivo);
       canvas.scale(porte);
-      canvas.translate(0, -_pes);
+      canvas.translate(0, -pivo);
     }
     canvas.rotate(giro);
 
@@ -3394,7 +3407,11 @@ class _PetPainter extends CustomPainter {
     //
     // Desenhados **depois** de [_boca] de propósito: com a boca aberta eles
     // caem sobre o vão escuro, que é onde os dentes de baixo de fato ficam.
-    for (final lado in [-1.0, 1.0]) {
+    //
+    // Recém-nascido e filhote não mostram: cachorro nasce sem dente, e os
+    // de leite só despontam pela terceira semana.
+    final temDentes = estagio.index >= EstagioDoBicho.jovem.index;
+    for (final lado in [if (temDentes) ...[-1.0, 1.0]]) {
       canvas.drawPath(
         _bolha(
           Rect.fromCenter(center: Offset(lado * 4.4, 34), width: 5.6, height: 6),
@@ -3539,11 +3556,14 @@ class _PetPainter extends CustomPainter {
   /// - **Pleno:** o adulto no auge — o porte cheio, e o detalhe de cada um
   ///   onde ele existe de verdade: o passarinho que pousa na capivara (o
   ///   "táxi" das aves no Pantanal) e a sobrancelha de penas da coruja
-  ///   velha de guerra. Nada disso se compra. As outras espécies ganham o
-  ///   delas no redesenho da Onda 3.
+  ///   velha de guerra; nas outras, o detalhe natural de cada uma (ver o
+  ///   `switch`). Nada disso se compra.
   void _marcasDoEstagio(Canvas canvas, double w, double h) {
     final topo = -h + 2;
-    if (estagio == EstagioDoBicho.filhote) {
+    // Penugem é de ave e de mamífero: o tracajá e o axolote nascem lisos.
+    final temPenugem =
+        species != Species.tortoise && species != Species.axolotl;
+    if (estagio == EstagioDoBicho.filhote && temPenugem) {
       final tinta = _p(pelo);
       for (final (dx, alto, inclina) in const [
         (-5.0, 9.0, -0.35),
@@ -3582,14 +3602,126 @@ class _PetPainter extends CustomPainter {
             _traco(Color.lerp(barriga, Colors.white, 0.4)!, 2.6),
           );
         }
-      case Species.otter ||
-            Species.tortoise ||
-            Species.axolotl ||
-            Species.penguin ||
-            Species.cat ||
-            Species.fox ||
-            Species.frenchie:
-        break;
+      // As outras ganham o que o auge delas tem de natural: a lontra traz
+      // a flor do lago presa ao pelo, o tracajá uma florzinha de margem, o
+      // axolote as guelras que brilham, o pinguim a crista dourada, e os
+      // três de terra um visitante — borboleta ou joaninha — que só pousa
+      // em quem está tranquilo.
+      case Species.otter:
+        _flor(canvas, Offset(-w * 0.62, topo + 9), Colors.white,
+            const Color(0xFFF2C14E), 5.5);
+      case Species.tortoise:
+        _flor(canvas, Offset(w * 0.55, topo + 7), const Color(0xFFF2C14E),
+            const Color(0xFFE08A3C), 5);
+      case Species.axolotl:
+        for (final lado in [-1.0, 1.0]) {
+          for (final (dx, dy) in const [
+            (1.08, -0.15),
+            (1.0, -0.55),
+            (0.88, 0.2),
+          ]) {
+            final p = Offset(lado * w * dx, h * dy);
+            canvas.drawCircle(
+              p,
+              5.5,
+              _p(const Color(0xFFD8FFFB).withValues(alpha: 0.85))
+                ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
+            );
+            canvas.drawCircle(p, 1.6, _p(Colors.white));
+          }
+        }
+      case Species.penguin:
+        if (!temChapeu) {
+          for (final (dx, alto, inclina) in const [
+            (-4.0, 9.0, -0.4),
+            (0.0, 12.0, 0.0),
+            (4.0, 9.0, 0.4),
+          ]) {
+            canvas.save();
+            canvas.translate(dx, topo + 3);
+            canvas.rotate(inclina);
+            canvas.drawPath(
+              Path()
+                ..moveTo(-2.2, 0)
+                ..quadraticBezierTo(-1.5, -alto * 0.7, 0, -alto)
+                ..quadraticBezierTo(1.5, -alto * 0.7, 2.2, 0)
+                ..close(),
+              _p(const Color(0xFFF2C14E)),
+            );
+            canvas.restore();
+          }
+        }
+      case Species.cat:
+        _borboleta(
+            canvas, Offset(w * 0.62, topo - 4), const Color(0xFFE9A0C4));
+      case Species.fox:
+        _joaninha(canvas, Offset(-w * 0.35, topo + 2));
+      case Species.frenchie:
+        _borboleta(
+            canvas, Offset(-w * 0.62, topo - 2), const Color(0xFF8EC5E8));
+    }
+  }
+
+  /// Uma flor de cinco pétalas, vista de frente.
+  void _flor(Canvas canvas, Offset o, Color petala, Color miolo, double r) {
+    for (var i = 0; i < 5; i++) {
+      final a = -math.pi / 2 + i * math.pi * 2 / 5;
+      canvas.drawCircle(
+        o + Offset(math.cos(a), math.sin(a)) * r * 0.75,
+        r * 0.55,
+        _p(petala),
+      );
+    }
+    canvas.drawCircle(o, r * 0.4, _p(miolo));
+  }
+
+  /// Uma borboleta pousada, de asas abertas.
+  void _borboleta(Canvas canvas, Offset o, Color asa) {
+    final escura = Color.lerp(asa, Cores.tinta, 0.35)!;
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: o + Offset(lado * 4.5, -2.5),
+          width: 8,
+          height: 9,
+        ),
+        _p(asa),
+      );
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: o + Offset(lado * 3.6, 3.2),
+          width: 6,
+          height: 6.5,
+        ),
+        _p(escura),
+      );
+    }
+    final corpo = _traco(Cores.tinta, 1.4);
+    final antena = _traco(Cores.tinta, 0.8);
+    canvas.drawLine(o + const Offset(0, -4), o + const Offset(0, 5), corpo);
+    canvas.drawLine(o + const Offset(0, -4), o + const Offset(-2.5, -8), antena);
+    canvas.drawLine(o + const Offset(0, -4), o + const Offset(2.5, -8), antena);
+  }
+
+  /// Uma joaninha: cúpula vermelha, cabeça preta, pintas.
+  void _joaninha(Canvas canvas, Offset o) {
+    canvas.drawCircle(o + const Offset(0, -4.2), 2.6, _p(Cores.tinta));
+    canvas.drawOval(
+      Rect.fromCenter(center: o, width: 10, height: 9),
+      _p(const Color(0xFFD9473A)),
+    );
+    canvas.drawLine(
+      o + const Offset(0, -4.4),
+      o + const Offset(0, 4.4),
+      _traco(Cores.tinta, 0.9),
+    );
+    for (final d in const [
+      Offset(-2.4, -1),
+      Offset(2.4, -1),
+      Offset(-2.2, 2.2),
+      Offset(2.2, 2.2),
+    ]) {
+      canvas.drawCircle(o + d, 1.1, _p(Cores.tinta));
     }
   }
 

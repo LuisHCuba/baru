@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../share/habitat_share.dart';
+import '../state.dart';
 import '../theme.dart';
+import 'common.dart';
 import 'raiz.dart';
 
 /// O cartão da raiz, feito para sair do app.
@@ -143,4 +146,71 @@ extension TextosDoCartaoDaRaiz on T {
   String get raizCartaoTitulo => s('raizCartaoTitulo');
   String get raizCartaoDias => s('raizCartaoDias');
   String get raizCartaoRodape => s('raizCartaoRodape');
+}
+
+/// Compartilhar a raiz.
+///
+/// Gera um cartão próprio em vez de capturar a tela: print leva junto barra
+/// de status, hora e bateria, e o que a pessoa quer mostrar é o que ela
+/// construiu. O cartão é montado fora da tela, num `Offstage`, porque ele
+/// tem proporção de retrato e apareceria deformado no meio da lista.
+class BotaoDeCompartilharRaiz extends StatefulWidget {
+  const BotaoDeCompartilharRaiz({super.key, required this.app});
+
+  final AppState app;
+
+  @override
+  State<BotaoDeCompartilharRaiz> createState() => BotaoDeCompartilharRaizRaizState();
+}
+
+class BotaoDeCompartilharRaizRaizState extends State<BotaoDeCompartilharRaiz> {
+  final _borda = GlobalKey();
+  bool _ocupado = false;
+
+  Future<void> _compartilha() async {
+    if (_ocupado) return;
+    setState(() => _ocupado = true);
+    final t = widget.app.t;
+    final ok = await HabitatShare.share(
+      boundaryKey: _borda,
+      text: t.fill(t.raizCartaoRodape, {'a': widget.app.displayName}),
+    );
+    if (!mounted) return;
+    setState(() => _ocupado = false);
+    if (!ok) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(t.shareFail)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final app = widget.app;
+    if (app.streak <= 0) {
+      // Raiz que ainda não existe não se mostra. Oferecer o botão no dia
+      // zero seria convidar a pessoa a exibir um número que ela ainda não
+      // tem.
+      return const SizedBox.shrink();
+    }
+    return Stack(
+      children: [
+        // Fora da tela, mas montado: `RepaintBoundary` só rasteriza o que
+        // foi realmente desenhado, e `Visibility(visible: false)` não
+        // desenha.
+        Positioned(
+          left: -CartaoDaRaiz.largura * 2,
+          child: CartaoDaRaiz(
+            dias: app.streak,
+            nomeDoPet: app.displayName,
+            lang: app.lang,
+          ),
+        ),
+        TextAction(
+          key: const Key('raiz-compartilhar'),
+          label: _ocupado ? app.t.authLoading : app.t.raizCompartilhar,
+          onTap: _compartilha,
+        ),
+      ],
+    );
+  }
 }

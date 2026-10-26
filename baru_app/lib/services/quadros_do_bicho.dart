@@ -154,13 +154,29 @@ class QuadrosDoBicho {
   Future<void> _desenha(AparenciaDoBicho a) async {
     if (a.chave == _ultimaChave) return;
     try {
+      // O Android já tem estes quadros (e da mesma versão do app)? Então
+      // não há o que desenhar. Sem esta pergunta, a primeira saída de cada
+      // processo redesenhava sempre — justo na hora em que a sobreposição
+      // pode aparecer.
+      final atual = await canal.invokeMethod<String>('quadrosChave');
+      if (atual == a.chave) {
+        _ultimaChave = a.chave;
+        return;
+      }
       final desenha = rasteriza ?? _rasterizaDeVerdade;
+      // Nomes por aparência: os arquivos novos nunca sobrescrevem os que a
+      // sobreposição pode estar lendo (auditoria da Onda 2, 5.1). O Android
+      // troca para eles só depois de existirem, e apaga os velhos.
+      // O instante entra no nome para nem o redesenho da mesma aparência
+      // (depois de uma atualização do app) tocar nos arquivos em uso.
+      final prefixo = 'baru_bicho_'
+          '${impressao('${a.chave}|${DateTime.now().microsecondsSinceEpoch}')}';
       final respiro = <String>[];
       final valores = respiros;
       for (var i = 0; i < valores.length; i++) {
         respiro.add(await desenha(
           cena(a, QuadroFixo(respiro: valores[i])),
-          'baru_bicho_$i',
+          '${prefixo}_$i',
           tamanho,
         ));
       }
@@ -168,7 +184,7 @@ class QuadrosDoBicho {
       // e no meio a diferença para qualquer quadro vizinho é invisível.
       final piscar = await desenha(
         cena(a, const QuadroFixo(pisca: 1)),
-        'baru_bicho_pisca',
+        '${prefixo}_pisca',
         tamanho,
       );
       desenhos++;
@@ -190,6 +206,19 @@ class QuadrosDoBicho {
         logicalSize: t,
         pixelRatio: densidade,
       );
+
+  /// FNV-1a de 32 bits, em hexadecimal: um nome curto e estável para os
+  /// arquivos de cada aparência. `String.hashCode` não promete ser o mesmo
+  /// entre execuções.
+  @visibleForTesting
+  static String impressao(String s) {
+    var h = 0x811c9dc5;
+    for (final c in s.codeUnits) {
+      h ^= c;
+      h = (h * 0x01000193) & 0xffffffff;
+    }
+    return h.toRadixString(16).padLeft(8, '0');
+  }
 
   bool get _ehAndroid =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;

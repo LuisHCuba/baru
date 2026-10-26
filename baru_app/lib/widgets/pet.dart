@@ -29,6 +29,7 @@ library;
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -283,7 +284,17 @@ class PetView extends StatefulWidget {
     this.roupaDeCabeca,
     this.quadro,
     this.estagio = EstagioDoBicho.adulto,
+    this.olharExterno,
+    this.cutucadas,
   });
+
+  /// Para onde ele olha, mandado de fora (-1..1 nos dois eixos): o dedo
+  /// passeando pela cena da sessão, longe dele, e ele acompanhando.
+  final Offset? olharExterno;
+
+  /// Cada vez que muda, ele reage como a um toque — o pulinho, a orelha.
+  /// Para a cena reagir a um toque que caiu fora do bicho.
+  final ValueListenable<int>? cutucadas;
 
   final Species species;
   final Mood mood;
@@ -457,6 +468,23 @@ class _PetViewState extends State<PetView>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.cutucadas?.addListener(_cutucado);
+  }
+
+  /// Uma reação de toque sem toque nele: a cena foi tocada e ele percebeu.
+  void _cutucado() {
+    if (!mounted || widget.quadro != null) return;
+    if (_gestoAtual != GestoOcioso.nenhum) {
+      _gesto.stop();
+      _gestoAtual = GestoOcioso.nenhum;
+      PetView.observadorDeGesto?.value = GestoOcioso.nenhum;
+    }
+    _toque.forward(from: 0);
+    if (!_orelha.isAnimating) {
+      _orelha.forward(from: 0).then((_) {
+        if (mounted) _orelha.value = 0;
+      });
+    }
   }
 
   /// Bicho escondido não respira.
@@ -500,6 +528,10 @@ class _PetViewState extends State<PetView>
   @override
   void didUpdateWidget(PetView antigo) {
     super.didUpdateWidget(antigo);
+    if (antigo.cutucadas != widget.cutucadas) {
+      antigo.cutucadas?.removeListener(_cutucado);
+      widget.cutucadas?.addListener(_cutucado);
+    }
     if (antigo.activity != widget.activity ||
         antigo.species != widget.species ||
         antigo.estagio != widget.estagio) {
@@ -772,6 +804,7 @@ class _PetViewState extends State<PetView>
 
   @override
   void dispose() {
+    widget.cutucadas?.removeListener(_cutucado);
     WidgetsBinding.instance.removeObserver(this);
     _proximoPiscar?.cancel();
     _proximaOrelha?.cancel();
@@ -891,7 +924,9 @@ class _PetViewState extends State<PetView>
               pisca: _pisca.value,
               orelha: _orelha.value,
               toque: _toque.value,
-              olhar: _gestoAtual == GestoOcioso.olhaEmVolta
+              olhar: widget.olharExterno != null && _dedo == null
+                  ? widget.olharExterno!
+                  : _gestoAtual == GestoOcioso.olhaEmVolta
                   // Varredura da cabeça: dois lados e volta ao centro.
                   ? Offset(math.sin(_gesto.value * math.pi * 2), -0.12)
                   : _olhar,
@@ -1803,9 +1838,11 @@ class _PetPainter extends CustomPainter {
   /// parada no meio lê como boneco, não como bicho conferindo se está tudo
   /// bem antes de voltar a comer.
   Offset get _olhoDesvio => Offset(
-        pose.olhar.dx * 1.8 * pose.amplitudeToque +
+        // 3 px e não 1,8: seguindo o dedo pela cena, menos que isso não se
+        // via que ele estava olhando.
+        pose.olhar.dx * 3.0 * pose.amplitudeToque +
             pose.olhadaDoPasto * 2.2,
-        pose.olhar.dy * 1.3 * pose.amplitudeToque,
+        pose.olhar.dy * 2.2 * pose.amplitudeToque,
       );
 
   /// A cabeça acompanha um pouco o olhar, e varre ao levantar do pasto.
@@ -1815,7 +1852,7 @@ class _PetPainter extends CustomPainter {
       pose.cocada +
       // Encosta a cabeça na mão.
       (pose.dedo == null ? 0 : pose.gosto * 0.06 * pose.amplitudeToque) +
-      pose.olhar.dx * 0.05 * pose.amplitudeToque +
+      pose.olhar.dx * 0.09 * pose.amplitudeToque +
       pose.olhadaDoPasto * 0.16;
 
   /// O quanto a cabeça desce, em pixels — pastando ou farejando.

@@ -705,16 +705,46 @@ class AppState extends ChangeNotifier {
   ///
   /// Hoje vira presente **assim que** há uma sessão concluída — a ação do dia
   /// tem eco na hora, não à meia-noite, quando `_advanceDay` grava a marca.
-  List<(int, WeekDayKind)> get ultimos7Dias => [
-        for (var k = 6; k >= 0; k--)
-          (() {
-            final i = (todayIndex - k + 7) % 7;
-            final marca = k == 0 && completedToday >= 1
-                ? WeekDayKind.present
-                : week[i];
-            return (i, marca);
-          })(),
-      ];
+  /// Os últimos 7 dias, do mais antigo a hoje: (dia da semana, marca).
+  ///
+  /// **A raiz manda na faixa.** O registro por dia da semana ([week]) é só
+  /// deste aparelho; a raiz vem da conta. Num aparelho novo, ou depois de
+  /// sincronizar, a raiz dizia "3 dias" com a faixa toda apagada. Agora os
+  /// dias da raiz se pintam a partir dela: hoje, se já houve foco, e os dias
+  /// de antes, pulando os que o congelamento segurou (esses não contam na
+  /// raiz, mas aparecem como congelados).
+  List<(int, WeekDayKind)> get ultimos7Dias {
+    final marcas = List<WeekDayKind>.filled(7, WeekDayKind.empty);
+    var faltam = streak;
+    for (var k = 0; k < 7; k++) {
+      final i = (todayIndex - k + 7) % 7;
+      if (k == 0) {
+        // Hoje: presente assim que houve foco, e esse dia é da raiz.
+        if (completedToday > 0) {
+          marcas[k] = WeekDayKind.present;
+          if (faltam > 0) faltam--;
+        } else {
+          marcas[k] = WeekDayKind.today;
+        }
+        continue;
+      }
+      if (week[i] == WeekDayKind.frozen && faltam > 0) {
+        marcas[k] = WeekDayKind.frozen;
+        continue;
+      }
+      if (faltam > 0) {
+        marcas[k] = WeekDayKind.present;
+        faltam--;
+        continue;
+      }
+      // Antes da raiz de agora: o que este aparelho sabe, mas nunca "hoje"
+      // fora de hoje.
+      marcas[k] = week[i] == WeekDayKind.today ? WeekDayKind.empty : week[i];
+    }
+    return [
+      for (var k = 6; k >= 0; k--) ((todayIndex - k + 7) % 7, marcas[k]),
+    ];
+  }
   int todayIndex = weekdayIndex();
   int freezesLeft = 1;
   DateTime? trialStartedAt;

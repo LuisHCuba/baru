@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n_humor.dart';
@@ -298,7 +299,24 @@ class HabitatScene extends StatefulWidget {
     this.height = alturaPadrao,
     this.animado = true,
     this.agora,
+    this.atividade,
+    this.humor,
+    this.moldura = true,
+    this.olharDoBicho,
+    this.cutucadas,
   });
+
+  /// O que o bicho faz, quando não é o do humor: na sessão ele está no banho
+  /// (ou brincando na beira), e radiante.
+  final Activity? atividade;
+  final Mood? humor;
+
+  /// Cantos arredondados e sombra de cartão. Na sessão a cena é a tela.
+  final bool moldura;
+
+  /// Repassados ao bicho (ver [PetView.olharExterno], [PetView.cutucadas]).
+  final Offset? olharDoBicho;
+  final ValueListenable<int>? cutucadas;
 
   /// Altura da cena na home.
   ///
@@ -489,11 +507,13 @@ class _HabitatSceneState extends State<HabitatScene>
         key: HabitatScene.cenaKey,
         child: Container(
           height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: Raio.todos(Raio.cena),
-            boxShadow: Elevacao.cena,
-          ),
-          clipBehavior: Clip.antiAlias,
+          decoration: widget.moldura
+              ? BoxDecoration(
+                  borderRadius: Raio.todos(Raio.cena),
+                  boxShadow: Elevacao.cena,
+                )
+              : null,
+          clipBehavior: widget.moldura ? Clip.antiAlias : Clip.none,
           child: LayoutBuilder(
             builder: (context, c) {
               final sx = c.maxWidth / HabitatScene.design.width;
@@ -517,13 +537,21 @@ class _HabitatSceneState extends State<HabitatScene>
                   return Stack(
                     fit: StackFit.expand,
                     children: [
-                      CustomPaint(
-                        painter: _FundoDaCena(
-                          sx: sx,
-                          sy: sy,
-                          luz: luz,
-                          cenario: cenario,
-                          fase: fase,
+                      // A margem da frente aparece quando ele sai da água,
+                      // no mesmo tempo em que ele muda de lugar.
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(end: _naAgua(app) ? 0 : 1),
+                        duration: _mudaDeLugar,
+                        curve: Curves.easeInOut,
+                        builder: (context, chao, _) => CustomPaint(
+                          painter: _FundoDaCena(
+                            sx: sx,
+                            sy: sy,
+                            luz: luz,
+                            cenario: cenario,
+                            fase: fase,
+                            chao: chao,
+                          ),
                         ),
                       ),
                       for (final item in possuidos)
@@ -566,8 +594,10 @@ class _HabitatSceneState extends State<HabitatScene>
                         child: Center(
                           child: PetView(
                             species: app.species,
-                            mood: app.mood,
-                            activity: app.activity,
+                            mood: widget.humor ?? app.mood,
+                            activity: _atividade(app),
+                            olharExterno: widget.olharDoBicho,
+                            cutucadas: widget.cutucadas,
                             coat: app.color,
                             estagio: app.estagioVisivel,
                             scale: escalaDoPet,
@@ -612,10 +642,12 @@ class _HabitatSceneState extends State<HabitatScene>
 
   static const _mudaDeLugar = Duration(milliseconds: 450);
 
+  Activity _atividade(AppState app) => widget.atividade ?? app.activity;
+
   /// Está de fato na água: a atividade é nadar **e** a espécie nada.
   bool _naAgua(AppState app) =>
-      app.activity == Activity.swim &&
-      acaoNoEstagio(app.species, app.activity, app.estagioVisivel) ==
+      _atividade(app) == Activity.swim &&
+      acaoNoEstagio(app.species, _atividade(app), app.estagioVisivel) ==
           AcaoDoBicho.nado;
 
   /// Onde o companheiro se apoia, em unidades do design, medido do fundo.
@@ -624,7 +656,7 @@ class _HabitatSceneState extends State<HabitatScene>
   /// nadam — no "nadar" eles brincam, e brincavam de pé no meio da lagoa
   /// (auditoria da Onda 3, 11b-M1; laudo 08, R8). Brincam na margem.
   double _alturaDoPet(AppState app) {
-    switch (app.activity) {
+    switch (_atividade(app)) {
       case Activity.swim:
         // Dentro d'água o corpo afunda um pouco.
         return _naAgua(app) ? 34 : 62;
@@ -733,6 +765,7 @@ class _FundoDaCena extends CustomPainter {
     required this.luz,
     required this.cenario,
     required this.fase,
+    this.chao = 0,
   });
 
   final double sx;
@@ -740,6 +773,14 @@ class _FundoDaCena extends CustomPainter {
   final LuzDaCena luz;
   final CenarioDoHabitat cenario;
   final double fase;
+
+  /// 0..1: quanto da margem da frente aparece. Inteira quando o bicho está
+  /// em terra (ele pisa nela); só as prainhas dos cantos quando ele nada.
+  ///
+  /// Sem margem, a coruja, a gata, a raposa e o buldogue ficavam de pé em
+  /// cima da água — o cenário inteiro era lagoa (dono do produto: "o
+  /// cenário tá uma merda").
+  final double chao;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -843,6 +884,125 @@ class _FundoDaCena extends CustomPainter {
         luz.brilho.withValues(alpha: 0.6));
     _brilho(canvas, Offset(w * 0.5 + derivaLonge, h - 24 * sy), 34 * sx,
         luz.brilho.withValues(alpha: 0.4));
+
+    _margemDaFrente(canvas, w, h, corDaAreia);
+  }
+
+  /// A terra em primeiro plano: as prainhas dos cantos sempre, e a margem
+  /// inteira, por cima, na medida de [chao].
+  void _margemDaFrente(Canvas canvas, double w, double h, Color areia) {
+    final grama = Color.lerp(areia, const Color(0xFF6E9C5E), 0.55)!;
+    final gramaFunda = Color.lerp(grama, const Color(0xFF2F5C27), 0.35)!;
+    Paint pintura(Rect r, double alfa) => Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.lerp(areia, grama, 0.25)!.withValues(alpha: alfa),
+          grama.withValues(alpha: alfa),
+          gramaFunda.withValues(alpha: alfa),
+        ],
+        stops: const [0, 0.35, 1],
+      ).createShader(r);
+
+    // As prainhas dos cantos.
+    final esquerda = Path()
+      ..moveTo(0, h - 64 * sy)
+      ..cubicTo(w * 0.12, h - 66 * sy, w * 0.22, h - 52 * sy, w * 0.32, h)
+      ..lineTo(0, h)
+      ..close();
+    final direita = Path()
+      ..moveTo(w, h - 54 * sy)
+      ..cubicTo(w * 0.9, h - 58 * sy, w * 0.8, h - 40 * sy, w * 0.72, h)
+      ..lineTo(w, h)
+      ..close();
+    final cantos = Rect.fromLTWH(0, h - 70 * sy, w, 70 * sy);
+    canvas.drawPath(esquerda, pintura(cantos, 1));
+    canvas.drawPath(direita, pintura(cantos, 1));
+
+    // A margem inteira, onde quem não nada pisa.
+    if (chao > 0) {
+      final topo = h - 86 * sy;
+      final margem = Path()
+        ..moveTo(0, h - 70 * sy)
+        ..cubicTo(w * 0.22, topo - 4 * sy, w * 0.62, topo - 8 * sy, w,
+            h - 74 * sy)
+        ..lineTo(w, h)
+        ..lineTo(0, h)
+        ..close();
+      canvas.drawPath(
+        margem,
+        pintura(Rect.fromLTWH(0, topo - 10 * sy, w, h - topo + 10 * sy), chao),
+      );
+      // A borda molhada, onde a terra encontra a água.
+      canvas.drawPath(
+        Path()
+          ..moveTo(0, h - 70 * sy)
+          ..cubicTo(w * 0.22, topo - 4 * sy, w * 0.62, topo - 8 * sy, w,
+              h - 74 * sy),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3 * sy
+          ..color = Color.lerp(areia, Colors.white, 0.35)!
+              .withValues(alpha: 0.7 * chao),
+      );
+    }
+
+    // Tufos de grama, pedrinhas e florzinhas: o que faz terra parecer terra.
+    final tufo = Paint()
+      ..color = gramaFunda
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.2 * sy;
+    void tufoEm(double x, double y, double alfa) {
+      tufo.color = gramaFunda.withValues(alpha: alfa);
+      for (final (dx, alto, inclina) in const [
+        (-4.0, 10.0, -0.35),
+        (0.0, 13.0, 0.0),
+        (4.0, 9.0, 0.35),
+      ]) {
+        canvas.drawLine(
+          Offset(x + dx * sx, y),
+          Offset(x + dx * sx + inclina * alto * sx, y - alto * sy),
+          tufo,
+        );
+      }
+    }
+
+    void florEm(double x, double y, Color cor, double alfa) {
+      for (var k = 0; k < 5; k++) {
+        final a = k * math.pi * 2 / 5;
+        canvas.drawCircle(
+          Offset(x + math.cos(a) * 2.6 * sx, y + math.sin(a) * 2.6 * sy),
+          2.2 * sy,
+          Paint()..color = cor.withValues(alpha: alfa),
+        );
+      }
+      canvas.drawCircle(Offset(x, y), 1.6 * sy,
+          Paint()..color = const Color(0xFFF2B33D).withValues(alpha: alfa));
+    }
+
+    void pedraEm(double x, double y, double r, double alfa) {
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(x, y), width: r * 2.2, height: r * 1.3),
+        Paint()..color = const Color(0xFFA79A8C).withValues(alpha: alfa),
+      );
+    }
+
+    // Nos cantos, sempre.
+    tufoEm(w * 0.06, h - 30 * sy, 1);
+    tufoEm(w * 0.94, h - 24 * sy, 1);
+    florEm(w * 0.15, h - 18 * sy, const Color(0xFFFFFBF2), 1);
+    pedraEm(w * 0.86, h - 12 * sy, 5 * sx, 1);
+    // Na margem inteira, com ela.
+    if (chao > 0) {
+      tufoEm(w * 0.30, h - 54 * sy, chao);
+      tufoEm(w * 0.70, h - 58 * sy, chao);
+      tufoEm(w * 0.52, h - 20 * sy, chao);
+      florEm(w * 0.40, h - 34 * sy, const Color(0xFFE9A0C4), chao);
+      florEm(w * 0.78, h - 30 * sy, const Color(0xFFFFFBF2), chao);
+      pedraEm(w * 0.22, h - 40 * sy, 4 * sx, chao);
+    }
   }
 
   void _brilho(Canvas canvas, Offset o, double largura, Color cor) {
@@ -861,7 +1021,8 @@ class _FundoDaCena extends CustomPainter {
       old.luz != luz ||
       old.cenario.id != cenario.id ||
       old.sx != sx ||
-      old.sy != sy;
+      old.sy != sy ||
+      old.chao != chao;
 }
 
 /// A cena, em miniatura e sem bicho — o cartão de um habitat na trilha.

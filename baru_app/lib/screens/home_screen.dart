@@ -272,7 +272,12 @@ class HomeScreen extends StatelessWidget {
                     Text(
                       next == null
                           ? t.unlockDone
-                          : t.fill(t.unlock, {
+                          // Com as folhas já na mão, "faltam 0 folhas" era
+                          // a frase errada: o certo é dizer que dá.
+                          : app.leaves >= next.price
+                              ? t.fill(t.s('unlockPronto'),
+                                  {'i': t.nomeDoItemDaLoja(next.id)})
+                              : t.fill(t.unlock, {
                               'x': (next.price - app.leaves).clamp(0, 9999),
                               // `nomeDoItemDaLoja` resolve por id e cai no
                               // catálogo antigo sozinho. O `nomeDoItem` de
@@ -296,7 +301,10 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-        if (!primeira) ..._secaoDeFoco(app),
+        if (!primeira) ...[
+          const SizedBox(height: Espaco.xl),
+          ..._secaoDeFoco(app),
+        ],
         const SizedBox(height: 16),
       ],
     );

@@ -72,6 +72,25 @@ void main() {
       expect(s.ultimos7Dias.last.$2, WeekDayKind.present);
     });
 
+    test('a raiz pinta os dias dela, mesmo com a semana deste aparelho vazia',
+        () {
+      // Raiz vinda da conta (outro aparelho, reinstalação): `week` local
+      // em branco. A faixa dizia "raiz de 3 dias" com tudo apagado.
+      final s = _em(terca, comSessao: false)
+        ..week = List.filled(7, WeekDayKind.empty)
+        ..streak = 3;
+      final marcas = s.ultimos7Dias.map((d) => d.$2).toList();
+      expect(marcas.last, WeekDayKind.today, reason: 'hoje ainda sem foco');
+      expect(marcas.sublist(3, 6), everyElement(WeekDayKind.present));
+      expect(marcas.sublist(0, 3), everyElement(WeekDayKind.empty));
+      s.completedToday = 1;
+      s.streak = 4;
+      expect(
+        s.ultimos7Dias.map((d) => d.$2).toList().sublist(3),
+        everyElement(WeekDayKind.present),
+      );
+    });
+
     test('o congelamento recarrega na segunda', () {
       final s = _em(quarta, comSessao: false);
       s.freezesLeft = 1;

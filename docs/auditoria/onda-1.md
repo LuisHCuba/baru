@@ -396,3 +396,24 @@ testar empate de preço (vale a ordem do catálogo) e a igualdade
 - `docs/auditoria/onda-1/zoom-pelagem-escura-buldogue-pinguim-lontra.png`
 - `docs/auditoria/onda-1/render_9x5_test.dart.txt` (o teste temporário que
   gerou as grades, para reproduzir)
+
+---
+
+## Resposta às ressalvas (commit seguinte ao a6d1e18)
+
+- **1b (média) — corrigido.** A geometria das pontas virou função
+  (`geometriaDoOlho`, `lib/widgets/pet.dart`) e ganhou teste
+  (`test/humor_geometria_test.dart`): na tristeza, a ponta de dentro fica
+  acima da de fora nos dois olhos, e os dois olhos são espelho.
+- **1c (média) — corrigido.** A pálpebra é recortada pelo círculo do olho; a
+  "viseira" da coruja some no neutro e na saudade.
+- **2a (média) — corrigido, e o teste achou um defeito.** `test/som_contexto_test.dart`
+  confere o contexto de áudio. Ao construí-lo, o plugin recusou
+  `ambient` + `mixWithOthers` por asserção: em modo debug todo som falhava
+  calado. `ambient` já mistura por definição; a opção saiu.
+- **Som, baixa — corrigido.** Se configurar o contexto falha, o tocador não é
+  guardado; o próximo som tenta de novo em vez de tocar sem contexto.
+- **1a (média) — decisão do dono.** A home volta à saudade depois de uma
+  desistência porque é o contrato em `docs/PRODUCT.md:30`. Fica na lista de
+  pendências do dono.
+- **Faixa e próximo item (baixas)** — sem mudança nesta rodada.

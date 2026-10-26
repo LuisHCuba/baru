@@ -214,6 +214,30 @@ const _respiracaoDormindo = Duration(milliseconds: 6400);
 /// Respiração de quem está se esforçando — nadando, voando, brincando.
 const _respiracaoNoEsforco = Duration(milliseconds: 2200);
 
+/// As pontas da pálpebra e da sobrancelha de um olho, no espaço da cabeça.
+///
+/// "Dentro" é a ponta virada para o meio da cara (x = 0). Na tristeza a
+/// ponta de dentro fica **acima** da de fora nos dois olhos — espelhado. Era
+/// essa a regra quebrada que fazia a saudade ler como raiva; o teste
+/// `test/humor_geometria_test.dart` a trava.
+@visibleForTesting
+({
+  Offset palpebraDentro,
+  Offset palpebraFora,
+  Offset sobrancelhaDentro,
+  Offset sobrancelhaFora,
+}) geometriaDoOlho(Offset o, double r, {required bool triste}) {
+  final dentro = o.dx < 0 ? 1.0 : -1.0;
+  return (
+    palpebraDentro:
+        Offset(o.dx + dentro * r * 1.05, o.dy - r * (triste ? 0.82 : 0.42)),
+    palpebraFora:
+        Offset(o.dx - dentro * r * 1.05, o.dy - r * (triste ? 0.30 : 0.42)),
+    sobrancelhaDentro: o + Offset(dentro * r * 0.35, -r * 1.85),
+    sobrancelhaFora: o + Offset(-dentro * r * 0.95, -r * 1.25),
+  );
+}
+
 class PetView extends StatefulWidget {
   const PetView({
     super.key,
@@ -4092,34 +4116,37 @@ class _PetPainter extends CustomPainter {
     // dentro subia (tristeza), no outro descia (raiva), e a "saudade" lia
     // como bicho bravo nas nove espécies. Triste é a ponta de **fora** caída e
     // a de dentro erguida; neutro é uma pálpebra reta, só um pouco baixa.
-    final dentro = o.dx < 0 ? 1.0 : -1.0;
+    final g = geometriaDoOlho(o, r, triste: triste);
     if (mood == Mood.neutral || triste) {
-      final yDentro = o.dy - r * (triste ? 0.82 : 0.42);
-      final yFora = o.dy - r * (triste ? 0.30 : 0.42);
+      // Recortada pelo olho: a pálpebra só existe **sobre** ele. Sem o
+      // recorte, onde o olho fica num disco claro (a coruja) o retângulo de
+      // pelo aparecia em volta como uma viseira.
+      canvas.save();
+      canvas.clipPath(Path()..addOval(Rect.fromCircle(center: o, radius: r)));
       canvas.drawPath(
         Path()
-          ..moveTo(o.dx + dentro * r * 1.05, yDentro)
-          ..lineTo(o.dx - dentro * r * 1.05, yFora)
-          ..lineTo(o.dx - dentro * r * 1.05, o.dy - r * 1.35)
-          ..lineTo(o.dx + dentro * r * 1.05, o.dy - r * 1.35)
+          ..moveTo(g.palpebraDentro.dx, g.palpebraDentro.dy)
+          ..lineTo(g.palpebraFora.dx, g.palpebraFora.dy)
+          ..lineTo(g.palpebraFora.dx, o.dy - r * 1.35)
+          ..lineTo(g.palpebraDentro.dx, o.dy - r * 1.35)
           ..close(),
         _p(pelo),
       );
+      canvas.restore();
     }
 
     // A sobrancelha "pidona": a ponta de dentro sobe, a de fora desce — o que
     // o músculo da testa faz num cão pedindo alguma coisa (AU1+AU4 no FACS).
     if (triste && sobrancelha) {
-      final interna = o + Offset(dentro * r * 0.35, -r * 1.85);
-      final externa = o + Offset(-dentro * r * 0.95, -r * 1.25);
+      final dentro = o.dx < 0 ? 1.0 : -1.0;
       canvas.drawPath(
         Path()
-          ..moveTo(interna.dx, interna.dy)
+          ..moveTo(g.sobrancelhaDentro.dx, g.sobrancelhaDentro.dy)
           ..quadraticBezierTo(
             o.dx - dentro * r * 0.25,
             o.dy - r * 1.80,
-            externa.dx,
-            externa.dy,
+            g.sobrancelhaFora.dx,
+            g.sobrancelhaFora.dy,
           ),
         _traco(sombraForte, 1.8),
       );

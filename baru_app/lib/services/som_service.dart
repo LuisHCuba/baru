@@ -9,7 +9,7 @@
 /// 1. O usuário pode desligar. Um app de foco que faz barulho sem permissão é
 ///    um app de distração.
 /// 2. Silencioso do sistema ganha do app, e a música de quem está ouvindo
-///    não para. Por isso o contexto de áudio é declarado em [_contexto]: o
+///    não para. Por isso o contexto de áudio é declarado em [contexto]: o
 ///    padrão do `audioplayers` é tocar como **mídia pedindo foco
 ///    permanente**, e o Android tira o Spotify do ar a cada toque no bicho.
 ///    (O comentário antigo dizia que já era "sonification"; não era —
@@ -173,7 +173,8 @@ class SomService {
   /// então quem está tocando música continua tocando. iOS: categoria
   /// `ambient`, que obedece a chave lateral e mistura com o que estiver
   /// tocando.
-  static final _contexto = AudioContext(
+  @visibleForTesting
+  static final contexto = AudioContext(
     android: const AudioContextAndroid(
       isSpeakerphoneOn: false,
       stayAwake: false,
@@ -181,18 +182,29 @@ class SomService {
       usageType: AndroidUsageType.assistanceSonification,
       audioFocus: AndroidAudioFocus.none,
     ),
-    iOS: AudioContextIOS(
-      category: AVAudioSessionCategory.ambient,
-      options: const {AVAudioSessionOptions.mixWithOthers},
-    ),
+    // `ambient` já mistura com o áudio dos outros apps — é a definição da
+    // categoria. Pedir `mixWithOthers` junto não é redundância inofensiva: o
+    // plugin recusa a combinação com uma asserção, e em modo debug todo som
+    // falhava calado.
+    iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
   );
 
   Future<void> _tocaDeVerdade(SomDoBaru som) async {
     if (!_armado) return;
     var p = _player;
     if (p == null) {
-      p = _player = AudioPlayer();
-      await p.setAudioContext(_contexto);
+      // Só guarda o tocador depois de o contexto pegar. Guardado antes, uma
+      // falha aqui deixava os sons seguintes tocando **sem** contexto — com
+      // foco de áudio, que é justamente pausar a música da pessoa. Assim a
+      // próxima vez tenta de novo, e o som que falhou só não toca.
+      final novo = AudioPlayer();
+      try {
+        await novo.setAudioContext(contexto);
+      } catch (_) {
+        unawaited(novo.dispose().catchError((_) {}));
+        rethrow;
+      }
+      p = _player = novo;
     }
     await p.setReleaseMode(ReleaseMode.stop);
     await p.setPlayerMode(PlayerMode.lowLatency);

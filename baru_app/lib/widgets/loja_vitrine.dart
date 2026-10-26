@@ -322,9 +322,9 @@ class _BichoVestido extends StatelessWidget {
         activity: Activity.idle,
         coat: app.color,
         // Roupa não veste ovo: a vitrine mostra pelo menos o filhote.
-        estagio: app.estagio == EstagioDoBicho.inicio
+        estagio: app.estagioVisivel == EstagioDoBicho.inicio
             ? EstagioDoBicho.filhote
-            : app.estagio,
+            : app.estagioVisivel,
         scale: 0.46,
         width: 148,
         height: 96,

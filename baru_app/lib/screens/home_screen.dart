@@ -181,6 +181,11 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        // Sem o acesso ao uso não há número: o cartão não mostra "0min de
+        // 4h30", que é medição inventada (§8; simulador, alto 1).
+        if (!app.usageAccess)
+          SemTempoDeTela(app: app)
+        else
         SoftCard(
           onTap: () => app.go(AppScreen.tempo),
           child: Column(

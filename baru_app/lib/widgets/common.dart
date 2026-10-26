@@ -580,3 +580,47 @@ class BottomTabs extends StatelessWidget {
     );
   }
 }
+
+/// O lugar do tempo de tela quando não há acesso ao uso.
+///
+/// O contrato (§8) é claro: sem permissão o app não estima nem inventa. A
+/// home e o relatório mostravam "0min de 4h30" e "4h30 abaixo da meta" —
+/// um número que ninguém mediu (simulador da Fase 4, alto 1).
+class SemTempoDeTela extends StatelessWidget {
+  const SemTempoDeTela({super.key, required this.app});
+
+  final AppState app;
+
+  static const chave = Key('sem-tempo-de-tela');
+
+  @override
+  Widget build(BuildContext context) {
+    final t = app.t;
+    return SoftCard(
+      key: chave,
+      muted: true,
+      onTap: () => app.go(AppScreen.tempo),
+      child: Row(
+        children: [
+          const AppIcon(Icons.lock_clock_outlined, size: 22, color: Cores.tinta500),
+          const SizedBox(width: Espaco.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.telaSemPermissaoT, style: estilo(Tipo.corpoForte)),
+                const SizedBox(height: 2),
+                Text(
+                  t.telaSemPermissaoB,
+                  style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Espaco.xs),
+          const Chevron(),
+        ],
+      ),
+    );
+  }
+}

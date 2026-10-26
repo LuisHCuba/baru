@@ -112,6 +112,15 @@ class AppState extends ChangeNotifier {
       estagio.index > (estagioCelebrado[species.name] ?? 0);
 
   /// De onde a cena parte: o último estágio que a pessoa viu.
+  /// O estágio que as telas desenham: o já visto, enquanto a cena de
+  /// crescimento não passou.
+  ///
+  /// O bicho aparecia crescido no último quadro da sessão e no resultado,
+  /// antes de "abriu os olhos!" — a cena perdia a surpresa (simulador da
+  /// Fase 4, alto 2). Só a cena de crescimento lê o [estagio] novo.
+  EstagioDoBicho get estagioVisivel =>
+      cresceuSemCelebrar ? estagioJaVisto : estagio;
+
   EstagioDoBicho get estagioJaVisto => EstagioDoBicho.values[
       (estagioCelebrado[species.name] ?? 0)
           .clamp(0, EstagioDoBicho.values.length - 1)];

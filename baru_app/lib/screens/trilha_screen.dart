@@ -1023,6 +1023,13 @@ String _criterioEmPalavras(AppState app, Criterio c) {
 String tituloDoMarco(AppState app, Marco m) {
   garanteTextosDaTrilha();
   final t = app.t;
+  // Sem o acesso ao uso, "fechar um dia abaixo da meta" é uma promessa que
+  // a pessoa não tem como cumprir: o título passa a ser o caminho que ela
+  // tem (simulador da Fase 4, alto 4).
+  final alt = m.alternativa;
+  if (m.tipo == TipoDeMarco.diasAbaixoDaMeta && !app.usageAccess && alt != null) {
+    return _criterioEmPalavras(app, alt);
+  }
   switch (m.tipo) {
     case TipoDeMarco.sessoes:
       return m.alvo == 1

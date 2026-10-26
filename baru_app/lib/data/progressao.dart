@@ -316,7 +316,10 @@ const trilha = <Marco>[
     id: 'primeiro_dia_abaixo',
     tipo: TipoDeMarco.diasAbaixoDaMeta,
     alvo: 1,
-    alternativa: Criterio(TipoDeMarco.sequencia, 4),
+    // 2 dias e não 4: sem o acesso ao uso este é o único caminho, e com 4
+    // a trilha inteira ficava parada no passo 2 por três dias — com nível e
+    // sessões de sobra esperando atrás (simulador da Fase 4, alto 4).
+    alternativa: Criterio(TipoDeMarco.sequencia, 2),
     recompensa: RecompensaDeMarco(folhas: 25),
   ),
   Marco(

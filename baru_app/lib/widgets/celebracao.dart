@@ -26,7 +26,15 @@ class Celebracao extends StatefulWidget {
     this.precisaCavar = false,
     this.som = SomDoBaru.conquista,
     this.bicho,
+    this.tituloDaToca,
+    this.ajudaDaToca,
   });
+
+  /// O cabeçalho e a dica da toca, os mesmos das Missões. Sem eles a cena
+  /// era uma meia-lua marrom sem instrução, e quem não sabia cavar ficava
+  /// preso nela (simulador da Fase 4, alto 3).
+  final String? tituloDaToca;
+  final String? ajudaDaToca;
 
   /// O bicho da pessoa, comemorando junto. Quando vem, ele ocupa o lugar do
   /// ícone: a conquista é dos dois, e um ícone genérico num círculo não é de
@@ -103,7 +111,10 @@ class _CelebracaoState extends State<Celebracao>
     // Fecha sozinha: conquista não pode virar bloqueio.
     _c.addStatusListener((s) {
       if (s == AnimationStatus.completed && mounted) {
-        Future.delayed(const Duration(milliseconds: 1100), () {
+        // O prêmio cavado fica à vista um pouco mais: em 1,1 s as folhas do
+        // marco sumiam antes de serem lidas (simulador, médio).
+        Future.delayed(
+            Duration(milliseconds: widget.precisaCavar ? 2600 : 1100), () {
           if (mounted) widget.aoFechar();
         });
       }
@@ -118,7 +129,8 @@ class _CelebracaoState extends State<Celebracao>
     return Positioned.fill(
       key: Celebracao.chave,
       child: ColoredBox(
-        color: Cores.tintaA(0.82),
+        // Quase opaco: o resultado atrás aparecia e brigava com o título.
+        color: Cores.tintaA(0.93),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(Espaco.margemTela),
@@ -128,8 +140,26 @@ class _CelebracaoState extends State<Celebracao>
                 Text(
                   widget.titulo,
                   textAlign: TextAlign.center,
-                  style: estilo(Tipo.titulo, color: Cores.superficie),
+                  style: estilo(Tipo.tituloGrande, color: Cores.superficie),
                 ),
+                if (widget.tituloDaToca != null) ...[
+                  const SizedBox(height: Espaco.xs),
+                  Text(
+                    widget.tituloDaToca!,
+                    textAlign: TextAlign.center,
+                    style: estilo(Tipo.corpoForte, color: Cores.superficie),
+                  ),
+                ],
+                if (widget.ajudaDaToca != null)
+                  Text(
+                    widget.ajudaDaToca!,
+                    textAlign: TextAlign.center,
+                    style: estilo(
+                      Tipo.corpo,
+                      color: Cores.superficie.withValues(alpha: 0.85),
+                    ),
+                  ),
+                const SizedBox(height: Espaco.sm),
                 Toca(
                   key: Celebracao.chaveDaToca,
                   rotuloDoPremio: widget.subtitulo,

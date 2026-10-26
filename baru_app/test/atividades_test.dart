@@ -714,6 +714,8 @@ void main() {
       // Bicho adulto: no ovo e no filhote a atividade muda de propósito
       // (ver `acaoNoEstagio` e crescimento_test).
       app.sessoesPorEspecie = {sp.name: 20};
+      // Crescimento já visto: senão a tela desenha o estágio de antes.
+      app.estagioCelebrado = {sp.name: 3};
       app.remaining = 25 * 60;
       addTearDown(app.dispose);
       await tester.pumpWidget(

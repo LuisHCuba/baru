@@ -330,7 +330,7 @@ class _Casca extends StatelessWidget {
         mood: Mood.radiant,
         activity: Activity.idle,
         coat: app.color,
-        estagio: app.estagio,
+        estagio: app.estagioVisivel,
         roupas: app.roupasDoBicho,
         roupaDeCabeca: app.roupaDeCabeca,
         interativo: false,
@@ -369,6 +369,8 @@ class _Casca extends StatelessWidget {
         cor: Cores.mel400,
         // Nível é recompensa: sai da toca, cavada.
         precisaCavar: true,
+        tituloDaToca: t.tocaTitulo,
+        ajudaDaToca: t.tocaAjuda,
         bicho: _bichoComemorando(app),
         aoFechar: app.celebrou,
       );
@@ -389,7 +391,11 @@ class _Casca extends StatelessWidget {
     final marco = app.marcosACelebrar.first;
     return Celebracao(
       titulo: t.celebMarco,
-      subtitulo: tituloDoMarco(app, marco),
+      // O prêmio pelo nome, e não só o marco: "+20 folhas" não aparecia.
+      subtitulo: [tituloDoMarco(app, marco), ...premiosDoMarco(app, marco)]
+          .join(' · '),
+      tituloDaToca: t.tocaTitulo,
+      ajudaDaToca: t.tocaAjuda,
       cor: Cores.mel400,
       bicho: _bichoComemorando(app),
       // Marco da trilha também é recompensa. A saudação da chegada, logo

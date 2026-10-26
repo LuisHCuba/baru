@@ -569,7 +569,7 @@ class _HabitatSceneState extends State<HabitatScene>
                             mood: app.mood,
                             activity: app.activity,
                             coat: app.color,
-                            estagio: app.estagio,
+                            estagio: app.estagioVisivel,
                             scale: escalaDoPet,
                             alignment: Alignment.bottomCenter,
                             interativo: widget.animado,
@@ -615,7 +615,7 @@ class _HabitatSceneState extends State<HabitatScene>
   /// Está de fato na água: a atividade é nadar **e** a espécie nada.
   bool _naAgua(AppState app) =>
       app.activity == Activity.swim &&
-      acaoNoEstagio(app.species, app.activity, app.estagio) ==
+      acaoNoEstagio(app.species, app.activity, app.estagioVisivel) ==
           AcaoDoBicho.nado;
 
   /// Onde o companheiro se apoia, em unidades do design, medido do fundo.

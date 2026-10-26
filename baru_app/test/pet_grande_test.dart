@@ -215,7 +215,8 @@ void _semNadoNaMargem() {
     // Adultos: no ovo e no ninho ninguém nada.
     AppState adulto(Species sp) => _estadoNoHumor(Mood.radiant)
       ..species = sp
-      ..sessoesPorEspecie = {sp.name: 20};
+      ..sessoesPorEspecie = {sp.name: 20}
+      ..estagioCelebrado = {sp.name: 3};
     final capivara = adulto(Species.capybara);
     addTearDown(capivara.dispose);
     await tester.pumpWidget(_cena(capivara, altura: 300));

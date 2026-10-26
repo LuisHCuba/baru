@@ -388,8 +388,10 @@ void main() {
     });
 
     test('o passo 2 abre pela presença quando não há o que medir', () {
-      expect(_p(sessoes: 1, seq: 3).passosConquistados, 1);
-      expect(_p(sessoes: 1, seq: 4).passosConquistados, greaterThan(1));
+      // Dois dias seguidos (simulador da Fase 4, alto 4: com quatro a trilha
+      // ficava parada três dias).
+      expect(_p(sessoes: 1, seq: 1).passosConquistados, 1);
+      expect(_p(sessoes: 1, seq: 2).passosConquistados, greaterThan(1));
     });
 
     test('o desvio é mais caro que o critério principal', () {

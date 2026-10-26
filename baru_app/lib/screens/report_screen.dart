@@ -47,6 +47,9 @@ class ReportScreen extends StatelessWidget {
             ],
           ),
         ),
+        if (!app.usageAccess)
+          SemTempoDeTela(app: app)
+        else
         GestureDetector(
           onTap: () => app.go(AppScreen.tempo),
           behavior: HitTestBehavior.opaque,
@@ -122,7 +125,7 @@ class ReportScreen extends StatelessWidget {
                     mood: app.mood,
                     activity: app.activity,
                     coat: app.color,
-                    estagio: app.estagio,
+                    estagio: app.estagioVisivel,
                   ),
                 ),
               ),

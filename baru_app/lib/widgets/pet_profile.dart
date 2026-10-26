@@ -217,7 +217,7 @@ class CompanionCard extends StatelessWidget {
               mood: app.mood,
               activity: app.activity,
               coat: app.color,
-              estagio: app.estagio,
+              estagio: app.estagioVisivel,
               scale: 1.05,
             ),
           ),

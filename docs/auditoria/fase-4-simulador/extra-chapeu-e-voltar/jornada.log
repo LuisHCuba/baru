@@ -1,0 +1,173 @@
+[ex] foto 001-home-antes-chapeu.png (rota /)
+    group||0,0 412x814
+    button|87|20,14 70x41
+    button|Raiz de 1 dia|98,16 294x38
+    button|5 sessões de foco hoje, 2h 30min no total. Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,69 372x372
+    -|Crescimento: Jovem. Faltam 10 sessões para crescer|20,451 372x70
+    -|5 sessões de foco hoje, 2h 30min no total.|20,539 372x62
+    -|Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,609 372x46
+    button|O relatório de hoje está pronto|20,671 372x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 1 dia / T / Q / Q / S / S / D / S|20,729 372x85
+    button|0min de 4h 30min / faltam 4h 30min|20,846 372x100
+    -|Nível 2 / 103 XP / 12 XP para o nível 3|20,958 372x96
+    button|Habitat / Habitat|12,825 97x55
+    button|Trilha / Trilha|109,825 97x55
+    button|Missões / Missões|206,825 97x55
+    button|Ajustes / Ajustes|303,825 97x55
+[ex] foto 002-loja.png (rota /loja)
+    button|voltar|20,16 48x48
+    -|Habitat|68,24 324x32
+    group||0,72 412x820
+    button|87 / Folhas|0,84 412x69
+    button|Tudo / Tudo|20,169 119x38
+    button|Dá para levar / Dá para levar|147,169 119x38
+    button|Meus itens / Meus itens|273,169 119x38
+    button|DÁ PARA LEVAR AGORA / Gorro de lã / Você já tem as folhas deste. / 80 / 80|0,227 412x164
+    group|NO HABITAT / Coisas que moram na cena. Pode ter todas ao mesmo tempo. / 1/22 / Beira d'água / O que só existe porque ali tem um lago. / Mata|0,417 412x475
+    group||0,524 412x214
+    button|Em uso / Vitórias-régias / Tirar / Tirar|20,524 152x214
+    button|Juncos da margem / Faltam 3 / Faltam 3|184,524 152x214
+    button|Pedra da fonte / Faltam 23 / Faltam 23|348,524 64x214
+    button|Pedras do riacho / Faltam 53 / Faltam 53|512,524 150x214
+    group||0,783 412x109
+    button|Bambuzal / 70 / 70|20,783 152x109
+    button|Cogumelos / Faltam 13 / Faltam 13|184,783 152x109
+    button|Samambaia / Faltam 33 / Faltam 33|348,783 64x109
+    button|Tronco caído / Faltam 93 / Faltam 93|512,783 150x214
+    group||0,1041 412x101
+    button|Lampião / Faltam 103 / Faltam 103|20,1041 152x214
+    button|Vaga-lumes / Faltam 133 / Faltam 133|184,1041 152x214
+    button|Varal de luzes / Faltam 173 / Faltam 173|348,1041 152x214
+    button|Fogueira / Faltam 193 / Faltam 193|512,1041 150x214
+[ex] som pedido: compra.wav
+[ex] som pedido: compra.wav
+[ex] quadros 003-compra-chapeu.png: 30 × 100 ms
+[ex] foto 004-compra-chapeu-celebrada.png (rota /loja)
+    -|É seu!|175,436 62x29
+    -|Pipoca já está vestindo.|127,469 157x22
+    button|Ver no habitat|66,511 280x56
+    button|Continuar na loja / Continuar na loja|66,575 280x48
+[ex] quadros 005-ver-no-habitat.png: 14 × 100 ms
+[ex] foto 006-home-com-chapeu.png (rota /)
+    group||0,0 412x814
+    button|27|20,14 70x41
+    button|Raiz de 1 dia|98,16 294x38
+    button|5 sessões de foco hoje, 2h 30min no total. Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,69 372x372
+    -|Crescimento: Jovem. Faltam 10 sessões para crescer|20,451 372x70
+    -|5 sessões de foco hoje, 2h 30min no total.|20,539 372x62
+    -|Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,609 372x46
+    button|O relatório de hoje está pronto|20,671 372x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 1 dia / T / Q / Q / S / S / D / S|20,729 372x85
+    button|0min de 4h 30min / faltam 4h 30min|20,846 372x100
+    -|Nível 2 / 103 XP / 12 XP para o nível 3|20,958 372x96
+    button|Habitat / Habitat|12,825 97x55
+    button|Trilha / Trilha|109,825 97x55
+    button|Missões / Missões|206,825 97x55
+    button|Ajustes / Ajustes|303,825 97x55
+[ex] foto 007-chapeu-em-ajustes.png (rota /ajustes)
+    group||0,0 412x814
+    -|Ajustes|20,16 372x32
+    group|Você é uma capivara. / Raiz de 1 dia|20,64 372x280
+    button||106,84 200x120
+    -[campo]||40,268 332x54
+    button|Sexo, Fêmea / Sexo / Fêmea|36,356 340x48
+    button|Seu animal interior, Capivara / Seu animal interior / Capivara|36,405 340x48
+    button|Pelagem, 3 / Pelagem / 3|36,454 340x48
+    button|Meta de tempo de tela, 4h 30min / Meta de tempo de tela / 4h 30min|36,518 340x48
+    button|Duração da sessão, 25 min / Duração da sessão / 25 min|36,567 340x48
+    group|Relatório da noite / Todo dia às 21:00 / Som / Sons curtos nas conquistas e no toque / "Senti sua falta" / No máximo uma vez por dia, depois|20,631 372x183
+    switch||325,644 51x31
+    button|Horário do relatório, 21:00 / Horário do relatório / 21:00|36,689 340x48
+    switch||325,751 51x31
+    switch||325,819 51x31
+    group|Permitir acesso ao uso / Só pelas sessões de foco|20,888 372x155
+    switch||325,901 51x31
+    button|Sobre outros apps / Sobre outros apps|36,946 340x48
+    button|Idioma, Português / Idioma / Português|36,995 340x48
+    button|Sua conta / E-mail, senha e seus dados. / Gerenciar|20,1059 372x5
+    button|Habitat / Habitat|12,825 97x55
+    button|Trilha / Trilha|109,825 97x55
+    button|Missões / Missões|206,825 97x55
+    button|Ajustes / Ajustes|303,825 97x55
+[ex] foto 008-chapeu-em-sobreposicao.png (rota /sobreposicao)
+    button|voltar|20,16 48x48
+    -|Sobre outros apps|68,24 324x32
+    -|Quando o tempo estourar, Pipoca dá um oi no canto da tela — sem travar nada.|68,68 324x44
+    group||0,120 412x772
+    -|ASSIM QUE VAI APARECER|20,132 372x15
+    -|Ei! Já deu um tempão aí. Que tal uma pausinha comigo? / Fechar o app / +5 min|20,159 372x300
+    -|PERMISSÕES / 0 de 2 concedidas|20,479 372x15
+    button|Acesso ao uso / Não concedida / Ler quanto tempo o aparelho passou em cada app. Só o total do dia — nunca o que você faz dentro deles. / Sem|20,506 372x262
+    button|Notificações / Não concedida / A sessão de foco na barra, o aviso de fim e o lembrete do dia. / Sem ela: A sessão corre sem contador na barr|20,776 372x116
+    -|Por enquanto só no Android. No iPhone a Apple não deixa um app desenhar por cima de outro.|20,1054 372x38
+    -|O Android exige que você ligue na tela do sistema. No máximo 4 vezes por dia, com 25 minutos entre uma e outra.|20,1100 372x38
+[ex] foto 009-chapeu-em-relatorio.png (rota /relatorio)
+    group||0,0 412x892
+    button|Voltar ao habitat / O dia de Pipoca / Segunda, 26 de outubro|24,16 364x135
+    button|0min / tempo de tela hoje / 4h 30min / sua meta / 4h 30min abaixo da sua meta.|24,151 364x171
+    button|5 sessões de foco hoje, 2h 30min no total. / Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|24,336 364x136
+    -|Sessões completas / 5|24,492 364x55
+    -|Bônus por ficar abaixo / —|24,548 364x55
+    -|Dias presente / Raiz de 1 dia|24,604 364x55
+    -|Resta 1 congelamento nesta semana. Se você faltar um dia, ele te espera.|24,659 364x64
+[ex] som pedido: inicio.wav
+[ex] som pedido: inicio.wav
+[ex] foto 010-sessao-com-chapeu.png (rota /sessao)
+    -|BANHO DE 25 MIN|144,28 125x18
+    button|Pipoca está nadando.|106,263 200x150
+    -|22:00 / 22:00|123,484 166x66
+    -|Pipoca está nadando.|130,564 153x23
+    button|Desistir / Desistir|26,808 360x50
+    -|Sem "desenhar sobre outros apps", não posso te chamar de volta. Ative em Ajustes › Sobreposição.|0,805 412x87
+[ex] voltar do navegador /sessao → /
+[ex] foto 011-voltar-na-sessao.png (rota /)
+    group||0,0 412x814
+    button|27|20,14 70x41
+    button|Raiz de 1 dia|98,16 294x38
+    button|5 sessões de foco hoje, 2h 30min no total. Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,69 372x372
+    -|Crescimento: Jovem. Faltam 10 sessões para crescer|20,451 372x70
+    -|5 sessões de foco hoje, 2h 30min no total.|20,539 372x62
+    -|Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,609 372x46
+    button|O relatório de hoje está pronto|20,671 372x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 1 dia / T / Q / Q / S / S / D / S|20,729 372x85
+    button|0min de 4h 30min / faltam 4h 30min|20,846 372x100
+    -|Nível 2 / 103 XP / 12 XP para o nível 3|20,958 372x96
+    -|Sem "desenhar sobre outros apps", não posso te chamar de volta. Ative em Ajustes › Sobreposição.|0,727 412x87
+    button|Habitat / Habitat|12,825 97x55
+    button|Trilha / Trilha|109,825 97x55
+    button|Missões / Missões|206,825 97x55
+    button|Ajustes / Ajustes|303,825 97x55
+[ex] rota após voltar na sessão: /
+[ex] foto 012-10s-depois.png (rota /)
+    group||0,0 412x814
+    button|27|20,14 70x41
+    button|Raiz de 1 dia|98,16 294x38
+    button|5 sessões de foco hoje, 2h 30min no total. Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,69 372x372
+    -|Crescimento: Jovem. Faltam 10 sessões para crescer|20,451 372x70
+    -|5 sessões de foco hoje, 2h 30min no total.|20,539 372x62
+    -|Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,609 372x46
+    button|O relatório de hoje está pronto|20,671 372x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 1 dia / T / Q / Q / S / S / D / S|20,729 372x85
+    button|0min de 4h 30min / faltam 4h 30min|20,846 372x100
+    -|Nível 2 / 103 XP / 12 XP para o nível 3|20,958 372x96
+    button|Habitat / Habitat|12,825 97x55
+    button|Trilha / Trilha|109,825 97x55
+    button|Missões / Missões|206,825 97x55
+    button|Ajustes / Ajustes|303,825 97x55
+[ex] som pedido: fim.wav
+[ex] som pedido: fim.wav
+[ex] som pedido: folhas.wav
+[ex] som pedido: folhas.wav
+[ex] foto 013-25s-depois.png (rota /resultado)
+    button|Nível 3 / Pipoca está mais em casa.|0,0 412x892
+    group|37|0,0 412x892
+    group||26,55 360x675
+    button||106,55 200x150
+    -|+10 folhas|167,227 108x32
+    -|25 minutos concluídos.|80,287 252x29
+    -|Nível 3|26,330 45x20
+    -|+12 XP|340,330 46x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 360x46
+    button|Compartilhar o habitat|26,740 360x56
+    button|Voltar ao habitat|26,806 360x56
+[ex] rota 25 s depois: /resultado

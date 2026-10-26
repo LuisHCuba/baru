@@ -90,8 +90,8 @@ void main() {
     test('"o que dá para fechar hoje" é outra pergunta, e tem resposta', () {
       final s = AppState()
         ..startCompanionship()
-        ..melhorSequencia = 2; // 'tres_dias' está a um dia
-      expect(s.progresso.marcoMaisPerto?.id, 'tres_dias');
+        ..melhorSequencia = 2; // o desvio do passo 2 já está cumprido
+      expect(s.progresso.marcoMaisPerto?.id, 'primeiro_dia_abaixo');
       expect(
         s.progresso.proximoMarco?.id,
         'primeiro_foco',

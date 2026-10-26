@@ -1,0 +1,1217 @@
+[onboarding] foto 001-onb-idioma.png (rota /comecar)
+    group||26,28 268x514
+    -|Em que idioma você quer falar com ele?|26,66 268x102
+    -|Pode trocar depois nos ajustes.|26,180 216x23
+    button|Português / pt-BR|26,229 268x69
+    button|English / en|26,298 268x69
+    button|Español / es|26,367 268x69
+    button|中文 / zh-Hans|26,436 268x69
+    button|Continuar|26,550 268x56
+[onboarding] tocou "English / en"
+[onboarding] foto 002-onb-idioma-en.png (rota /comecar)
+    group||26,28 268x514
+    -|Which language should we speak?|26,83 268x68
+    -|You can change it later in settings.|26,163 237x23
+    button|Português / pt-BR|26,212 268x69
+    button|English / en|26,281 268x69
+    button|Español / es|26,350 268x69
+    button|中文 / zh-Hans|26,419 268x69
+    button|Continue|26,550 268x56
+[onboarding] tocou "Português / pt-BR"
+[onboarding] quadros 003-onb-idioma-para-promessa.png: 8 × 80 ms
+[onboarding] foto 004-onb-promessa.png (rota /comecar)
+    group||26,28 268x514
+    button||60,95 200x150
+    -|Deixe o celular de lado. Alguém aqui fica feliz com isso.|26,271 268x99
+    -|Você escolhe um animal, define uma meta de tempo de tela e faz sessões de foco. Ele nunca morre, nunca perde nada e nunca te culpa.|26,384 268x92
+    button|Começar foco|26,550 268x56
+[onboarding] voltar do navegador /comecar → /comecar
+[onboarding] foto 005-onb-promessa-apos-voltar.png (rota /comecar)
+    group||26,28 268x514
+    button||60,95 200x150
+    -|Deixe o celular de lado. Alguém aqui fica feliz com isso.|26,271 268x99
+    -|Você escolhe um animal, define uma meta de tempo de tela e faz sessões de foco. Ele nunca morre, nunca perde nada e nunca te culpa.|26,384 268x92
+    button|Começar foco|26,550 268x56
+[onboarding] tocou "Começar foco"
+[onboarding] foto 006-onb-quiz-1.png (rota /comecar)
+    -|1/6|26,54 268x19
+    -|Com qual elemento você se parece|26,83 268x62
+    group||26,167 268x431
+    button|Água / Água|26,167 268x68
+    button|Fogo / Fogo|26,235 268x68
+    button|Terra / Terra|26,303 268x68
+    button|Ar / Ar|26,371 268x68
+[onboarding] tocou "Terra / Terra"
+[onboarding] foto 007-onb-quiz-2.png (rota /comecar)
+    -|2/6|26,54 268x19
+    -|Quando sua cabeça fica mais clara|26,83 268x62
+    group||26,167 268x383
+    button|De manhã cedo / De manhã cedo|26,167 268x68
+    button|À tarde / À tarde|26,235 268x68
+    button|De madrugada / De madrugada|26,303 268x68
+    button|Depende do dia / Depende do dia|26,371 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] quadros 008-onb-quiz-avanca.png: 8 × 80 ms
+[onboarding] foto 009-onb-quiz-3.png (rota /comecar)
+    -|3/6|26,54 268x19
+    -|O que realmente te acalma|26,83 268x62
+    group||26,167 268x383
+    button|Água quente / Água quente|26,167 268x68
+    button|Boa companhia / Boa companhia|26,235 268x68
+    button|Um quarto silencioso / Um quarto silencioso|26,303 268x68
+    button|Uma rotina / Uma rotina|26,371 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] tocou "Água quente / Água quente"
+[onboarding] tocou "Voltar uma / Voltar uma"
+[onboarding] foto 010-onb-quiz-voltou-uma.png (rota /comecar)
+    -|3/6|26,54 268x19
+    -|O que realmente te acalma|26,83 268x62
+    group||26,167 268x383
+    button|Água quente / Água quente|26,167 268x68
+    button|Boa companhia / Boa companhia|26,235 268x68
+    button|Um quarto silencioso / Um quarto silencioso|26,303 268x68
+    button|Uma rotina / Uma rotina|26,371 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] foto 011-onb-quiz-3.png (rota /comecar)
+    -|3/6|26,54 268x19
+    -|O que realmente te acalma|26,83 268x62
+    group||26,167 268x383
+    button|Água quente / Água quente|26,167 268x68
+    button|Boa companhia / Boa companhia|26,235 268x68
+    button|Um quarto silencioso / Um quarto silencioso|26,303 268x68
+    button|Uma rotina / Uma rotina|26,371 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] tocou "Água quente / Água quente"
+[onboarding] foto 012-onb-quiz-apos-recarregar.png (rota /comecar)
+    -|1/6|26,54 268x19
+    -|Com qual elemento você se parece|26,83 268x62
+    group||26,167 268x431
+    button|Água / Água|26,167 268x68
+    button|Fogo / Fogo|26,235 268x68
+    button|Terra / Terra|26,303 268x68
+    button|Ar / Ar|26,371 268x68
+[onboarding] foto 013-onb-quiz-1.png (rota /comecar)
+    -|1/6|26,54 268x19
+    -|Com qual elemento você se parece|26,83 268x62
+    group||26,167 268x431
+    button|Água / Água|26,167 268x68
+    button|Fogo / Fogo|26,235 268x68
+    button|Terra / Terra|26,303 268x68
+    button|Ar / Ar|26,371 268x68
+[onboarding] tocou "Terra / Terra"
+[onboarding] foto 014-onb-quiz-2.png (rota /comecar)
+    -|2/6|26,54 268x19
+    -|Quando sua cabeça fica mais clara|26,83 268x62
+    group||26,167 268x383
+    button|De manhã cedo / De manhã cedo|26,167 268x68
+    button|À tarde / À tarde|26,235 268x68
+    button|De madrugada / De madrugada|26,303 268x68
+    button|Depende do dia / Depende do dia|26,371 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] tocou "De manhã cedo / De manhã cedo"
+[onboarding] foto 015-onb-quiz-3.png (rota /comecar)
+    -|3/6|26,54 268x19
+    -|O que realmente te acalma|26,83 268x62
+    group||26,167 268x383
+    button|Água quente / Água quente|26,167 268x68
+    button|Boa companhia / Boa companhia|26,235 268x68
+    button|Um quarto silencioso / Um quarto silencioso|26,303 268x68
+    button|Uma rotina / Uma rotina|26,371 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] tocou "Água quente / Água quente"
+[onboarding] foto 016-onb-quiz-4.png (rota /comecar)
+    -|4/6|26,54 268x19
+    -|O que mais rouba seu foco|26,83 268x62
+    group||26,167 268x383
+    button|Redes sociais / Redes sociais|26,167 268x68
+    button|Vídeos / Vídeos|26,235 268x68
+    button|Jogos / Jogos|26,303 268x68
+    button|Mensagens e grupos / Mensagens e grupos|26,371 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] tocou "Redes sociais / Redes sociais"
+[onboarding] voltar do navegador /comecar → /comecar
+[onboarding] foto 017-onb-quiz-apos-voltar-navegador.png (rota /comecar)
+    -|5/6|26,54 268x19
+    -|Como você recarrega|26,83 268x31
+    group||26,136 268x414
+    button|Sozinho, em silêncio / Sozinho, em silêncio|26,136 268x68
+    button|Com gente que eu gosto / Com gente que eu gosto|26,204 268x68
+    button|Perto da natureza / Perto da natureza|26,272 268x68
+    button|Dormindo / Dormindo|26,340 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] foto 018-onb-quiz-5.png (rota /comecar)
+    -|5/6|26,54 268x19
+    -|Como você recarrega|26,83 268x31
+    group||26,136 268x414
+    button|Sozinho, em silêncio / Sozinho, em silêncio|26,136 268x68
+    button|Com gente que eu gosto / Com gente que eu gosto|26,204 268x68
+    button|Perto da natureza / Perto da natureza|26,272 268x68
+    button|Dormindo / Dormindo|26,340 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] tocou "Perto da natureza / Perto da natureza"
+[onboarding] foto 019-onb-quiz-6.png (rota /comecar)
+    -|6/6|26,54 268x19
+    -|O que você quer do Baru|26,83 268x62
+    group||26,167 268x383
+    button|Menos tempo de tela / Menos tempo de tela|26,167 268x68
+    button|Mais foco / Mais foco|26,235 268x68
+    button|Uma rotina que eu mantenha / Uma rotina que eu mantenha|26,303 268x68
+    button|Só companhia / Só companhia|26,371 268x68
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] tocou "Mais foco / Mais foco"
+[onboarding] foto 020-onb-quiz-fim.png (rota /comecar)
+    -|6/6|26,54 268x19
+    -|O que você quer do Baru|26,83 268x62
+    group||26,167 268x327
+    button|Menos tempo de tela / Menos tempo de tela|26,167 268x68
+    button|Mais foco / Mais foco|26,235 268x68
+    button|Uma rotina que eu mantenha / Uma rotina que eu mantenha|26,303 268x68
+    button|Só companhia / Só companhia|26,371 268x68
+    button|Ver seu animal|26,502 268x56
+    button|Voltar uma / Voltar uma|26,558 268x48
+[onboarding] quadros 021-onb-revelacao-entra.png: 16 × 100 ms
+[onboarding] foto 022-onb-revelacao.png (rota /comecar)
+    group||26,28 268x514
+    -|SEU ANIMAL INTERIOR|26,48 268x17
+    -|Você é uma capivara.|26,75 268x31
+    -|Água morna, companhia fácil. Você desacelera rápido quando se permite.|26,115 268x44
+    button||26,175 268x150
+    -[campo]||26,343 268x54
+    -|SEXO|26,419 268x17
+    button|Não dizer / Não dizer|26,445 84x48
+    button|Macho / Macho|118,445 84x48
+    button|Fêmea / Fêmea|210,445 84x48
+    group|PELAGEM|26,515 268x27
+    button|Pelagem 1|40,544 60x60
+    button|Pelagem 2|100,544 60x60
+    button|Pelagem 3|160,544 60x60
+    button|Pelagem 4|220,544 60x60
+    button|Pelagem 5|100,604 60x60
+    button|Pelagem 6|160,604 60x60
+    group|PREFERE OUTRO?|26,686 268x106
+    button|Capivara / Capivara|26,713 268x47
+    button|Lontra / Lontra|26,768 268x24
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] foto 023-onb-revelacao-rolada-p0.png (rota /comecar)
+    group||26,28 268x514
+    -|SEU ANIMAL INTERIOR|26,48 268x17
+    -|Você é uma capivara.|26,75 268x31
+    -|Água morna, companhia fácil. Você desacelera rápido quando se permite.|26,115 268x44
+    button||26,175 268x150
+    -[campo]||26,343 268x54
+    -|SEXO|26,419 268x17
+    button|Não dizer / Não dizer|26,445 84x48
+    button|Macho / Macho|118,445 84x48
+    button|Fêmea / Fêmea|210,445 84x48
+    group|PELAGEM|26,515 268x27
+    button|Pelagem 1|40,544 60x60
+    button|Pelagem 2|100,544 60x60
+    button|Pelagem 3|160,544 60x60
+    button|Pelagem 4|220,544 60x60
+    button|Pelagem 5|100,604 60x60
+    button|Pelagem 6|160,604 60x60
+    group|PREFERE OUTRO?|26,686 268x106
+    button|Capivara / Capivara|26,713 268x47
+    button|Lontra / Lontra|26,768 268x24
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] foto 024-onb-revelacao-rolada-p1.png (rota /comecar)
+    group||26,28 268x514
+    -|SEU ANIMAL INTERIOR|26,-77 268x17
+    -|Você é uma capivara.|26,-50 268x31
+    -|Água morna, companhia fácil. Você desacelera rápido quando se permite.|26,28 268x6
+    button||26,50 268x150
+    -[campo]||26,218 268x54
+    -|SEXO|26,294 268x17
+    button|Não dizer / Não dizer|26,320 84x48
+    button|Macho / Macho|118,320 84x48
+    button|Fêmea / Fêmea|210,320 84x48
+    group|PELAGEM|26,390 268x149
+    button|Pelagem 1|40,419 60x60
+    button|Pelagem 2|100,419 60x60
+    button|Pelagem 3|160,419 60x60
+    button|Pelagem 4|220,419 60x60
+    button|Pelagem 5|100,479 60x60
+    button|Pelagem 6|160,479 60x60
+    group|PREFERE OUTRO?|26,561 268x231
+    button|Capivara / Capivara|26,588 268x47
+    button|Lontra / Lontra|26,643 268x47
+    button|Tartaruga / Tartaruga|26,698 268x47
+    button|Coruja / Coruja|26,753 268x39
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] foto 025-onb-revelacao-rolada-p2.png (rota /comecar)
+    group||26,28 268x514
+    -|SEU ANIMAL INTERIOR|26,-202 268x17
+    -|Você é uma capivara.|26,-175 268x31
+    -|Água morna, companhia fácil. Você desacelera rápido quando se permite.|26,-135 268x44
+    button||26,28 268x47
+    -[campo]||26,93 268x54
+    -|SEXO|26,169 268x17
+    button|Não dizer / Não dizer|26,195 84x48
+    button|Macho / Macho|118,195 84x48
+    button|Fêmea / Fêmea|210,195 84x48
+    group|PELAGEM|26,265 268x149
+    button|Pelagem 1|40,294 60x60
+    button|Pelagem 2|100,294 60x60
+    button|Pelagem 3|160,294 60x60
+    button|Pelagem 4|220,294 60x60
+    button|Pelagem 5|100,354 60x60
+    button|Pelagem 6|160,354 60x60
+    group|PREFERE OUTRO?|26,436 268x106
+    button|Capivara / Capivara|26,463 268x47
+    button|Lontra / Lontra|26,518 268x24
+    button|Tartaruga / Tartaruga|26,573 268x47
+    button|Coruja / Coruja|26,628 268x47
+    -|Axolote / Axolote|26,683 97x43
+    -|Pinguim / Pinguim|131,683 99x43
+    -|Gata / Gata|26,734 78x43
+    -|Raposa / Raposa|112,734 95x43
+    -|Buldogue francês / Buldogue francês|26,785 157x7
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] tocou "Pinguim / Pinguim"
+[onboarding] foto 026-onb-revelacao-toque-bloqueada.png (rota /comecar)
+    group||26,28 268x514
+    button||26,-222 268x97
+    -[campo]||26,-107 268x54
+    -|SEXO|26,-31 268x17
+    button|Não dizer / Não dizer|26,28 84x15
+    button|Macho / Macho|118,28 84x15
+    button|Fêmea / Fêmea|210,28 84x15
+    group|PELAGEM|26,65 268x149
+    button|Pelagem 1|40,94 60x60
+    button|Pelagem 2|100,94 60x60
+    button|Pelagem 3|160,94 60x60
+    button|Pelagem 4|220,94 60x60
+    button|Pelagem 5|100,154 60x60
+    button|Pelagem 6|160,154 60x60
+    group|PREFERE OUTRO?|26,236 268x306
+    button|Capivara / Capivara|26,263 268x47
+    button|Lontra / Lontra|26,318 268x47
+    button|Tartaruga / Tartaruga|26,373 268x47
+    button|Coruja / Coruja|26,428 268x47
+    -|Axolote / Axolote|26,483 97x43
+    -|Pinguim / Pinguim|131,483 99x43
+    -|Gata / Gata|26,534 78x8
+    -|Raposa / Raposa|112,534 95x8
+    -|Buldogue francês / Buldogue francês|26,585 157x43
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] tocou "Coruja / Coruja"
+[onboarding] foto 027-onb-revelacao-coruja.png (rota /comecar)
+    group||26,28 268x514
+    button||26,-222 268x97
+    -[campo]||26,-107 268x54
+    -|SEXO|26,-31 268x17
+    button|Não dizer / Não dizer|26,28 84x15
+    button|Macho / Macho|118,28 84x15
+    button|Fêmea / Fêmea|210,28 84x15
+    group|PELAGEM|26,65 268x149
+    button|Pelagem 1|40,94 60x60
+    button|Pelagem 2|100,94 60x60
+    button|Pelagem 3|160,94 60x60
+    button|Pelagem 4|220,94 60x60
+    button|Pelagem 5|100,154 60x60
+    button|Pelagem 6|160,154 60x60
+    group|PREFERE OUTRO?|26,236 268x306
+    button|Capivara / Capivara|26,263 268x47
+    button|Lontra / Lontra|26,318 268x47
+    button|Tartaruga / Tartaruga|26,373 268x47
+    button|Coruja / Coruja|26,428 268x47
+    -|Axolote / Axolote|26,483 97x43
+    -|Pinguim / Pinguim|131,483 99x43
+    -|Gata / Gata|26,534 78x8
+    -|Raposa / Raposa|112,534 95x8
+    -|Buldogue francês / Buldogue francês|26,585 157x43
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] tocou "Tartaruga / Tartaruga"
+[onboarding] foto 028-onb-revelacao-tartaruga.png (rota /comecar)
+    group||26,28 268x514
+    button||26,-222 268x97
+    -[campo]||26,-107 268x54
+    -|SEXO|26,-31 268x17
+    button|Não dizer / Não dizer|26,28 84x15
+    button|Macho / Macho|118,28 84x15
+    button|Fêmea / Fêmea|210,28 84x15
+    group|PELAGEM|26,65 268x149
+    button|Pelagem 1|40,94 60x60
+    button|Pelagem 2|100,94 60x60
+    button|Pelagem 3|160,94 60x60
+    button|Pelagem 4|220,94 60x60
+    button|Pelagem 5|100,154 60x60
+    button|Pelagem 6|160,154 60x60
+    group|PREFERE OUTRO?|26,236 268x306
+    button|Capivara / Capivara|26,263 268x47
+    button|Lontra / Lontra|26,318 268x47
+    button|Tartaruga / Tartaruga|26,373 268x47
+    button|Coruja / Coruja|26,428 268x47
+    -|Axolote / Axolote|26,483 97x43
+    -|Pinguim / Pinguim|131,483 99x43
+    -|Gata / Gata|26,534 78x8
+    -|Raposa / Raposa|112,534 95x8
+    -|Buldogue francês / Buldogue francês|26,585 157x43
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] tocou "Capivara / Capivara"
+[onboarding] tocou "Fêmea / Fêmea"
+[onboarding] tocou "Pelagem 3"
+[onboarding] foto 029-onb-nome-longo.png (rota /comecar)
+    group||26,28 268x514
+    -|Você é uma capivara.|26,-222 268x21
+    -|Água morna, companhia fácil. Você desacelera rápido quando se permite.|26,-192 268x44
+    button||26,-132 268x150
+    -[campo]||26,36 268x54
+    -|SEXO|26,112 268x17
+    button|Não dizer / Não dizer|26,138 84x48
+    button|Macho / Macho|118,138 84x48
+    button|Fêmea / Fêmea|210,138 84x48
+    group|PELAGEM|26,208 268x149
+    button|Pelagem 1|40,237 60x60
+    button|Pelagem 2|100,237 60x60
+    button|Pelagem 3|160,237 60x60
+    button|Pelagem 4|220,237 60x60
+    button|Pelagem 5|100,297 60x60
+    button|Pelagem 6|160,297 60x60
+    group|PREFERE OUTRO?|26,379 268x163
+    button|Capivara / Capivara|26,406 268x47
+    button|Lontra / Lontra|26,461 268x47
+    button|Tartaruga / Tartaruga|26,516 268x26
+    button|Coruja / Coruja|26,571 268x47
+    -|Axolote / Axolote|26,626 97x43
+    -|Pinguim / Pinguim|131,626 99x43
+    -|Gata / Gata|26,677 78x43
+    -|Raposa / Raposa|112,677 95x43
+    -|Buldogue francês / Buldogue francês|26,728 157x43
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] foto 030-onb-revelacao-escolhida.png (rota /comecar)
+    group||26,28 268x514
+    -|Você é uma capivara.|26,-222 268x21
+    -|Água morna, companhia fácil. Você desacelera rápido quando se permite.|26,-192 268x44
+    button||26,-132 268x150
+    -[campo]||26,36 268x54
+    -|SEXO|26,112 268x17
+    button|Não dizer / Não dizer|26,138 84x48
+    button|Macho / Macho|118,138 84x48
+    button|Fêmea / Fêmea|210,138 84x48
+    group|PELAGEM|26,208 268x149
+    button|Pelagem 1|40,237 60x60
+    button|Pelagem 2|100,237 60x60
+    button|Pelagem 3|160,237 60x60
+    button|Pelagem 4|220,237 60x60
+    button|Pelagem 5|100,297 60x60
+    button|Pelagem 6|160,297 60x60
+    group|PREFERE OUTRO?|26,379 268x163
+    button|Capivara / Capivara|26,406 268x47
+    button|Lontra / Lontra|26,461 268x47
+    button|Tartaruga / Tartaruga|26,516 268x26
+    button|Coruja / Coruja|26,571 268x47
+    -|Axolote / Axolote|26,626 97x43
+    -|Pinguim / Pinguim|131,626 99x43
+    -|Gata / Gata|26,677 78x43
+    -|Raposa / Raposa|112,677 95x43
+    -|Buldogue francês / Buldogue francês|26,728 157x43
+    button|Prazer em conhecer|26,550 268x56
+[onboarding] tocou "Prazer em conhecer"
+[onboarding] foto 031-onb-meta.png (rota /comecar)
+    group||26,28 268x514
+    -|Quanto tempo de tela num dia comum?|26,68 268x60
+    -|Um chute serve. Só precisamos de um ponto de partida.|26,138 268x44
+    button|3h / 3h|26,206 60x54
+    button|4h / 4h|95,206 60x54
+    button|5h / 5h|165,206 60x54
+    button|6h / 6h|234,206 60x54
+    -|META DIÁRIA SUGERIDA / 3h / 25% abaixo da sua média. Dá para mudar quando quiser nos ajustes.|26,284 268x159
+    button|Usar esta meta|26,550 268x56
+[onboarding] tocou "6h / 6h"
+[onboarding] foto 032-onb-meta-6h.png (rota /comecar)
+    group||26,28 268x514
+    -|Quanto tempo de tela num dia comum?|26,68 268x60
+    -|Um chute serve. Só precisamos de um ponto de partida.|26,138 268x44
+    button|3h / 3h|26,206 60x54
+    button|4h / 4h|95,206 60x54
+    button|5h / 5h|165,206 60x54
+    button|6h / 6h|234,206 60x54
+    -|META DIÁRIA SUGERIDA / 4h 30min / 25% abaixo da sua média. Dá para mudar quando quiser nos ajustes.|26,284 268x159
+    button|Usar esta meta|26,550 268x56
+[onboarding] tocou "Usar esta meta"
+[onboarding] foto 033-onb-permissao-1.png (rota /comecar)
+    group||26,28 268x514
+    -|Permissão 1 de 2|26,54 268x19
+    -|Permissões|26,83 268x31
+    -|O que Pipoca precisa para te acompanhar. Você decide uma por uma, e pode mudar de ideia depois.|26,124 268x66
+    button|Acesso ao uso / Não concedida / Ler quanto tempo o aparelho passou em cada app. Só o total do dia — nunca o que você faz dentro deles. / Sem|26,210 268x300
+    -|Nada aqui é definitivo. Você revê tudo em Ajustes › Sobre outros apps.|26,524 268x18
+    button|Agora não / Agora não|26,550 268x48
+[onboarding] tocou "Agora não / Agora não"
+[onboarding] foto 034-onb-permissao-2.png (rota /comecar)
+    group||26,28 268x514
+    -|Permissão 2 de 2|26,54 268x19
+    -|Permissões|26,83 268x31
+    -|O que Pipoca precisa para te acompanhar. Você decide uma por uma, e pode mudar de ideia depois.|26,124 268x66
+    button|Notificações / Não concedida / A sessão de foco na barra, o aviso de fim e o lembrete do dia. / Sem ela: A sessão corre sem contador na barr|26,210 268x281
+    -|Nada aqui é definitivo. Você revê tudo em Ajustes › Sobre outros apps.|26,505 268x37
+    button|Concluir / Concluir|26,550 268x48
+[onboarding] tocou "Notificações / Não concedida / A sessão de foco na barra, o aviso de fim e o lembret"
+[onboarding] foto 035-onb-permissao-2-pedida.png (rota /comecar)
+    group||26,28 268x514
+    -|Permissão 2 de 2|26,54 268x19
+    -|Permissões|26,83 268x31
+    -|O que Pipoca precisa para te acompanhar. Você decide uma por uma, e pode mudar de ideia depois.|26,124 268x66
+    button|Notificações / Não concedida / A sessão de foco na barra, o aviso de fim e o lembrete do dia. / Sem ela: A sessão corre sem contador na barr|26,210 268x281
+    -|Nada aqui é definitivo. Você revê tudo em Ajustes › Sobre outros apps.|26,505 268x37
+    button|Concluir / Concluir|26,550 268x48
+[onboarding] quadros 036-onb-entra-na-home.png: 16 × 100 ms
+[onboarding] cenas vistas: []
+[onboarding] foto 037-home-primeira-vez.png (rota /)
+    group||0,0 320x562
+    button|0|20,14 60x41
+    button|Raiz de 0 dias|88,16 212x38
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,69 280x372
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,451 280x79
+    -|Ainda não houve sessão de foco hoje.|20,548 280x14
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,618 280x69
+    button|O relatório de hoje está pronto|20,703 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,761 280x51
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[onboarding] ok (52.1 s reais)
+[home] foto 038-home-p0.png (rota /)
+    group||0,0 320x562
+    button|0|20,14 60x41
+    button|Raiz de 0 dias|88,16 212x38
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,69 280x372
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,451 280x79
+    -|Ainda não houve sessão de foco hoje.|20,548 280x14
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,618 280x69
+    button|O relatório de hoje está pronto|20,703 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,761 280x51
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] foto 039-home-p1.png (rota /)
+    group||0,0 320x562
+    button|0|20,-136 60x41
+    button|Raiz de 0 dias|88,-134 212x38
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,0 280x291
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,301 280x79
+    -|Ainda não houve sessão de foco hoje.|20,398 280x62
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,468 280x69
+    button|O relatório de hoje está pronto|20,553 280x9
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,611 280x105
+    button|0min de 4h 30min / faltam 4h 30min|20,728 280x84
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] foto 040-home-p2.png (rota /)
+    group||0,0 320x562
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,0 280x141
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,151 280x79
+    -|Ainda não houve sessão de foco hoje.|20,248 280x62
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,318 280x69
+    button|O relatório de hoje está pronto|20,403 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,461 280x101
+    button|0min de 4h 30min / faltam 4h 30min|20,578 280x100
+    -|Nível 1 / 0 XP / 40 XP para o nível 2|20,690 280x96
+    button|Missões / 0/3|20,798 280x14
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] foto 041-home-p3.png (rota /)
+    group||0,0 320x562
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,-250 280x241
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,1 280x79
+    -|Ainda não houve sessão de foco hoje.|20,98 280x62
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,168 280x69
+    button|O relatório de hoje está pronto|20,253 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,311 280x105
+    button|0min de 4h 30min / faltam 4h 30min|20,428 280x100
+    -|Nível 1 / 0 XP / 40 XP para o nível 2|20,540 280x22
+    button|Missões / 0/3|20,648 280x71
+    button|faltam 40 folhas para Vitórias-régias|20,731 280x81
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] foto 042-home-p4.png (rota /)
+    group||0,0 320x562
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,-250 280x91
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,-149 280x79
+    -|Ainda não houve sessão de foco hoje.|20,0 280x10
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,18 280x69
+    button|O relatório de hoje está pronto|20,103 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,161 280x105
+    button|0min de 4h 30min / faltam 4h 30min|20,278 280x100
+    -|Nível 1 / 0 XP / 40 XP para o nível 2|20,390 280x96
+    button|Missões / 0/3|20,498 280x64
+    button|faltam 40 folhas para Vitórias-régias|20,581 280x85
+    button|25min / 25min|20,686 64x46
+    button|50min / 50min|92,686 64x46
+    button|90min / 90min|164,686 64x46
+    button|Livre / Livre|236,686 64x46
+    button|Começar foco|20,744 280x64
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] som pedido: toque_1.wav
+[home] som pedido: toque_1.wav
+[home] quadros 043-home-toque-no-bicho.png: 14 × 80 ms
+[home] carinho gravado: 18 quadros
+[home] quadros 045-home-carinho-solta.png: 12 × 100 ms
+[home] tocou "Livre / Livre"
+[home] foto 046-home-livre.png (rota /)
+    group||0,0 320x562
+    -|Ainda não houve sessão de foco hoje.|20,-250 280x60
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,-182 280x69
+    button|O relatório de hoje está pronto|20,-97 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,0 280x66
+    button|0min de 4h 30min / faltam 4h 30min|20,78 280x100
+    -|Nível 1 / 0 XP / 40 XP para o nível 2|20,190 280x96
+    button|Missões / 0/3|20,298 280x71
+    button|faltam 40 folhas para Vitórias-régias|20,381 280x85
+    button|25min / 25min|20,486 64x46
+    button|50min / 50min|92,486 64x46
+    button|90min / 90min|164,486 64x46
+    button|Livre / Livre|236,486 64x46
+    button|Começar foco|20,544 280x18
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] tocou "90min / 90min"
+[home] tocou "25min / 25min"
+[home] tocou "0"
+[home] foto 047-detalhe-folhas-p0.png (rota /folhas)
+    button|voltar|20,16 48x48
+    -|Suas folhas|68,24 232x32
+    -|De onde elas vêm e para onde vão.|68,68 232x44
+    group||0,120 320x520
+    button|0 / Faltam 40 para Vitórias-régias / Ver a loja|20,132 280x144
+    -|Nenhuma folha ainda / Termine uma sessão de foco e as primeiras folhas caem aqui.|20,302 280x205
+[home] voltar do navegador /folhas → /
+[home] foto 048-detalhe-folhas-apos-voltar.png (rota /)
+    group||0,0 320x562
+    button|0|20,0 60x6
+    button|Raiz de 0 dias|88,0 212x5
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,20 280x372
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,402 280x79
+    -|Ainda não houve sessão de foco hoje.|20,499 280x62
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,569 280x69
+    button|O relatório de hoje está pronto|20,654 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,712 280x100
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] tocou "Raiz de 0 dias"
+[home] foto 049-detalhe-raiz-p0.png (rota /sequencia)
+    button|voltar|20,16 48x48
+    -|Sua raiz|68,24 232x32
+    -|Cada dia presente aprofunda a raiz. É ela que segura o hábito no dia em que a vontade falta.|68,68 232x66
+    group||0,142 320x498
+    -|RAIZ ATUAL / 0 / Apareça amanhã e ela ganha o segundo dia.|20,154 280x211
+    -|ÚLTIMOS 7 DIAS / T / Q / Q / S / S / D / S|20,389 280x124
+    button|Faltam 3 dias para 3 dias seguidos presente|20,529 280x84
+    -|Raiz mais funda / 0 / Congelamentos / Um congelamento segura a raiz num dia em que você faltar. Volta a cada segunda. / 1 / Sessões concluíd|20,629 280x11
+[home] foto 050-detalhe-raiz-p1.png (rota /sequencia)
+    button|voltar|20,16 48x48
+    -|Sua raiz|68,24 232x32
+    -|Cada dia presente aprofunda a raiz. É ela que segura o hábito no dia em que a vontade falta.|68,68 232x66
+    group||0,142 320x498
+    -|RAIZ ATUAL / 0 / Apareça amanhã e ela ganha o segundo dia.|20,142 280x61
+    -|ÚLTIMOS 7 DIAS / T / Q / Q / S / S / D / S|20,227 280x124
+    button|Faltam 3 dias para 3 dias seguidos presente|20,367 280x84
+    -|Raiz mais funda / 0 / Congelamentos / Um congelamento segura a raiz num dia em que você faltar. Volta a cada segunda. / 1 / Sessões concluíd|20,467 280x174
+[home] foto 051-detalhe-raiz-p2.png (rota /sequencia)
+    button|voltar|20,16 48x48
+    -|Sua raiz|68,24 232x32
+    -|Cada dia presente aprofunda a raiz. É ela que segura o hábito no dia em que a vontade falta.|68,68 232x66
+    group||0,142 320x498
+    -|RAIZ ATUAL / 0 / Apareça amanhã e ela ganha o segundo dia.|20,-108 280x201
+    -|ÚLTIMOS 7 DIAS / T / Q / Q / S / S / D / S|20,142 280x99
+    button|Faltam 3 dias para 3 dias seguidos presente|20,257 280x84
+    -|Raiz mais funda / 0 / Congelamentos / Um congelamento segura a raiz num dia em que você faltar. Volta a cada segunda. / 1 / Sessões concluíd|20,357 280x249
+[home] voltar do navegador /sequencia → /
+[home] foto 052-detalhe-raiz-apos-voltar.png (rota /)
+    group||0,0 320x562
+    button|0|20,0 60x6
+    button|Raiz de 0 dias|88,0 212x5
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,20 280x372
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,402 280x79
+    -|Ainda não houve sessão de foco hoje.|20,499 280x62
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,569 280x69
+    button|O relatório de hoje está pronto|20,654 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,712 280x100
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] tocou "O relatório de hoje está pronto"
+[home] foto 053-detalhe-relatorio-p0.png (rota /relatorio)
+    group||0,0 320x640
+    button|Voltar ao habitat / O dia de Pipoca / Segunda, 26 de outubro|24,16 272x135
+    button|0min / tempo de tela hoje / 4h 30min / sua meta / 4h 30min abaixo da sua meta.|24,151 272x171
+    button|Ainda não houve sessão de foco hoje. / E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|24,336 272x193
+    -|Sessões completas / 0|24,549 272x78
+    -|Bônus por ficar abaixo / —|24,628 272x12
+    -|Dias presente / Raiz de 0 dias|24,707 272x55
+    -|Resta 1 congelamento nesta semana. Se você faltar um dia, ele te espera.|24,762 272x64
+[home] foto 054-detalhe-relatorio-p1.png (rota /relatorio)
+    group||0,0 320x640
+    button|Voltar ao habitat / O dia de Pipoca / Segunda, 26 de outubro|24,-146 272x135
+    button|0min / tempo de tela hoje / 4h 30min / sua meta / 4h 30min abaixo da sua meta.|24,0 272x160
+    button|Ainda não houve sessão de foco hoje. / E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|24,174 272x193
+    -|Sessões completas / 0|24,387 272x78
+    -|Bônus por ficar abaixo / —|24,466 272x78
+    -|Dias presente / Raiz de 0 dias|24,545 272x55
+    -|Resta 1 congelamento nesta semana. Se você faltar um dia, ele te espera.|24,600 272x41
+[home] foto 055-detalhe-relatorio-p2.png (rota /relatorio)
+    group||0,0 320x640
+    button|Voltar ao habitat / O dia de Pipoca / Segunda, 26 de outubro|24,-202 272x135
+    button|0min / tempo de tela hoje / 4h 30min / sua meta / 4h 30min abaixo da sua meta.|24,0 272x104
+    button|Ainda não houve sessão de foco hoje. / E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|24,118 272x193
+    -|Sessões completas / 0|24,331 272x78
+    -|Bônus por ficar abaixo / —|24,410 272x78
+    -|Dias presente / Raiz de 0 dias|24,489 272x55
+    -|Resta 1 congelamento nesta semana. Se você faltar um dia, ele te espera.|24,544 272x64
+[home] voltar do navegador /relatorio → /
+[home] foto 056-detalhe-relatorio-apos-voltar.png (rota /)
+    group||0,0 320x562
+    button|0|20,-235 60x41
+    button|Raiz de 0 dias|88,-233 212x38
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,0 280x192
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,202 280x79
+    -|Ainda não houve sessão de foco hoje.|20,299 280x62
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,369 280x69
+    button|O relatório de hoje está pronto|20,454 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,512 280x50
+    button|0min de 4h 30min / faltam 4h 30min|20,629 280x100
+    -|Nível 1 / 0 XP / 40 XP para o nível 2|20,741 280x71
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] tocou "0min de 4h 30min / faltam 4h 30min"
+[home] foto 057-detalhe-tempo-p0.png (rota /tempo)
+    button|voltar|20,16 48x48
+    -|Seu tempo de tela|68,24 232x32
+    -|Sem acesso ao uso|88,315 144x21
+    -|Sem a permissão o Baru não estima nem inventa número. Conceda para ver onde seu tempo foi.|26,344 268x66
+    button|Permitir acesso ao uso|51,430 219x48
+[home] voltar do navegador /tempo → /
+[home] foto 058-detalhe-tempo-apos-voltar.png (rota /)
+    group||0,0 320x562
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,-250 280x242
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,2 280x79
+    -|Ainda não houve sessão de foco hoje.|20,99 280x62
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,169 280x69
+    button|O relatório de hoje está pronto|20,254 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,312 280x105
+    button|0min de 4h 30min / faltam 4h 30min|20,429 280x100
+    -|Nível 1 / 0 XP / 40 XP para o nível 2|20,541 280x21
+    button|Missões / 0/3|20,649 280x71
+    button|faltam 40 folhas para Vitórias-régias|20,732 280x80
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] tocou "Missões / 0/3"
+[home] foto 059-detalhe-missoes-resumo-p0.png (rota /missoes)
+    group||0,0 320x562
+    -|Missões / 0|20,16 280x41
+    -|Ritmo para hoje, amplitude para a semana.|20,61 280x44
+    button|A PRINCIPAL DE HOJE / 30 / +10 XP / Descanse 40 minutos seguidos / Sem o acesso ao uso eu não sei se o telefone ficou parado. Conceda para o|20,121 280x268
+    group|PARA FAZER HOJE|20,389 280x173
+    button|Faça um foco de 50 min / 20 / +10 XP / Uma sessão só, mais longa: escolha a duração maior ao começar o foco. / 0/50 / até meia-noite|20,432 280x130
+    button|Some 60 min de foco / 22 / +10 XP / Vale a soma do dia. Várias sessões curtas contam igual a uma longa. / 0/60 / até meia-noite|20,598 280x158
+    group|ESPERANDO O ACESSO AO USO|20,764 280x48
+    button|Feche o dia abaixo da meta / 15 / +10 XP / Basta terminar o dia com menos tempo de tela que a sua meta. / 0/1 / Precisa do acesso ao uso / a|20,807 280x5
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] foto 060-detalhe-missoes-resumo-p1.png (rota /missoes)
+    group||0,0 320x562
+    -|Missões / 0|20,-146 280x41
+    -|Ritmo para hoje, amplitude para a semana.|20,-101 280x44
+    button|A PRINCIPAL DE HOJE / 30 / +10 XP / Descanse 40 minutos seguidos / Sem o acesso ao uso eu não sei se o telefone ficou parado. Conceda para o|20,0 280x227
+    group|PARA FAZER HOJE|20,227 280x336
+    button|Faça um foco de 50 min / 20 / +10 XP / Uma sessão só, mais longa: escolha a duração maior ao começar o foco. / 0/50 / até meia-noite|20,270 280x158
+    button|Some 60 min de foco / 22 / +10 XP / Vale a soma do dia. Várias sessões curtas contam igual a uma longa. / 0/60 / até meia-noite|20,436 280x127
+    group|ESPERANDO O ACESSO AO USO|20,602 280x211
+    button|Feche o dia abaixo da meta / 15 / +10 XP / Basta terminar o dia com menos tempo de tela que a sua meta. / 0/1 / Precisa do acesso ao uso / a|20,645 280x158
+    button|Colha o descanso em 3 dias desta semana / 90 / +40 XP / O dia entra quando você abre a toca do descanso daquele dia. / 0/3 / Precisa do aces|20,811 280x2
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] foto 061-detalhe-missoes-resumo-p2.png (rota /missoes)
+    group||0,0 320x562
+    -|Ritmo para hoje, amplitude para a semana.|20,-250 280x30
+    button|A PRINCIPAL DE HOJE / 30 / +10 XP / Descanse 40 minutos seguidos / Sem o acesso ao uso eu não sei se o telefone ficou parado. Conceda para o|20,0 280x64
+    group|PARA FAZER HOJE|20,64 280x375
+    button|Faça um foco de 50 min / 20 / +10 XP / Uma sessão só, mais longa: escolha a duração maior ao começar o foco. / 0/50 / até meia-noite|20,107 280x158
+    button|Some 60 min de foco / 22 / +10 XP / Vale a soma do dia. Várias sessões curtas contam igual a uma longa. / 0/60 / até meia-noite|20,273 280x158
+    group|ESPERANDO O ACESSO AO USO|20,439 280x123
+    button|Feche o dia abaixo da meta / 15 / +10 XP / Basta terminar o dia com menos tempo de tela que a sua meta. / 0/1 / Precisa do acesso ao uso / a|20,482 280x80
+    button|Colha o descanso em 3 dias desta semana / 90 / +40 XP / O dia entra quando você abre a toca do descanso daquele dia. / 0/3 / Precisa do aces|20,648 280x164
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] voltar do navegador /missoes → /
+[home] foto 062-detalhe-missoes-resumo-apos-voltar.png (rota /)
+    group||0,0 320x562
+    button|0|20,14 60x41
+    button|Raiz de 0 dias|88,16 212x38
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,69 280x372
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,451 280x79
+    -|Ainda não houve sessão de foco hoje.|20,548 280x14
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,618 280x69
+    button|O relatório de hoje está pronto|20,703 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,761 280x51
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] tocou "faltam 40 folhas para Vitórias-régias"
+[home] foto 063-detalhe-loja-p0.png (rota /loja)
+    button|voltar|20,16 48x48
+    -|Habitat|68,24 232x32
+    group||0,72 320x568
+    button|0 / Folhas|0,84 320x69
+    button|Tudo / Tudo|20,169 88x38
+    button|Dá para levar / Dá para levar|116,169 88x38
+    button|Meus itens / Meus itens|212,169 88x38
+    button|O PRÓXIMO / Vitórias-régias / Faltam 40 folhas. / Faltam 40 / Faltam 40|0,227 320x186
+    group|NO HABITAT / Coisas que moram na cena. Pode ter todas ao mesmo tempo. / 0/22 / Beira d'água / O que só existe porque ali tem um lago. / Mata|0,439 320x201
+    group||0,546 320x94
+    button|Vitórias-régias / Faltam 40 / Faltam 40|20,546 152x94
+    button|Juncos da margem / Faltam 90 / Faltam 90|184,546 136x94
+    button|Pedra da fonte / Faltam 110 / Faltam 110|348,546 152x214
+    button|Pedras do riacho / Faltam 140 / Faltam 140|512,546 58x214
+    group||0,805 320x85
+    button|Bambuzal / Faltam 70 / Faltam 70|20,805 152x214
+    button|Cogumelos / Faltam 100 / Faltam 100|184,805 152x214
+    button|Samambaia / Faltam 120 / Faltam 120|348,805 152x214
+    button|Tronco caído / Faltam 180 / Faltam 180|512,805 58x214
+[home] foto 064-detalhe-loja-p1.png (rota /loja)
+    button|voltar|20,16 48x48
+    -|Habitat|68,24 232x32
+    group||0,72 320x568
+    button|0 / Folhas|0,-78 320x69
+    button|Tudo / Tudo|20,7 88x38
+    button|Dá para levar / Dá para levar|116,7 88x38
+    button|Meus itens / Meus itens|212,7 88x38
+    button|O PRÓXIMO / Vitórias-régias / Faltam 40 folhas. / Faltam 40 / Faltam 40|0,72 320x179
+    group|NO HABITAT / Coisas que moram na cena. Pode ter todas ao mesmo tempo. / 0/22 / Beira d'água / O que só existe porque ali tem um lago. / Mata|0,277 320x364
+    group||0,384 320x214
+    button|Vitórias-régias / Faltam 40 / Faltam 40|20,384 152x214
+    button|Juncos da margem / Faltam 90 / Faltam 90|184,384 136x214
+    button|Pedra da fonte / Faltam 110 / Faltam 110|348,384 152x214
+    button|Pedras do riacho / Faltam 140 / Faltam 140|512,384 58x214
+    group||0,642 320x214
+    button|Bambuzal / Faltam 70 / Faltam 70|20,642 152x214
+    button|Cogumelos / Faltam 100 / Faltam 100|184,642 152x214
+    button|Samambaia / Faltam 120 / Faltam 120|348,642 152x214
+    button|Tronco caído / Faltam 180 / Faltam 180|512,642 58x214
+[home] foto 065-detalhe-loja-p2.png (rota /loja)
+    button|voltar|20,16 48x48
+    -|Habitat|68,24 232x32
+    group||0,72 320x568
+    button|Tudo / Tudo|20,-156 88x38
+    button|Dá para levar / Dá para levar|116,-156 88x38
+    button|Meus itens / Meus itens|212,-156 88x38
+    button|O PRÓXIMO / Vitórias-régias / Faltam 40 folhas. / Faltam 40 / Faltam 40|0,72 320x16
+    group|NO HABITAT / Coisas que moram na cena. Pode ter todas ao mesmo tempo. / 0/22 / Beira d'água / O que só existe porque ali tem um lago. / Mata|0,114 320x526
+    group||0,221 320x214
+    button|Vitórias-régias / Faltam 40 / Faltam 40|20,221 152x214
+    button|Juncos da margem / Faltam 90 / Faltam 90|184,221 136x214
+    button|Pedra da fonte / Faltam 110 / Faltam 110|348,221 152x214
+    button|Pedras do riacho / Faltam 140 / Faltam 140|512,221 58x214
+    group||0,480 320x160
+    button|Bambuzal / Faltam 70 / Faltam 70|20,480 152x160
+    button|Cogumelos / Faltam 100 / Faltam 100|184,480 136x160
+    button|Samambaia / Faltam 120 / Faltam 120|348,480 152x214
+    button|Tronco caído / Faltam 180 / Faltam 180|512,480 58x214
+    group||0,738 320x152
+    button|Lampião / Faltam 190 / Faltam 190|20,738 152x214
+    button|Vaga-lumes / Faltam 220 / Faltam 220|184,738 152x214
+    button|Varal de luzes / Faltam 260 / Faltam 260|348,738 152x214
+    button|Fogueira / Faltam 280 / Faltam 280|512,738 58x214
+[home] voltar do navegador /loja → /
+[home] foto 066-detalhe-loja-apos-voltar.png (rota /)
+    group||0,0 320x562
+    button|Ainda não houve sessão de foco hoje. E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,-250 280x16
+    -|Crescimento: Ninho. Falta 1 sessão de foco para Pipoca abrir os olhos|20,-224 280x79
+    -|Ainda não houve sessão de foco hoje.|20,-127 280x62
+    -|E sem o acesso ao uso eu não meço a sua tela, então hoje eu leio o dia só pelo foco.|20,0 280x12
+    button|O relatório de hoje está pronto|20,28 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 0 dias / T / Q / Q / S / S / D / S|20,86 280x105
+    button|0min de 4h 30min / faltam 4h 30min|20,203 280x100
+    -|Nível 1 / 0 XP / 40 XP para o nível 2|20,315 280x96
+    button|Missões / 0/3|20,423 280x71
+    button|faltam 40 folhas para Vitórias-régias|20,506 280x56
+    button|25min / 25min|20,611 64x46
+    button|50min / 50min|92,611 64x46
+    button|90min / 90min|164,611 64x46
+    button|Livre / Livre|236,611 64x46
+    button|Começar foco|20,669 280x64
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[home] ok (54.8 s reais)
+[sessao-1] tocou "25min / 25min"
+[sessao-1] som pedido: inicio.wav
+[sessao-1] som pedido: inicio.wav
+[sessao-1] quadros 067-s1-entra.png: 10 × 80 ms
+[sessao-1] foto 068-s1-sessao-inicio.png (rota /sessao)
+    -|FOCO DE 25 MIN|104,28 112x18
+    button|Pipoca está dormindo no ninho.|60,137 200x150
+    -|25:00 / 25:00|77,358 166x66
+    -|Pipoca está dormindo no ninho.|48,438 225x23
+    button|Desistir / Desistir|26,556 268x50
+    -|Sem "desenhar sobre outros apps", não posso te chamar de volta. Ative em Ajustes › Sobreposição.|0,531 320x109
+[sessao-1] foto 069-s1-sessao-4s.png (rota /sessao)
+    -|FOCO DE 25 MIN|104,28 112x18
+    button|Pipoca está dormindo no ninho.|60,137 200x150
+    -|20:57 / 20:57|77,358 166x66
+    -|Pipoca está dormindo no ninho.|48,438 225x23
+    button|Desistir / Desistir|26,556 268x50
+    -|Sem "desenhar sobre outros apps", não posso te chamar de volta. Ative em Ajustes › Sobreposição.|0,531 320x109
+[sessao-1] som pedido: fim.wav
+[sessao-1] som pedido: fim.wav
+[sessao-1] som pedido: folhas.wav
+[sessao-1] som pedido: folhas.wav
+[sessao-1] foto 070-s1-quase-fim.png (rota /resultado)
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|0/50|40,518 25x17
+    -|Some 60 min de foco|40,565 136x20
+    -|0/60|40,602 25x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+[sessao-1] som pedido: raiz.wav
+[sessao-1] som pedido: raiz.wav
+[sessao-1] quadros 071-s1-fim-e-resultado.png: 48 × 125 ms
+[sessao-1] foto 072-s1-resultado-ou-cena.png (rota /resultado)
+    group|0 / 1 / dia|0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|+12 XP|177,330 46x20
+    -|+5 da raiz|231,330 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 268x46
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|0/50|40,518 25x17
+    -|Some 60 min de foco|40,565 136x20
+    -|0/60|40,602 25x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+    group||0,410 320x230
+    -|Raiz de 1 dia|82,424 156x32
+    -|Faltam 2 dias para o próximo galho.|32,462 257x23
+    -|T|40,526 7x17
+    -|Q|78,526 9x17
+    -|Q|117,526 9x17
+    -|S|156,526 7x17
+    -|S|195,526 7x17
+    -|D|233,526 9x17
+    -|S|273,526 7x17
+    button|Continuar|24,561 272x56
+[sessao-1] foto 073-s1-cena0.png (rota /resultado)
+    group|0 / 1 / dia|0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|+12 XP|177,330 46x20
+    -|+5 da raiz|231,330 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 268x46
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|0/50|40,518 25x17
+    -|Some 60 min de foco|40,565 136x20
+    -|0/60|40,602 25x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+    group||0,410 320x230
+    -|Raiz de 1 dia|82,424 156x32
+    -|Faltam 2 dias para o próximo galho.|32,462 257x23
+    -|T|40,526 7x17
+    -|Q|78,526 9x17
+    -|Q|117,526 9x17
+    -|S|156,526 7x17
+    -|S|195,526 7x17
+    -|D|233,526 9x17
+    -|S|273,526 7x17
+    button|Continuar|24,561 272x56
+[sessao-1] quadros 074-s1-cena0-sai.png: 18 × 100 ms
+[sessao-1] som pedido: crescimento.wav
+[sessao-1] som pedido: crescimento.wav
+[sessao-1] foto 075-s1-cena1.png (rota /resultado)
+    group|Pipoca abriu os olhos! / AGORA: FILHOTE / Cada sessão de foco com você faz Pipoca crescer.|0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|+12 XP|177,330 46x20
+    -|+5 da raiz|231,330 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 268x46
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|0/50|40,518 25x17
+    -|Some 60 min de foco|40,565 136x20
+    -|0/60|40,602 25x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+    button|Continuar|50,492 220x56
+[sessao-1] quadros 076-s1-cena1-sai.png: 18 × 100 ms
+[sessao-1] foto 077-s1-celebracao2.png (rota /resultado)
+    button|Marco alcançado / Sua primeira sessão de foco|0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|+12 XP|177,330 46x20
+    -|+5 da raiz|231,330 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 268x46
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|0/50|40,518 25x17
+    -|Some 60 min de foco|40,565 136x20
+    -|0/60|40,602 25x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+[sessao-1] som pedido: cavar_2.wav
+[sessao-1] som pedido: cavar_2.wav
+[sessao-1] som pedido: cavar_2.wav
+[sessao-1] som pedido: premio.wav
+[sessao-1] som pedido: premio.wav
+[sessao-1] som pedido: marco.wav
+[sessao-1] som pedido: marco.wav
+[sessao-1] quadros 078-s1-celebracao2-cavando.png: 30 × 100 ms
+[sessao-1] foto 079-s1-celebracao2-aberta.png (rota /resultado)
+    group||0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|+12 XP|177,330 46x20
+    -|+5 da raiz|231,330 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 268x46
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|6/50|40,518 25x17
+    -|Some 60 min de foco|40,565 136x20
+    -|6/60|40,602 25x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+[sessao-1] som pedido: toque_1.wav
+[sessao-1] quadros 080-s1-celebracao2-fecha.png: 10 × 100 ms
+[sessao-1] cenas vistas: ["0 / 1 / dia","Pipoca abriu os olhos! / AGORA: FILHOTE / Cada sessão de foco com você faz Pipoca crescer.","Marco alcançado / Sua primeira sessão de foco"]
+[sessao-1] quadros 081-s1-resultado-missoes.png: 20 × 150 ms
+[sessao-1] foto 082-s1-resultado-final-p0.png (rota /resultado)
+    group||0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|+12 XP|177,330 46x20
+    -|+5 da raiz|231,330 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 268x46
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|25/50|40,518 32x17
+    -|Some 60 min de foco|40,565 136x20
+    -|25/60|40,602 32x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+[sessao-1] foto 083-s1-resultado-final-p1.png (rota /resultado)
+    group||0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x25
+    -|+10 folhas|121,102 108x32
+    -|25 minutos concluídos.|34,162 252x29
+    -|Nível 1|26,205 45x20
+    -|+12 XP|177,205 46x20
+    -|+5 da raiz|231,205 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,256 268x46
+    -|MISSÕES QUE ANDARAM|26,320 268x17
+    -|Faça um foco de 50 min|40,356 153x20
+    -|25/50|40,393 32x17
+    -|Some 60 min de foco|40,440 136x20
+    -|25/60|40,477 32x1
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+[sessao-1] tocou "Compartilhar o habitat"
+[sessao-1] foto 084-s1-compartilhar.png (rota /resultado)
+    group|Uma sessão de foco hoje, 25min no total. Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|+12 XP|177,330 46x20
+    -|+5 da raiz|231,330 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 268x46
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|25/50|40,518 32x17
+    -|Some 60 min de foco|40,565 136x20
+    -|25/60|40,602 32x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+    group|Folha de compartilhamento nativa. A fase 1 compartilha um screenshot do habitat.|0,357 320x283
+    group|habitat.png / Imagem · 402 × 296|18,400 284x84
+    button|Uma sessão de foco hoje, 25min no total. Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|32,414 74x56
+    button|Pronto|18,554 284x52
+[sessao-1] tocou "Pronto"
+[sessao-1] foto 085-s1-compartilhar-fechado.png (rota /resultado)
+    group||0,0 320x640
+    group|30|0,0 320x640
+    group||26,55 268x423
+    button||60,55 200x150
+    -|+10 folhas|121,227 108x32
+    -|25 minutos concluídos.|34,287 252x29
+    -|Nível 1|26,330 45x20
+    -|+12 XP|177,330 46x20
+    -|+5 da raiz|231,330 63x20
+    -|Dia feito. Pode largar o telefone: Pipoca cuida do resto.|26,381 268x46
+    -|MISSÕES QUE ANDARAM|26,445 268x17
+    -|Faça um foco de 50 min|40,481 153x20
+    -|25/50|40,518 32x17
+    -|Some 60 min de foco|40,565 136x20
+    -|25/60|40,602 32x17
+    button|Compartilhar o habitat|26,488 268x56
+    button|Voltar ao habitat|26,554 268x56
+[sessao-1] quadros 086-s1-volta-ao-habitat.png: 10 × 100 ms
+[sessao-1] cenas vistas: []
+[sessao-1] foto 087-s1-home-depois.png (rota /)
+    group||0,0 320x640
+    group||0,0 320x562
+    button|30|20,14 70x41
+    button|Raiz de 1 dia|98,16 202x38
+    button|Uma sessão de foco hoje, 25min no total. Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,69 280x372
+    -|Crescimento: Filhote. Faltam 4 sessões para crescer|20,451 280x79
+    -|Uma sessão de foco hoje, 25min no total.|20,548 280x14
+    -|Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,618 280x46
+    button|O relatório de hoje está pronto|20,680 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 1 dia / T / Q / Q / S / S / D / S|20,738 280x74
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[sessao-1] ok (68.1 s reais)
+[desistencia] som pedido: inicio.wav
+[desistencia] quadros 088-s2-entra.png: 10 × 80 ms
+[desistencia] foto 089-s2-sessao-3s.png (rota /sessao)
+    group||0,0 320x640
+    -|BANHO DE 25 MIN|98,28 125x18
+    button|Pipoca está nadando.|60,137 200x150
+    -|21:57 / 21:57|77,358 166x66
+    -|Pipoca está nadando.|84,438 153x23
+    button|Desistir / Desistir|26,556 268x50
+    -|Sem "desenhar sobre outros apps", não posso te chamar de volta. Ative em Ajustes › Sobreposição.|0,531 320x109
+[desistencia] relógio antes de desistir/recarregar: 21:57 / 21:57
+[desistencia] tocou "Desistir / Desistir"
+[desistencia] foto 090-s2-confirma-desistir.png (rota /sessao)
+    group||0,0 320x640
+    -|BANHO DE 25 MIN|98,28 125x18
+    button|Pipoca está nadando.|60,137 200x150
+    button||60,198 200x150
+    -|16:55 / 16:55|77,358 166x66
+    -|Pipoca está no meio de um banho.|26,364 268x58
+    -|Pipoca está nadando.|84,438 153x23
+    -|Sair agora encerra a sessão sem folhas. Nada mais muda.|26,430 268x44
+    button|Ficar com ele|26,496 268x56
+    button|Sair mesmo assim / Sair mesmo assim|26,552 268x48
+    button|Desistir / Desistir|26,556 268x50
+[desistencia] tocou "Ficar com ele"
+[desistencia] foto 091-s2-ficou.png (rota /sessao)
+    group||0,0 320x640
+    -|BANHO DE 25 MIN|98,28 125x18
+    button|Pipoca está nadando.|60,137 200x150
+    -|15:54 / 15:54|77,358 166x66
+    -|Pipoca está nadando.|84,438 153x23
+    button|Desistir / Desistir|26,556 268x50
+[desistencia] relógio antes de recarregar: 15:54 / 15:54
+[desistencia] foto 092-s2-apos-recarregar-na-sessao.png (rota /sessao)
+    -|BANHO DE 25 MIN|98,28 125x18
+    button|Pipoca está nadando.|60,137 200x150
+    -|08:47 / 08:47|77,358 166x66
+    -|Pipoca está nadando.|84,438 153x23
+    button|Desistir / Desistir|26,556 268x50
+[desistencia] relógio depois de recarregar (6,5 s depois): 08:47 / 08:47 rota /sessao
+[desistencia] voltar do navegador /sessao → /
+[desistencia] foto 093-s2-voltar-do-navegador-na-sessao.png (rota /)
+    group||0,0 320x562
+    button|30|20,14 70x41
+    button|Raiz de 1 dia|98,16 202x38
+    button|Uma sessão de foco hoje, 25min no total. Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,69 280x372
+    -|Crescimento: Filhote. Faltam 4 sessões para crescer|20,451 280x79
+    -|Uma sessão de foco hoje, 25min no total.|20,548 280x14
+    -|Sem o acesso ao uso eu não meço a sua tela: hoje eu leio o dia só pelo foco.|20,618 280x46
+    button|O relatório de hoje está pronto|20,680 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 1 dia / T / Q / Q / S / S / D / S|20,738 280x74
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[desistencia] o voltar saiu da sessão sem perguntar; voltando por endereço
+[desistencia] foto 094-s2-de-volta-a-sessao.png (rota /sessao)
+    -|BANHO DE 25 MIN|98,28 125x18
+    button|Pipoca está nadando.|60,137 200x150
+    -|05:47 / 05:47|77,358 166x66
+    -|Pipoca está nadando.|84,438 153x23
+    button|Desistir / Desistir|26,556 268x50
+[desistencia] tocou "Desistir / Desistir"
+[desistencia] som pedido: desistencia.wav
+[desistencia] som pedido: desistencia.wav
+[desistencia] quadros 095-s2-sai.png: 12 × 100 ms
+[desistencia] foto 096-s2-desistencia.png (rota /resultado)
+    button||60,140 200x150
+    -|Pipoca sentiu sua falta.|26,312 268x62
+    -|Sem folhas desta vez, e nada foi perdido. Ela continua aqui.|26,384 268x46
+    button|Voltar ao habitat|26,550 268x56
+[desistencia] cenas vistas: []
+[desistencia] tocou "Voltar ao habitat"
+[desistencia] foto 097-s2-home-apos-desistir.png (rota /)
+    group||0,0 320x562
+    button|30|20,14 70x41
+    button|Raiz de 1 dia|98,16 202x38
+    button|Uma sessão de 25min parou no meio hoje. Sem folhas por essa, e nada além disso. Ela espera a próxima.|20,69 280x372
+    -|Crescimento: Filhote. Faltam 4 sessões para crescer|20,451 280x79
+    -|Uma sessão de 25min parou no meio hoje.|20,548 280x14
+    -|Sem folhas por essa, e nada além disso. Ela espera a próxima.|20,618 280x46
+    button|O relatório de hoje está pronto|20,680 280x46
+    -|ÚLTIMOS 7 DIAS / Raiz de 1 dia / T / Q / Q / S / S / D / S|20,738 280x74
+    button|Habitat / Habitat|12,573 74x55
+    button|Trilha / Trilha|86,573 74x55
+    button|Missões / Missões|160,573 74x55
+    button|Ajustes / Ajustes|234,573 74x55
+[desistencia] ok (44.3 s reais)

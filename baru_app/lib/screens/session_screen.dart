@@ -70,7 +70,7 @@ class SessionScreen extends StatelessWidget {
     garanteTextosDoPet();
     final app = AppScope.of(context);
     final t = app.t;
-    final acao = acaoNoEstagio(app.species, atividade, app.estagio);
+    final acao = acaoNoEstagio(app.species, atividade, app.estagioVisivel);
     final total = app.sessionMinutes * 60;
     final pct = total == 0 ? 0.0 : ((total - app.remaining) / total).clamp(0.0, 1.0);
     final mm = (app.remaining ~/ 60).toString().padLeft(2, '0');
@@ -137,7 +137,7 @@ class SessionScreen extends StatelessWidget {
                               label: t.fill(
                                 t.petFazendoNoEstagio(
                                   acao,
-                                  app.estagio,
+                                  app.estagioVisivel,
                                   app.species,
                                 ),
                                 {'n': app.displayName},
@@ -147,7 +147,7 @@ class SessionScreen extends StatelessWidget {
                                 mood: Mood.radiant,
                                 activity: atividade,
                                 coat: app.color,
-                                estagio: app.estagio,
+                                estagio: app.estagioVisivel,
                                 scale: escalaDoBicho,
                                 roupas: app.roupasDoBicho,
                                 roupaDeCabeca: app.roupaDeCabeca,
@@ -168,7 +168,7 @@ class SessionScreen extends StatelessWidget {
                       const SizedBox(height: 14),
                       Text(
                         t.fill(
-                          t.petFazendoNoEstagio(acao, app.estagio, app.species),
+                          t.petFazendoNoEstagio(acao, app.estagioVisivel, app.species),
                           {'n': app.displayName},
                         ),
                         style: nunito(size: 15.5, color: Cores.tinta700),
@@ -281,7 +281,7 @@ class _QuitSheet extends StatelessWidget {
                 mood: Mood.radiant,
                 activity: SessionScreen.atividade,
                 coat: app.color,
-                estagio: app.estagio,
+                estagio: app.estagioVisivel,
                 roupas: app.roupasDoBicho,
                 roupaDeCabeca: app.roupaDeCabeca,
               ),

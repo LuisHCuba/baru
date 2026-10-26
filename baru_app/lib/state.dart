@@ -673,8 +673,14 @@ class AppState extends ChangeNotifier {
   /// `--dart-define=BARU_RELOGIO_REAL=true` desliga a compressão num build de
   /// depuração: é o que permite testar num aparelho o que só acontece com o
   /// tempo correndo de verdade, como o companheiro aparecer sobre outro app.
+  ///
+  /// `--dart-define=BARU_RELOGIO_RAPIDO=true` liga a compressão num build
+  /// web de release, só para o simulador que percorre o app tela a tela (um
+  /// agente não espera 25 minutos). Sem o define, a constante é `false` e o
+  /// compilador apaga o caminho: nenhum build de loja passa por aqui.
   bool debugFast =
-      kDebugMode && !const bool.fromEnvironment('BARU_RELOGIO_REAL');
+      (kDebugMode && !const bool.fromEnvironment('BARU_RELOGIO_REAL')) ||
+          const bool.fromEnvironment('BARU_RELOGIO_RAPIDO');
   bool usageAccess = false;
   bool companionshipStarted = false;
   List<WeekDayKind> week = freshWeek();

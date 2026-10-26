@@ -966,3 +966,30 @@ saber); nada de retenção fora de 8h–21h; textos que giram por dia.
 **Consequências.** Quem tinha silenciado o canal antigo volta a receber
 recados até silenciar o novo. A regra "foco de 10 min conta" e a "raiz
 adormecida" seguem como decisão pendente do dono: nenhum texto as promete.
+
+## ADR-026 — Espécies redesenhadas pela biologia (2026-10-26)
+
+**Contexto.** Os laudos 06–08 mostraram espécies genéricas: a raposa lia como
+panda-vermelho, a gata como castor, o pinguim tinha o bico laranja igual ao da
+coruja, o axolote não tinha cauda nem guelra plumosa, a lontra e a capivara
+coincidiam em 83% da silhueta, e a coruja de tufos pairava sobre a lagoa.
+
+**Decisão.** Cada espécie vira o bicho real que a inspira, sem mudar a chave
+interna nem o nome:
+
+- **Nina** é uma coruja-buraqueira: sem tufos, olho amarelo, sobrancelha e
+  queixo brancos, pernas longas. É de chão: na sessão ela brinca na beira em
+  vez de voar (`acaoDoBicho`).
+- **Nino** é um pinguim-de-magalhães: bico e pés escuros, faixa branca em C a
+  partir de cima do olho, e as duas faixas do peito só no adulto.
+- **Lume** ganha cauda com barbatana e guelras com filamentos, que crescem com
+  o estágio.
+- **Faísca** ganha os brancos da raposa (bochecha, queixo, peito, ponta da
+  cauda) e cauda ruiva.
+- **Mel** ganha cauda tubular anelada, orelha de ponta fina e o "M" na testa.
+- **Rio** fica esguia e de cabeça chata; **Baru** segue barril.
+- Orelhas e cauda da gata e da raposa, e a postura de todas, mudam com o humor.
+
+**Fora desta decisão.** A troca da tartaruga-de-orelha-vermelha pelo tracajá
+(laudo 06) segue pendente do dono. **Consequências.** As capturas da Play
+precisam ser regeradas para mostrar os desenhos novos.

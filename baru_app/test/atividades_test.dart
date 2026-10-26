@@ -159,7 +159,8 @@ void main() {
         (Species.tortoise, Activity.swim): AcaoDoBicho.nado,
         (Species.penguin, Activity.swim): AcaoDoBicho.nado,
         (Species.axolotl, Activity.swim): AcaoDoBicho.nado,
-        (Species.owl, Activity.swim): AcaoDoBicho.voo,
+        // A coruja-buraqueira é de chão (laudo 07, R4): brinca na beira.
+        (Species.owl, Activity.swim): AcaoDoBicho.brincadeira,
         (Species.cat, Activity.swim): AcaoDoBicho.brincadeira,
         (Species.fox, Activity.swim): AcaoDoBicho.brincadeira,
         (Species.frenchie, Activity.swim): AcaoDoBicho.brincadeira,
@@ -583,49 +584,19 @@ void main() {
   // ======================================================================
 
   group('quem não nada', () {
-    testWidgets('a coruja abre as asas e bate', (tester) async {
-      // A faixa é a **ponta da asa aberta**, muito além do corpo. Dobrada,
-      // a asa não passa de x=150; aberta, ela chega a x=186.
+    testWidgets('a buraqueira não paira: na sessão a asa fica dobrada',
+        (tester) async {
+      // A faixa é onde a **ponta da asa aberta** chegaria, muito além do
+      // corpo. A coruja de antes voava sobre a lagoa; a buraqueira é de
+      // chão e brinca na beira (laudo 07, R4), e a asa nunca abre ali.
       const x0 = 172, x1 = 196;
-
-      await tester.pumpWidget(
-        _cena(activity: Activity.idle, species: Species.owl),
-      );
-      await tester.pump();
-      expect(
-        _pintadosEm(await _quadro(tester), x0, 0, x1, _alturaDoQuadro),
-        0,
-        reason: 'pousada, a asa fica dobrada no corpo',
-      );
-
       await tester.pumpWidget(
         _cena(activity: Activity.swim, species: Species.owl),
       );
       await tester.pump();
-
-      final altas = <int>[];
-      final todas = <int>[];
       for (final q in await _voltaCompleta(tester, _umaAsada, 8)) {
-        altas.add(_pintadosEm(q, x0, 0, x1, 40));
-        todas.add(_pintadosEm(q, x0, 0, x1, _alturaDoQuadro));
+        expect(_pintadosEm(q, x0, 0, x1, 40), 0);
       }
-
-      expect(
-        todas.every((n) => n > 0),
-        isTrue,
-        reason: 'no lugar do nado a coruja voa, e voando a asa está aberta '
-            'o tempo todo. Vistas: $todas',
-      );
-      expect(
-        altas.where((n) => n > 0),
-        isNotEmpty,
-        reason: 'a ponta da asa tem de subir na batida. Vistas: $altas',
-      );
-      expect(
-        altas.where((n) => n == 0),
-        isNotEmpty,
-        reason: 'e descer de volta — asa parada no alto é planeio',
-      );
     });
 
     testWidgets('a gata salta em vez de nadar', (tester) async {
@@ -774,14 +745,11 @@ void main() {
       expect(find.text('BANHO DE 25 MIN'), findsOneWidget);
     });
 
-    testWidgets('a coruja voa, e a tela fala em voo', (tester) async {
+    testWidgets('a coruja brinca na beira, e a tela não fala em voo',
+        (tester) async {
       await abre(tester, Species.owl);
-      expect(
-        find.textContaining('voando'),
-        findsOneWidget,
-        reason: 'era aqui que a coruja dizia "está nadando"',
-      );
-      expect(find.textContaining('VOO DE 25 MIN'), findsOneWidget);
+      expect(find.textContaining('brincando'), findsOneWidget);
+      expect(find.textContaining('voando'), findsNothing);
       expect(find.textContaining('nadando'), findsNothing);
     });
 

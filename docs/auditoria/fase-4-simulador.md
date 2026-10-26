@@ -773,3 +773,37 @@ Médios:
 20. Arte rudimentar de itens, raiz e toca.
 21. Resposta fraca ao toque e ao carinho.
 22. Sons sintetizados da mesma família, sem voz de espécie.
+
+---
+
+## Resposta do implementador
+
+Conferido de novo com o próprio `tool/simulador/simula.js` (`SIM_CURTA=1`,
+412×892) sobre um build novo. A etapa "desistência" do script falha agora
+porque o voltar do navegador durante a sessão passou a perguntar antes de
+sair (correção do 7): o script esperava o comportamento antigo.
+
+| # | Situação | O que mudou |
+|---|---|---|
+| A1 | corrigido | Sem acesso ao uso, home e relatório mostram o estado vazio (`SemTempoDeTela`), sem "0min de 4h30". |
+| A2 | corrigido | `estagioVisivel`: todas as telas desenham o estágio já visto até a cena de crescimento passar, inclusive o fim da sessão e o resultado. |
+| A3 | corrigido | A toca das celebrações tem "Tem algo enterrado aqui / Toque na terra para cavar", véu a 97% e o prêmio do marco pelo nome. |
+| A4 | corrigido | Sem permissão, o passo 2 abre com **2** dias seguidos (eram 4) e o título mostra esse caminho. Os passos 6, 8 e seguintes mantêm o desvio de antes. |
+| A5 | melhorado | Filhote atarracado e cabeçudo; jovem espichado; na água os dois boiam mais alto. O bicho continua do mesmo tamanho na cena. |
+| 6 | corrigido | Prêmio do marco no subtítulo e cena aberta por 2,6 s depois de cavada. |
+| 7 | corrigido | Endereço durante a sessão pede confirmação. Deep link do Android segue o mesmo caminho (`abrePorEndereco`), não testado em aparelho. |
+| 8 | corrigido | `/sessao` sem sessão vai para a home. A folha de compartilhar presa no voltar da web não foi tratada. |
+| 9 | corrigido | Roupa do bicho em ajustes, relatório, resultado, sobreposição, paywall e saída; fora do habitat o bicho não nada. O widget da tela inicial continua sem roupa. |
+| 10 | corrigido | Véu do crescimento opaco desde o 1º quadro e clarão no bicho, não na tela. |
+| 11 | **decisão do dono** | Espécies de origem travadas nos Ajustes: o contrato (§4) e a trilha (ADR) divergem. Não mudei. |
+| 12 | corrigido | Sem permissão o descanso não é "a principal" e desce para "à espera". |
+| 13 | não tratado | "Foco de 50 min" segue mostrando a maior sessão do dia. |
+| 14 | corrigido | Primeira home com boas-vindas ("Oi! Eu sou Pipoca. Ainda estou no ninho…"), duração e "Começar foco" logo abaixo do bicho, e "Plante sua raiz hoje" no lugar de "Raiz de 0 dias". |
+| 15 | não tratado | Transições do quiz, revelação e home ↔ sessão. |
+| 16 | corrigido | O recado sobe durante a sessão; sem aviso de sobreposição na web. |
+| 17 | parcial | Rótulos de botão encolhem em vez de cortar (item 10); os outros cortes em 320 não foram revistos. |
+| 18 | corrigido | Paywall com botão de fechar. |
+| 19 | corrigido | Texto de produto no lugar da nota de desenvolvedor. |
+| 20–22 | não tratado | Arte de itens, resposta ao toque e identidade sonora: exigem trabalho de arte e som (e ouvir), não cabem numa correção. |
+
+Baixos não tratados.

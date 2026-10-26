@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n_humor.dart';
 import '../l10n_loja.dart';
+import '../data/crescimento.dart';
 import '../models.dart';
 import '../state.dart';
 import 'trilha_screen.dart';
@@ -17,6 +18,14 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final t = app.t;
+    // A primeira home: ninguém focou ainda. Recebe, explica o que vem e põe
+    // a ação à vista; relatório e semana esperam ter o que mostrar.
+    final primeira = app.sessoesConcluidas == 0 &&
+        app.completedToday == 0 &&
+        app.sessions.isEmpty &&
+        app.streak == 0 &&
+        app.daysAway == 0 &&
+        !app.abandonedToday;
     final next = app.nextItem;
     final fala = app.falaDoHumor;
     final usagePct = (app.usage / (app.goal * 1.35)).clamp(0.0, 1.0);
@@ -108,7 +117,9 @@ class HomeScreen extends StatelessWidget {
         // `frase` resolve pronome e valores no mesmo passo; separar em dois
         // `fill` deixaria `{P}` cru quando a fala tem número e pronome.
         Text(
-          app.frase(t.humorCap(fala), fala.valores),
+          primeira
+              ? t.fill(t.s('homeBoasVindasT'), {'n': app.displayName})
+              : app.frase(t.humorCap(fala), fala.valores),
           key: const Key('home-humor-cap'),
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
@@ -116,11 +127,20 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          app.frase(t.humorSub(fala), fala.valores),
+          primeira
+              ? t.s(Crescimento.botaOvo(app.species)
+                  ? 'homeBoasVindasOvo'
+                  : 'homeBoasVindasNinho')
+              : app.frase(t.humorSub(fala), fala.valores),
           key: const Key('home-humor-sub'),
           style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
         ),
-        const SizedBox(height: 16),
+        if (primeira) ...[
+          const SizedBox(height: 18),
+          ..._secaoDeFoco(app),
+        ],
+        if (!primeira) const SizedBox(height: 16),
+        if (!primeira)
         GestureDetector(
           onTap: () => app.go(AppScreen.report),
           child: Container(
@@ -275,37 +295,46 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            for (var i = 0; i < durations.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              SelectChip(
-                label: i == 3
-                    ? t.custom
-                    : (app.lang == 'zh'
-                        ? '${durations[i]}分'
-                        : '${durations[i]}${app.lang == 'en' ? 'm' : 'min'}'),
-                selected: app.dur == durations[i],
-                onTap: () => app.pickDur(durations[i]),
-                expand: true,
-                height: 46,
-                radius: 14,
-                size: 14,
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 12),
-        BotaoBaru(
-          rotulo: t.start,
-          aoTocar: app.startSession,
-          altura: 64,
-          tamanhoDoTexto: 18,
-        ),
+        if (!primeira) ..._secaoDeFoco(app),
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  /// A duração e o "Começar foco". Na primeira home ficam logo abaixo do
+  /// bicho: com eles no fim da lista, quem acabou o onboarding precisava
+  /// rolar para achar a única ação que importa (simulador da Fase 4, 14).
+  List<Widget> _secaoDeFoco(AppState app) {
+    final t = app.t;
+    return [
+            Row(
+              children: [
+                for (var i = 0; i < durations.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  SelectChip(
+                    label: i == 3
+                        ? t.custom
+                        : (app.lang == 'zh'
+                            ? '${durations[i]}分'
+                            : '${durations[i]}${app.lang == 'en' ? 'm' : 'min'}'),
+                    selected: app.dur == durations[i],
+                    onTap: () => app.pickDur(durations[i]),
+                    expand: true,
+                    height: 46,
+                    radius: 14,
+                    size: 14,
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            BotaoBaru(
+              rotulo: t.start,
+              aoTocar: app.startSession,
+              altura: 64,
+              tamanhoDoTexto: 18,
+            ),
+    ];
   }
 
   Widget _dot(WeekDayKind k) {

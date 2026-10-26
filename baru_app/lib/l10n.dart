@@ -117,7 +117,13 @@ class T {
     return fill(s('repFreezeMany'), {'n': left});
   }
 
-  String streakLabel(int n) => n == 1 ? streakOne : fill(streak, {'n': n});
+  /// "Raiz de 0 dias" na primeira home lia como placar zerado (simulador da
+  /// Fase 4, 14): sem raiz ainda, o rótulo convida em vez de contar.
+  String streakLabel(int n) => n == 0
+      ? s('streakZero')
+      : n == 1
+          ? streakOne
+          : fill(streak, {'n': n});
 
   String formatLongDate([DateTime? raw]) {
     final d = raw ?? DateTime.now();
@@ -994,6 +1000,12 @@ const _pt = <String, Object>{
   'unlock': 'faltam {x} folhas para {i}',
   'unlockDone': 'Habitat completo',
   'reportReady': 'O relatório de hoje está pronto',
+  'streakZero': 'Plante sua raiz hoje',
+  'homeBoasVindasT': "Oi! Eu sou {n}.",
+  'homeBoasVindasOvo':
+      "Ainda estou no ovo. Quando você terminar a primeira sessão de foco, eu nasço — e daí em diante a gente cresce junto.",
+  'homeBoasVindasNinho':
+      "Ainda estou no ninho, de olhos fechados. Quando você terminar a primeira sessão de foco, eu abro os olhos — e daí em diante a gente cresce junto.",
   'days': ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
   'payRemind': 'Avisamos 24h antes do teste terminar.',
   'payRestore': 'Restaurar',
@@ -1545,6 +1557,12 @@ const _en = <String, Object>{
   'unlock': '{x} leaves to {i}',
   'unlockDone': 'Habitat complete',
   'reportReady': "Today's report is ready",
+  'streakZero': 'Plant your roots today',
+  'homeBoasVindasT': "Hi! I'm {n}.",
+  'homeBoasVindasOvo':
+      "I'm still in my egg. When you finish your first focus session, I hatch — and from then on we grow together.",
+  'homeBoasVindasNinho':
+      "I'm still in the nest, eyes closed. When you finish your first focus session, I open my eyes — and from then on we grow together.",
   'days': ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
   'payRemind': "We'll remind you 24h before your trial ends.",
   'payRestore': 'Restore',
@@ -2090,6 +2108,12 @@ const _es = <String, Object>{
   'unlock': 'faltan {x} hojas para {i}',
   'unlockDone': 'Hábitat completo',
   'reportReady': 'El informe de hoy está listo',
+  'streakZero': 'Planta tu raíz hoy',
+  'homeBoasVindasT': "¡Hola! Soy {n}.",
+  'homeBoasVindasOvo':
+      "Todavía estoy en el huevo. Cuando termines tu primera sesión de foco, nazco, y desde ahí crecemos juntos.",
+  'homeBoasVindasNinho':
+      "Todavía estoy en el nido, con los ojos cerrados. Cuando termines tu primera sesión de foco, abro los ojos, y desde ahí crecemos juntos.",
   'days': ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
   'payRemind': 'Te avisamos 24 h antes de que termine la prueba.',
   'payRestore': 'Restaurar',
@@ -2614,6 +2638,12 @@ const _zh = <String, Object>{
   'unlock': '再 {x} 片叶子解锁{i}',
   'unlockDone': '栖息地已完成',
   'reportReady': '今天的报告已生成',
+  'streakZero': '今天种下你的根',
+  'homeBoasVindasT': "你好！我是 {n}。",
+  'homeBoasVindasOvo':
+      "我还在蛋里。等你完成第一次专注，我就会破壳——从那以后我们一起长大。",
+  'homeBoasVindasNinho':
+      "我还在窝里，眼睛还没睁开。等你完成第一次专注，我就会睁开眼睛——从那以后我们一起长大。",
   'days': ['一', '二', '三', '四', '五', '六', '日'],
   'payRemind': '试用结束前 24 小时我们会提醒你。',
   'payRestore': '恢复购买',

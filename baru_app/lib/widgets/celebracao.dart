@@ -130,7 +130,7 @@ class _CelebracaoState extends State<Celebracao>
       key: Celebracao.chave,
       child: ColoredBox(
         // Quase opaco: o resultado atrás aparecia e brigava com o título.
-        color: Cores.tintaA(0.93),
+        color: Cores.tintaA(0.97),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(Espaco.margemTela),
@@ -203,7 +203,7 @@ class _CelebracaoState extends State<Celebracao>
             return ColoredBox(
               // Véu forte: o texto é creme, e sobre fundo claro ele some.
               // Contraste é requisito, não gosto.
-              color: Cores.tintaA(0.82 * (t * 2.2).clamp(0.0, 1.0)),
+              color: Cores.tintaA(0.92 * (t * 2.2).clamp(0.0, 1.0)),
               child: Center(
                 child: Stack(
                   alignment: Alignment.center,

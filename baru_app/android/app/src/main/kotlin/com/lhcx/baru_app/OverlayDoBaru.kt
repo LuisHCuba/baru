@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -13,6 +14,8 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.os.IBinder
 import android.provider.Settings
@@ -20,8 +23,13 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.LinearInterpolator
 import android.view.animation.OvershootInterpolator
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.min
+import kotlin.random.Random
 
 /**
  * O companheiro por cima dos outros apps.
@@ -91,11 +99,22 @@ class OverlayDoBaru : Service() {
         val rotuloMais = intent?.getStringExtra(EXTRA_ACAO_MAIS).orEmpty()
 
         val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        // O bicho da pessoa, se o Dart ja deixou os quadros; senao, o
+        // desenho de reserva.
+        val quadros = QuadrosDoBicho.carrega(
+            this,
+            dp(BalaoDoBaru.ALTURA_DO_BICHO_DP.toInt()),
+        )
+        Log.i(
+            VigiaDaSessao.TAG_LOG,
+            "overlay: " + if (quadros != null) "bicho real" else "reserva",
+        )
         val v = BalaoDoBaru(
             this,
             fala = fala,
             pelo = pelo,
             especie = especie,
+            quadros = quadros,
             rotuloFechar = rotuloFechar,
             rotuloMais = rotuloMais,
             aoFechar = {
@@ -173,23 +192,47 @@ class OverlayDoBaru : Service() {
  * Desenhado à mão em `Canvas` de propósito: um overlay não pode depender do
  * motor do Flutter estar vivo — ele aparece justamente quando o usuário está
  * **noutro app**.
+ *
+ * O bicho é o da pessoa: quadros do `PetView` rasterizados pelo Dart
+ * ([QuadrosDoBicho]). Aqui só se anima a troca entre eles — o peito sobe e
+ * desce, o olho pisca. Sem quadros, entra o desenho de reserva.
  */
 private class BalaoDoBaru(
     ctx: Context,
     private val fala: String,
     private val pelo: Int,
     private val especie: String,
+    private val quadros: QuadrosDoBicho.Quadros?,
     private val rotuloFechar: String,
     private val rotuloMais: String,
     private val aoFechar: () -> Unit,
     private val aoAdiar: () -> Unit,
 ) : View(ctx) {
 
+    companion object {
+        /** Altura do bicho real. Maior que a reserva: agora vale olhar. */
+        const val ALTURA_DO_BICHO_DP = 120f
+
+        /**
+         * Um fôlego inteiro, enche e esvazia. O dobro de `Tempo.respiracao`
+         * do Dart, que é só a ida: lá o controller vai e volta.
+         */
+        const val FOLEGO_MS = 6800L
+    }
+
     private val d = resources.displayMetrics.density
     private fun dp(v: Float) = v * d
 
     private val larguraBalao = dp(232f)
-    private val alturaPet = dp(96f)
+    private val alturaPet = dp(if (quadros != null) ALTURA_DO_BICHO_DP else 96f)
+    private val pincel = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val destino = RectF()
+
+    /** 0 a 1, a fase do fôlego. */
+    private var folego = 0f
+    private var piscando = false
+    private var respiracao: ValueAnimator? = null
+    private val relogio = Handler(Looper.getMainLooper())
 
     private val tinta = Paint(Paint.ANTI_ALIAS_FLAG)
     private val texto = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -217,6 +260,62 @@ private class BalaoDoBaru(
                 invalidate()
             }
         }.start()
+        if (quadros != null) vive()
+    }
+
+    /**
+     * Respira e pisca, como na home.
+     *
+     * Com as animações do sistema desligadas (a escala de duração em zero,
+     * que é o "remover animações" da acessibilidade), o bicho fica parado no
+     * meio do fôlego e não pisca: quem pediu menos movimento não recebe
+     * movimento de enfeite.
+     */
+    private fun vive() {
+        val q = quadros ?: return
+        if (!animacoesLigadas()) {
+            folego = 0.25f
+            return
+        }
+        respiracao = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = FOLEGO_MS
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                folego = it.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
+        agendaPiscar()
+    }
+
+    /**
+     * Piscada em intervalo irregular, às vezes dupla — a mesma cadência do
+     * `PetView` (1,8 s a 6,4 s). Cadência fixa parece relógio, não bicho.
+     */
+    private fun agendaPiscar() {
+        relogio.postDelayed({
+            val vezes = if (Random.nextInt(5) == 0) 2 else 1
+            var t = 0L
+            repeat(vezes) {
+                relogio.postDelayed({ piscando = true; invalidate() }, t)
+                relogio.postDelayed({ piscando = false; invalidate() }, t + 150)
+                t += 300
+            }
+            agendaPiscar()
+        }, 1800L + Random.nextLong(4600))
+    }
+
+    private fun animacoesLigadas(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            ValueAnimator.areAnimatorsEnabled()
+
+    override fun onDetachedFromWindow() {
+        respiracao?.cancel()
+        respiracao = null
+        relogio.removeCallbacksAndMessages(null)
+        super.onDetachedFromWindow()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -289,8 +388,52 @@ private class BalaoDoBaru(
             textoBotao,
         )
 
-        desenhaBicho(canvas, r.right - dp(58f), alturaBalao + dp(6f))
+        val q = quadros
+        if (q != null) {
+            desenhaQuadros(canvas, q, r.right - dp(62f), alturaBalao - dp(4f))
+        } else {
+            desenhaBicho(canvas, r.right - dp(58f), alturaBalao + dp(6f))
+        }
         canvas.restore()
+    }
+
+    /**
+     * O bicho real, no ponto do fôlego.
+     *
+     * Seis quadros cobrem o peito do vazio ao cheio; a fase cai quase
+     * sempre entre dois, e os dois são desenhados com pesos complementares.
+     * É o que deixa a subida contínua e não em degraus.
+     */
+    private fun desenhaQuadros(
+        canvas: Canvas,
+        q: QuadrosDoBicho.Quadros,
+        cx: Float,
+        topo: Float,
+    ) {
+        val base = q.respiro[0]
+        val altura = alturaPet
+        val largura = altura * base.width / base.height
+        destino.set(cx - largura / 2f, topo, cx + largura / 2f, topo + altura)
+
+        if (piscando) {
+            pincel.alpha = 255
+            canvas.drawBitmap(q.piscar, null, destino, pincel)
+            return
+        }
+        // -cos: começa vazio, enche na metade, esvazia — uma senoide, o
+        // mesmo vai e vem suave do `easeInOut` da home.
+        val peito = (1f - cos(2.0 * PI * folego).toFloat()) / 2f
+        val pos = peito * (q.respiro.size - 1)
+        val i = floor(pos).toInt().coerceIn(0, q.respiro.size - 1)
+        val j = (i + 1).coerceAtMost(q.respiro.size - 1)
+        val t = pos - i
+        pincel.alpha = 255
+        canvas.drawBitmap(q.respiro[i], null, destino, pincel)
+        if (j != i && t > 0.01f) {
+            pincel.alpha = (t * 255).toInt()
+            canvas.drawBitmap(q.respiro[j], null, destino, pincel)
+        }
+        pincel.alpha = 255
     }
 
     /**

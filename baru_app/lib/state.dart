@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import 'cobranca.dart';
 import 'data/app_snapshot.dart';
+import 'data/crescimento.dart';
 import 'data/cofre.dart';
 import 'data/descanso_do_dia.dart';
 import 'data/descanso_retencao.dart';
@@ -26,6 +27,7 @@ import 'models.dart';
 import 'navegacao.dart';
 import 'services/notification_service.dart';
 import 'services/overlay_service.dart';
+import 'services/quadros_do_bicho.dart';
 import 'services/som_service.dart';
 import 'services/vigia_service.dart';
 import 'services/widget_service.dart';
@@ -85,6 +87,48 @@ class AppState extends ChangeNotifier {
 
   /// Nivel ja comemorado, para saber se houve subida nova.
   int nivelCelebrado = 1;
+
+  // --- crescimento ---------------------------------------------------------
+
+  /// Sessoes de foco concluidas com cada especie. A regua do crescimento
+  /// (`Crescimento`); so sobe.
+  Map<String, int> sessoesPorEspecie = {};
+
+  /// O ultimo estagio ja celebrado em cena, por especie.
+  Map<String, int> estagioCelebrado = {};
+
+  /// Sessoes concluidas com o bicho de agora.
+  int get sessoesJuntos => sessoesPorEspecie[species.name] ?? 0;
+
+  EstagioDoBicho get estagio => Crescimento.estagioPara(sessoesJuntos);
+
+  /// O bicho cresceu e a cena ainda nao passou.
+  ///
+  /// Vem antes do nivel na fila: nascer e crescer e o que a pessoa veio
+  /// ver, e as duas coisas costumam cair na mesma sessao.
+  bool get cresceuSemCelebrar =>
+      estagio.index > (estagioCelebrado[species.name] ?? 0);
+
+  /// De onde a cena parte: o último estágio que a pessoa viu.
+  EstagioDoBicho get estagioJaVisto => EstagioDoBicho.values[
+      (estagioCelebrado[species.name] ?? 0)
+          .clamp(0, EstagioDoBicho.values.length - 1)];
+
+  /// Contas de antes do crescimento: cada especie liberada recebe o total
+  /// de sessoes da conta, e o estagio a que isso leva ja conta como visto —
+  /// ninguem precisa ver o proprio bicho "nascer" de novo. Ver ADR-024.
+  void _semeiaCrescimento() {
+    if (sessoesPorEspecie.isNotEmpty || sessoesConcluidas <= 0) return;
+    sessoesPorEspecie = Crescimento.semeia(
+      atual: sessoesPorEspecie,
+      sessoesDaConta: sessoesConcluidas,
+      liberadas: especiesLiberadas,
+    );
+    estagioCelebrado = {
+      for (final e in sessoesPorEspecie.entries)
+        e.key: Crescimento.estagioPara(e.value).index,
+    };
+  }
 
   ProgressoDaTrilha get progresso => ProgressoDaTrilha(
         xp: xp,
@@ -212,7 +256,10 @@ class AppState extends ChangeNotifier {
   /// A ordem importa: conquista real vem antes da saudação. Quem subiu de
   /// nível quer ver o nível, não "bom te ver".
   bool get temCelebracaoPendente =>
-      subiuDeNivel || marcosACelebrar.isNotEmpty || chegadaACelebrar;
+      cresceuSemCelebrar ||
+      subiuDeNivel ||
+      marcosACelebrar.isNotEmpty ||
+      chegadaACelebrar;
 
   /// A celebração entrou em cena. O som acompanha a animação, não o clique de
   /// fechar — quem fecha já viu a conquista.
@@ -223,6 +270,15 @@ class AppState extends ChangeNotifier {
   /// O nível vem antes do marco: subir de nível é a conquista maior, e as duas
   /// costumam cair juntas.
   void celebrou() {
+    if (cresceuSemCelebrar) {
+      estagioCelebrado = {
+        ...estagioCelebrado,
+        species.name: estagio.index,
+      };
+      _markSync(_syncSession);
+      notifyListeners();
+      return;
+    }
     if (subiuDeNivel) {
       nivelCelebrado = nivel;
       _markSync(_syncSession);
@@ -1501,6 +1557,8 @@ class AppState extends ChangeNotifier {
     sessionDur = 0;
     xp = 0;
     sessoesConcluidas = 0;
+    sessoesPorEspecie = {};
+    estagioCelebrado = {};
     melhorSequencia = 0;
     diasAbaixoDaMeta = 0;
     marcosResgatados = {};
@@ -1928,6 +1986,12 @@ class AppState extends ChangeNotifier {
     }
     completedToday += 1;
     sessoesConcluidas += 1;
+    // O bicho cresce com quem foca com ele: a sessao conta para a especie
+    // de agora, e so para ela.
+    sessoesPorEspecie = {
+      ...sessoesPorEspecie,
+      species.name: sessoesJuntos + 1,
+    };
     // Contadores de missão vêm do evento de domínio, não da tela (§5).
     minutosDeFocoHoje += minutos;
     minutosNaSemana += minutos;
@@ -2315,6 +2379,8 @@ class AppState extends ChangeNotifier {
       afeto: afeto,
       carinhosHoje: carinhosHoje,
       sessoesConcluidas: sessoesConcluidas,
+      sessoesPorEspecie: Map<String, int>.of(sessoesPorEspecie),
+      estagioCelebrado: Map<String, int>.of(estagioCelebrado),
       melhorSequencia: melhorSequencia,
       diasAbaixoDaMeta: diasAbaixoDaMeta,
       marcosResgatados: marcosResgatados.toList(),
@@ -2392,6 +2458,8 @@ class AppState extends ChangeNotifier {
     afeto = s.afeto;
     carinhosHoje = s.carinhosHoje;
     sessoesConcluidas = s.sessoesConcluidas;
+    sessoesPorEspecie = Map<String, int>.of(s.sessoesPorEspecie);
+    estagioCelebrado = Map<String, int>.of(s.estagioCelebrado);
     melhorSequencia = s.melhorSequencia;
     diasAbaixoDaMeta = s.diasAbaixoDaMeta;
     marcosResgatados = s.marcosResgatados.toSet();
@@ -2409,6 +2477,7 @@ class AppState extends ChangeNotifier {
     minutosNaSemana = s.minutosNaSemana;
     diasAbaixoNaSemana = s.diasAbaixoNaSemana;
     missoesResgatadas = s.missoesResgatadas.toSet();
+    _semeiaCrescimento();
     // Inventário antigo não tinha "equipado": tudo o que já era do usuário
     // continua em cena, senão o habitat esvazia na atualização.
     respostasDoQuiz = Map<String, String>.from(s.respostasDoQuiz);
@@ -2533,6 +2602,16 @@ class AppState extends ChangeNotifier {
         raiz: streak,
         usoDoDia: usage,
         meta: goal,
+        estagio: estagio,
+      );
+
+  /// O bicho da sobreposição: o mesmo da home, vestido igual.
+  AparenciaDoBicho get aparenciaDoBicho => AparenciaDoBicho(
+        especie: species,
+        pelagem: color,
+        roupas: roupasDoBicho,
+        roupaDeCabeca: roupaDeCabeca,
+        estagio: estagio,
       );
 
   @override

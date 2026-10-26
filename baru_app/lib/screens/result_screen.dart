@@ -29,6 +29,7 @@ class ResultScreen extends StatelessWidget {
                   mood: won ? Mood.radiant : Mood.content,
                   activity: Activity.idle,
                   coat: app.color,
+                  estagio: app.estagio,
                   scale: 1.15,
                 ),
                 if (won) ...[

@@ -468,6 +468,28 @@ class T {
   String get celebNivelSub => s('celebNivelSub');
   String get celebMarco => s('celebMarco');
   String get celebChegada => s('celebChegada');
+  String get estOvo => s('estOvo');
+  String get estNinho => s('estNinho');
+  String get estFilhote => s('estFilhote');
+  String get estJovem => s('estJovem');
+  String get estAdulto => s('estAdulto');
+  String get estPleno => s('estPleno');
+  String get crescNasceu => s('crescNasceu');
+  String get crescAbriuOlhos => s('crescAbriuOlhos');
+  String get crescCresceu => s('crescCresceu');
+  String get crescAgora => s('crescAgora');
+  String get crescSubFilhote => s('crescSubFilhote');
+  String get crescSubJovem => s('crescSubJovem');
+  String get crescSubAdulto => s('crescSubAdulto');
+  String get crescSubPleno => s('crescSubPleno');
+  String get crescFaltaNascer1 => s('crescFaltaNascer1');
+  String get crescFaltaNascer => s('crescFaltaNascer');
+  String get crescFaltaAbrir1 => s('crescFaltaAbrir1');
+  String get crescFaltaAbrir => s('crescFaltaAbrir');
+  String get crescFalta1 => s('crescFalta1');
+  String get crescFalta => s('crescFalta');
+  String get crescNoAuge => s('crescNoAuge');
+  String get crescRotulo => s('crescRotulo');
   String get celebChegadaSub => s('celebChegadaSub');
   String get trilhaVaziaT => s('trilhaVaziaT');
   String get trilhaVaziaB => s('trilhaVaziaB');
@@ -716,6 +738,28 @@ const _pt = <String, Object>{
   'celebNivelSub': '{a} está mais em casa.',
   'celebMarco': 'Marco alcançado',
   'celebChegada': 'Você voltou',
+  'estOvo': 'Ovo',
+  'estNinho': 'Ninho',
+  'estFilhote': 'Filhote',
+  'estJovem': 'Jovem',
+  'estAdulto': 'Adulto',
+  'estPleno': 'Pleno',
+  'crescNasceu': '{a} nasceu!',
+  'crescAbriuOlhos': '{a} abriu os olhos!',
+  'crescCresceu': '{a} cresceu!',
+  'crescAgora': 'Agora: {e}',
+  'crescSubFilhote': 'Cada sessão de foco com você faz {a} crescer.',
+  'crescSubJovem': 'Cada vez mais forte. Sigam juntos.',
+  'crescSubAdulto': 'Crescimento completo. Agora é seguir firme.',
+  'crescSubPleno': 'O auge. Nada disso se compra: foi o seu foco.',
+  'crescFaltaNascer1': 'Falta 1 sessão de foco para {a} nascer',
+  'crescFaltaNascer': 'Faltam {n} sessões de foco para {a} nascer',
+  'crescFaltaAbrir1': 'Falta 1 sessão de foco para {a} abrir os olhos',
+  'crescFaltaAbrir': 'Faltam {n} sessões de foco para {a} abrir os olhos',
+  'crescFalta1': 'Falta 1 sessão para crescer',
+  'crescFalta': 'Faltam {n} sessões para crescer',
+  'crescNoAuge': '{a} está no auge',
+  'crescRotulo': 'Crescimento',
   'celebChegadaSub': '{a} passou o dia esperando por isso.',
   'trilhaVaziaT': 'A trilha começa amanhã',
   'trilhaVaziaB': 'Termine o onboarding e o primeiro passo aparece aqui.',
@@ -1222,6 +1266,28 @@ const _en = <String, Object>{
   'celebNivelSub': '{a} feels more at home.',
   'celebMarco': 'Milestone reached',
   'celebChegada': 'You\'re back',
+  'estOvo': 'Egg',
+  'estNinho': 'Nest',
+  'estFilhote': 'Baby',
+  'estJovem': 'Young',
+  'estAdulto': 'Adult',
+  'estPleno': 'Prime',
+  'crescNasceu': '{a} hatched!',
+  'crescAbriuOlhos': '{a} opened their eyes!',
+  'crescCresceu': '{a} grew!',
+  'crescAgora': 'Now: {e}',
+  'crescSubFilhote': 'Every focus session with you helps {a} grow.',
+  'crescSubJovem': 'Stronger every day. Keep going together.',
+  'crescSubAdulto': 'Fully grown. Now keep it steady.',
+  'crescSubPleno': 'Their prime. None of this can be bought: it was your focus.',
+  'crescFaltaNascer1': '1 focus session until {a} hatches',
+  'crescFaltaNascer': '{n} focus sessions until {a} hatches',
+  'crescFaltaAbrir1': '1 focus session until {a} opens their eyes',
+  'crescFaltaAbrir': '{n} focus sessions until {a} opens their eyes',
+  'crescFalta1': '1 session to grow',
+  'crescFalta': '{n} sessions to grow',
+  'crescNoAuge': '{a} is in their prime',
+  'crescRotulo': 'Growth',
   'celebChegadaSub': '{a} spent the day waiting for this.',
   'trilhaVaziaT': 'The path starts tomorrow',
   'trilhaVaziaB': 'Finish onboarding and the first step shows up here.',
@@ -1718,6 +1784,28 @@ const _es = <String, Object>{
   'celebNivelSub': '{a} se siente más en casa.',
   'celebMarco': 'Hito alcanzado',
   'celebChegada': 'Volviste',
+  'estOvo': 'Huevo',
+  'estNinho': 'Nido',
+  'estFilhote': 'Cría',
+  'estJovem': 'Joven',
+  'estAdulto': 'Adulto',
+  'estPleno': 'Pleno',
+  'crescNasceu': '¡{a} nació!',
+  'crescAbriuOlhos': '¡{a} abrió los ojos!',
+  'crescCresceu': '¡{a} creció!',
+  'crescAgora': 'Ahora: {e}',
+  'crescSubFilhote': 'Cada sesión de foco contigo hace crecer a {a}.',
+  'crescSubJovem': 'Cada vez más fuerte. Sigan juntos.',
+  'crescSubAdulto': 'Crecimiento completo. Ahora, a seguir firmes.',
+  'crescSubPleno': 'En su mejor momento. Nada de esto se compra: fue tu foco.',
+  'crescFaltaNascer1': 'Falta 1 sesión de foco para que {a} nazca',
+  'crescFaltaNascer': 'Faltan {n} sesiones de foco para que {a} nazca',
+  'crescFaltaAbrir1': 'Falta 1 sesión de foco para que {a} abra los ojos',
+  'crescFaltaAbrir': 'Faltan {n} sesiones de foco para que {a} abra los ojos',
+  'crescFalta1': 'Falta 1 sesión para crecer',
+  'crescFalta': 'Faltan {n} sesiones para crecer',
+  'crescNoAuge': '{a} está en su mejor momento',
+  'crescRotulo': 'Crecimiento',
   'celebChegadaSub': '{a} pasó el día esperando esto.',
   'trilhaVaziaT': 'El camino empieza mañana',
   'trilhaVaziaB': 'Termina el onboarding y el primer paso aparece aquí.',
@@ -2215,6 +2303,28 @@ const _zh = <String, Object>{
   'celebNivelSub': '{a} 更有家的感觉了。',
   'celebMarco': '达成里程碑',
   'celebChegada': '你回来了',
+  'estOvo': '蛋',
+  'estNinho': '巢中',
+  'estFilhote': '幼崽',
+  'estJovem': '少年',
+  'estAdulto': '成年',
+  'estPleno': '巅峰',
+  'crescNasceu': '{a} 破壳了！',
+  'crescAbriuOlhos': '{a} 睁开了眼睛！',
+  'crescCresceu': '{a} 长大了！',
+  'crescAgora': '现在：{e}',
+  'crescSubFilhote': '和你一起的每次专注都让 {a} 成长。',
+  'crescSubJovem': '一天比一天强壮。继续一起努力。',
+  'crescSubAdulto': '已经完全长大。接下来稳稳坚持。',
+  'crescSubPleno': '巅峰状态。这些都买不到：是你的专注换来的。',
+  'crescFaltaNascer1': '再专注 1 次，{a} 就会破壳',
+  'crescFaltaNascer': '再专注 {n} 次，{a} 就会破壳',
+  'crescFaltaAbrir1': '再专注 1 次，{a} 就会睁开眼睛',
+  'crescFaltaAbrir': '再专注 {n} 次，{a} 就会睁开眼睛',
+  'crescFalta1': '再完成 1 次就会长大',
+  'crescFalta': '再完成 {n} 次就会长大',
+  'crescNoAuge': '{a} 正值巅峰',
+  'crescRotulo': '成长',
   'celebChegadaSub': '{a} 等了一整天。',
   'trilhaVaziaT': '路径明天开始',
   'trilhaVaziaB': '完成引导后，第一步就会出现在这里。',

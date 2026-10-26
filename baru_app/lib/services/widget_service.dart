@@ -18,6 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 
+import '../data/crescimento.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets/pet.dart';
@@ -33,6 +34,7 @@ class EstadoDoWidget {
     required this.raiz,
     required this.usoDoDia,
     required this.meta,
+    this.estagio = EstagioDoBicho.adulto,
   });
 
   final Species especie;
@@ -42,9 +44,11 @@ class EstadoDoWidget {
   final int raiz;
   final int usoDoDia;
   final int meta;
+  final EstagioDoBicho estagio;
 
   /// Só o que exige redesenhar o bicho.
-  String get chaveDaImagem => '${especie.name}-${humor.name}-$pelagem';
+  String get chaveDaImagem =>
+      '${especie.name}-${humor.name}-$pelagem-${estagio.name}';
 
   @override
   bool operator ==(Object other) =>
@@ -55,11 +59,12 @@ class EstadoDoWidget {
       other.nome == nome &&
       other.raiz == raiz &&
       other.usoDoDia == usoDoDia &&
-      other.meta == meta;
+      other.meta == meta &&
+      other.estagio == estagio;
 
   @override
   int get hashCode =>
-      Object.hash(especie, humor, pelagem, nome, raiz, usoDoDia, meta);
+      Object.hash(especie, humor, pelagem, nome, raiz, usoDoDia, meta, estagio);
 }
 
 class WidgetService {
@@ -226,6 +231,7 @@ class _CenaDoWidget extends StatelessWidget {
         mood: estado.humor,
         activity: Activity.idle,
         coat: estado.pelagem,
+        estagio: estado.estagio,
         interativo: false,
         width: 300,
         height: 260,

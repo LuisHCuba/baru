@@ -93,6 +93,7 @@ class _FolhaDeSaidaState extends State<FolhaDeSaida>
                               mood: app.mood,
                               activity: app.activity,
                               coat: app.color,
+                              estagio: app.estagio,
                               scale: 0.9,
                               interativo: false,
                             ),

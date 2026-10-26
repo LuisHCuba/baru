@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'data/app_snapshot.dart';
 import 'data/repositories.dart';
 import 'services/notification_service.dart';
+import 'services/quadros_do_bicho.dart';
 import 'services/som_service.dart';
 import 'services/vigia_service.dart';
 import 'services/widget_service.dart';
@@ -32,6 +33,7 @@ import 'state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 import 'widgets/celebracao.dart';
+import 'widgets/crescimento.dart';
 import 'widgets/saida.dart';
 import 'widgets/share_sheet.dart';
 
@@ -149,6 +151,9 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     // segura de rasterizar, com as animações da tela já paradas.
     if (s != AppLifecycleState.resumed) {
       WidgetService.instance.atualiza(state.estadoDoWidget);
+      // Pelo mesmo motivo, os quadros do bicho da sobreposição: ela só
+      // aparece com a pessoa noutro app, e é agora que ela sai.
+      unawaited(QuadrosDoBicho.instance.atualiza(state.aparenciaDoBicho));
       // Fecha a conta do tempo dentro do Baru. Sem isto, olhar o bicho
       // contaria como descanso — e a missão é justamente ficar longe.
       state.saiuDoApp();
@@ -315,6 +320,16 @@ class _Casca extends StatelessWidget {
   /// Conquista aparece por cima de qualquer tela, inclusive da sessão.
   Widget _celebracao(AppState app) {
     final t = app.t;
+    if (app.cresceuSemCelebrar) {
+      return CenaDoCrescimento(
+        // A chave muda com o estágio: duas viradas seguidas são duas cenas,
+        // não a mesma reaproveitada pela metade.
+        key: ValueKey('crescimento-${app.species.name}-${app.estagio.name}'),
+        antes: app.estagioJaVisto,
+        depois: app.estagio,
+        aoFechar: app.celebrou,
+      );
+    }
     if (app.subiuDeNivel) {
       return Celebracao(
         titulo: t.fill(t.celebNivel, {'n': app.nivel}),

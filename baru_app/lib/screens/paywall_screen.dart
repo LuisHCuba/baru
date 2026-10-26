@@ -29,6 +29,7 @@ class PaywallScreen extends StatelessWidget {
                   mood: Mood.radiant,
                   activity: Activity.nap,
                   coat: app.color,
+                  estagio: app.estagio,
                 ),
                 const SizedBox(height: 18),
                 Text(

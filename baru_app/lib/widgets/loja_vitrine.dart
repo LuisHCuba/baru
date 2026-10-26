@@ -15,6 +15,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../data/crescimento.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -320,6 +321,10 @@ class _BichoVestido extends StatelessWidget {
         mood: Mood.content,
         activity: Activity.idle,
         coat: app.color,
+        // Roupa não veste ovo: a vitrine mostra pelo menos o filhote.
+        estagio: app.estagio == EstagioDoBicho.inicio
+            ? EstagioDoBicho.filhote
+            : app.estagio,
         scale: 0.46,
         width: 148,
         height: 96,

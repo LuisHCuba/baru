@@ -901,3 +901,45 @@ visto num aparelho**: o desenho do cronômetro é o system UI. Registrado em
 BL-16. Reverter: os arquivos tocados são `notification_service.dart`,
 `l10n_notificacao.dart`, `app.dart`, `VigiaDaSessao.kt`, `MainActivity.kt` e o
 manifesto.
+
+## ADR-024 — O bicho nasce e cresce com as sessões feitas com ele (2026-10-26)
+
+**Contexto.** O dono pediu crescimento "extremamente visível" ("a coruja
+começa em um ovo"). Não existia estágio de vida no código: o bicho era o
+mesmo adulto do primeiro ao centésimo dia. Os laudos 05–08
+(`docs/pesquisa/`) propuseram três réguas — passo da trilha, XP por espécie,
+sessões por espécie — e a síntese (`00-SINTESE.md`) escolheu a última.
+
+**Decisão.**
+
+1. **Régua:** sessões de foco concluídas com aquela espécie
+   (`sessoesPorEspecie`), contador que só sobe. Estágios em 0 / 1 / 5 / 15 /
+   40 sessões: começo, filhote, jovem, adulto, pleno (`lib/data/crescimento.dart`).
+   A trilha abre a raposa no passo 22 (nasceria adulta) e o XP mistura
+   carinho, missão e marco; "cresceu porque eu foquei" é o que a pessoa
+   entende sem explicação.
+2. **Começo biológico:** coruja, pinguim, tartaruga e axolote começam no
+   ovo; capivara, lontra, gata, raposa e buldogue, recém-nascidos de olho
+   fechado no ninho. A primeira sessão concluída choca o ovo (ou abre os
+   olhos) numa cena própria.
+3. **Último estágio é "pleno"**, adulto no auge — nunca idoso.
+4. **Nunca regride e nunca se compra.** A sincronização funde por espécie
+   ficando com o maior (`Crescimento.fundeMaior`), como os outros contadores.
+5. **Contas de antes:** na primeira leitura com o mapa vazio, cada espécie
+   já liberada recebe o total de sessões concluídas da conta, e o estágio
+   resultante conta como já celebrado. O app está em teste fechado; quem já
+   usava vê o estágio real do bicho sem a cena de "nascer" de novo. Espécie
+   liberada depois começa do zero — nunca foi vista crescida.
+6. **Persistência:** migration 16 (`20261026120000_baru_crescimento.sql`),
+   aditiva — duas colunas jsonb em `baru_progression`, opcionais no gateway
+   para o app novo funcionar contra banco ainda sem elas.
+7. **Desenho:** o `CustomPainter` continua a fonte única; o estágio muda
+   porte (pelos pés), cabeça e olho (o esquema de bebê), penugem, tufo da
+   coruja e detalhes do pleno. O desenho de vitrine (seletor, loja,
+   paywall) segue adulto; só o bicho da pessoa passa o estágio dele.
+
+**Consequências.** Quem tinha um bicho adulto com poucas sessões o vê
+menor depois da atualização — aceito porque não há público ainda. Os
+limiares precisam de calibração com uso real. O detalhe do pleno existe só
+na capivara (passarinho) e na coruja (sobrancelha de penas); as outras
+espécies ganham o delas no redesenho da Onda 3.

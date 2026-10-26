@@ -616,6 +616,7 @@ class _Balao extends StatelessWidget {
             mood: app.mood,
             activity: Activity.idle,
             coat: app.color,
+            estagio: app.estagio,
             scale: 0.62,
             interativo: false,
           ),

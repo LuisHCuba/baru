@@ -33,6 +33,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 
+import '../data/crescimento.dart';
 import '../models.dart';
 import '../services/som_service.dart';
 import '../theme.dart';
@@ -228,6 +229,8 @@ class PetView extends StatefulWidget {
     this.aoCarinho,
     this.roupas = const {},
     this.roupaDeCabeca,
+    this.quadro,
+    this.estagio = EstagioDoBicho.adulto,
   });
 
   final Species species;
@@ -251,6 +254,20 @@ class PetView extends StatefulWidget {
 
   /// O id da peça de cabeça, que muda o desenho.
   final String? roupaDeCabeca;
+
+  /// Um quadro parado, para rasterizar o bicho fora da tela.
+  ///
+  /// Com ele o bicho não liga relógio nenhum: nada de `repeat`, nada de
+  /// piscar agendado. É o que a sobreposição usa para levar o desenho real
+  /// para o Android, quadro a quadro (ver `QuadrosDoBicho`).
+  final QuadroFixo? quadro;
+
+  /// Em que ponto da vida o bicho está (`Crescimento`).
+  ///
+  /// Adulto por padrão: é o desenho de vitrine — o seletor de espécie, a
+  /// loja, o paywall mostram a espécie como ela é. Só o bicho **da pessoa**
+  /// passa o estágio dele.
+  final EstagioDoBicho estagio;
 
   /// Quanto o dedo precisa percorrer para encher a satisfação.
   ///
@@ -393,7 +410,9 @@ class _PetViewState extends State<PetView>
     if (!mounted) return;
     switch (estado) {
       case AppLifecycleState.resumed:
-        if (!Movimento.reduzido(context)) _iniciaContinuo();
+        if (widget.quadro == null && !Movimento.reduzido(context)) {
+          _iniciaContinuo();
+        }
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
@@ -405,7 +424,7 @@ class _PetViewState extends State<PetView>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (Movimento.reduzido(context)) {
+    if (widget.quadro != null || Movimento.reduzido(context)) {
       _paraContinuo();
     } else {
       _iniciaContinuo();
@@ -422,12 +441,29 @@ class _PetViewState extends State<PetView>
   void didUpdateWidget(PetView antigo) {
     super.didUpdateWidget(antigo);
     if (antigo.activity != widget.activity ||
-        antigo.species != widget.species) {
+        antigo.species != widget.species ||
+        antigo.estagio != widget.estagio) {
       _ajustaRitmo();
     }
   }
 
-  AcaoDoBicho get _acao => acaoDoBicho(widget.species, widget.activity);
+  /// No ovo e no ninho não há atividade: ovo não nada e recém-nascido não
+  /// pasta. O ninho dorme; o ovo fica.
+  ///
+  /// E filhote não voa: a corujinha ainda não tem pena de voo. Onde a
+  /// adulta voaria, ela fica no poleiro.
+  AcaoDoBicho get _acao {
+    if (widget.estagio == EstagioDoBicho.inicio) {
+      return Crescimento.botaOvo(widget.species)
+          ? AcaoDoBicho.ocioso
+          : AcaoDoBicho.cochilo;
+    }
+    final acao = acaoDoBicho(widget.species, widget.activity);
+    if (acao == AcaoDoBicho.voo && widget.estagio == EstagioDoBicho.filhote) {
+      return AcaoDoBicho.ocioso;
+    }
+    return acao;
+  }
 
   Duration get _duracaoDoCiclo => switch (_acao) {
         AcaoDoBicho.nado => _cicloDoNado,
@@ -732,30 +768,32 @@ class _PetViewState extends State<PetView>
               coatIndex: widget.coat,
               roupas: widget.roupas,
               roupaDeCabeca: widget.roupaDeCabeca,
-              pose: _Pose(
-                acao: _acao,
-                // Cru, sem curva: o laço da atividade é uma fase que dá a
-                // volta. Passá-lo por `easeInOut` como os contínuos criaria
-                // um salto na emenda entre 1 e 0 — a braçada travava a cada
-                // volta.
-                ciclo: _ciclo.value,
-                respiro: Curvas.organica.transform(_respiro.value) * 2 - 1,
-                boia: Curvas.organica.transform(_flutua.value) * 2 - 1,
-                cauda: Curvas.organica.transform(_cauda.value) * 2 - 1,
-                pisca: _pisca.value,
-                orelha: _orelha.value,
-                toque: _toque.value,
-                olhar: _gestoAtual == GestoOcioso.olhaEmVolta
-                    // Varredura da cabeça: dois lados e volta ao centro.
-                    ? Offset(math.sin(_gesto.value * math.pi * 2), -0.12)
-                    : _olhar,
-                animado: _toquesSeguidos >= 3,
-                amplitude: amplitude,
-                gesto: _gestoAtual,
-                gestoT: _gesto.value,
-                dedo: _dedo,
-                gosto: _gosto.value,
-              ),
+              estagio: widget.estagio,
+              pose: widget.quadro?._pose(_acao) ??
+                  _Pose(
+                    acao: _acao,
+                    // Cru, sem curva: o laço da atividade é uma fase que dá a
+                    // volta. Passá-lo por `easeInOut` como os contínuos criaria
+                    // um salto na emenda entre 1 e 0 — a braçada travava a cada
+                    // volta.
+                    ciclo: _ciclo.value,
+                    respiro: Curvas.organica.transform(_respiro.value) * 2 - 1,
+                    boia: Curvas.organica.transform(_flutua.value) * 2 - 1,
+                    cauda: Curvas.organica.transform(_cauda.value) * 2 - 1,
+                    pisca: _pisca.value,
+                    orelha: _orelha.value,
+                    toque: _toque.value,
+                    olhar: _gestoAtual == GestoOcioso.olhaEmVolta
+                        // Varredura da cabeça: dois lados e volta ao centro.
+                        ? Offset(math.sin(_gesto.value * math.pi * 2), -0.12)
+                        : _olhar,
+                    animado: _toquesSeguidos >= 3,
+                    amplitude: amplitude,
+                    gesto: _gestoAtual,
+                    gestoT: _gesto.value,
+                    dedo: _dedo,
+                    gosto: _gosto.value,
+                  ),
             ),
           );
         },
@@ -835,6 +873,43 @@ class _AfagoVenceARolagem extends PanGestureRecognizer {
     }
     super.handleEvent(event);
   }
+}
+
+/// Uma pose congelada do bicho, fora do relógio das animações.
+///
+/// Só os dois movimentos que a sobreposição anima do lado nativo: o peito
+/// (respiro) e o olho (piscar). O resto fica em repouso — a fase 0 de cada
+/// laço, a mesma que o "reduzir movimento" usa.
+@immutable
+class QuadroFixo {
+  const QuadroFixo({this.respiro = 0, this.pisca = 0});
+
+  /// -1 (vazio) a 1 (cheio), como em `_Pose.respiro`.
+  final double respiro;
+
+  /// 0 aberto, 1 fechado.
+  final double pisca;
+
+  _Pose _pose(AcaoDoBicho acao) => _Pose(
+        acao: acao,
+        ciclo: 0,
+        respiro: respiro,
+        boia: 0,
+        cauda: 0,
+        pisca: pisca,
+        orelha: 0,
+        toque: 0,
+        olhar: Offset.zero,
+        animado: false,
+        amplitude: 1,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is QuadroFixo && other.respiro == respiro && other.pisca == pisca;
+
+  @override
+  int get hashCode => Object.hash(respiro, pisca);
 }
 
 /// Os valores animados de um quadro. O painter não sabe de controllers.
@@ -1091,12 +1166,17 @@ class _PetPainter extends CustomPainter {
     required this.pose,
     this.roupas = const {},
     this.roupaDeCabeca,
+    this.estagio = EstagioDoBicho.adulto,
   });
 
   final Species species;
   final Mood mood;
   final Activity activity;
   final Color coat;
+
+  /// Ovo/ninho, filhote, jovem, adulto ou pleno. Muda porte, proporção e
+  /// detalhe — o crescimento tem de ser visto de longe, não lido numa barra.
+  final EstagioDoBicho estagio;
 
   /// Qual entrada da paleta da espécie foi escolhida.
   ///
@@ -1125,6 +1205,49 @@ class _PetPainter extends CustomPainter {
   AcaoDoBicho get acao => pose.acao;
 
   bool get dormindo => acao == AcaoDoBicho.cochilo || mood == Mood.sleepy;
+
+  // --- estágio ------------------------------------------------------------
+  //
+  // Os números do crescimento. O filhote tem o "esquema de bebê" de Lorenz
+  // (laudo 05, §4): corpo menor, cabeça e olhos proporcionalmente maiores. O
+  // porte encolhe pelos pés, para o filhote ficar no chão do habitat.
+
+  /// Escala do bicho inteiro.
+  ///
+  /// O adulto fica no tamanho de sempre: é o desenho de vitrine e o que os
+  /// testes de anatomia medem. O pleno se distingue pelo detalhe, não por
+  /// passar da caixa — a ponta do tufo da coruja já mora a poucos pixels do
+  /// topo do quadro.
+  double get _porte => switch (estagio) {
+        EstagioDoBicho.inicio => 0.52,
+        EstagioDoBicho.filhote => 0.62,
+        EstagioDoBicho.jovem => 0.78,
+        EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+      };
+
+  /// Escala da cabeça, por cima do porte.
+  double get _cabecaDoEstagio => switch (estagio) {
+        EstagioDoBicho.inicio || EstagioDoBicho.filhote => 1.24,
+        EstagioDoBicho.jovem => 1.10,
+        EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+      };
+
+  /// Escala do olho, por cima da cabeça.
+  double get _olhoDoEstagio => switch (estagio) {
+        EstagioDoBicho.inicio || EstagioDoBicho.filhote => 1.16,
+        EstagioDoBicho.jovem => 1.07,
+        EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+      };
+
+  /// O quanto do tufo da coruja já cresceu. A corujinha não tem tufo.
+  double get _tufoDoEstagio => switch (estagio) {
+        EstagioDoBicho.inicio || EstagioDoBicho.filhote => 0,
+        EstagioDoBicho.jovem => 0.55,
+        EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+      };
+
+  /// Onde ficam os pés, no espaço do corpo. É o pivô do porte.
+  static const _pes = 60.0;
   bool get triste => mood == Mood.missingYou;
   bool get feliz =>
       mood == Mood.radiant || pose.carinho > 0.35 || pose.gosto > 0.25;
@@ -1154,7 +1277,29 @@ class _PetPainter extends CustomPainter {
 
   // --- paleta -------------------------------------------------------------
 
+  /// O pelo do humor, passado pela penugem do estágio.
+  ///
+  /// Filhote tem penugem: mais clara e mais fosca. Nas aves e no pinguim a
+  /// penugem tem cor própria — o filhote de pinguim é cinza e fofo, a
+  /// corujinha é quase branca —, nas outras espécies é o mesmo pelo mais
+  /// claro.
   Color get pelo {
+    final base = _peloDoHumor;
+    final t = switch (estagio) {
+      EstagioDoBicho.inicio || EstagioDoBicho.filhote => 1.0,
+      EstagioDoBicho.jovem => 0.45,
+      EstagioDoBicho.adulto || EstagioDoBicho.pleno => 0.0,
+    };
+    if (t == 0) return base;
+    final penugem = switch (species) {
+      Species.penguin => Color.lerp(base, const Color(0xFF9DA5AA), 0.62 * t)!,
+      Species.owl => Color.lerp(base, const Color(0xFFE9E1D3), 0.55 * t)!,
+      _ => Color.lerp(base, Cores.superficie, 0.16 * t)!,
+    };
+    return penugem;
+  }
+
+  Color get _peloDoHumor {
     switch (mood) {
       case Mood.radiant:
         return Color.lerp(coat, Cores.superficie, 0.10)!;
@@ -1240,6 +1385,13 @@ class _PetPainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2 + 10;
 
+    if (estagio == EstagioDoBicho.inicio && Crescimento.botaOvo(species)) {
+      _ovo(canvas, Offset(cx, cy + _pes - 2));
+      return;
+    }
+    final noNinho = estagio == EstagioDoBicho.inicio;
+    if (noNinho) _ninho(canvas, Offset(cx, cy + _pes - 2), frente: false);
+
     final amp = pose.amplitude;
     final sopro = pose.respiro * amp;
     final boia = pose.boia * amp;
@@ -1312,6 +1464,13 @@ class _PetPainter extends CustomPainter {
       AcaoDoBicho.ocioso =>
         triste ? 0.02 : boia * 0.012 + pose.pesoNoPe * 0.006,
     };
+    // O porte do estágio, pelos pés.
+    final porte = _porte;
+    if (porte != 1) {
+      canvas.translate(0, _pes);
+      canvas.scale(porte);
+      canvas.translate(0, -_pes);
+    }
     canvas.rotate(giro);
 
     // Respiração como squash/stretch, mais o quique do toque e o alongamento
@@ -1346,6 +1505,7 @@ class _PetPainter extends CustomPainter {
         _buldogue(canvas);
     }
     canvas.restore();
+    if (noNinho) _ninho(canvas, Offset(cx, cy + _pes - 2), frente: true);
 
     if (nadando) {
       canvas.save();
@@ -1363,7 +1523,7 @@ class _PetPainter extends CustomPainter {
       _lamina(canvas, size, linhaDagua);
     }
 
-    if (dormindo) {
+    if (dormindo && !noNinho) {
       _zzz(canvas, size);
       _folhaDoSono(canvas, size);
     }
@@ -1528,6 +1688,7 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -30 + pose.respiro * amp * 0.7 + _cabecaDesce);
     canvas.rotate(_cabecaGiro * 0.9);
+    canvas.scale(_cabecaDoEstagio);
 
     // Orelhas antes da cabeça: nascem atrás dela, então a base some sob o
     // contorno em vez de ficar boiando em cima.
@@ -1661,6 +1822,7 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
     canvas.rotate(_cabecaGiro * 0.9);
+    canvas.scale(_cabecaDoEstagio);
 
     // Orelhas pequenas e altas: na lontra elas quase somem na cabeça.
     _orelhaRedonda(canvas, const Offset(-33, -24), 16, 14, -0.24);
@@ -1801,6 +1963,7 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -36 - estica + _cabecaDesce);
     canvas.rotate(_cabecaGiro * 0.8);
+    canvas.scale(_cabecaDoEstagio);
 
     // Pescoço: sai da cabeça e entra no casco. É ele que faz a cabeça
     // **sair** do casco em vez de ficar apoiada nele como um chapéu.
@@ -2008,9 +2171,17 @@ class _PetPainter extends CustomPainter {
     // se espreguiçar (corpo 7% maior e 4 px acima) ela era cortada.
     canvas.translate(0, -28 + pose.respiro * amp * 0.6 + _cabecaDesce);
     canvas.rotate(_cabecaGiro * 0.8);
+    canvas.scale(_cabecaDoEstagio);
 
     // Tufos: base larga presa à cabeça, ponta afiada. Antes eram bolinhas.
+    // Crescem com o estágio: a corujinha não tem, a jovem tem curtos.
+    final tufo = _tufoDoEstagio;
+    canvas.save();
+    canvas.translate(0, -22);
+    canvas.scale(1, tufo);
+    canvas.translate(0, 22);
     for (final lado in [-1.0, 1.0]) {
+      if (tufo == 0) break;
       final treme = pose.orelha * 0.5 * lado;
       canvas.drawPath(
         Path()
@@ -2026,6 +2197,7 @@ class _PetPainter extends CustomPainter {
         _p(sombraForte),
       );
     }
+    canvas.restore();
 
     canvas.drawPath(
       _bolha(
@@ -2105,6 +2277,7 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
     canvas.rotate(_cabecaGiro * 0.9);
+    canvas.scale(_cabecaDoEstagio);
 
     // Guelras antes da cabeça: os três ramos de cada lado nascem atrás dela.
     final corDaGuelra = Color.lerp(pelo, Cores.acento, 0.34)!;
@@ -2239,6 +2412,7 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -34 + pose.respiro * amp * 0.6 + _cabecaDesce);
     canvas.rotate(_cabecaGiro * 0.9);
+    canvas.scale(_cabecaDoEstagio);
 
     canvas.drawPath(
       _bolha(Rect.fromCenter(center: Offset.zero, width: 72, height: 60)),
@@ -2334,6 +2508,7 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
     canvas.rotate(_cabecaGiro * 0.9);
+    canvas.scale(_cabecaDoEstagio);
 
     // Orelhas triangulares, com a concha por dentro. Antes da cabeça: a base
     // some sob o contorno.
@@ -2473,6 +2648,7 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
     canvas.rotate(_cabecaGiro * 0.9);
+    canvas.scale(_cabecaDoEstagio);
 
     // Orelhas grandes, em três camadas: pelo, concha clara e ponta escura.
     for (final lado in [-1.0, 1.0]) {
@@ -2676,6 +2852,7 @@ class _PetPainter extends CustomPainter {
     // A inclinação de cabeça do cão que não entende por que você sumiu. Meio
     // grau só; mais que isso e ele fica tonto em vez de sentido.
     canvas.rotate(_cabecaGiro * 0.9 + (triste ? 0.05 : 0));
+    canvas.scale(_cabecaDoEstagio);
 
     _buldogueCabeca(canvas);
 
@@ -3313,9 +3490,12 @@ class _PetPainter extends CustomPainter {
   /// espécie, e escalado pelo tamanho dela: a mesma peça serve na capivara
   /// larga e na tartaruga pequena sem código por espécie.
   void _veste(Canvas canvas, double larguraDaCabeca, double alturaDaCabeca) {
-    if (roupas.isEmpty) return;
     final w = larguraDaCabeca / 2;
     final h = alturaDaCabeca / 2;
+    // Toda espécie chama isto já no espaço da cabeça: é o lugar certo para o
+    // que o estágio põe nela.
+    _marcasDoEstagio(canvas, w, h);
+    if (roupas.isEmpty) return;
 
     // Pescoço primeiro: fica atrás do queixo.
     final pescoco = roupas[Vestimenta.pescoco];
@@ -3326,6 +3506,307 @@ class _PetPainter extends CustomPainter {
 
     final cabeca = roupas[Vestimenta.cabeca];
     if (cabeca != null) _naCabeca(canvas, w, h, cabeca);
+  }
+
+  /// O que o estágio desenha na cabeça, por cima de tudo menos a roupa.
+  ///
+  /// - **Filhote:** um topete de penugem no alto da cabeça. É o traço que
+  ///   mais diz "bebê" depois do tamanho.
+  /// - **Pleno:** o adulto no auge — o porte cheio, e o detalhe de cada um
+  ///   onde ele existe de verdade: o passarinho que pousa na capivara (o
+  ///   "táxi" das aves no Pantanal) e a sobrancelha de penas da coruja
+  ///   velha de guerra. Nada disso se compra. As outras espécies ganham o
+  ///   delas no redesenho da Onda 3.
+  void _marcasDoEstagio(Canvas canvas, double w, double h) {
+    final topo = -h + 2;
+    if (estagio == EstagioDoBicho.filhote) {
+      final tinta = _p(pelo);
+      for (final (dx, alto, inclina) in const [
+        (-5.0, 9.0, -0.35),
+        (0.0, 12.0, 0.0),
+        (5.0, 9.0, 0.35),
+      ]) {
+        canvas.save();
+        canvas.translate(dx, topo + 3);
+        canvas.rotate(inclina);
+        canvas.drawPath(
+          Path()
+            ..moveTo(-3, 0)
+            ..quadraticBezierTo(-2.5, -alto * 0.7, 0, -alto)
+            ..quadraticBezierTo(2.5, -alto * 0.7, 3, 0)
+            ..close(),
+          tinta,
+        );
+        canvas.restore();
+      }
+      return;
+    }
+    if (estagio != EstagioDoBicho.pleno) return;
+
+    final temChapeu = roupas[Vestimenta.cabeca] != null;
+    switch (species) {
+      case Species.capybara:
+        if (!temChapeu) _passarinho(canvas, Offset(w * 0.30, topo - 1));
+      case Species.owl:
+        for (final lado in [-1.0, 1.0]) {
+          canvas.drawPath(
+            Path()
+              ..moveTo(lado * 6, -11)
+              ..quadraticBezierTo(lado * 18, -17, lado * 33, -10)
+              ..quadraticBezierTo(lado * 18, -13, lado * 6, -11)
+              ..close(),
+            _traco(Color.lerp(barriga, Colors.white, 0.4)!, 2.6),
+          );
+        }
+      case Species.otter ||
+            Species.tortoise ||
+            Species.axolotl ||
+            Species.penguin ||
+            Species.cat ||
+            Species.fox ||
+            Species.frenchie:
+        break;
+    }
+  }
+
+  /// O passarinho que pousa na capivara plena. Pequeno, de perfil, olhando
+  /// para frente — um anu ou um suiriri, sem pretensão de espécie.
+  void _passarinho(Canvas canvas, Offset pe) {
+    final corpo = const Color(0xFFF2C14E);
+    final asa = const Color(0xFF8A6A3A);
+    canvas.save();
+    canvas.translate(pe.dx, pe.dy);
+    // Patinhas.
+    canvas.drawLine(const Offset(-2, 0), const Offset(-2, -4), _traco(Cores.tinta, 1.2));
+    canvas.drawLine(const Offset(2, 0), const Offset(2, -4), _traco(Cores.tinta, 1.2));
+    // Corpo e cauda.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-10, -9)
+        ..lineTo(-15, -12)
+        ..lineTo(-13, -7)
+        ..close(),
+      _p(asa),
+    );
+    canvas.drawOval(Rect.fromCenter(center: const Offset(-1, -9), width: 17, height: 11), _p(corpo));
+    canvas.drawCircle(const Offset(6, -15), 5.2, _p(corpo));
+    canvas.drawOval(Rect.fromCenter(center: const Offset(-3, -10), width: 9, height: 6), _p(asa));
+    // Bico e olho.
+    canvas.drawPath(
+      Path()
+        ..moveTo(10.5, -16)
+        ..lineTo(14.5, -14.6)
+        ..lineTo(10.5, -13.4)
+        ..close(),
+      _p(const Color(0xFFE08A3C)),
+    );
+    canvas.drawCircle(const Offset(7.4, -16), 1.3, _p(Cores.tinta));
+    canvas.restore();
+  }
+
+  /// O começo de quem bota ovo: o ovo, no lugar onde aquela espécie o põe.
+  ///
+  /// - Coruja: ovo branco, quase redondo, num ninho de gravetos.
+  /// - Pinguim: ovo creme num anel de pedrinhas (o pinguim-de-magalhães faz
+  ///   ninho em toca rasa e o forra).
+  /// - Tartaruga: ovo branco meio enterrado na areia — a tartaruga cava e vai
+  ///   embora; o sol choca.
+  /// - Axolote: um cacho de ovos gelatinosos preso numa folha d'água, cada um
+  ///   com o embrião escuro à vista.
+  ///
+  /// Ele está vivo: balança com o fôlego e dá um tranco de vez em quando (o
+  /// mesmo relógio irregular da orelha). Quem olha tem de achar que tem
+  /// alguém ali dentro.
+  void _ovo(Canvas canvas, Offset chao) {
+    final amp = pose.amplitude;
+    final tranco = math.sin(pose.orelha * math.pi * 4) * 0.10 * amp;
+    final balanco = pose.respiro * 0.025 * amp + tranco;
+
+    switch (species) {
+      case Species.axolotl:
+        _ovosDoAxolote(canvas, chao, balanco);
+        return;
+      case Species.tortoise:
+        // Areia atrás.
+        canvas.drawOval(
+          Rect.fromCenter(center: chao + const Offset(0, -4), width: 120, height: 34),
+          _p(const Color(0xFFE6CC9A)),
+        );
+      case Species.owl:
+        _ninho(canvas, chao, frente: false);
+      case Species.penguin:
+        for (var i = 0; i < 9; i++) {
+          final a = math.pi + i / 8 * math.pi;
+          canvas.drawOval(
+            Rect.fromCenter(
+              center: chao + Offset(math.cos(a) * 44, -6 + math.sin(a) * 9),
+              width: 16,
+              height: 11,
+            ),
+            _p(Color.lerp(const Color(0xFF9A9389), Colors.white, (i % 3) * 0.12)!),
+          );
+        }
+      case Species.capybara ||
+            Species.otter ||
+            Species.cat ||
+            Species.fox ||
+            Species.frenchie:
+        break;
+    }
+
+    final casca = switch (species) {
+      Species.penguin => const Color(0xFFF1EBDD),
+      Species.tortoise => const Color(0xFFF7F3EA),
+      _ => const Color(0xFFF5F1E8),
+    };
+    final (largura, altura) = switch (species) {
+      Species.tortoise => (40.0, 42.0),
+      Species.owl => (44.0, 52.0),
+      _ => (46.0, 58.0),
+    };
+    final base = chao + const Offset(0, -6);
+
+    canvas.save();
+    canvas.translate(base.dx, base.dy);
+    canvas.rotate(balanco);
+    final ovo = Path()
+      ..moveTo(0, -altura)
+      ..cubicTo(largura * 0.62, -altura, largura * 0.56, 0, 0, 0)
+      ..cubicTo(-largura * 0.56, 0, -largura * 0.62, -altura, 0, -altura)
+      ..close();
+    canvas.drawPath(ovo, _p(casca));
+    canvas.save();
+    canvas.clipPath(ovo);
+    // Sombra do lado de baixo e da direita: volume, não adesivo.
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(largura * 0.32, -altura * 0.30), width: largura, height: altura),
+      _p(Color.lerp(casca, Cores.tinta, 0.10)!),
+    );
+    if (species == Species.penguin) {
+      final sorte = math.Random(7);
+      for (var i = 0; i < 9; i++) {
+        canvas.drawCircle(
+          Offset((sorte.nextDouble() - 0.5) * largura * 0.8,
+              -altura * (0.2 + sorte.nextDouble() * 0.7)),
+          1 + sorte.nextDouble() * 1.4,
+          _p(const Color(0xFFB9AE98)),
+        );
+      }
+    }
+    canvas.restore();
+    // O brilho.
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(-largura * 0.18, -altura * 0.70), width: 9, height: 14),
+      _p(Colors.white.withValues(alpha: 0.85)),
+    );
+    canvas.drawPath(ovo, _traco(Color.lerp(casca, Cores.tinta, 0.22)!, 1.4));
+    canvas.restore();
+
+    switch (species) {
+      case Species.tortoise:
+        // Areia na frente: o ovo está enterrado até a metade.
+        canvas.drawPath(
+          Path()
+            ..moveTo(chao.dx - 62, chao.dy + 4)
+            ..quadraticBezierTo(chao.dx - 30, chao.dy - 18, chao.dx, chao.dy - 12)
+            ..quadraticBezierTo(chao.dx + 30, chao.dy - 18, chao.dx + 62, chao.dy + 4)
+            ..close(),
+          _p(const Color(0xFFDDBE85)),
+        );
+        for (final d in const [Offset(-30, -6), Offset(14, -9), Offset(36, -2)]) {
+          canvas.drawCircle(chao + d, 1.4, _p(const Color(0xFFC4A266)));
+        }
+      case Species.owl:
+        _ninho(canvas, chao, frente: true);
+      case Species.penguin:
+        for (var i = 0; i < 7; i++) {
+          final a = i / 6 * math.pi;
+          canvas.drawOval(
+            Rect.fromCenter(
+              center: chao + Offset(math.cos(a) * 46, -4 + math.sin(a) * 7),
+              width: 17,
+              height: 12,
+            ),
+            _p(Color.lerp(const Color(0xFF8C857B), Colors.white, (i % 3) * 0.14)!),
+          );
+        }
+      case Species.axolotl ||
+            Species.capybara ||
+            Species.otter ||
+            Species.cat ||
+            Species.fox ||
+            Species.frenchie:
+        break;
+    }
+  }
+
+  /// O cacho de ovos do axolote, numa folha d'água.
+  void _ovosDoAxolote(Canvas canvas, Offset chao, double balanco) {
+    // A folha onde a mãe prendeu os ovos.
+    canvas.drawPath(
+      Path()
+        ..moveTo(chao.dx - 8, chao.dy)
+        ..quadraticBezierTo(chao.dx - 30, chao.dy - 50, chao.dx + 4, chao.dy - 78)
+        ..quadraticBezierTo(chao.dx + 18, chao.dy - 40, chao.dx - 8, chao.dy)
+        ..close(),
+      _p(const Color(0xFF6E9B6A)),
+    );
+    canvas.save();
+    canvas.translate(chao.dx, chao.dy - 38);
+    canvas.rotate(balanco * 0.6);
+    canvas.scale(1.3);
+    const ovos = [
+      Offset(-14, -14), Offset(4, -20), Offset(18, -8), Offset(-20, 4),
+      Offset(0, 0), Offset(16, 10), Offset(-6, 16),
+    ];
+    for (var i = 0; i < ovos.length; i++) {
+      final o = ovos[i];
+      canvas.drawCircle(o, 10.5, _p(const Color(0xFFD7EEE6).withValues(alpha: 0.78)));
+      canvas.drawCircle(o, 10.5, _traco(const Color(0xFF9CC7BA), 1.1));
+      // O embrião: um grão escuro que vira vírgula conforme o ovo amadurece.
+      final gira = i * 1.3 + pose.respiro * 0.2;
+      canvas.drawCircle(o + Offset(math.cos(gira) * 1.5, math.sin(gira) * 1.5), 3.4,
+          _p(const Color(0xFF5B4A44)));
+      canvas.drawCircle(o + const Offset(-3.5, -4), 2, _p(Colors.white.withValues(alpha: 0.8)));
+    }
+    canvas.restore();
+  }
+
+  /// O ninho: bacia de gravetos e capim. Desenhado em duas metades — o fundo
+  /// antes de quem está dentro, a borda da frente depois —, para o filhote
+  /// ficar **dentro** dele e não colado por cima.
+  void _ninho(Canvas canvas, Offset chao, {required bool frente}) {
+    const marrom = Color(0xFF8B6440);
+    final escuro = Color.lerp(marrom, Cores.tinta, 0.35)!;
+    final claro = Color.lerp(marrom, const Color(0xFFE8D2A6), 0.45)!;
+    if (!frente) {
+      canvas.drawOval(
+        Rect.fromCenter(center: chao + const Offset(0, -14), width: 104, height: 34),
+        _p(escuro),
+      );
+      return;
+    }
+    final borda = Path()
+      ..moveTo(chao.dx - 56, chao.dy - 16)
+      ..quadraticBezierTo(chao.dx, chao.dy - 2, chao.dx + 56, chao.dy - 16)
+      ..quadraticBezierTo(chao.dx + 50, chao.dy + 8, chao.dx, chao.dy + 9)
+      ..quadraticBezierTo(chao.dx - 50, chao.dy + 8, chao.dx - 56, chao.dy - 16)
+      ..close();
+    canvas.drawPath(borda, _p(marrom));
+    // Gravetos e fios de capim cruzando a borda.
+    final sorte = math.Random(species.index + 11);
+    for (var i = 0; i < 16; i++) {
+      final x = (sorte.nextDouble() - 0.5) * 104;
+      final y = -10 + sorte.nextDouble() * 14;
+      final a = (sorte.nextDouble() - 0.5) * 0.9;
+      final c = math.cos(a) * 13;
+      final d = math.sin(a) * 13;
+      canvas.drawLine(
+        chao + Offset(x - c, y - d),
+        chao + Offset(x + c, y + d),
+        _traco(i.isEven ? claro : escuro, 1.6),
+      );
+    }
   }
 
   void _cachecol(Canvas canvas, double w, double h, Color cor) {
@@ -3556,6 +4037,7 @@ class _PetPainter extends CustomPainter {
     bool coruja = false,
     bool sobrancelha = true,
   }) {
+    r *= _olhoDoEstagio;
     final f = fechamento;
 
     if (f > 0.94) {

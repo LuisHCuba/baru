@@ -1,6 +1,7 @@
 import 'package:uuid/uuid.dart';
 
 import '../models.dart';
+import 'crescimento.dart';
 
 /// Estado persistível (local). Não inclui timer em curso, share sheet nem override de debug.
 class AppSnapshot {
@@ -64,6 +65,8 @@ class AppSnapshot {
     this.minutosNaSemana = 0,
     this.diasAbaixoNaSemana = 0,
     this.missoesResgatadas = const [],
+    this.sessoesPorEspecie = const {},
+    this.estagioCelebrado = const {},
   });
 
   final AppScreen screen;
@@ -160,6 +163,20 @@ class AppSnapshot {
   final int diasAbaixoNaSemana;
   final List<String> missoesResgatadas;
 
+  /// Sessões de foco concluídas com cada espécie. Régua do crescimento
+  /// (`Crescimento`); só sobe.
+  final Map<String, int> sessoesPorEspecie;
+
+  /// O último estágio já celebrado em cena, por espécie (índice de
+  /// `EstagioDoBicho`).
+  final Map<String, int> estagioCelebrado;
+
+  static Map<String, int> parseContadores(dynamic raw) => {
+        if (raw is Map)
+          for (final e in raw.entries)
+            if (e.value is num) '${e.key}': (e.value as num).toInt(),
+      };
+
   Map<String, dynamic> toJson() => {
         'v': 1,
         'screen': screen.name,
@@ -221,6 +238,8 @@ class AppSnapshot {
         'minutosNaSemana': minutosNaSemana,
         'diasAbaixoNaSemana': diasAbaixoNaSemana,
         'missoesResgatadas': missoesResgatadas,
+        'sessoesPorEspecie': sessoesPorEspecie,
+        'estagioCelebrado': estagioCelebrado,
       };
 
   /// Um app recém-instalado.
@@ -344,6 +363,8 @@ class AppSnapshot {
       missoesResgatadas:
           (j['missoesResgatadas'] as List?)?.map((e) => '$e').toList() ??
               const [],
+      sessoesPorEspecie: parseContadores(j['sessoesPorEspecie']),
+      estagioCelebrado: parseContadores(j['estagioCelebrado']),
     );
   }
 
@@ -402,6 +423,12 @@ class AppSnapshot {
       respostasDoQuiz:
           respostasDoQuiz.isEmpty ? local.respostasDoQuiz : respostasDoQuiz,
       missoesResgatadas: uniao(missoesResgatadas, local.missoesResgatadas),
+      // Crescimento: contador que só sobe, por espécie. E a cena já vista
+      // não volta: o maior estágio celebrado de cada lado.
+      sessoesPorEspecie:
+          Crescimento.fundeMaior(sessoesPorEspecie, local.sessoesPorEspecie),
+      estagioCelebrado:
+          Crescimento.fundeMaior(estagioCelebrado, local.estagioCelebrado),
       // Do dia e da semana: **fica com o maior**, não com o local.
       //
       // Estes cinco deixaram de ser cegos ao remoto. Os quatro de foco são
@@ -515,6 +542,8 @@ class AppSnapshot {
     int? minutosNaSemana,
     int? diasAbaixoNaSemana,
     List<String>? missoesResgatadas,
+    Map<String, int>? sessoesPorEspecie,
+    Map<String, int>? estagioCelebrado,
     bool clearQuiz = false,
     bool clearTrialStart = false,
     bool clearSession = false,
@@ -584,6 +613,8 @@ class AppSnapshot {
       minutosNaSemana: minutosNaSemana ?? this.minutosNaSemana,
       diasAbaixoNaSemana: diasAbaixoNaSemana ?? this.diasAbaixoNaSemana,
       missoesResgatadas: missoesResgatadas ?? this.missoesResgatadas,
+      sessoesPorEspecie: sessoesPorEspecie ?? this.sessoesPorEspecie,
+      estagioCelebrado: estagioCelebrado ?? this.estagioCelebrado,
     );
   }
 

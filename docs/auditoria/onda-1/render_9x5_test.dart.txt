@@ -1,0 +1,121 @@
+// TEMPORÁRIO — auditoria da Onda 1. Apagar depois de gerar as imagens.
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:baru_app/models.dart';
+import 'package:baru_app/theme.dart';
+import 'package:baru_app/widgets/pet.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+final _pasta = Platform.environment['AUDIT_OUT'] ?? '/tmp/audit';
+
+const _humores = {
+  Mood.radiant: 'radiante',
+  Mood.content: 'contente',
+  Mood.neutral: 'neutro',
+  Mood.sleepy: 'sono',
+  Mood.missingYou: 'saudade',
+};
+
+Activity _comoNaHome(Mood m) => switch (m) {
+      Mood.sleepy || Mood.neutral => Activity.nap,
+      Mood.radiant => Activity.swim,
+      Mood.content => Activity.graze,
+      Mood.missingYou => Activity.idle,
+    };
+
+Future<void> _grava(WidgetTester tester, String nome, double pr) async {
+  final b = tester.renderObject<RenderRepaintBoundary>(find.byKey(const Key('g')));
+  await tester.runAsync(() async {
+    final img = await b.toImage(pixelRatio: pr);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    img.dispose();
+    Directory(_pasta).createSync(recursive: true);
+    File('$_pasta/$nome.png').writeAsBytesSync(data!.buffer.asUint8List());
+  });
+}
+
+Widget _cel(Species sp, Mood m, int coat, Activity a) => Container(
+      color: const Color(0xFFF3EEDF),
+      width: 200,
+      height: 160,
+      child: PetView(
+        species: sp,
+        mood: m,
+        activity: a,
+        coat: coat,
+        interativo: false,
+        width: 200,
+        height: 160,
+      ),
+    );
+
+Future<void> _grade(WidgetTester tester, String nome,
+    {required bool escuro, required bool home}) async {
+  await tester.pumpWidget(Directionality(
+    textDirection: TextDirection.ltr,
+    child: Center(
+      child: RepaintBoundary(
+        key: const Key('g'),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          for (final sp in Species.values)
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              for (final m in _humores.keys)
+                _cel(
+                  sp,
+                  m,
+                  escuro ? AppColors.coatDe(sp).length - 1 : 0,
+                  home ? _comoNaHome(m) : Activity.idle,
+                ),
+            ]),
+        ]),
+      ),
+    ),
+  ));
+  await tester.pump(const Duration(milliseconds: 120));
+  await _grava(tester, nome, 1.5);
+}
+
+void main() {
+  testWidgets('grades', (tester) async {
+    tester.view.physicalSize = const Size(1100, 1500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    await _grade(tester, 'grade-idle-pelo0', escuro: false, home: false);
+    await _grade(tester, 'grade-idle-pelo-escuro', escuro: true, home: false);
+    await _grade(tester, 'grade-como-na-home', escuro: false, home: true);
+  });
+
+  testWidgets('individuais em alta', (tester) async {
+    tester.view.physicalSize = const Size(400, 400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    for (final sp in Species.values) {
+      for (final h in _humores.entries) {
+        await tester.pumpWidget(Directionality(
+          textDirection: TextDirection.ltr,
+          child: Center(
+            child: RepaintBoundary(
+              key: const Key('g'),
+              child: _cel(sp, h.key, 0, Activity.idle),
+            ),
+          ),
+        ));
+        await tester.pump(const Duration(milliseconds: 120));
+        await _grava(tester, 'hi-${sp.name}-${h.value}', 5);
+      }
+    }
+  });
+}

@@ -117,6 +117,8 @@ class BaruRowCodec {
       'marcos_resgatados': s.marcosResgatados,
       'missoes_resgatadas': s.missoesResgatadas,
       'sessoes_concluidas': s.sessoesConcluidas,
+      'sessoes_por_especie': s.sessoesPorEspecie,
+      'estagio_celebrado': s.estagioCelebrado,
       'melhor_sequencia': s.melhorSequencia,
       'dias_abaixo_da_meta': s.diasAbaixoDaMeta,
       'dias_abaixo_na_semana': s.diasAbaixoNaSemana,
@@ -390,6 +392,10 @@ class BaruRowCodec {
               const [],
       sessoesConcluidas:
           (progresso?['sessoes_concluidas'] as num?)?.toInt() ?? 0,
+      sessoesPorEspecie:
+          AppSnapshot.parseContadores(progresso?['sessoes_por_especie']),
+      estagioCelebrado:
+          AppSnapshot.parseContadores(progresso?['estagio_celebrado']),
       melhorSequencia:
           (progresso?['melhor_sequencia'] as num?)?.toInt() ?? 0,
       diasAbaixoDaMeta:

@@ -8,6 +8,7 @@ import 'trilha_screen.dart';
 import '../theme.dart';
 import '../widgets/raiz.dart';
 import '../widgets/common.dart';
+import '../widgets/crescimento.dart';
 import '../widgets/habitat.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -100,7 +101,10 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         const HabitatScene(),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
+        // O crescimento do bicho, logo abaixo dele: quanto falta e o que vem.
+        const BarraDoCrescimento(),
+        const SizedBox(height: 18),
         // A legenda diz **o fato** que levou o bicho àquele humor, com o
         // número que o app mediu, e só depois o sentimento. Antes vinha de
         // `moodCap`/`moodSub`: um texto por humor, sempre igual, que dizia

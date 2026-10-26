@@ -565,6 +565,7 @@ class _HabitatSceneState extends State<HabitatScene>
                             mood: app.mood,
                             activity: app.activity,
                             coat: app.color,
+                            estagio: app.estagio,
                             scale: escalaDoPet,
                             alignment: Alignment.bottomCenter,
                             interativo: widget.animado,

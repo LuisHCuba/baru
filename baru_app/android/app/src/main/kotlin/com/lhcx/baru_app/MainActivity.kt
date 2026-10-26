@@ -254,6 +254,24 @@ class MainActivity : FlutterFragmentActivity() {
                     result.success(true)
                 }
 
+                // Os quadros do bicho real, rasterizados pelo Dart ao sair
+                // do app. So os caminhos atravessam o canal; os PNGs ja
+                // estao no disco, e e de la que a sobreposicao os le — com
+                // o processo do Flutter vivo ou nao.
+                "quadros" -> {
+                    val respiro = call.argument<List<String>>("respiro")
+                        .orEmpty()
+                    val piscar = call.argument<String>("piscar").orEmpty()
+                    result.success(
+                        QuadrosDoBicho.grava(
+                            this,
+                            chave = call.argument<String>("chave").orEmpty(),
+                            respiro = respiro,
+                            piscar = piscar,
+                        ),
+                    )
+                }
+
                 "esconde" -> {
                     startService(
                         Intent(this, OverlayDoBaru::class.java).apply {

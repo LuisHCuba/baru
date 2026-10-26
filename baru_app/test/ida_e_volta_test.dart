@@ -55,6 +55,7 @@ const _sincronizados = <String>{
   'xp', 'afeto', 'carinhosHoje', 'nivelCelebrado', 'sessoesConcluidas',
   'melhorSequencia', 'diasAbaixoDaMeta', 'marcosResgatados',
   'missoesResgatadas', 'diasAbaixoNaSemana',
+  'sessoesPorEspecie', 'estagioCelebrado',
   // recalculados de baru_sessions — sem coluna de propósito
   'minutosDeFocoHoje', 'maiorSessaoHoje', 'sessoesNaSemana', 'minutosNaSemana',
 };
@@ -166,6 +167,8 @@ AppSnapshot _cheio() => AppSnapshot(
       afeto: 63,
       carinhosHoje: 3,
       sessoesConcluidas: 31,
+      sessoesPorEspecie: const {'owl': 22, 'capybara': 9},
+      estagioCelebrado: const {'owl': 3, 'capybara': 2},
       melhorSequencia: 12,
       diasAbaixoDaMeta: 18,
       marcosResgatados: const ['primeiro_foco', 'nivel_3'],

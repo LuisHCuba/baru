@@ -118,6 +118,8 @@ void _historico(AppState s) {
     ..sessoesNaSemana = 4
     ..minutosNaSemana = 210
     ..diasAbaixoNaSemana = 2
+    // Os bichos da loja aparecem adultos: 20 sessões juntos com cada um.
+    ..sessoesPorEspecie = {for (final e in Species.values) e.name: 20}
     ..afeto = 23
     ..xp = Balanco.xpAcumuladoPara(4) + 30
     ..resumoTela = _dia

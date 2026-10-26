@@ -46,6 +46,10 @@ Widget _bicho(Species sp, Mood mood, {Activity activity = Activity.idle}) =>
       width: 200,
       height: 160,
       child: PetView(
+        // Chave por bicho e humor: sem ela o mesmo PetView é reaproveitado de
+        // um humor para o outro, a troca de humor começa, e a foto sai com o
+        // rosto do humor anterior.
+        key: ValueKey('${sp.name}-${mood.name}-${activity.name}'),
         species: sp,
         mood: mood,
         activity: activity,

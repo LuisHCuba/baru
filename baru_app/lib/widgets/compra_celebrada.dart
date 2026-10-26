@@ -35,7 +35,8 @@ Future<void> mostraCompraCelebrada(
       item: item,
       luz: luz,
     ),
-  );
+    // Fechada a cena, por onde for, a compra fica.
+  ).whenComplete(app.esqueceCompra);
 }
 
 class _CompraCelebrada extends StatefulWidget {
@@ -149,6 +150,15 @@ class _CompraCelebradaState extends State<_CompraCelebrada>
                         TextAction(
                           label: t.compraSeguir,
                           onTap: () => Navigator.of(context).pop(),
+                        ),
+                        // Mudou de ideia na hora: as folhas voltam. Só aqui,
+                        // com a cena aberta; fechada, a compra fica.
+                        TextAction(
+                          label: t.compraDesfazer,
+                          onTap: () {
+                            app.desfazCompra(widget.item);
+                            Navigator.of(context).pop();
+                          },
                         ),
                       ],
                     ),

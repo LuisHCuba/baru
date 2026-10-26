@@ -2006,10 +2006,16 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
+  /// A compra que ainda dá para desfazer, e o que estava em cena antes dela.
+  String? _ultimaCompra;
+  Set<String> _equipadosAntesDaCompra = const {};
+
   void buy(ShopItemDef item) {
     if (owned.contains(item.id) || leaves < item.price) return;
     leaves -= item.price;
     owned = [...owned, item.id];
+    _ultimaCompra = item.id;
+    _equipadosAntesDaCompra = {...equipados};
     // Recém-comprado já entra em cena: ninguém compra para deixar na gaveta.
     _equipa(item);
     // Compra era muda: gastar folhas sem resposta nenhuma parecia erro.
@@ -2017,6 +2023,25 @@ class AppState extends ChangeNotifier {
     _markSync(_syncShop);
     notifyListeners();
   }
+
+  /// Desfaz a compra que acabou de acontecer (laudo 09, R1).
+  ///
+  /// Só a última, e só enquanto a cena da compra está aberta (quem fecha
+  /// chama [esqueceCompra]): um "Desfazer" que vale para sempre viraria
+  /// aluguel de item. Devolve as folhas e o que estava em cena antes.
+  bool desfazCompra(ShopItemDef item) {
+    if (_ultimaCompra != item.id || !owned.contains(item.id)) return false;
+    leaves += item.price;
+    owned = [...owned]..remove(item.id);
+    equipados = _equipadosAntesDaCompra;
+    _ultimaCompra = null;
+    _markSync(_syncShop);
+    notifyListeners();
+    return true;
+  }
+
+  /// A cena da compra fechou: daqui em diante a compra é definitiva.
+  void esqueceCompra() => _ultimaCompra = null;
 
   /// Coloca ou tira. Devolve `true` se ficou equipado.
   bool alternaEquipado(ShopItemDef item) {

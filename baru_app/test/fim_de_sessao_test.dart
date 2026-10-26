@@ -235,6 +235,38 @@ void main() {
     expect(ResumoDaSessao.tocadas(antes, antes), isEmpty);
   });
 
+  testWidgets('desfazer a compra devolve as folhas e o que estava em cena',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(412, 892));
+    final s = _app()..leaves = 500;
+    addTearDown(s.dispose);
+    s.go(AppScreen.shop);
+    await tester.pumpWidget(AppScope(
+      state: s,
+      child: const MaterialApp(home: Scaffold(body: ShopScreen())),
+    ));
+    await tester.pump();
+    final preco = find
+        .byWidgetPredicate((w) =>
+            w is PilulaDaLoja && w.ativo && int.tryParse(w.rotulo) != null)
+        .first;
+    await tester.ensureVisible(preco);
+    final folhas = s.leaves;
+    final itens = [...s.owned];
+    final emCena = {...s.equipados};
+    await tester.tap(preco);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1000));
+    expect(s.leaves, lessThan(folhas));
+
+    await tester.tap(find.text(s.t.compraDesfazer));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(s.leaves, folhas);
+    expect(s.owned, itens);
+    expect(s.equipados, emCena);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('comprar abre a compra celebrada, e ela leva ao habitat',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(412, 892));

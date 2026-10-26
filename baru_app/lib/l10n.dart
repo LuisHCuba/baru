@@ -512,6 +512,7 @@ class T {
   String get compraSubRoupa => s('compraSubRoupa');
   String get compraVer => s('compraVer');
   String get compraSeguir => s('compraSeguir');
+  String get compraDesfazer => s('compraDesfazer');
   String get resDiaFeito => s('resDiaFeito');
   String get resProximo => s('resProximo');
   String get celebChegadaSub => s('celebChegadaSub');
@@ -806,6 +807,7 @@ const _pt = <String, Object>{
   'compraSubRoupa': '{a} já está vestindo.',
   'compraVer': 'Ver no habitat',
   'compraSeguir': 'Continuar na loja',
+  'compraDesfazer': 'Desfazer a compra',
   'resDiaFeito': 'Dia feito. Pode largar o telefone: {a} cuida do resto.',
   'resProximo': 'Próximo: "{m}" ({p}/{t}), +{f} folhas.',
   'celebChegadaSub': '{a} passou o dia esperando por isso.',
@@ -1358,6 +1360,7 @@ const _en = <String, Object>{
   'compraSubRoupa': '{a} is already wearing it.',
   'compraVer': 'See it in the habitat',
   'compraSeguir': 'Keep shopping',
+  'compraDesfazer': 'Undo purchase',
   'resDiaFeito': 'Day done. You can put the phone down — {a} takes it from here.',
   'resProximo': 'Next: "{m}" ({p}/{t}), +{f} leaves.',
   'celebChegadaSub': '{a} spent the day waiting for this.',
@@ -1900,6 +1903,7 @@ const _es = <String, Object>{
   'compraSubRoupa': '{a} ya lo lleva puesto.',
   'compraVer': 'Verlo en el hábitat',
   'compraSeguir': 'Seguir en la tienda',
+  'compraDesfazer': 'Deshacer la compra',
   'resDiaFeito': 'Día hecho. Puedes dejar el teléfono: {a} se encarga del resto.',
   'resProximo': 'Siguiente: "{m}" ({p}/{t}), +{f} hojas.',
   'celebChegadaSub': '{a} pasó el día esperando esto.',
@@ -2443,6 +2447,7 @@ const _zh = <String, Object>{
   'compraSubRoupa': '{a} 已经穿上了。',
   'compraVer': '去栖息地看看',
   'compraSeguir': '继续逛逛',
+  'compraDesfazer': '撤销购买',
   'resDiaFeito': '今天完成了。放下手机吧，剩下的交给 {a}。',
   'resProximo': '下一个：“{m}”（{p}/{t}），+{f} 片叶子。',
   'celebChegadaSub': '{a} 等了一整天。',

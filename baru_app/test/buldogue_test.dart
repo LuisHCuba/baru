@@ -207,9 +207,9 @@ void main() {
       );
     }
 
-    // E nenhuma das outras oito produz isso. Não é firula: a coruja tem
-    // tufos, a gata e a raposa têm orelhas eretas, e o axolote tem guelras
-    // saindo dos dois lados — três formas que passariam num teste frouxo.
+    // E nenhuma das outras oito produz isso. Não é firula: a gata e a raposa
+    // têm orelhas eretas, e o axolote tem guelras saindo dos dois lados —
+    // formas que passariam num teste frouxo.
     for (final outra in Species.values) {
       if (outra == Species.frenchie) continue;
       final d = await _desenha(tester, especie: outra);

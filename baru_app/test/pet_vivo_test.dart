@@ -287,14 +287,16 @@ void main() {
   });
 
   testWidgets('depois do toque nada fica preso na pose', (tester) async {
-    // Coruja de propósito: o tufo dela responde de forma linear a `orelha`, e
-    // um controller que termina em 1.0 e fica lá deixa o tufo torto. Na
-    // orelha redonda o defeito se esconde, porque `sin(2π)` volta a zero.
+    // Gata de propósito: a orelha de ponta dela responde de forma linear a
+    // `orelha` (`treme = orelha * 0.6`), e um controller que termina em 1.0
+    // e fica lá deixa a orelha torta. Na orelha redonda o defeito se
+    // esconde, porque `sin(2π)` volta a zero. (Era a coruja, pelo tufo; a
+    // buraqueira não tem tufo desde o ADR-026.)
     //
     // Movimento reduzido isola: sem o contínuo, o único que anda é o toque.
     _movimentoReduzido(tester, true);
     await tester.pumpWidget(
-      _cena(activity: Activity.idle, species: Species.owl),
+      _cena(activity: Activity.idle, species: Species.cat),
     );
     await tester.pump();
 

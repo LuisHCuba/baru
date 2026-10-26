@@ -1,0 +1,719 @@
+// Harness da auditoria do item 11 (fora do repositório: worktree temporário).
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
+import 'package:baru_app/data/crescimento.dart';
+import 'package:baru_app/design/tokens.dart';
+import 'package:baru_app/models.dart';
+import 'package:baru_app/screens/session_screen.dart';
+import 'package:baru_app/services/quadros_do_bicho.dart';
+import 'package:baru_app/state.dart';
+import 'package:baru_app/widgets/crescimento.dart';
+import 'package:baru_app/widgets/habitat.dart';
+import 'package:baru_app/widgets/pet.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+const _pasta = '/home/user/baru/docs/auditoria/onda-3-item-11';
+const _chave = Key('aud');
+
+Future<void> _fonte() async {
+  final loader = FontLoader('Nunito');
+  for (final peso in ['Regular', 'Bold']) {
+    final bytes = File('assets/fonts/Nunito-$peso.ttf').readAsBytesSync();
+    loader.addFont(Future.value(ByteData.view(bytes.buffer)));
+  }
+  await loader.load();
+}
+
+Future<void> _salva(WidgetTester tester, String nome,
+    {double ratio = 1.5, Key chave = _chave}) async {
+  final b = tester.renderObject<RenderRepaintBoundary>(find.byKey(chave));
+  await tester.runAsync(() async {
+    final img = await b.toImage(pixelRatio: ratio);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    img.dispose();
+    Directory(_pasta).createSync(recursive: true);
+    File('$_pasta/$nome.png').writeAsBytesSync(data!.buffer.asUint8List());
+  });
+}
+
+void _tela(WidgetTester tester, Size s) {
+  tester.view.physicalSize = s;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
+const _bg = Color(0xFFEFE8DA);
+const _txt = TextStyle(fontFamily: 'Nunito', fontSize: 12, color: Color(0xFF3E2F23));
+
+/// Célula: caixa do PetView (200x150) com contorno, e 30 px de margem para
+/// ver o que vaza da caixa.
+Widget _cel(Widget pet, {Color bg = _bg}) => Container(
+      width: 260,
+      height: 210,
+      color: bg,
+      alignment: Alignment.center,
+      child: Stack(clipBehavior: Clip.none, children: [
+        pet,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0x55FF0000), width: 1),
+              ),
+            ),
+          ),
+        ),
+      ]),
+    );
+
+Widget _grade(String titulo, List<String> cols, List<String> linhas,
+    Widget Function(int l, int c) cel) {
+  return Directionality(
+    textDirection: TextDirection.ltr,
+    child: MediaQuery(
+      data: const MediaQueryData(disableAnimations: true),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: RepaintBoundary(
+          key: _chave,
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(titulo, style: _txt.copyWith(fontSize: 15, fontWeight: FontWeight.bold)),
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  const SizedBox(width: 90),
+                  for (final c in cols)
+                    SizedBox(width: 260, child: Text(c, style: _txt, textAlign: TextAlign.center)),
+                ]),
+                for (var l = 0; l < linhas.length; l++)
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    SizedBox(width: 90, child: Text(linhas[l], style: _txt)),
+                    for (var c = 0; c < cols.length; c++) cel(l, c),
+                  ]),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+PetView _pet(Species sp,
+        {Mood m = Mood.content,
+        Activity a = Activity.idle,
+        int coat = 0,
+        EstagioDoBicho e = EstagioDoBicho.adulto,
+        Map<Vestimenta, Color> roupas = const {},
+        String? cabeca,
+        QuadroFixo quadro = const QuadroFixo()}) =>
+    PetView(
+      species: sp,
+      mood: m,
+      activity: a,
+      coat: coat,
+      estagio: e,
+      interativo: false,
+      roupas: roupas,
+      roupaDeCabeca: cabeca,
+      quadro: quadro,
+    );
+
+const _coats = {
+  Species.capybara: [0, 5, 4],
+  Species.otter: [0, 3, 5],
+  Species.tortoise: [0, 3, 5],
+  Species.owl: [0, 3, 5],
+  Species.axolotl: [0, 3, 5],
+  Species.penguin: [0, 3, 5],
+  Species.cat: [0, 3, 5],
+  Species.fox: [0, 3, 5],
+  Species.frenchie: [0, 5, 2],
+};
+
+/// Caixa (bbox) do que foi pintado, relativo à caixa do PetView.
+Future<Rect?> _bbox(WidgetTester tester, Widget pet) async {
+  // PetView 200x150 no centro de 600x500 transparente.
+  await tester.pumpWidget(Directionality(
+    textDirection: TextDirection.ltr,
+    child: MediaQuery(
+      data: const MediaQueryData(disableAnimations: true),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: RepaintBoundary(
+          key: _chave,
+          child: SizedBox(
+            width: 600,
+            height: 500,
+            child: Stack(children: [Positioned(left: 200, top: 175, child: pet)]),
+          ),
+        ),
+      ),
+    ),
+  ));
+  await tester.pump();
+  final b = tester.renderObject<RenderRepaintBoundary>(find.byKey(_chave));
+  late Uint8List px;
+  await tester.runAsync(() async {
+    final img = await b.toImage();
+    px = (await img.toByteData(format: ui.ImageByteFormat.rawRgba))!.buffer.asUint8List();
+    img.dispose();
+  });
+  int? x0, y0, x1, y1;
+  for (var y = 0; y < 500; y++) {
+    for (var x = 0; x < 600; x++) {
+      if (px[(y * 600 + x) * 4 + 3] > 20) {
+        x0 = x0 == null || x < x0 ? x : x0;
+        x1 = x1 == null || x > x1 ? x : x1;
+        y0 = y0 == null || y < y0 ? y : y0;
+        y1 = y1 == null || y > y1 ? y : y1;
+      }
+    }
+  }
+  if (x0 == null) return null;
+  return Rect.fromLTRB(x0 - 200.0, y0! - 175.0, x1! - 200.0 + 1, y1! - 175.0 + 1);
+}
+
+void main() {
+  mainCloseups();
+  mainSono();
+  mainBrinca();
+  setUpAll(_fonte);
+
+  testWidgets('grade humor x estágio por espécie', (tester) async {
+    _tela(tester, const Size(1450, 1150));
+    for (final sp in Species.values) {
+      await tester.pumpWidget(_grade(
+        '${sp.name}: humor x estágio (ócio, pelagem 0, quadro fixo)',
+        [for (final e in EstagioDoBicho.values) e.name],
+        [for (final m in Mood.values) m.name],
+        (l, c) => _cel(_pet(sp, m: Mood.values[l], e: EstagioDoBicho.values[c])),
+      ));
+      await tester.pump();
+      await _salva(tester, 'grade-humor-estagio-${sp.name}', ratio: 1.2);
+    }
+  });
+
+  testWidgets('grade atividade x humor por espécie (adulto e filhote)', (tester) async {
+    _tela(tester, const Size(1950, 1000));
+    for (final sp in Species.values) {
+      await tester.pumpWidget(_grade(
+        '${sp.name}: atividade x humor (adulto; última coluna filhote contente)',
+        [for (final m in Mood.values) m.name, 'filhote/content', 'pleno/radiant'],
+        [for (final a in Activity.values) a.name],
+        (l, c) => _cel(_pet(sp,
+            a: Activity.values[l],
+            m: c < 5 ? Mood.values[c] : (c == 5 ? Mood.content : Mood.radiant),
+            e: c < 5
+                ? EstagioDoBicho.adulto
+                : (c == 5 ? EstagioDoBicho.filhote : EstagioDoBicho.pleno))),
+      ));
+      await tester.pump();
+      await _salva(tester, 'grade-atividade-${sp.name}', ratio: 1.0);
+    }
+  });
+
+  testWidgets('pelagens no fundo do habitat', (tester) async {
+    _tela(tester, const Size(1700, 2000));
+    await tester.pumpWidget(_grade(
+      'pelagens (adulto; contente e saudade), fundo Cores.habitat',
+      ['coat A content', 'coat B content', 'coat C content', 'coat B missingYou', 'coat B sleepy', 'coat B radiant'],
+      [for (final sp in Species.values) '${sp.name}\n${_coats[sp]}'],
+      (l, c) {
+        final sp = Species.values[l];
+        final cs = _coats[sp]!;
+        final coat = c < 3 ? cs[c] : cs[1];
+        final m = c < 3 ? Mood.content : [Mood.missingYou, Mood.sleepy, Mood.radiant][c - 3];
+        return _cel(_pet(sp, coat: coat, m: m), bg: Cores.habitat);
+      },
+    ));
+    await tester.pump();
+    await _salva(tester, 'pelagens', ratio: 1.0);
+  });
+
+  testWidgets('roupas sobre as cabeças novas', (tester) async {
+    _tela(tester, const Size(2400, 2000));
+    const gorro = Color(0xFFD5695A);
+    const palha = Color(0xFFE0BE7A);
+    const coroa = Color(0xFF6E9E5A);
+    const cachecol = Color(0xFFC96A86);
+    const oculos = Color(0xFF3E2F23);
+    final casos = <(String, Map<Vestimenta, Color>, String?, EstagioDoBicho)>[
+      ('gorro', {Vestimenta.cabeca: gorro}, 'gorro', EstagioDoBicho.adulto),
+      ('chapeu_palha', {Vestimenta.cabeca: palha}, 'chapeu_palha', EstagioDoBicho.adulto),
+      ('coroa_folhas', {Vestimenta.cabeca: coroa}, 'coroa_folhas', EstagioDoBicho.adulto),
+      ('cachecol', {Vestimenta.pescoco: cachecol}, null, EstagioDoBicho.adulto),
+      ('oculos', {Vestimenta.rosto: oculos}, null, EstagioDoBicho.adulto),
+      ('tudo', {Vestimenta.cabeca: gorro, Vestimenta.pescoco: cachecol, Vestimenta.rosto: oculos}, 'gorro', EstagioDoBicho.adulto),
+      ('pleno+palha', {Vestimenta.cabeca: palha}, 'chapeu_palha', EstagioDoBicho.pleno),
+      ('filhote+oculos+gorro', {Vestimenta.cabeca: gorro, Vestimenta.rosto: oculos}, 'gorro', EstagioDoBicho.filhote),
+    ];
+    await tester.pumpWidget(_grade(
+      'roupas (contente, ócio)',
+      [for (final c in casos) c.$1],
+      [for (final sp in Species.values) sp.name],
+      (l, c) => _cel(_pet(Species.values[l],
+          roupas: casos[c].$2, cabeca: casos[c].$3, e: casos[c].$4)),
+    ));
+    await tester.pump();
+    await _salva(tester, 'roupas', ratio: 1.0);
+    // Saudade com roupa (cabeça inclinada).
+    await tester.pumpWidget(_grade(
+      'roupas na saudade e no sono',
+      ['tudo/missingYou', 'tudo/sleepy', 'tudo/radiant', 'oculos/missingYou'],
+      [for (final sp in Species.values) sp.name],
+      (l, c) => _cel(_pet(Species.values[l],
+          m: [Mood.missingYou, Mood.sleepy, Mood.radiant, Mood.missingYou][c],
+          roupas: c < 3 ? casos[5].$2 : casos[4].$2,
+          cabeca: c < 3 ? 'gorro' : null)),
+    ));
+    await tester.pump();
+    await _salva(tester, 'roupas-humores', ratio: 1.0);
+  });
+
+  testWidgets('respiração: vazio x cheio', (tester) async {
+    _tela(tester, const Size(1450, 2000));
+    await tester.pumpWidget(_grade(
+      'respiro -1 / 0 / +1 (adulto e pleno, contente), e sono',
+      ['adulto -1', 'adulto 0', 'adulto +1', 'pleno -1', 'pleno +1'],
+      [for (final sp in Species.values) sp.name],
+      (l, c) => _cel(_pet(Species.values[l],
+          e: c < 3 ? EstagioDoBicho.adulto : EstagioDoBicho.pleno,
+          quadro: QuadroFixo(respiro: [-1.0, 0.0, 1.0, -1.0, 1.0][c]))),
+    ));
+    await tester.pump();
+    await _salva(tester, 'respiracao', ratio: 1.0);
+  });
+
+  testWidgets('medidas: vazamento da caixa e amplitude do fôlego', (tester) async {
+    final linhas = <String>[];
+    linhas.add('# bbox relativo à caixa 200x150 do PetView (x0,y0,x1,y1)');
+    for (final sp in Species.values) {
+      for (final e in EstagioDoBicho.values) {
+        for (final a in Activity.values) {
+          for (final m in Mood.values) {
+            final r = await _bbox(tester, _pet(sp, m: m, a: a, e: e));
+            if (r == null) continue;
+            final vaza = r.left < 0 || r.top < 0 || r.right > 200 || r.bottom > 150;
+            final vaza170 = r.top < 0 || r.bottom > 170;
+            linhas.add('${sp.name} ${e.name} ${a.name} ${m.name}: '
+                '${r.left.toInt()},${r.top.toInt()},${r.right.toInt()},${r.bottom.toInt()}'
+                '${vaza ? '  VAZA200x150' : ''}${vaza170 ? '  VAZA-overlay200x170' : ''}');
+          }
+        }
+        // Com chapéu.
+        for (final h in ['gorro', 'chapeu_palha', 'coroa_folhas']) {
+          final r = await _bbox(tester, _pet(sp, e: e, roupas: const {Vestimenta.cabeca: Color(0xFFD5695A)}, cabeca: h));
+          if (r == null) continue;
+          linhas.add('${sp.name} ${e.name} chapeu=$h: '
+              '${r.left.toInt()},${r.top.toInt()},${r.right.toInt()},${r.bottom.toInt()}'
+              '${r.top < 0 ? '  VAZA-TOPO' : ''}');
+        }
+      }
+      // Fôlego: altura do bbox com respiro -1 e +1.
+      for (final e in [EstagioDoBicho.adulto, EstagioDoBicho.pleno]) {
+        final v = await _bbox(tester, _pet(sp, e: e, quadro: const QuadroFixo(respiro: -1)));
+        final c = await _bbox(tester, _pet(sp, e: e, quadro: const QuadroFixo(respiro: 1)));
+        linhas.add('FOLEGO ${sp.name} ${e.name}: vazio h=${v!.height} w=${v.width} top=${v.top}  cheio h=${c!.height} w=${c.width} top=${c.top}  dh=${(v.height - c.height).toStringAsFixed(1)} dw=${(c.width - v.width).toStringAsFixed(1)}');
+      }
+    }
+    Directory(_pasta).createSync(recursive: true);
+    File('$_pasta/medidas.txt').writeAsStringSync(linhas.join('\n'));
+  });
+
+  testWidgets('transição de humor: quadros', (tester) async {
+    _tela(tester, const Size(1900, 1300));
+    final casos = [
+      (Species.capybara, Mood.content, Mood.missingYou),
+      (Species.owl, Mood.content, Mood.missingYou),
+      (Species.fox, Mood.content, Mood.missingYou),
+      (Species.penguin, Mood.missingYou, Mood.radiant),
+      (Species.cat, Mood.sleepy, Mood.radiant),
+    ];
+    const tempos = [0, 50, 100, 175, 250, 320, 400];
+    for (final reduzido in [false, true]) {
+      final quadros = <List<ui.Image>>[];
+      for (final (sp, de, para) in casos) {
+        final linha = <ui.Image>[];
+        Widget cena(Mood m) => Directionality(
+              textDirection: TextDirection.ltr,
+              child: MediaQuery(
+                data: MediaQueryData(disableAnimations: reduzido),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: RepaintBoundary(
+                    key: _chave,
+                    child: Container(
+                      color: _bg,
+                      width: 260,
+                      height: 210,
+                      alignment: Alignment.center,
+                      child: PetView(species: sp, mood: m, activity: Activity.idle, coat: 0, interativo: false),
+                    ),
+                  ),
+                ),
+              ),
+            );
+        await tester.pumpWidget(cena(de));
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpWidget(cena(para));
+        var t0 = 0;
+        for (final t in tempos) {
+          await tester.pump(Duration(milliseconds: t - t0));
+          t0 = t;
+          final b = tester.renderObject<RenderRepaintBoundary>(find.byKey(_chave));
+          late ui.Image img;
+          await tester.runAsync(() async {
+            img = await b.toImage(pixelRatio: 1);
+          });
+          linha.add(img);
+          if (t == 175) {
+            final n = find.descendant(of: find.byType(PetView), matching: find.byType(Opacity)).evaluate().length;
+            File('$_pasta/medidas-transicao.txt').writeAsStringSync(
+                'reduzido=$reduzido ${sp.name} ${de.name}->${para.name}: Opacity em 175ms = $n\n',
+                mode: FileMode.append);
+          }
+        }
+        quadros.add(linha);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(seconds: 30));
+      }
+      // Monta a folha.
+      await tester.runAsync(() async {
+        final rec = ui.PictureRecorder();
+        final c = Canvas(rec);
+        c.drawRect(const Rect.fromLTWH(0, 0, 7 * 262.0, 5 * 212.0), Paint()..color = Colors.white);
+        for (var l = 0; l < quadros.length; l++) {
+          for (var k = 0; k < quadros[l].length; k++) {
+            c.drawImage(quadros[l][k], Offset(k * 262.0, l * 212.0), Paint());
+          }
+        }
+        final img = await rec.endRecording().toImage(7 * 262, 5 * 212);
+        final data = await img.toByteData(format: ui.ImageByteFormat.png);
+        File('$_pasta/transicao${reduzido ? '-reduzido' : ''}.png')
+            .writeAsBytesSync(data!.buffer.asUint8List());
+      });
+    }
+  });
+
+  testWidgets('pulinho do radiante: fases', (tester) async {
+    _tela(tester, const Size(1900, 600));
+    // QuadroFixo não anda o ciclo; uso o bicho vivo e capturo fases.
+    final imgs = <ui.Image>[];
+    for (final sp in [Species.capybara, Species.frenchie]) {
+      await tester.pumpWidget(Directionality(
+        textDirection: TextDirection.ltr,
+        child: MediaQuery(
+          data: const MediaQueryData(),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: RepaintBoundary(
+              key: _chave,
+              child: Container(
+                color: _bg, width: 260, height: 210, alignment: Alignment.center,
+                child: PetView(species: sp, mood: Mood.radiant, activity: Activity.idle, coat: 0, interativo: false),
+              ),
+            ),
+          ),
+        ),
+      ));
+      for (var i = 0; i < 7; i++) {
+        await tester.pump(const Duration(milliseconds: 230));
+        final b = tester.renderObject<RenderRepaintBoundary>(find.byKey(_chave));
+        await tester.runAsync(() async {
+          imgs.add(await b.toImage(pixelRatio: 1));
+        });
+      }
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 30));
+    }
+    await tester.runAsync(() async {
+      final rec = ui.PictureRecorder();
+      final c = Canvas(rec);
+      for (var i = 0; i < imgs.length; i++) {
+        c.drawImage(imgs[i], Offset((i % 7) * 262.0, (i ~/ 7) * 212.0), Paint());
+      }
+      final img = await rec.endRecording().toImage(7 * 262, 2 * 212);
+      final data = await img.toByteData(format: ui.ImageByteFormat.png);
+      File('$_pasta/pulinho-radiante.png').writeAsBytesSync(data!.buffer.asUint8List());
+    });
+  });
+
+  testWidgets('habitat por espécie e humor', (tester) async {
+    _tela(tester, const Size(372 * 5 + 40, 296 * 9 + 40));
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    AppState estado(Species sp, Mood m) {
+      final s = AppState()..startCompanionship();
+      s.species = sp;
+      s.sessoesPorEspecie = {sp.name: 15};
+      s.owned = const ['lily', 'dock', 'rock'];
+      s.equipados = {'lily', 'dock', 'rock'};
+      s.usageAccess = true;
+      s.goal = 150;
+      switch (m) {
+        case Mood.radiant:
+          s.usage = 30;
+          s.completedToday = 1;
+        case Mood.content:
+          s.usage = 30;
+        case Mood.neutral:
+          s.usage = 160;
+        case Mood.sleepy:
+          s.usage = 400;
+        case Mood.missingYou:
+          s.daysAway = 3;
+      }
+      return s;
+    }
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RepaintBoundary(
+          key: _chave,
+          child: Column(children: [
+            for (final sp in Species.values)
+              Row(children: [
+                for (final m in Mood.values)
+                  AppScope(
+                    state: estado(sp, m),
+                    child: SizedBox(
+                      width: 372,
+                      height: 296,
+                      child: HabitatScene(agora: DateTime(2026, 8, 27, 12), animado: false),
+                    ),
+                  ),
+              ]),
+          ]),
+        ),
+      ),
+    ));
+    await tester.pump();
+    await _salva(tester, 'habitat-especie-humor', ratio: 1.0);
+    // Confere o humor efetivo.
+    final f = File('$_pasta/medidas-habitat.txt');
+    final b = StringBuffer();
+    for (final sp in Species.values) {
+      for (final m in Mood.values) {
+        final s = estado(sp, m);
+        b.writeln('${sp.name} pedido=${m.name} efetivo=${s.mood.name} atividade=${s.activity.name} acao=${acaoNoEstagio(sp, s.activity, s.estagio).name} estagio=${s.estagio.name}');
+      }
+    }
+    f.writeAsStringSync(b.toString());
+  });
+
+  testWidgets('sessão por espécie', (tester) async {
+    _tela(tester, const Size(412, 860));
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    for (final sp in [Species.owl, Species.penguin, Species.axolotl, Species.fox, Species.cat, Species.otter]) {
+      final s = AppState()..startCompanionship();
+      s.species = sp;
+      s.sessoesPorEspecie = {sp.name: 15};
+      await tester.pumpWidget(MaterialApp(
+        home: RepaintBoundary(
+          key: _chave,
+          child: AppScope(state: s, child: const SessionScreen()),
+        ),
+      ));
+      await tester.pump();
+      await _salva(tester, 'sessao-${sp.name}', ratio: 1.0);
+    }
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('sobreposição (QuadrosDoBicho.cena) e widget', (tester) async {
+    _tela(tester, const Size(1300, 1300));
+    await tester.pumpWidget(Directionality(
+      textDirection: TextDirection.ltr,
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: RepaintBoundary(
+          key: _chave,
+          child: Container(
+            color: const Color(0xFF555555),
+            child: Wrap(spacing: 4, runSpacing: 4, children: [
+              for (final sp in Species.values)
+                for (final e in [EstagioDoBicho.filhote, EstagioDoBicho.adulto])
+                  ClipRect(
+                    child: Container(
+                      color: Cores.habitat,
+                      child: QuadrosDoBicho.cena(
+                        AparenciaDoBicho(
+                          especie: sp,
+                          pelagem: 0,
+                          roupas: const {},
+                          roupaDeCabeca: null,
+                          estagio: e,
+                        ),
+                        const QuadroFixo(respiro: 1),
+                      ),
+                    ),
+                  ),
+            ]),
+          ),
+        ),
+      ),
+    ));
+    await tester.pump();
+    await _salva(tester, 'sobreposicao-quadros', ratio: 1.0);
+  });
+
+  testWidgets('cena do crescimento: ovo/ninho -> filhote e jovem -> adulto', (tester) async {
+    _tela(tester, const Size(412, 860));
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    for (final sp in [Species.owl, Species.penguin, Species.axolotl, Species.fox, Species.cat, Species.otter]) {
+      for (final (antes, depois) in [
+        (EstagioDoBicho.inicio, EstagioDoBicho.filhote),
+        (EstagioDoBicho.jovem, EstagioDoBicho.adulto),
+      ]) {
+        final s = AppState()..startCompanionship();
+        s.species = sp;
+        s.sessoesPorEspecie = {sp.name: Crescimento.limiares[depois.index]};
+        await tester.pumpWidget(MaterialApp(
+          home: RepaintBoundary(
+            key: _chave,
+            child: AppScope(
+              state: s,
+              child: Stack(children: [
+                Positioned.fill(child: Container(color: Cores.habitat)),
+                CenaDoCrescimento(antes: antes, depois: depois, aoFechar: () {}),
+              ]),
+            ),
+          ),
+        ));
+        await tester.pump(const Duration(milliseconds: 1200));
+        await _salva(tester, 'crescimento-${sp.name}-${antes.name}-meio', ratio: 0.8);
+        await tester.pump(const Duration(milliseconds: 4000));
+        await _salva(tester, 'crescimento-${sp.name}-${antes.name}-fim', ratio: 0.8);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(seconds: 5));
+      }
+    }
+  });
+}
+
+void closeups() {}
+
+void mainCloseups() {
+  testWidgets('closeups', (tester) async {
+    _tela(tester, const Size(1700, 400));
+    final casos = <(String, PetView)>[
+      ('owl-adulto-content', _pet(Species.owl)),
+      ('owl-adulto-missing', _pet(Species.owl, m: Mood.missingYou)),
+      ('owl-adulto-radiant', _pet(Species.owl, m: Mood.radiant)),
+      ('penguin-adulto-content', _pet(Species.penguin)),
+      ('penguin-adulto-missing', _pet(Species.penguin, m: Mood.missingYou)),
+      ('penguin-pleno-content', _pet(Species.penguin, e: EstagioDoBicho.pleno)),
+      ('axolotl-adulto-content', _pet(Species.axolotl)),
+      ('axolotl-adulto-missing', _pet(Species.axolotl, m: Mood.missingYou)),
+      ('axolotl-pleno-content', _pet(Species.axolotl, e: EstagioDoBicho.pleno)),
+      ('fox-adulto-content', _pet(Species.fox)),
+      ('fox-adulto-missing', _pet(Species.fox, m: Mood.missingYou)),
+      ('fox-adulto-radiant', _pet(Species.fox, m: Mood.radiant)),
+      ('cat-adulto-content', _pet(Species.cat)),
+      ('cat-adulto-missing', _pet(Species.cat, m: Mood.missingYou)),
+      ('cat-adulto-radiant', _pet(Species.cat, m: Mood.radiant)),
+      ('otter-adulto-content', _pet(Species.otter)),
+      ('otter-adulto-missing', _pet(Species.otter, m: Mood.missingYou)),
+      ('capybara-adulto-content', _pet(Species.capybara)),
+      ('owl-oculos', _pet(Species.owl, roupas: const {Vestimenta.rosto: Color(0xFF3E2F23)})),
+      ('owl-gorro', _pet(Species.owl, roupas: const {Vestimenta.cabeca: Color(0xFFD5695A)}, cabeca: 'gorro')),
+      ('penguin-oculos', _pet(Species.penguin, roupas: const {Vestimenta.rosto: Color(0xFF3E2F23)})),
+      ('penguin-gorro', _pet(Species.penguin, roupas: const {Vestimenta.cabeca: Color(0xFFD5695A)}, cabeca: 'gorro')),
+      ('otter-oculos', _pet(Species.otter, roupas: const {Vestimenta.rosto: Color(0xFF3E2F23)})),
+      ('otter-gorro-pleno', _pet(Species.otter, e: EstagioDoBicho.pleno, roupas: const {Vestimenta.cabeca: Color(0xFFD5695A)}, cabeca: 'gorro')),
+      ('axolotl-gorro', _pet(Species.axolotl, roupas: const {Vestimenta.cabeca: Color(0xFFD5695A)}, cabeca: 'gorro')),
+      ('cat-oculos', _pet(Species.cat, roupas: const {Vestimenta.rosto: Color(0xFF3E2F23)})),
+      ('fox-gorro-missing', _pet(Species.fox, m: Mood.missingYou, roupas: const {Vestimenta.cabeca: Color(0xFFD5695A)}, cabeca: 'gorro')),
+      ('owl-nap', _pet(Species.owl, a: Activity.nap, m: Mood.sleepy)),
+      ('penguin-cachecol', _pet(Species.penguin, roupas: const {Vestimenta.pescoco: Color(0xFFC96A86)})),
+      ('owl-cachecol', _pet(Species.owl, roupas: const {Vestimenta.pescoco: Color(0xFFC96A86)})),
+    ];
+    for (var i = 0; i < casos.length; i += 6) {
+      final fatia = casos.sublist(i, (i + 6).clamp(0, casos.length));
+      await tester.pumpWidget(_grade('closeups', [for (final c in fatia) c.$1], [''],
+          (l, c) => _cel(fatia[c].$2)));
+      await tester.pump();
+      await _salva(tester, 'zoom-${i ~/ 6}', ratio: 2.2);
+    }
+  });
+}
+
+void mainSono() {
+  testWidgets('sono: fôlego', (tester) async {
+    _tela(tester, const Size(1450, 800));
+    final sps = [Species.capybara, Species.frenchie, Species.tortoise];
+    await tester.pumpWidget(_grade('cochilo respiro -1 / +1 (adulto sleepy, nap)', ['-1', '+1', '-1 pleno', '+1 pleno'],
+        [for (final s in sps) s.name],
+        (l, c) => _cel(_pet(sps[l], m: Mood.sleepy, a: Activity.nap, e: c < 2 ? EstagioDoBicho.adulto : EstagioDoBicho.pleno,
+            quadro: QuadroFixo(respiro: c.isEven ? -1 : 1)))));
+    await tester.pump();
+    await _salva(tester, 'respiracao-sono', ratio: 1.2);
+    final b = StringBuffer();
+    for (final s in Species.values) {
+      final v = await _bbox(tester, _pet(s, m: Mood.sleepy, a: Activity.nap, quadro: const QuadroFixo(respiro: -1)));
+      final c = await _bbox(tester, _pet(s, m: Mood.sleepy, a: Activity.nap, quadro: const QuadroFixo(respiro: 1)));
+      b.writeln('SONO ${s.name}: vazio ${v!.width}x${v.height} cheio ${c!.width}x${c.height} dw=${c.width - v.width} dh=${v.height - c.height}');
+    }
+    File('$_pasta/medidas-sono.txt').writeAsStringSync(b.toString());
+  });
+}
+
+void mainBrinca() {
+  testWidgets('brincadeira da coruja: fases', (tester) async {
+    _tela(tester, const Size(1900, 700));
+    final imgs = <ui.Image>[];
+    for (final (sp, a) in [(Species.owl, Activity.swim), (Species.owl, Activity.graze), (Species.cat, Activity.swim)]) {
+      await tester.pumpWidget(Directionality(
+        textDirection: TextDirection.ltr,
+        child: MediaQuery(
+          data: const MediaQueryData(),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: RepaintBoundary(
+              key: _chave,
+              child: Container(
+                color: _bg, width: 260, height: 210, alignment: Alignment.center,
+                child: PetView(species: sp, mood: Mood.radiant, activity: a, coat: 0, interativo: false),
+              ),
+            ),
+          ),
+        ),
+      ));
+      for (var i = 0; i < 7; i++) {
+        await tester.pump(const Duration(milliseconds: 180));
+        final b = tester.renderObject<RenderRepaintBoundary>(find.byKey(_chave));
+        await tester.runAsync(() async {
+          imgs.add(await b.toImage(pixelRatio: 1));
+        });
+      }
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 30));
+    }
+    await tester.runAsync(() async {
+      final rec = ui.PictureRecorder();
+      final c = Canvas(rec);
+      for (var i = 0; i < imgs.length; i++) {
+        c.drawImage(imgs[i], Offset((i % 7) * 262.0, (i ~/ 7) * 212.0), Paint());
+      }
+      final img = await rec.endRecording().toImage(7 * 262, 3 * 212);
+      final data = await img.toByteData(format: ui.ImageByteFormat.png);
+      File('$_pasta/coruja-brincadeira.png').writeAsBytesSync(data!.buffer.asUint8List());
+    });
+  });
+}

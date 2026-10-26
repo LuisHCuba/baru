@@ -1,0 +1,10 @@
+reduzido=false capybara content->missingYou: Opacity em 175ms = 2
+reduzido=false cat sleepy->radiant: Opacity em 175ms = 2
+reduzido=false fox content->missingYou: Opacity em 175ms = 2
+reduzido=false owl content->missingYou: Opacity em 175ms = 2
+reduzido=false penguin missingYou->radiant: Opacity em 175ms = 2
+reduzido=true capybara content->missingYou: Opacity em 175ms = 0
+reduzido=true cat sleepy->radiant: Opacity em 175ms = 0
+reduzido=true fox content->missingYou: Opacity em 175ms = 0
+reduzido=true owl content->missingYou: Opacity em 175ms = 0
+reduzido=true penguin missingYou->radiant: Opacity em 175ms = 0

@@ -537,28 +537,32 @@ class _HabitatSceneState extends State<HabitatScene>
                       // cena: os pés dele ficam a ~26 unidades do chão da
                       // caixa de 150 px, e é a escala que decide onde isso
                       // cai. Presa ao `sy`, a sombra ficaria no tornozelo.
-                      Positioned(
+                      AnimatedPositioned(
+                        duration: _mudaDeLugar,
+                        curve: Curves.easeInOut,
                         left: 0,
                         right: 0,
-                        bottom: _alturaDoPet(app.activity) * sy +
-                            26 * escalaDoPet,
+                        bottom: _alturaDoPet(app) * sy + 26 * escalaDoPet,
                         child: Center(
                           child: Container(
                             width: 141 * escalaDoPet,
                             height: 13 * sy,
                             decoration: BoxDecoration(
-                              color: Cores.tintaA(
-                                app.activity == Activity.swim ? 0.07 : 0.13,
-                              ),
+                              color: Cores.tintaA(_naAgua(app) ? 0.07 : 0.13),
                               borderRadius: Raio.todos(Raio.pilula),
                             ),
                           ),
                         ),
                       ),
-                      Positioned(
+                      // A troca de lugar anda junto com a troca de humor
+                      // (350 ms no bicho): o corpo ia da margem para a água
+                      // num quadro só (auditoria da Onda 3, 11a-M2).
+                      AnimatedPositioned(
+                        duration: _mudaDeLugar,
+                        curve: Curves.easeInOut,
                         left: 0,
                         right: 0,
-                        bottom: _alturaDoPet(app.activity) * sy,
+                        bottom: _alturaDoPet(app) * sy,
                         child: Center(
                           child: PetView(
                             species: app.species,
@@ -581,12 +585,13 @@ class _HabitatSceneState extends State<HabitatScene>
                         ),
                       ),
                       if (_textoDoPremio != null)
-                        Positioned(
+                        AnimatedPositioned(
+                          duration: _mudaDeLugar,
+                          curve: Curves.easeInOut,
                           left: 0,
                           right: 0,
                           // Acima da cabeça, e a cabeça sobe com a escala.
-                          bottom: _alturaDoPet(app.activity) * sy +
-                              118 * escalaDoPet,
+                          bottom: _alturaDoPet(app) * sy + 118 * escalaDoPet,
                           child: IgnorePointer(
                             child: _PremioSubindo(
                               anima: _premio,
@@ -605,11 +610,24 @@ class _HabitatSceneState extends State<HabitatScene>
     );
   }
 
+  static const _mudaDeLugar = Duration(milliseconds: 450);
+
+  /// Está de fato na água: a atividade é nadar **e** a espécie nada.
+  bool _naAgua(AppState app) =>
+      app.activity == Activity.swim &&
+      acaoNoEstagio(app.species, app.activity, app.estagio) ==
+          AcaoDoBicho.nado;
+
   /// Onde o companheiro se apoia, em unidades do design, medido do fundo.
-  double _alturaDoPet(Activity a) {
-    switch (a) {
+  ///
+  /// Pela ação, não só pela atividade: coruja, gata, raposa e buldogue não
+  /// nadam — no "nadar" eles brincam, e brincavam de pé no meio da lagoa
+  /// (auditoria da Onda 3, 11b-M1; laudo 08, R8). Brincam na margem.
+  double _alturaDoPet(AppState app) {
+    switch (app.activity) {
       case Activity.swim:
-        return 34; // dentro d'água, o corpo afunda um pouco
+        // Dentro d'água o corpo afunda um pouco.
+        return _naAgua(app) ? 34 : 62;
       case Activity.nap:
         return 52; // deitado na areia
       case Activity.graze:

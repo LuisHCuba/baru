@@ -1,0 +1,9 @@
+SONO capybara: vazio 122.0x137.0 cheio 128.0x137.0 dw=6.0 dh=0.0
+SONO otter: vazio 119.0x133.0 cheio 136.0x133.0 dw=17.0 dh=0.0
+SONO tortoise: vazio 119.0x143.0 cheio 130.0x143.0 dw=11.0 dh=0.0
+SONO owl: vazio 115.0x139.0 cheio 121.0x139.0 dw=6.0 dh=0.0
+SONO axolotl: vazio 154.0x131.0 cheio 175.0x132.0 dw=21.0 dh=-1.0
+SONO penguin: vazio 112.0x134.0 cheio 119.0x134.0 dw=7.0 dh=0.0
+SONO cat: vazio 118.0x132.0 cheio 122.0x132.0 dw=4.0 dh=0.0
+SONO fox: vazio 126.0x132.0 cheio 142.0x132.0 dw=16.0 dh=0.0
+SONO frenchie: vazio 130.0x141.0 cheio 136.0x141.0 dw=6.0 dh=0.0

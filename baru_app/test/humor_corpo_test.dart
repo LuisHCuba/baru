@@ -70,7 +70,7 @@ void main() {
     }
   });
 
-  testWidgets('trocar de humor esmaece de um desenho para o outro',
+  testWidgets('trocar de humor: o corpo anda, só o rosto esmaece',
       (tester) async {
     Widget bicho(Mood m) => Center(
           child: PetView(
@@ -90,10 +90,67 @@ void main() {
 
     await tester.pumpWidget(bicho(Mood.missingYou));
     await tester.pump(const Duration(milliseconds: 150));
-    expect(opacidades(), findsNWidgets(2), reason: 'os dois humores na tela');
+    // Um só esmaecido, o de cima. O de baixo opaco: os dois a meio
+    // caminho deixavam o fundo vazar pelo bicho (auditoria, 11a-M1).
+    expect(opacidades(), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 400));
     expect(opacidades(), findsNothing, reason: 'acabou: só o humor novo');
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('no meio da troca não há dois bichos nem bicho translúcido',
+      (tester) async {
+    // Conta os pixels do desenho: opacos e não vazios. Dois corpos em
+    // posturas diferentes aumentam a área ocupada; dois a 50% derrubam os
+    // opacos.
+    Future<(int, int)> conta() async {
+      final borda = tester.renderObject<RenderRepaintBoundary>(
+        find.byKey(PetView.cenaKey),
+      );
+      late (int, int) r;
+      await tester.runAsync(() async {
+        final img = await borda.toImage();
+        final bytes = (await img.toByteData())!;
+        img.dispose();
+        var ocupados = 0, opacos = 0;
+        for (var i = 3; i < bytes.lengthInBytes; i += 4) {
+          final a = bytes.getUint8(i);
+          if (a > 8) ocupados++;
+          if (a >= 250) opacos++;
+        }
+        r = (ocupados, opacos);
+      });
+      return r;
+    }
+
+    Widget bicho(Mood m) => Center(
+          child: PetView(
+            species: Species.fox,
+            mood: m,
+            activity: Activity.idle,
+            coat: 0,
+            interativo: false,
+          ),
+        );
+    await tester.pumpWidget(bicho(Mood.radiant));
+    await tester.pump(const Duration(seconds: 1));
+    final (areaDe, opacosDe) = await conta();
+    await tester.pumpWidget(bicho(Mood.missingYou));
+    await tester.pump(const Duration(seconds: 1));
+    final (areaPara, opacosPara) = await conta();
+
+    await tester.pumpWidget(bicho(Mood.radiant));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 175));
+    final (areaMeio, opacosMeio) = await conta();
+
+    final maiorArea = areaDe > areaPara ? areaDe : areaPara;
+    final menosOpacos = opacosDe < opacosPara ? opacosDe : opacosPara;
+    expect(areaMeio, lessThan(maiorArea * 1.06),
+        reason: 'dois corpos em posturas diferentes ocupariam mais área');
+    expect(opacosMeio, greaterThan(menosOpacos * 0.94),
+        reason: 'o bicho não fica translúcido no meio da troca');
     await tester.pumpWidget(const SizedBox());
   });
 }

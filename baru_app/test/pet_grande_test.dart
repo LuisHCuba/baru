@@ -93,6 +93,8 @@ Rect _bichoDesenhado(WidgetTester tester) {
 }
 
 void main() {
+  _semNadoNaMargem();
+
   testWidgets('o bicho domina a cena, não divide espaço com ela',
       (tester) async {
     _semMovimento(tester);
@@ -196,5 +198,43 @@ void main() {
       moreOrLessEquals(declarada, epsilon: 0.5),
       reason: 'o mesmo quadro de 296 px tem de dar o mesmo desenho',
     );
+  });
+}
+
+/// Quem não nada brinca na margem, não no meio da lagoa (auditoria da Onda
+/// 3, 11b-M1; laudo 08, R8).
+void _semNadoNaMargem() {
+  testWidgets('no radiante, quem não nada fica na altura da margem',
+      (tester) async {
+    double fundoDoBicho(Species sp) {
+      final y = tester.getBottomLeft(find.byType(PetView)).dy;
+      expect(sp, isNotNull);
+      return y;
+    }
+
+    // Adultos: no ovo e no ninho ninguém nada.
+    AppState adulto(Species sp) => _estadoNoHumor(Mood.radiant)
+      ..species = sp
+      ..sessoesPorEspecie = {sp.name: 20};
+    final capivara = adulto(Species.capybara);
+    addTearDown(capivara.dispose);
+    await tester.pumpWidget(_cena(capivara, altura: 300));
+    await tester.pump(const Duration(seconds: 1));
+    final naAgua = fundoDoBicho(Species.capybara);
+
+    for (final sp in [
+      Species.owl,
+      Species.cat,
+      Species.fox,
+      Species.frenchie,
+    ]) {
+      final s = adulto(sp);
+      addTearDown(s.dispose);
+      await tester.pumpWidget(_cena(s, altura: 300));
+      await tester.pump(const Duration(seconds: 1));
+      expect(fundoDoBicho(sp), lessThan(naAgua - 10),
+          reason: '${sp.name} de pé dentro da lagoa');
+    }
+    await tester.pumpWidget(const SizedBox());
   });
 }

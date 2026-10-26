@@ -1,0 +1,1054 @@
+# bbox relativo à caixa 200x150 do PetView (x0,y0,x1,y1)
+capybara inicio idle radiant: 32,25,171,153  VAZA200x150
+capybara inicio idle content: 44,80,156,153  VAZA200x150
+capybara inicio idle neutral: 44,82,156,153  VAZA200x150
+capybara inicio idle sleepy: 44,87,156,153  VAZA200x150
+capybara inicio idle missingYou: 44,89,156,153  VAZA200x150
+capybara inicio nap radiant: 32,25,171,153  VAZA200x150
+capybara inicio nap content: 44,80,156,153  VAZA200x150
+capybara inicio nap neutral: 44,82,156,153  VAZA200x150
+capybara inicio nap sleepy: 44,87,156,153  VAZA200x150
+capybara inicio nap missingYou: 44,89,156,153  VAZA200x150
+capybara inicio swim radiant: 32,25,171,153  VAZA200x150
+capybara inicio swim content: 44,80,156,153  VAZA200x150
+capybara inicio swim neutral: 44,82,156,153  VAZA200x150
+capybara inicio swim sleepy: 44,87,156,153  VAZA200x150
+capybara inicio swim missingYou: 44,89,156,153  VAZA200x150
+capybara inicio graze radiant: 32,25,171,153  VAZA200x150
+capybara inicio graze content: 44,80,156,153  VAZA200x150
+capybara inicio graze neutral: 44,82,156,153  VAZA200x150
+capybara inicio graze sleepy: 44,87,156,153  VAZA200x150
+capybara inicio graze missingYou: 44,89,156,153  VAZA200x150
+capybara inicio chapeu=gorro: 44,73,156,153
+capybara inicio chapeu=chapeu_palha: 44,74,156,153
+capybara inicio chapeu=coroa_folhas: 44,79,156,153
+capybara filhote idle radiant: 32,25,171,145
+capybara filhote idle content: 63,54,137,145
+capybara filhote idle neutral: 63,57,137,145
+capybara filhote idle sleepy: 62,17,171,145
+capybara filhote idle missingYou: 61,64,140,145
+capybara filhote nap radiant: 32,17,171,153  VAZA200x150
+capybara filhote nap content: 58,17,171,153  VAZA200x150
+capybara filhote nap neutral: 59,17,171,153  VAZA200x150
+capybara filhote nap sleepy: 59,17,171,153  VAZA200x150
+capybara filhote nap missingYou: 60,17,171,153  VAZA200x150
+capybara filhote swim radiant: 15,25,185,145
+capybara filhote swim content: 15,38,185,145
+capybara filhote swim neutral: 15,41,185,145
+capybara filhote swim sleepy: 15,17,185,145
+capybara filhote swim missingYou: 15,49,185,145
+capybara filhote graze radiant: 32,25,171,145
+capybara filhote graze content: 64,58,139,145
+capybara filhote graze neutral: 64,61,139,145
+capybara filhote graze sleepy: 62,17,171,146
+capybara filhote graze missingYou: 61,68,141,146
+capybara filhote chapeu=gorro: 63,52,137,145
+capybara filhote chapeu=chapeu_palha: 62,53,138,145
+capybara filhote chapeu=coroa_folhas: 63,54,137,145
+capybara jovem idle radiant: 32,25,171,144
+capybara jovem idle content: 59,44,141,144
+capybara jovem idle neutral: 59,48,141,144
+capybara jovem idle sleepy: 58,17,171,144
+capybara jovem idle missingYou: 57,55,145,145
+capybara jovem nap radiant: 32,17,171,153  VAZA200x150
+capybara jovem nap content: 53,17,171,153  VAZA200x150
+capybara jovem nap neutral: 53,17,171,153  VAZA200x150
+capybara jovem nap sleepy: 54,17,171,153  VAZA200x150
+capybara jovem nap missingYou: 55,17,171,153  VAZA200x150
+capybara jovem swim radiant: 15,25,185,145
+capybara jovem swim content: 15,39,185,145
+capybara jovem swim neutral: 15,43,185,145
+capybara jovem swim sleepy: 15,17,185,145
+capybara jovem swim missingYou: 15,51,185,145
+capybara jovem graze radiant: 32,25,171,145
+capybara jovem graze content: 60,48,144,145
+capybara jovem graze neutral: 60,52,144,146
+capybara jovem graze sleepy: 58,17,171,146
+capybara jovem graze missingYou: 57,59,146,146
+capybara jovem chapeu=gorro: 59,33,141,144
+capybara jovem chapeu=chapeu_palha: 58,34,142,144
+capybara jovem chapeu=coroa_folhas: 59,41,141,144
+capybara adulto idle radiant: 32,11,171,144
+capybara adulto idle content: 52,20,148,144
+capybara adulto idle neutral: 52,24,148,144
+capybara adulto idle sleepy: 51,17,171,144
+capybara adulto idle missingYou: 50,33,152,144
+capybara adulto nap radiant: 32,15,171,153  VAZA200x150
+capybara adulto nap content: 45,17,171,153  VAZA200x150
+capybara adulto nap neutral: 45,17,171,153  VAZA200x150
+capybara adulto nap sleepy: 46,17,171,154  VAZA200x150
+capybara adulto nap missingYou: 47,17,171,154  VAZA200x150
+capybara adulto swim radiant: 15,21,185,154  VAZA200x150
+capybara adulto swim content: 15,29,185,155  VAZA200x150
+capybara adulto swim neutral: 15,34,185,155  VAZA200x150
+capybara adulto swim sleepy: 15,17,185,155  VAZA200x150
+capybara adulto swim missingYou: 15,44,185,155  VAZA200x150
+capybara adulto graze radiant: 32,18,171,145
+capybara adulto graze content: 52,25,151,146
+capybara adulto graze neutral: 52,29,151,146
+capybara adulto graze sleepy: 51,17,171,146
+capybara adulto graze missingYou: 50,38,153,146
+capybara adulto chapeu=gorro: 52,6,148,144
+capybara adulto chapeu=chapeu_palha: 51,8,149,144
+capybara adulto chapeu=coroa_folhas: 52,16,148,144
+capybara pleno idle radiant: 32,-14,171,144  VAZA200x150  VAZA-overlay200x170
+capybara pleno idle content: 52,-4,148,144  VAZA200x150  VAZA-overlay200x170
+capybara pleno idle neutral: 52,1,148,144
+capybara pleno idle sleepy: 51,11,171,144
+capybara pleno idle missingYou: 50,16,152,144
+capybara pleno nap radiant: 32,-9,171,153  VAZA200x150  VAZA-overlay200x170
+capybara pleno nap content: 45,0,171,153  VAZA200x150
+capybara pleno nap neutral: 45,5,171,153  VAZA200x150
+capybara pleno nap sleepy: 46,14,171,154  VAZA200x150
+capybara pleno nap missingYou: 47,17,171,154  VAZA200x150
+capybara pleno swim radiant: 15,-4,185,154  VAZA200x150  VAZA-overlay200x170
+capybara pleno swim content: 15,6,185,155  VAZA200x150
+capybara pleno swim neutral: 15,11,185,155  VAZA200x150
+capybara pleno swim sleepy: 15,17,185,155  VAZA200x150
+capybara pleno swim missingYou: 15,25,185,155  VAZA200x150
+capybara pleno graze radiant: 32,-6,171,145  VAZA200x150  VAZA-overlay200x170
+capybara pleno graze content: 52,4,151,146
+capybara pleno graze neutral: 52,9,151,146
+capybara pleno graze sleepy: 51,17,171,146
+capybara pleno graze missingYou: 50,23,153,146
+capybara pleno chapeu=gorro: 52,6,148,144
+capybara pleno chapeu=chapeu_palha: 51,8,149,144
+capybara pleno chapeu=coroa_folhas: 52,16,148,144
+FOLEGO capybara adulto: vazio h=129.0 w=94.0 top=17.0  cheio h=121.0 w=100.0 top=22.0  dh=8.0 dw=6.0
+FOLEGO capybara pleno: vazio h=153.0 w=94.0 top=-7.0  cheio h=144.0 w=100.0 top=-1.0  dh=9.0 dw=6.0
+otter inicio idle radiant: 32,25,171,152  VAZA200x150
+otter inicio idle content: 36,82,159,152  VAZA200x150
+otter inicio idle neutral: 36,84,159,152  VAZA200x150
+otter inicio idle sleepy: 36,88,159,152  VAZA200x150
+otter inicio idle missingYou: 36,90,159,152  VAZA200x150
+otter inicio nap radiant: 32,25,171,152  VAZA200x150
+otter inicio nap content: 36,82,159,152  VAZA200x150
+otter inicio nap neutral: 36,84,159,152  VAZA200x150
+otter inicio nap sleepy: 36,88,159,152  VAZA200x150
+otter inicio nap missingYou: 36,90,159,152  VAZA200x150
+otter inicio swim radiant: 32,25,171,152  VAZA200x150
+otter inicio swim content: 36,82,159,152  VAZA200x150
+otter inicio swim neutral: 36,84,159,152  VAZA200x150
+otter inicio swim sleepy: 36,88,159,152  VAZA200x150
+otter inicio swim missingYou: 36,90,159,152  VAZA200x150
+otter inicio graze radiant: 32,25,171,152  VAZA200x150
+otter inicio graze content: 36,82,159,152  VAZA200x150
+otter inicio graze neutral: 36,84,159,152  VAZA200x150
+otter inicio graze sleepy: 36,88,159,152  VAZA200x150
+otter inicio graze missingYou: 36,90,159,152  VAZA200x150
+otter inicio chapeu=gorro: 36,73,159,152
+otter inicio chapeu=chapeu_palha: 36,73,159,152
+otter inicio chapeu=coroa_folhas: 36,79,159,152
+otter filhote idle radiant: 32,25,171,145
+otter filhote idle content: 68,53,149,145
+otter filhote idle neutral: 68,56,149,145
+otter filhote idle sleepy: 66,17,171,145
+otter filhote idle missingYou: 66,64,150,145
+otter filhote nap radiant: 32,17,171,150
+otter filhote nap content: 66,17,171,150
+otter filhote nap neutral: 66,17,171,151  VAZA200x150
+otter filhote nap sleepy: 65,17,171,151  VAZA200x150
+otter filhote nap missingYou: 65,17,171,151  VAZA200x150
+otter filhote swim radiant: 15,25,185,145
+otter filhote swim content: 15,42,185,145
+otter filhote swim neutral: 15,45,185,145
+otter filhote swim sleepy: 15,17,185,145
+otter filhote swim missingYou: 15,52,185,145
+otter filhote graze radiant: 32,25,171,145
+otter filhote graze content: 68,55,148,145
+otter filhote graze neutral: 68,58,148,145
+otter filhote graze sleepy: 66,17,171,145
+otter filhote graze missingYou: 66,66,149,145
+otter filhote chapeu=gorro: 68,51,149,145
+otter filhote chapeu=chapeu_palha: 67,52,149,145
+otter filhote chapeu=coroa_folhas: 68,53,149,145
+otter jovem idle radiant: 32,25,171,145
+otter jovem idle content: 64,45,161,145
+otter jovem idle neutral: 64,48,161,145
+otter jovem idle sleepy: 63,17,171,145
+otter jovem idle missingYou: 62,57,163,145
+otter jovem nap radiant: 32,17,171,150
+otter jovem nap content: 61,17,171,150
+otter jovem nap neutral: 62,17,171,150
+otter jovem nap sleepy: 61,17,171,151  VAZA200x150
+otter jovem nap missingYou: 61,17,171,151  VAZA200x150
+otter jovem swim radiant: 15,25,185,145
+otter jovem swim content: 15,45,185,145
+otter jovem swim neutral: 15,49,185,145
+otter jovem swim sleepy: 15,17,185,145
+otter jovem swim missingYou: 15,58,185,145
+otter jovem graze radiant: 32,25,171,145
+otter jovem graze content: 65,48,161,145
+otter jovem graze neutral: 65,51,161,145
+otter jovem graze sleepy: 63,17,171,145
+otter jovem graze missingYou: 63,59,162,145
+otter jovem chapeu=gorro: 64,32,161,145
+otter jovem chapeu=chapeu_palha: 63,33,161,145
+otter jovem chapeu=coroa_folhas: 64,40,161,145
+otter adulto idle radiant: 32,11,177,144
+otter adulto idle content: 58,20,178,144
+otter adulto idle neutral: 58,24,178,144
+otter adulto idle sleepy: 57,17,181,144
+otter adulto idle missingYou: 56,35,180,144
+otter adulto nap radiant: 32,17,176,150
+otter adulto nap content: 54,17,178,150
+otter adulto nap neutral: 55,17,178,150
+otter adulto nap sleepy: 54,17,181,150
+otter adulto nap missingYou: 54,17,181,150
+otter adulto swim radiant: 15,25,185,162  VAZA200x150
+otter adulto swim content: 15,37,185,162  VAZA200x150
+otter adulto swim neutral: 15,41,185,162  VAZA200x150
+otter adulto swim sleepy: 15,17,185,162  VAZA200x150
+otter adulto swim missingYou: 15,52,185,162  VAZA200x150
+otter adulto graze radiant: 32,16,176,144
+otter adulto graze content: 60,24,178,144
+otter adulto graze neutral: 59,28,178,144
+otter adulto graze sleepy: 57,17,180,144
+otter adulto graze missingYou: 57,38,180,144
+otter adulto chapeu=gorro: 58,5,178,144
+otter adulto chapeu=chapeu_palha: 57,6,178,144
+otter adulto chapeu=coroa_folhas: 58,14,178,144
+otter pleno idle radiant: 32,11,177,144
+otter pleno idle content: 58,17,178,144
+otter pleno idle neutral: 58,22,178,144
+otter pleno idle sleepy: 57,17,181,144
+otter pleno idle missingYou: 56,30,180,144
+otter pleno nap radiant: 32,17,176,150
+otter pleno nap content: 54,17,178,150
+otter pleno nap neutral: 55,17,178,150
+otter pleno nap sleepy: 54,17,181,150
+otter pleno nap missingYou: 54,17,181,150
+otter pleno swim radiant: 15,25,185,162  VAZA200x150
+otter pleno swim content: 15,36,185,162  VAZA200x150
+otter pleno swim neutral: 15,40,185,162  VAZA200x150
+otter pleno swim sleepy: 15,17,185,162  VAZA200x150
+otter pleno swim missingYou: 15,49,185,162  VAZA200x150
+otter pleno graze radiant: 32,13,176,144
+otter pleno graze content: 60,20,178,144
+otter pleno graze neutral: 59,24,178,144
+otter pleno graze sleepy: 57,17,180,144
+otter pleno graze missingYou: 57,33,180,144
+otter pleno chapeu=gorro: 58,5,178,144
+otter pleno chapeu=chapeu_palha: 57,6,178,144
+otter pleno chapeu=coroa_folhas: 58,14,178,144
+FOLEGO otter adulto: vazio h=129.0 w=116.0 top=17.0  cheio h=121.0 w=124.0 top=22.0  dh=8.0 dw=8.0
+FOLEGO otter pleno: vazio h=131.0 w=116.0 top=15.0  cheio h=123.0 w=124.0 top=20.0  dh=8.0 dw=8.0
+tortoise inicio idle radiant: 38,94,162,156  VAZA200x150
+tortoise inicio idle content: 38,94,162,156  VAZA200x150
+tortoise inicio idle neutral: 38,94,162,156  VAZA200x150
+tortoise inicio idle sleepy: 38,94,162,156  VAZA200x150
+tortoise inicio idle missingYou: 38,94,162,156  VAZA200x150
+tortoise inicio nap radiant: 38,94,162,156  VAZA200x150
+tortoise inicio nap content: 38,94,162,156  VAZA200x150
+tortoise inicio nap neutral: 38,94,162,156  VAZA200x150
+tortoise inicio nap sleepy: 38,94,162,156  VAZA200x150
+tortoise inicio nap missingYou: 38,94,162,156  VAZA200x150
+tortoise inicio swim radiant: 38,94,162,156  VAZA200x150
+tortoise inicio swim content: 38,94,162,156  VAZA200x150
+tortoise inicio swim neutral: 38,94,162,156  VAZA200x150
+tortoise inicio swim sleepy: 38,94,162,156  VAZA200x150
+tortoise inicio swim missingYou: 38,94,162,156  VAZA200x150
+tortoise inicio graze radiant: 38,94,162,156  VAZA200x150
+tortoise inicio graze content: 38,94,162,156  VAZA200x150
+tortoise inicio graze neutral: 38,94,162,156  VAZA200x150
+tortoise inicio graze sleepy: 38,94,162,156  VAZA200x150
+tortoise inicio graze missingYou: 38,94,162,156  VAZA200x150
+tortoise inicio chapeu=gorro: 38,94,162,156
+tortoise inicio chapeu=chapeu_palha: 38,94,162,156
+tortoise inicio chapeu=coroa_folhas: 38,94,162,156
+tortoise filhote idle radiant: 32,25,171,147
+tortoise filhote idle content: 63,62,137,147
+tortoise filhote idle neutral: 63,65,137,147
+tortoise filhote idle sleepy: 62,17,171,147
+tortoise filhote idle missingYou: 61,72,138,147
+tortoise filhote nap radiant: 32,17,171,157  VAZA200x150
+tortoise filhote nap content: 66,17,171,157  VAZA200x150
+tortoise filhote nap neutral: 66,17,171,157  VAZA200x150
+tortoise filhote nap sleepy: 66,17,171,157  VAZA200x150
+tortoise filhote nap missingYou: 66,17,171,157  VAZA200x150
+tortoise filhote swim radiant: 15,25,185,145
+tortoise filhote swim content: 15,40,185,145
+tortoise filhote swim neutral: 15,43,185,145
+tortoise filhote swim sleepy: 15,17,185,145
+tortoise filhote swim missingYou: 15,50,185,145
+tortoise filhote graze radiant: 32,25,171,148
+tortoise filhote graze content: 60,66,135,148
+tortoise filhote graze neutral: 60,69,135,148
+tortoise filhote graze sleepy: 59,17,171,148
+tortoise filhote graze missingYou: 59,75,136,148
+tortoise filhote chapeu=gorro: 63,57,137,147
+tortoise filhote chapeu=chapeu_palha: 63,57,137,147
+tortoise filhote chapeu=coroa_folhas: 63,62,137,147
+tortoise jovem idle radiant: 32,25,171,148
+tortoise jovem idle content: 53,44,147,147
+tortoise jovem idle neutral: 53,48,147,147
+tortoise jovem idle sleepy: 52,17,171,147
+tortoise jovem idle missingYou: 51,56,147,147
+tortoise jovem nap radiant: 32,17,171,158  VAZA200x150
+tortoise jovem nap content: 60,17,171,158  VAZA200x150
+tortoise jovem nap neutral: 60,17,171,158  VAZA200x150
+tortoise jovem nap sleepy: 59,17,171,158  VAZA200x150
+tortoise jovem nap missingYou: 59,17,171,158  VAZA200x150
+tortoise jovem swim radiant: 15,24,185,145
+tortoise jovem swim content: 15,31,185,145
+tortoise jovem swim neutral: 15,34,185,145
+tortoise jovem swim sleepy: 15,17,185,145
+tortoise jovem swim missingYou: 15,43,185,145
+tortoise jovem graze radiant: 32,25,171,149
+tortoise jovem graze content: 50,49,144,149
+tortoise jovem graze neutral: 50,52,144,149
+tortoise jovem graze sleepy: 49,17,171,149
+tortoise jovem graze missingYou: 49,60,145,149
+tortoise jovem chapeu=gorro: 53,38,147,147
+tortoise jovem chapeu=chapeu_palha: 53,39,147,147
+tortoise jovem chapeu=coroa_folhas: 53,44,147,147
+tortoise adulto idle radiant: 32,10,171,148
+tortoise adulto idle content: 40,19,160,148
+tortoise adulto idle neutral: 40,23,160,148
+tortoise adulto idle sleepy: 38,17,171,148
+tortoise adulto idle missingYou: 37,34,161,148
+tortoise adulto nap radiant: 32,17,171,160  VAZA200x150
+tortoise adulto nap content: 49,17,171,160  VAZA200x150
+tortoise adulto nap neutral: 49,17,171,160  VAZA200x150
+tortoise adulto nap sleepy: 47,17,171,160  VAZA200x150
+tortoise adulto nap missingYou: 47,17,171,160  VAZA200x150
+tortoise adulto swim radiant: 15,9,185,158  VAZA200x150
+tortoise adulto swim content: 15,18,185,158  VAZA200x150
+tortoise adulto swim neutral: 15,23,185,158  VAZA200x150
+tortoise adulto swim sleepy: 15,17,185,158  VAZA200x150
+tortoise adulto swim missingYou: 15,34,185,158  VAZA200x150
+tortoise adulto graze radiant: 32,17,171,150
+tortoise adulto graze content: 36,25,156,150
+tortoise adulto graze neutral: 36,29,156,150
+tortoise adulto graze sleepy: 35,17,171,150
+tortoise adulto graze missingYou: 35,39,158,150
+tortoise adulto chapeu=gorro: 40,12,160,148
+tortoise adulto chapeu=chapeu_palha: 40,13,160,148
+tortoise adulto chapeu=coroa_folhas: 40,19,160,148
+tortoise pleno idle radiant: 32,10,171,148
+tortoise pleno idle content: 40,19,160,148
+tortoise pleno idle neutral: 40,23,160,148
+tortoise pleno idle sleepy: 38,17,171,148
+tortoise pleno idle missingYou: 37,34,161,148
+tortoise pleno nap radiant: 32,17,171,160  VAZA200x150
+tortoise pleno nap content: 49,17,171,160  VAZA200x150
+tortoise pleno nap neutral: 49,17,171,160  VAZA200x150
+tortoise pleno nap sleepy: 47,17,171,160  VAZA200x150
+tortoise pleno nap missingYou: 47,17,171,160  VAZA200x150
+tortoise pleno swim radiant: 15,9,185,158  VAZA200x150
+tortoise pleno swim content: 15,18,185,158  VAZA200x150
+tortoise pleno swim neutral: 15,23,185,158  VAZA200x150
+tortoise pleno swim sleepy: 15,17,185,158  VAZA200x150
+tortoise pleno swim missingYou: 15,34,185,158  VAZA200x150
+tortoise pleno graze radiant: 32,17,171,150
+tortoise pleno graze content: 36,25,156,150
+tortoise pleno graze neutral: 36,29,156,150
+tortoise pleno graze sleepy: 35,17,171,150
+tortoise pleno graze missingYou: 35,39,158,150
+tortoise pleno chapeu=gorro: 40,12,160,148
+tortoise pleno chapeu=chapeu_palha: 40,13,160,148
+tortoise pleno chapeu=coroa_folhas: 40,19,160,148
+FOLEGO tortoise adulto: vazio h=133.0 w=116.0 top=17.0  cheio h=126.0 w=124.0 top=20.0  dh=7.0 dw=8.0
+FOLEGO tortoise pleno: vazio h=133.0 w=116.0 top=17.0  cheio h=126.0 w=124.0 top=20.0  dh=7.0 dw=8.0
+owl inicio idle radiant: 39,84,160,152  VAZA200x150
+owl inicio idle content: 39,84,160,152  VAZA200x150
+owl inicio idle neutral: 39,84,160,152  VAZA200x150
+owl inicio idle sleepy: 39,84,160,152  VAZA200x150
+owl inicio idle missingYou: 39,84,160,152  VAZA200x150
+owl inicio nap radiant: 39,84,160,152  VAZA200x150
+owl inicio nap content: 39,84,160,152  VAZA200x150
+owl inicio nap neutral: 39,84,160,152  VAZA200x150
+owl inicio nap sleepy: 39,84,160,152  VAZA200x150
+owl inicio nap missingYou: 39,84,160,152  VAZA200x150
+owl inicio swim radiant: 39,84,160,152  VAZA200x150
+owl inicio swim content: 39,84,160,152  VAZA200x150
+owl inicio swim neutral: 39,84,160,152  VAZA200x150
+owl inicio swim sleepy: 39,84,160,152  VAZA200x150
+owl inicio swim missingYou: 39,84,160,152  VAZA200x150
+owl inicio graze radiant: 39,84,160,152  VAZA200x150
+owl inicio graze content: 39,84,160,152  VAZA200x150
+owl inicio graze neutral: 39,84,160,152  VAZA200x150
+owl inicio graze sleepy: 39,84,160,152  VAZA200x150
+owl inicio graze missingYou: 39,84,160,152  VAZA200x150
+owl inicio chapeu=gorro: 39,84,160,152
+owl inicio chapeu=chapeu_palha: 39,84,160,152
+owl inicio chapeu=coroa_folhas: 39,84,160,152
+owl filhote idle radiant: 32,25,171,146
+owl filhote idle content: 67,58,133,146
+owl filhote idle neutral: 67,61,133,146
+owl filhote idle sleepy: 66,17,171,146
+owl filhote idle missingYou: 67,68,134,146
+owl filhote nap radiant: 32,17,171,154  VAZA200x150
+owl filhote nap content: 65,17,171,154  VAZA200x150
+owl filhote nap neutral: 65,17,171,154  VAZA200x150
+owl filhote nap sleepy: 65,17,171,154  VAZA200x150
+owl filhote nap missingYou: 65,17,171,154  VAZA200x150
+owl filhote swim radiant: 32,25,171,151  VAZA200x150
+owl filhote swim content: 66,62,132,151  VAZA200x150
+owl filhote swim neutral: 67,65,132,151  VAZA200x150
+owl filhote swim sleepy: 66,17,171,151  VAZA200x150
+owl filhote swim missingYou: 66,72,133,151  VAZA200x150
+owl filhote graze radiant: 32,25,171,147
+owl filhote graze content: 68,61,134,147
+owl filhote graze neutral: 68,64,133,147
+owl filhote graze sleepy: 66,17,171,147
+owl filhote graze missingYou: 67,71,134,147
+owl filhote chapeu=gorro: 67,57,133,146
+owl filhote chapeu=chapeu_palha: 66,58,134,146
+owl filhote chapeu=coroa_folhas: 67,58,133,146
+owl jovem idle radiant: 32,25,171,146
+owl jovem idle content: 64,47,136,146
+owl jovem idle neutral: 64,50,136,146
+owl jovem idle sleepy: 63,17,171,146
+owl jovem idle missingYou: 63,59,138,147
+owl jovem nap radiant: 32,17,171,155  VAZA200x150
+owl jovem nap content: 60,17,171,155  VAZA200x150
+owl jovem nap neutral: 61,17,171,155  VAZA200x150
+owl jovem nap sleepy: 60,17,171,155  VAZA200x150
+owl jovem nap missingYou: 61,17,171,155  VAZA200x150
+owl jovem swim radiant: 32,25,171,151  VAZA200x150
+owl jovem swim content: 62,51,135,151  VAZA200x150
+owl jovem swim neutral: 63,54,135,151  VAZA200x150
+owl jovem swim sleepy: 62,17,171,151  VAZA200x150
+owl jovem swim missingYou: 62,63,137,151  VAZA200x150
+owl jovem graze radiant: 32,25,171,148
+owl jovem graze content: 65,50,138,148
+owl jovem graze neutral: 65,53,137,148
+owl jovem graze sleepy: 63,17,171,148
+owl jovem graze missingYou: 63,61,138,148
+owl jovem chapeu=gorro: 64,39,136,146
+owl jovem chapeu=chapeu_palha: 62,40,138,146
+owl jovem chapeu=coroa_folhas: 64,46,136,146
+owl adulto idle radiant: 32,15,171,147
+owl adulto idle content: 55,23,145,147
+owl adulto idle neutral: 55,27,145,147
+owl adulto idle sleepy: 53,17,171,146
+owl adulto idle missingYou: 53,38,147,147
+owl adulto nap radiant: 32,17,171,156  VAZA200x150
+owl adulto nap content: 53,17,171,156  VAZA200x150
+owl adulto nap neutral: 54,17,171,156  VAZA200x150
+owl adulto nap sleepy: 53,17,171,156  VAZA200x150
+owl adulto nap missingYou: 53,17,171,156  VAZA200x150
+owl adulto swim radiant: 32,19,171,152  VAZA200x150
+owl adulto swim content: 54,27,145,152  VAZA200x150
+owl adulto swim neutral: 54,31,145,152  VAZA200x150
+owl adulto swim sleepy: 53,17,171,152  VAZA200x150
+owl adulto swim missingYou: 53,42,147,152  VAZA200x150
+owl adulto graze radiant: 32,19,171,148
+owl adulto graze content: 55,27,146,148
+owl adulto graze neutral: 55,31,146,148
+owl adulto graze sleepy: 53,17,171,148
+owl adulto graze missingYou: 53,41,147,148
+owl adulto chapeu=gorro: 55,13,145,147
+owl adulto chapeu=chapeu_palha: 55,15,145,147
+owl adulto chapeu=coroa_folhas: 55,22,145,147
+owl pleno idle radiant: 32,4,171,147
+owl pleno idle content: 55,13,145,147
+owl pleno idle neutral: 55,18,145,147
+owl pleno idle sleepy: 53,17,171,146
+owl pleno idle missingYou: 53,32,147,147
+owl pleno nap radiant: 32,7,171,156  VAZA200x150
+owl pleno nap content: 53,16,171,156  VAZA200x150
+owl pleno nap neutral: 54,17,171,156  VAZA200x150
+owl pleno nap sleepy: 53,17,171,156  VAZA200x150
+owl pleno nap missingYou: 53,17,171,156  VAZA200x150
+owl pleno swim radiant: 32,7,171,152  VAZA200x150
+owl pleno swim content: 54,16,145,152  VAZA200x150
+owl pleno swim neutral: 54,21,145,152  VAZA200x150
+owl pleno swim sleepy: 53,17,171,152  VAZA200x150
+owl pleno swim missingYou: 53,34,147,152  VAZA200x150
+owl pleno graze radiant: 32,10,171,148
+owl pleno graze content: 55,19,146,148
+owl pleno graze neutral: 55,23,146,148
+owl pleno graze sleepy: 53,17,171,148
+owl pleno graze missingYou: 53,37,147,148
+owl pleno chapeu=gorro: 55,13,145,147
+owl pleno chapeu=chapeu_palha: 55,13,145,147
+owl pleno chapeu=coroa_folhas: 55,13,145,147
+FOLEGO owl adulto: vazio h=128.0 w=88.0 top=20.0  cheio h=120.0 w=94.0 top=25.0  dh=8.0 dw=6.0
+FOLEGO owl pleno: vazio h=137.0 w=88.0 top=11.0  cheio h=129.0 w=94.0 top=16.0  dh=8.0 dw=6.0
+axolotl inicio idle radiant: 59,64,138,143
+axolotl inicio idle content: 59,64,138,143
+axolotl inicio idle neutral: 59,64,138,143
+axolotl inicio idle sleepy: 59,64,138,143
+axolotl inicio idle missingYou: 59,64,138,143
+axolotl inicio nap radiant: 59,64,138,143
+axolotl inicio nap content: 59,64,138,143
+axolotl inicio nap neutral: 59,64,138,143
+axolotl inicio nap sleepy: 59,64,138,143
+axolotl inicio nap missingYou: 59,64,138,143
+axolotl inicio swim radiant: 59,64,138,143
+axolotl inicio swim content: 59,64,138,143
+axolotl inicio swim neutral: 59,64,138,143
+axolotl inicio swim sleepy: 59,64,138,143
+axolotl inicio swim missingYou: 59,64,138,143
+axolotl inicio graze radiant: 59,64,138,143
+axolotl inicio graze content: 59,64,138,143
+axolotl inicio graze neutral: 59,64,138,143
+axolotl inicio graze sleepy: 59,64,138,143
+axolotl inicio graze missingYou: 59,64,138,143
+axolotl inicio chapeu=gorro: 59,64,138,143
+axolotl inicio chapeu=chapeu_palha: 59,64,138,143
+axolotl inicio chapeu=coroa_folhas: 59,64,138,143
+axolotl filhote idle radiant: 32,25,171,142
+axolotl filhote idle content: 46,60,154,143
+axolotl filhote idle neutral: 46,63,154,143
+axolotl filhote idle sleepy: 44,17,171,143
+axolotl filhote idle missingYou: 45,64,157,143
+axolotl filhote nap radiant: 32,17,171,149
+axolotl filhote nap content: 42,17,171,149
+axolotl filhote nap neutral: 42,17,171,149
+axolotl filhote nap sleepy: 42,17,171,150
+axolotl filhote nap missingYou: 43,17,171,150
+axolotl filhote swim radiant: 15,25,185,145
+axolotl filhote swim content: 15,46,185,145
+axolotl filhote swim neutral: 15,49,185,145
+axolotl filhote swim sleepy: 15,17,185,145
+axolotl filhote swim missingYou: 15,55,185,145
+axolotl filhote graze radiant: 32,25,171,142
+axolotl filhote graze content: 47,59,155,143
+axolotl filhote graze neutral: 47,62,155,143
+axolotl filhote graze sleepy: 45,17,171,143
+axolotl filhote graze missingYou: 45,64,158,143
+axolotl filhote chapeu=gorro: 46,55,154,143
+axolotl filhote chapeu=chapeu_palha: 46,56,154,143
+axolotl filhote chapeu=coroa_folhas: 46,60,154,143
+axolotl jovem idle radiant: 32,25,171,142
+axolotl jovem idle content: 39,42,166,142
+axolotl jovem idle neutral: 39,46,166,142
+axolotl jovem idle sleepy: 38,17,171,142
+axolotl jovem idle missingYou: 38,48,167,142
+axolotl jovem nap radiant: 32,17,171,148
+axolotl jovem nap content: 35,17,171,149
+axolotl jovem nap neutral: 35,17,171,149
+axolotl jovem nap sleepy: 36,17,171,149
+axolotl jovem nap missingYou: 36,17,171,149
+axolotl jovem swim radiant: 15,25,185,145
+axolotl jovem swim content: 15,41,185,145
+axolotl jovem swim neutral: 15,44,185,145
+axolotl jovem swim sleepy: 15,17,185,145
+axolotl jovem swim missingYou: 15,52,185,145
+axolotl jovem graze radiant: 32,25,171,142
+axolotl jovem graze content: 41,42,165,142
+axolotl jovem graze neutral: 41,45,165,142
+axolotl jovem graze sleepy: 39,17,171,142
+axolotl jovem graze missingYou: 39,48,167,142
+axolotl jovem chapeu=gorro: 39,37,166,142
+axolotl jovem chapeu=chapeu_palha: 39,38,166,142
+axolotl jovem chapeu=coroa_folhas: 39,42,166,142
+axolotl adulto idle radiant: 31,6,183,141
+axolotl adulto idle content: 29,17,184,141
+axolotl adulto idle neutral: 29,21,184,141
+axolotl adulto idle sleepy: 27,17,187,141
+axolotl adulto idle missingYou: 28,25,186,141
+axolotl adulto nap radiant: 22,3,184,148
+axolotl adulto nap content: 23,13,186,148
+axolotl adulto nap neutral: 24,17,186,148
+axolotl adulto nap sleepy: 25,17,189,148
+axolotl adulto nap missingYou: 25,17,189,148
+axolotl adulto swim radiant: 15,21,185,158  VAZA200x150
+axolotl adulto swim content: 15,32,185,158  VAZA200x150
+axolotl adulto swim neutral: 15,36,185,158  VAZA200x150
+axolotl adulto swim sleepy: 15,17,187,158  VAZA200x150
+axolotl adulto swim missingYou: 15,46,187,159  VAZA200x150
+axolotl adulto graze radiant: 32,11,181,141
+axolotl adulto graze content: 31,17,183,141
+axolotl adulto graze neutral: 31,21,183,141
+axolotl adulto graze sleepy: 29,17,185,141
+axolotl adulto graze missingYou: 29,26,185,141
+axolotl adulto chapeu=gorro: 29,12,184,141
+axolotl adulto chapeu=chapeu_palha: 29,13,184,141
+axolotl adulto chapeu=coroa_folhas: 29,17,184,141
+axolotl pleno idle radiant: 31,5,183,141
+axolotl pleno idle content: 29,16,184,141
+axolotl pleno idle neutral: 29,21,184,141
+axolotl pleno idle sleepy: 27,17,187,141
+axolotl pleno idle missingYou: 28,25,186,141
+axolotl pleno nap radiant: 22,3,184,148
+axolotl pleno nap content: 23,13,186,148
+axolotl pleno nap neutral: 24,17,186,148
+axolotl pleno nap sleepy: 25,17,189,148
+axolotl pleno nap missingYou: 25,17,189,148
+axolotl pleno swim radiant: 15,21,185,158  VAZA200x150
+axolotl pleno swim content: 15,31,185,158  VAZA200x150
+axolotl pleno swim neutral: 15,36,185,158  VAZA200x150
+axolotl pleno swim sleepy: 15,17,187,158  VAZA200x150
+axolotl pleno swim missingYou: 15,46,187,159  VAZA200x150
+axolotl pleno graze radiant: 32,11,181,141
+axolotl pleno graze content: 31,17,183,141
+axolotl pleno graze neutral: 31,21,183,141
+axolotl pleno graze sleepy: 29,17,185,141
+axolotl pleno graze missingYou: 29,26,185,141
+axolotl pleno chapeu=gorro: 29,12,184,141
+axolotl pleno chapeu=chapeu_palha: 29,13,184,141
+axolotl pleno chapeu=coroa_folhas: 29,16,184,141
+FOLEGO axolotl adulto: vazio h=128.0 w=149.0 top=14.0  cheio h=120.0 w=160.0 top=19.0  dh=8.0 dw=11.0
+FOLEGO axolotl pleno: vazio h=128.0 w=149.0 top=14.0  cheio h=120.0 w=160.0 top=19.0  dh=8.0 dw=11.0
+penguin inicio idle radiant: 45,78,155,152  VAZA200x150
+penguin inicio idle content: 45,78,155,152  VAZA200x150
+penguin inicio idle neutral: 45,78,155,152  VAZA200x150
+penguin inicio idle sleepy: 45,78,155,152  VAZA200x150
+penguin inicio idle missingYou: 45,78,155,152  VAZA200x150
+penguin inicio nap radiant: 45,78,155,152  VAZA200x150
+penguin inicio nap content: 45,78,155,152  VAZA200x150
+penguin inicio nap neutral: 45,78,155,152  VAZA200x150
+penguin inicio nap sleepy: 45,78,155,152  VAZA200x150
+penguin inicio nap missingYou: 45,78,155,152  VAZA200x150
+penguin inicio swim radiant: 45,78,155,152  VAZA200x150
+penguin inicio swim content: 45,78,155,152  VAZA200x150
+penguin inicio swim neutral: 45,78,155,152  VAZA200x150
+penguin inicio swim sleepy: 45,78,155,152  VAZA200x150
+penguin inicio swim missingYou: 45,78,155,152  VAZA200x150
+penguin inicio graze radiant: 45,78,155,152  VAZA200x150
+penguin inicio graze content: 45,78,155,152  VAZA200x150
+penguin inicio graze neutral: 45,78,155,152  VAZA200x150
+penguin inicio graze sleepy: 45,78,155,152  VAZA200x150
+penguin inicio graze missingYou: 45,78,155,152  VAZA200x150
+penguin inicio chapeu=gorro: 45,78,155,152
+penguin inicio chapeu=chapeu_palha: 45,78,155,152
+penguin inicio chapeu=coroa_folhas: 45,78,155,152
+penguin filhote idle radiant: 32,25,171,144
+penguin filhote idle content: 72,58,128,144
+penguin filhote idle neutral: 72,61,128,144
+penguin filhote idle sleepy: 66,17,171,144
+penguin filhote idle missingYou: 71,68,129,144
+penguin filhote nap radiant: 32,17,171,151  VAZA200x150
+penguin filhote nap content: 66,17,171,151  VAZA200x150
+penguin filhote nap neutral: 66,17,171,151  VAZA200x150
+penguin filhote nap sleepy: 66,17,171,151  VAZA200x150
+penguin filhote nap missingYou: 66,17,171,151  VAZA200x150
+penguin filhote swim radiant: 15,25,185,145
+penguin filhote swim content: 15,47,185,145
+penguin filhote swim neutral: 15,50,185,145
+penguin filhote swim sleepy: 15,17,185,145
+penguin filhote swim missingYou: 15,57,185,145
+penguin filhote graze radiant: 32,25,171,144
+penguin filhote graze content: 71,61,129,144
+penguin filhote graze neutral: 71,64,129,144
+penguin filhote graze sleepy: 66,17,171,144
+penguin filhote graze missingYou: 70,71,129,144
+penguin filhote chapeu=gorro: 72,58,128,144
+penguin filhote chapeu=chapeu_palha: 71,58,128,144
+penguin filhote chapeu=coroa_folhas: 72,58,128,144
+penguin jovem idle radiant: 32,25,171,143
+penguin jovem idle content: 64,46,136,143
+penguin jovem idle neutral: 64,49,136,143
+penguin jovem idle sleepy: 63,17,171,144
+penguin jovem idle missingYou: 63,57,136,144
+penguin jovem nap radiant: 32,17,171,151  VAZA200x150
+penguin jovem nap content: 64,17,171,151  VAZA200x150
+penguin jovem nap neutral: 65,17,171,151  VAZA200x150
+penguin jovem nap sleepy: 65,17,171,151  VAZA200x150
+penguin jovem nap missingYou: 65,17,171,151  VAZA200x150
+penguin jovem swim radiant: 15,25,185,150
+penguin jovem swim content: 15,46,185,150
+penguin jovem swim neutral: 15,50,185,150
+penguin jovem swim sleepy: 15,17,185,150
+penguin jovem swim missingYou: 15,58,185,150
+penguin jovem graze radiant: 32,25,171,144
+penguin jovem graze content: 64,49,135,144
+penguin jovem graze neutral: 64,52,135,144
+penguin jovem graze sleepy: 63,17,171,144
+penguin jovem graze missingYou: 63,60,136,144
+penguin jovem chapeu=gorro: 64,39,136,143
+penguin jovem chapeu=chapeu_palha: 64,40,136,143
+penguin jovem chapeu=coroa_folhas: 64,46,136,143
+penguin adulto idle radiant: 32,13,171,143
+penguin adulto idle content: 55,21,145,143
+penguin adulto idle neutral: 55,25,145,143
+penguin adulto idle sleepy: 53,17,171,143
+penguin adulto idle missingYou: 53,36,146,143
+penguin adulto nap radiant: 32,17,171,151  VAZA200x150
+penguin adulto nap content: 56,17,171,151  VAZA200x150
+penguin adulto nap neutral: 57,17,171,151  VAZA200x150
+penguin adulto nap sleepy: 56,17,171,151  VAZA200x150
+penguin adulto nap missingYou: 56,17,171,151  VAZA200x150
+penguin adulto swim radiant: 15,25,185,168  VAZA200x150
+penguin adulto swim content: 15,38,185,168  VAZA200x150
+penguin adulto swim neutral: 15,42,185,168  VAZA200x150
+penguin adulto swim sleepy: 15,17,185,168  VAZA200x150
+penguin adulto swim missingYou: 15,53,185,167  VAZA200x150
+penguin adulto graze radiant: 32,17,171,144
+penguin adulto graze content: 54,25,145,144
+penguin adulto graze neutral: 54,29,144,144
+penguin adulto graze sleepy: 52,17,171,144
+penguin adulto graze missingYou: 52,39,146,144
+penguin adulto chapeu=gorro: 55,14,145,143
+penguin adulto chapeu=chapeu_palha: 55,15,145,143
+penguin adulto chapeu=coroa_folhas: 55,21,145,143
+penguin pleno idle radiant: 32,6,171,143
+penguin pleno idle content: 55,14,145,143
+penguin pleno idle neutral: 55,19,145,143
+penguin pleno idle sleepy: 53,17,171,143
+penguin pleno idle missingYou: 53,30,146,143
+penguin pleno nap radiant: 32,13,171,151  VAZA200x150
+penguin pleno nap content: 56,17,171,151  VAZA200x150
+penguin pleno nap neutral: 57,17,171,151  VAZA200x150
+penguin pleno nap sleepy: 56,17,171,151  VAZA200x150
+penguin pleno nap missingYou: 56,17,171,151  VAZA200x150
+penguin pleno swim radiant: 15,23,185,168  VAZA200x150
+penguin pleno swim content: 15,31,185,168  VAZA200x150
+penguin pleno swim neutral: 15,36,185,168  VAZA200x150
+penguin pleno swim sleepy: 15,17,185,168  VAZA200x150
+penguin pleno swim missingYou: 15,47,185,167  VAZA200x150
+penguin pleno graze radiant: 32,10,171,144
+penguin pleno graze content: 54,18,145,144
+penguin pleno graze neutral: 54,23,144,144
+penguin pleno graze sleepy: 52,17,171,144
+penguin pleno graze missingYou: 52,34,146,144
+penguin pleno chapeu=gorro: 55,14,145,143
+penguin pleno chapeu=chapeu_palha: 55,15,145,143
+penguin pleno chapeu=coroa_folhas: 55,21,145,143
+FOLEGO penguin adulto: vazio h=126.0 w=88.0 top=18.0  cheio h=118.0 w=94.0 top=23.0  dh=8.0 dw=6.0
+FOLEGO penguin pleno: vazio h=132.0 w=88.0 top=12.0  cheio h=124.0 w=94.0 top=17.0  dh=8.0 dw=6.0
+cat inicio idle radiant: 32,25,171,153  VAZA200x150
+cat inicio idle content: 36,71,166,153  VAZA200x150
+cat inicio idle neutral: 36,73,166,153  VAZA200x150
+cat inicio idle sleepy: 36,79,166,153  VAZA200x150
+cat inicio idle missingYou: 36,82,166,153  VAZA200x150
+cat inicio nap radiant: 32,25,171,153  VAZA200x150
+cat inicio nap content: 36,71,166,153  VAZA200x150
+cat inicio nap neutral: 36,73,166,153  VAZA200x150
+cat inicio nap sleepy: 36,79,166,153  VAZA200x150
+cat inicio nap missingYou: 36,82,166,153  VAZA200x150
+cat inicio swim radiant: 32,25,171,153  VAZA200x150
+cat inicio swim content: 36,71,166,153  VAZA200x150
+cat inicio swim neutral: 36,73,166,153  VAZA200x150
+cat inicio swim sleepy: 36,79,166,153  VAZA200x150
+cat inicio swim missingYou: 36,82,166,153  VAZA200x150
+cat inicio graze radiant: 32,25,171,153  VAZA200x150
+cat inicio graze content: 36,71,166,153  VAZA200x150
+cat inicio graze neutral: 36,73,166,153  VAZA200x150
+cat inicio graze sleepy: 36,79,166,153  VAZA200x150
+cat inicio graze missingYou: 36,82,166,153  VAZA200x150
+cat inicio chapeu=gorro: 36,71,166,153
+cat inicio chapeu=chapeu_palha: 36,71,166,153
+cat inicio chapeu=coroa_folhas: 36,71,166,153
+cat filhote idle radiant: 32,25,171,142
+cat filhote idle content: 69,52,142,142
+cat filhote idle neutral: 69,55,144,142
+cat filhote idle sleepy: 66,17,171,144
+cat filhote idle missingYou: 68,62,138,144
+cat filhote nap radiant: 32,17,171,149
+cat filhote nap content: 65,17,171,150
+cat filhote nap neutral: 64,17,171,150
+cat filhote nap sleepy: 63,17,171,150
+cat filhote nap missingYou: 63,17,171,150
+cat filhote swim radiant: 32,25,171,146
+cat filhote swim content: 68,55,142,146
+cat filhote swim neutral: 68,58,145,146
+cat filhote swim sleepy: 66,17,171,147
+cat filhote swim missingYou: 67,68,137,147
+cat filhote graze radiant: 32,25,171,142
+cat filhote graze content: 70,53,142,143
+cat filhote graze neutral: 69,56,144,143
+cat filhote graze sleepy: 66,17,171,146
+cat filhote graze missingYou: 68,63,140,145
+cat filhote chapeu=gorro: 69,52,142,142
+cat filhote chapeu=chapeu_palha: 68,52,142,142
+cat filhote chapeu=coroa_folhas: 69,52,142,142
+cat jovem idle radiant: 32,25,171,141
+cat jovem idle content: 65,33,153,141
+cat jovem idle neutral: 65,37,155,142
+cat jovem idle sleepy: 64,17,171,144
+cat jovem idle missingYou: 64,45,143,143
+cat jovem nap radiant: 32,17,171,149
+cat jovem nap content: 61,17,171,149
+cat jovem nap neutral: 60,17,171,149
+cat jovem nap sleepy: 58,17,171,150
+cat jovem nap missingYou: 58,17,171,150
+cat jovem swim radiant: 32,25,171,146
+cat jovem swim content: 64,36,152,146
+cat jovem swim neutral: 64,40,156,146
+cat jovem swim sleepy: 62,17,171,146
+cat jovem swim missingYou: 63,52,146,146
+cat jovem graze radiant: 32,25,171,142
+cat jovem graze content: 66,35,153,142
+cat jovem graze neutral: 66,39,155,142
+cat jovem graze sleepy: 65,17,171,146
+cat jovem graze missingYou: 65,47,144,145
+cat jovem chapeu=gorro: 65,33,153,141
+cat jovem chapeu=chapeu_palha: 64,33,153,141
+cat jovem chapeu=coroa_folhas: 65,33,153,141
+cat adulto idle radiant: 32,-3,171,140  VAZA200x150  VAZA-overlay200x170
+cat adulto idle content: 59,7,167,140
+cat adulto idle neutral: 59,12,171,140
+cat adulto idle sleepy: 58,17,171,143
+cat adulto idle missingYou: 58,22,155,142
+cat adulto nap radiant: 32,0,171,148
+cat adulto nap content: 54,9,171,149
+cat adulto nap neutral: 53,14,172,149
+cat adulto nap sleepy: 51,17,171,149
+cat adulto nap missingYou: 51,17,171,149
+cat adulto swim radiant: 32,0,171,144
+cat adulto swim content: 58,10,167,145
+cat adulto swim neutral: 58,15,171,145
+cat adulto swim sleepy: 56,17,171,145
+cat adulto swim missingYou: 56,29,159,145
+cat adulto graze radiant: 32,2,171,141
+cat adulto graze content: 58,9,167,141
+cat adulto graze neutral: 58,14,170,141
+cat adulto graze sleepy: 57,17,171,146
+cat adulto graze missingYou: 57,24,153,144
+cat adulto chapeu=gorro: 59,7,167,140
+cat adulto chapeu=chapeu_palha: 58,7,167,140
+cat adulto chapeu=coroa_folhas: 59,7,167,140
+cat pleno idle radiant: 32,-3,171,140  VAZA200x150  VAZA-overlay200x170
+cat pleno idle content: 59,7,167,140
+cat pleno idle neutral: 59,12,171,140
+cat pleno idle sleepy: 58,17,171,143
+cat pleno idle missingYou: 58,22,155,142
+cat pleno nap radiant: 32,0,171,148
+cat pleno nap content: 54,9,171,149
+cat pleno nap neutral: 53,14,172,149
+cat pleno nap sleepy: 51,17,171,149
+cat pleno nap missingYou: 51,17,171,149
+cat pleno swim radiant: 32,0,171,144
+cat pleno swim content: 58,10,167,145
+cat pleno swim neutral: 58,15,171,145
+cat pleno swim sleepy: 56,17,171,145
+cat pleno swim missingYou: 56,29,159,145
+cat pleno graze radiant: 32,2,171,141
+cat pleno graze content: 58,9,167,141
+cat pleno graze neutral: 58,14,170,141
+cat pleno graze sleepy: 57,17,171,146
+cat pleno graze missingYou: 57,24,153,144
+cat pleno chapeu=gorro: 59,7,167,140
+cat pleno chapeu=chapeu_palha: 58,7,167,140
+cat pleno chapeu=coroa_folhas: 59,7,167,140
+FOLEGO cat adulto: vazio h=138.0 w=104.0 top=4.0  cheio h=129.0 w=111.0 top=10.0  dh=9.0 dw=7.0
+FOLEGO cat pleno: vazio h=138.0 w=104.0 top=4.0  cheio h=129.0 w=111.0 top=10.0  dh=9.0 dw=7.0
+fox inicio idle radiant: 32,25,171,153  VAZA200x150
+fox inicio idle content: 37,72,159,153  VAZA200x150
+fox inicio idle neutral: 37,74,159,153  VAZA200x150
+fox inicio idle sleepy: 37,80,159,153  VAZA200x150
+fox inicio idle missingYou: 37,84,159,153  VAZA200x150
+fox inicio nap radiant: 32,25,171,153  VAZA200x150
+fox inicio nap content: 37,72,159,153  VAZA200x150
+fox inicio nap neutral: 37,74,159,153  VAZA200x150
+fox inicio nap sleepy: 37,80,159,153  VAZA200x150
+fox inicio nap missingYou: 37,84,159,153  VAZA200x150
+fox inicio swim radiant: 32,25,171,153  VAZA200x150
+fox inicio swim content: 37,72,159,153  VAZA200x150
+fox inicio swim neutral: 37,74,159,153  VAZA200x150
+fox inicio swim sleepy: 37,80,159,153  VAZA200x150
+fox inicio swim missingYou: 37,84,159,153  VAZA200x150
+fox inicio graze radiant: 32,25,171,153  VAZA200x150
+fox inicio graze content: 37,72,159,153  VAZA200x150
+fox inicio graze neutral: 37,74,159,153  VAZA200x150
+fox inicio graze sleepy: 37,80,159,153  VAZA200x150
+fox inicio graze missingYou: 37,84,159,153  VAZA200x150
+fox inicio chapeu=gorro: 37,72,159,153
+fox inicio chapeu=chapeu_palha: 37,72,159,153
+fox inicio chapeu=coroa_folhas: 37,72,159,153
+fox filhote idle radiant: 32,25,171,142
+fox filhote idle content: 67,53,147,142
+fox filhote idle neutral: 66,57,147,142
+fox filhote idle sleepy: 63,17,171,142
+fox filhote idle missingYou: 64,64,148,142
+fox filhote nap radiant: 32,17,171,149
+fox filhote nap content: 61,17,171,150
+fox filhote nap neutral: 60,17,171,150
+fox filhote nap sleepy: 58,17,171,150
+fox filhote nap missingYou: 58,17,171,150
+fox filhote swim radiant: 32,25,171,146
+fox filhote swim content: 65,56,147,146
+fox filhote swim neutral: 64,60,147,146
+fox filhote swim sleepy: 61,17,171,147
+fox filhote swim missingYou: 61,70,149,147
+fox filhote graze radiant: 32,25,171,142
+fox filhote graze content: 70,54,147,143
+fox filhote graze neutral: 68,58,147,143
+fox filhote graze sleepy: 65,17,171,143
+fox filhote graze missingYou: 65,65,148,143
+fox filhote chapeu=gorro: 67,53,147,142
+fox filhote chapeu=chapeu_palha: 67,53,147,142
+fox filhote chapeu=coroa_folhas: 67,53,147,142
+fox jovem idle radiant: 32,25,171,141
+fox jovem idle content: 63,35,159,141
+fox jovem idle neutral: 62,39,159,142
+fox jovem idle sleepy: 58,17,171,142
+fox jovem idle missingYou: 59,48,161,142
+fox jovem nap radiant: 32,17,171,149
+fox jovem nap content: 56,17,171,149
+fox jovem nap neutral: 55,17,171,149
+fox jovem nap sleepy: 52,17,171,150
+fox jovem nap missingYou: 53,17,171,150
+fox jovem swim radiant: 32,25,171,146
+fox jovem swim content: 61,38,159,146
+fox jovem swim neutral: 60,42,159,146
+fox jovem swim sleepy: 57,17,171,146
+fox jovem swim missingYou: 57,55,161,146
+fox jovem graze radiant: 32,25,171,142
+fox jovem graze content: 66,37,159,142
+fox jovem graze neutral: 65,40,159,142
+fox jovem graze sleepy: 61,17,171,142
+fox jovem graze missingYou: 61,49,160,142
+fox jovem chapeu=gorro: 63,35,159,141
+fox jovem chapeu=chapeu_palha: 63,35,159,141
+fox jovem chapeu=coroa_folhas: 63,35,159,141
+fox adulto idle radiant: 32,-1,174,140  VAZA200x150  VAZA-overlay200x170
+fox adulto idle content: 57,9,176,140
+fox adulto idle neutral: 56,14,176,140
+fox adulto idle sleepy: 52,17,178,141
+fox adulto idle missingYou: 53,25,177,141
+fox adulto nap radiant: 32,2,171,148
+fox adulto nap content: 49,11,174,149
+fox adulto nap neutral: 47,15,175,149
+fox adulto nap sleepy: 44,17,179,149
+fox adulto nap missingYou: 45,17,179,149
+fox adulto swim radiant: 32,1,173,144
+fox adulto swim content: 55,11,175,145
+fox adulto swim neutral: 53,16,176,145
+fox adulto swim sleepy: 49,17,178,145
+fox adulto swim missingYou: 49,32,179,145
+fox adulto graze radiant: 32,4,175,141
+fox adulto graze content: 59,11,176,141
+fox adulto graze neutral: 59,16,175,141
+fox adulto graze sleepy: 55,17,177,141
+fox adulto graze missingYou: 55,27,177,141
+fox adulto chapeu=gorro: 57,9,176,140
+fox adulto chapeu=chapeu_palha: 57,9,176,140
+fox adulto chapeu=coroa_folhas: 57,9,176,140
+fox pleno idle radiant: 32,-1,174,140  VAZA200x150  VAZA-overlay200x170
+fox pleno idle content: 57,9,176,140
+fox pleno idle neutral: 56,14,176,140
+fox pleno idle sleepy: 52,17,178,141
+fox pleno idle missingYou: 53,25,177,141
+fox pleno nap radiant: 32,2,171,148
+fox pleno nap content: 49,11,174,149
+fox pleno nap neutral: 47,15,175,149
+fox pleno nap sleepy: 44,17,179,149
+fox pleno nap missingYou: 45,17,179,149
+fox pleno swim radiant: 32,1,173,144
+fox pleno swim content: 55,11,175,145
+fox pleno swim neutral: 53,16,176,145
+fox pleno swim sleepy: 49,17,178,145
+fox pleno swim missingYou: 49,32,179,145
+fox pleno graze radiant: 32,4,175,141
+fox pleno graze content: 59,11,176,141
+fox pleno graze neutral: 59,16,175,141
+fox pleno graze sleepy: 55,17,177,141
+fox pleno graze missingYou: 55,27,177,141
+fox pleno chapeu=gorro: 57,9,176,140
+fox pleno chapeu=chapeu_palha: 57,9,176,140
+fox pleno chapeu=coroa_folhas: 57,9,176,140
+FOLEGO fox adulto: vazio h=136.0 w=114.0 top=6.0  cheio h=128.0 w=122.0 top=11.0  dh=8.0 dw=8.0
+FOLEGO fox pleno: vazio h=136.0 w=114.0 top=6.0  cheio h=128.0 w=122.0 top=11.0  dh=8.0 dw=8.0
+frenchie inicio idle radiant: 32,25,171,155  VAZA200x150
+frenchie inicio idle content: 39,77,161,155  VAZA200x150
+frenchie inicio idle neutral: 39,79,161,155  VAZA200x150
+frenchie inicio idle sleepy: 39,84,161,155  VAZA200x150
+frenchie inicio idle missingYou: 39,91,161,155  VAZA200x150
+frenchie inicio nap radiant: 32,25,171,155  VAZA200x150
+frenchie inicio nap content: 39,77,161,155  VAZA200x150
+frenchie inicio nap neutral: 39,79,161,155  VAZA200x150
+frenchie inicio nap sleepy: 39,84,161,155  VAZA200x150
+frenchie inicio nap missingYou: 39,91,161,155  VAZA200x150
+frenchie inicio swim radiant: 32,25,171,155  VAZA200x150
+frenchie inicio swim content: 39,77,161,155  VAZA200x150
+frenchie inicio swim neutral: 39,79,161,155  VAZA200x150
+frenchie inicio swim sleepy: 39,84,161,155  VAZA200x150
+frenchie inicio swim missingYou: 39,91,161,155  VAZA200x150
+frenchie inicio graze radiant: 32,25,171,155  VAZA200x150
+frenchie inicio graze content: 39,77,161,155  VAZA200x150
+frenchie inicio graze neutral: 39,79,161,155  VAZA200x150
+frenchie inicio graze sleepy: 39,84,161,155  VAZA200x150
+frenchie inicio graze missingYou: 39,91,161,155  VAZA200x150
+frenchie inicio chapeu=gorro: 39,77,161,155
+frenchie inicio chapeu=chapeu_palha: 39,77,161,155
+frenchie inicio chapeu=coroa_folhas: 39,77,161,155
+frenchie filhote idle radiant: 32,25,171,146
+frenchie filhote idle content: 63,54,137,146
+frenchie filhote idle neutral: 62,58,138,146
+frenchie filhote idle sleepy: 57,17,171,146
+frenchie filhote idle missingYou: 58,68,148,147
+frenchie filhote nap radiant: 32,17,171,155  VAZA200x150
+frenchie filhote nap content: 52,17,171,155  VAZA200x150
+frenchie filhote nap neutral: 53,17,171,155  VAZA200x150
+frenchie filhote nap sleepy: 53,17,171,155  VAZA200x150
+frenchie filhote nap missingYou: 53,17,171,155  VAZA200x150
+frenchie filhote swim radiant: 32,25,171,151  VAZA200x150
+frenchie filhote swim content: 61,57,136,151  VAZA200x150
+frenchie filhote swim neutral: 60,61,137,151  VAZA200x150
+frenchie filhote swim sleepy: 56,17,171,151  VAZA200x150
+frenchie filhote swim missingYou: 56,74,146,151  VAZA200x150
+frenchie filhote graze radiant: 32,25,171,148
+frenchie filhote graze content: 64,55,139,148
+frenchie filhote graze neutral: 63,59,140,148
+frenchie filhote graze sleepy: 59,17,171,148
+frenchie filhote graze missingYou: 59,69,148,148
+frenchie filhote chapeu=gorro: 63,54,137,146
+frenchie filhote chapeu=chapeu_palha: 62,54,138,146
+frenchie filhote chapeu=coroa_folhas: 63,54,137,146
+frenchie jovem idle radiant: 32,25,171,147
+frenchie jovem idle content: 58,36,142,146
+frenchie jovem idle neutral: 57,41,143,146
+frenchie jovem idle sleepy: 52,17,171,146
+frenchie jovem idle missingYou: 53,53,153,147
+frenchie jovem nap radiant: 32,17,171,156  VAZA200x150
+frenchie jovem nap content: 46,17,171,156  VAZA200x150
+frenchie jovem nap neutral: 47,17,171,156  VAZA200x150
+frenchie jovem nap sleepy: 47,17,171,157  VAZA200x150
+frenchie jovem nap missingYou: 48,17,171,157  VAZA200x150
+frenchie jovem swim radiant: 32,25,171,152  VAZA200x150
+frenchie jovem swim content: 57,38,142,152  VAZA200x150
+frenchie jovem swim neutral: 55,43,142,152  VAZA200x150
+frenchie jovem swim sleepy: 51,17,171,152  VAZA200x150
+frenchie jovem swim missingYou: 51,59,152,152  VAZA200x150
+frenchie jovem graze radiant: 32,25,171,148
+frenchie jovem graze content: 57,37,144,148
+frenchie jovem graze neutral: 57,42,145,148
+frenchie jovem graze sleepy: 55,17,171,148
+frenchie jovem graze missingYou: 54,54,154,148
+frenchie jovem chapeu=gorro: 58,36,142,146
+frenchie jovem chapeu=chapeu_palha: 58,36,142,146
+frenchie jovem chapeu=coroa_folhas: 58,36,142,146
+frenchie adulto idle radiant: 32,-1,171,147  VAZA200x150  VAZA-overlay200x170
+frenchie adulto idle content: 47,9,153,147
+frenchie adulto idle neutral: 47,16,153,147
+frenchie adulto idle sleepy: 45,17,171,147
+frenchie adulto idle missingYou: 45,31,162,147
+frenchie adulto nap radiant: 32,9,171,158  VAZA200x150
+frenchie adulto nap content: 37,17,171,158  VAZA200x150
+frenchie adulto nap neutral: 38,17,171,158  VAZA200x150
+frenchie adulto nap sleepy: 38,17,171,158  VAZA200x150
+frenchie adulto nap missingYou: 39,17,171,158  VAZA200x150
+frenchie adulto swim radiant: 32,2,171,153  VAZA200x150
+frenchie adulto swim content: 47,12,154,153  VAZA200x150
+frenchie adulto swim neutral: 47,18,154,153  VAZA200x150
+frenchie adulto swim sleepy: 43,17,171,153  VAZA200x150
+frenchie adulto swim missingYou: 43,37,160,153  VAZA200x150
+frenchie adulto graze radiant: 32,4,171,149
+frenchie adulto graze content: 46,12,152,149
+frenchie adulto graze neutral: 45,18,153,149
+frenchie adulto graze sleepy: 44,17,171,149
+frenchie adulto graze missingYou: 44,33,163,149
+frenchie adulto chapeu=gorro: 47,9,153,147
+frenchie adulto chapeu=chapeu_palha: 47,9,153,147
+frenchie adulto chapeu=coroa_folhas: 47,9,153,147
+frenchie pleno idle radiant: 32,-1,171,147  VAZA200x150  VAZA-overlay200x170
+frenchie pleno idle content: 47,9,153,147
+frenchie pleno idle neutral: 47,16,153,147
+frenchie pleno idle sleepy: 45,17,171,147
+frenchie pleno idle missingYou: 45,26,162,147
+frenchie pleno nap radiant: 32,9,171,158  VAZA200x150
+frenchie pleno nap content: 37,17,171,158  VAZA200x150
+frenchie pleno nap neutral: 38,17,171,158  VAZA200x150
+frenchie pleno nap sleepy: 38,17,171,158  VAZA200x150
+frenchie pleno nap missingYou: 39,17,171,158  VAZA200x150
+frenchie pleno swim radiant: 32,2,171,153  VAZA200x150
+frenchie pleno swim content: 47,12,154,153  VAZA200x150
+frenchie pleno swim neutral: 47,18,154,153  VAZA200x150
+frenchie pleno swim sleepy: 43,17,171,153  VAZA200x150
+frenchie pleno swim missingYou: 43,32,160,153  VAZA200x150
+frenchie pleno graze radiant: 32,4,171,149
+frenchie pleno graze content: 46,12,152,149
+frenchie pleno graze neutral: 45,18,153,149
+frenchie pleno graze sleepy: 44,17,171,149
+frenchie pleno graze missingYou: 44,29,163,149
+frenchie pleno chapeu=gorro: 47,9,153,147
+frenchie pleno chapeu=chapeu_palha: 47,9,153,147
+frenchie pleno chapeu=coroa_folhas: 47,9,153,147
+FOLEGO frenchie adulto: vazio h=141.0 w=104.0 top=7.0  cheio h=133.0 w=110.0 top=12.0  dh=8.0 dw=6.0
+FOLEGO frenchie pleno: vazio h=141.0 w=104.0 top=7.0  cheio h=133.0 w=110.0 top=12.0  dh=8.0 dw=6.0

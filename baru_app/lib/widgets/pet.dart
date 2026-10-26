@@ -817,11 +817,22 @@ class _PetViewState extends State<PetView>
             // Alinhamento sem direção: o bicho também é desenhado fora do app
             // (widget da tela inicial, sobreposição), onde pode não haver
             // `Directionality`.
+            //
+            // Os dois desenhos têm o **mesmo** corpo, na postura do meio do
+            // caminho; só o rosto difere. O de baixo fica opaco: esmaecer os
+            // dois deixava o fundo vazar pelo bicho no meio da troca.
+            Widget com(Mood rosto) => _pintado(
+                  rosto,
+                  amplitude,
+                  corpoDe: anterior,
+                  corpoPara: widget.mood,
+                  mistura: t,
+                );
             return Stack(
               alignment: Alignment.topLeft,
               children: [
-                Opacity(opacity: 1 - t, child: _pintado(anterior, amplitude)),
-                Opacity(opacity: t, child: _pintado(widget.mood, amplitude)),
+                com(anterior),
+                Opacity(opacity: t, child: com(widget.mood)),
               ],
             );
           }
@@ -845,12 +856,21 @@ class _PetViewState extends State<PetView>
   }
 
   /// O bicho num humor, com a pose deste quadro.
-  Widget _pintado(Mood humor, double amplitude) {
+  Widget _pintado(
+    Mood humor,
+    double amplitude, {
+    Mood? corpoDe,
+    Mood? corpoPara,
+    double mistura = 1,
+  }) {
     return CustomPaint(
       size: Size(widget.width, widget.height),
       painter: _PetPainter(
         species: widget.species,
         mood: humor,
+        corpoDe: corpoDe,
+        corpoPara: corpoPara,
+        mistura: mistura,
         activity: widget.activity,
         coat: AppColors.pelagemDe(widget.species, widget.coat),
         coatIndex: widget.coat,
@@ -1244,10 +1264,41 @@ class _PetPainter extends CustomPainter {
     this.roupas = const {},
     this.roupaDeCabeca,
     this.estagio = EstagioDoBicho.adulto,
+    this.corpoDe,
+    this.corpoPara,
+    this.mistura = 1,
   });
 
   final Species species;
+
+  /// O humor do **rosto**: olhos, boca, sobrancelha, lágrima.
   final Mood mood;
+
+  /// O humor do **corpo** durante uma troca: postura, cabeça, orelhas e
+  /// cauda vão de [corpoDe] a [corpoPara] por [mistura], num desenho só.
+  /// Fora da troca, os dois são o próprio [mood].
+  ///
+  /// A troca esmaecia dois bichos inteiros, e com a postura mudando com o
+  /// humor apareciam duas cabeças e quatro orelhas no meio do caminho
+  /// (auditoria da Onda 3, 11a-M1). Agora o corpo anda; só o rosto esmaece.
+  final Mood? corpoDe;
+  final Mood? corpoPara;
+  final double mistura;
+
+  /// A escala do fôlego deste quadro, (largura, altura).
+  (double, double) _folego = (1, 1);
+
+  /// Desfaz o fôlego no espaço da cabeça: o peito respira, o rosto não.
+  void _cabecaSemFolego(Canvas canvas) {
+    canvas.scale(1 / _folego.$1, 1 / _folego.$2);
+  }
+
+  /// Um valor do corpo que depende do humor, já interpolado na troca.
+  double _porHumor(double Function(Mood m) f) {
+    final de = f(corpoDe ?? mood);
+    final para = f(corpoPara ?? mood);
+    return de + (para - de) * mistura;
+  }
   final Activity activity;
   final Color coat;
 
@@ -1486,9 +1537,10 @@ class _PetPainter extends CustomPainter {
       // O radiante dá pulinhos de vez em quando: três por volta do ócio,
       // só a parte de cima do seno, para pousar e não afundar.
       AcaoDoBicho.ocioso => boia * 1.2 -
-          (mood == Mood.radiant
-              ? math.max(0.0, math.sin(pose.ciclo * math.pi * 6)) * 4 * amp
-              : 0),
+          _porHumor((m) => m == Mood.radiant ? 1 : 0) *
+              math.max(0.0, math.sin(pose.ciclo * math.pi * 6)) *
+              4 *
+              amp,
     };
 
     if (nadando) _rastro(canvas, size, linhaDagua);
@@ -1555,7 +1607,9 @@ class _PetPainter extends CustomPainter {
     // sinal que faz o sono ser visto sem depender de nenhum símbolo.
     final q = pose.quique * pose.amplitudeToque;
     final e = pose.estica;
-    final fundura = dormindo ? 2.1 : 1.0;
+    // 1,5 e não 2,1 no sono: a 2,1 o corpo variava 14% de pico a pico e a
+    // cara se esmagava (auditoria da Onda 3, 11a-M3).
+    final fundura = dormindo ? 1.5 : 1.0;
     // A postura do humor, pelos pés.
     final (px, py) = _posturaDoHumor;
     if (px != 1 || py != 1) {
@@ -1563,12 +1617,16 @@ class _PetPainter extends CustomPainter {
       canvas.scale(px, py);
       canvas.translate(0, -_pes);
     }
+    // O quique do toque e o espreguiçar: o bicho inteiro.
+    canvas.scale(1 + q * 0.07 + e * 0.07, 1 - q * 0.07 + e * 0.03);
     // O fôlego quase dobrou: a 1,8% ele não se via (laudo 05, R4); a 3,4% o
-    // peito sobe e desce sem virar pulo.
-    canvas.scale(
-      1 + sopro * 0.034 * fundura + q * 0.07 + e * 0.07,
-      1 - sopro * 0.026 * fundura - q * 0.07 + e * 0.03,
-    );
+    // peito sobe e desce sem virar pulo. Pelos pés, que não saem do chão, e
+    // só no tronco: a cabeça desfaz a escala em [_cabecaSemFolego] e é
+    // levada pelo peito, em vez de achatar junto com ele.
+    _folego = (1 + sopro * 0.034 * fundura, 1 - sopro * 0.026 * fundura);
+    canvas.translate(0, _pes);
+    canvas.scale(_folego.$1, _folego.$2);
+    canvas.translate(0, -_pes);
 
     switch (species) {
       case Species.capybara:
@@ -1743,32 +1801,35 @@ class _PetPainter extends CustomPainter {
   // movimento: valem com "reduzir movimento" também.
 
   /// Quanto a cabeça desce pelo humor (negativo sobe).
-  double get _cabecaDoHumor => switch (mood) {
+  double get _cabecaDoHumor => _porHumor((m) => switch (m) {
         Mood.radiant => -3,
         Mood.content => 0,
         Mood.neutral => 2,
         Mood.sleepy => 5,
         Mood.missingYou => 7,
-      };
+      });
 
   /// A inclinação da cabeça pelo humor: o "pidão" de lado na saudade.
-  double get _inclinaDoHumor => switch (mood) {
+  double get _inclinaDoHumor => _porHumor((m) => switch (m) {
         Mood.radiant => -0.05,
         Mood.content => 0,
         Mood.neutral => 0,
         Mood.sleepy => 0.06,
         Mood.missingYou => 0.12,
-      };
+      });
 
   /// A postura do tronco: (largura, altura). Murcho na saudade e no sono,
   /// esticado no radiante. Pivô nos pés.
-  (double, double) get _posturaDoHumor => switch (mood) {
-        Mood.radiant => (0.98, 1.04),
-        Mood.content => (1.0, 1.0),
-        Mood.neutral => (1.0, 0.98),
-        Mood.sleepy => (1.03, 0.94),
-        Mood.missingYou => (1.03, 0.93),
-      };
+  (double, double) get _posturaDoHumor {
+    (double, double) de(Mood m) => switch (m) {
+          Mood.radiant => (0.98, 1.04),
+          Mood.content => (1.0, 1.0),
+          Mood.neutral => (1.0, 0.98),
+          Mood.sleepy => (1.03, 0.94),
+          Mood.missingYou => (1.03, 0.93),
+        };
+    return (_porHumor((m) => de(m).$1), _porHumor((m) => de(m).$2));
+  }
 
   // ======================================================================
   // CAPIVARA — de frente: cabeça grande e chata, focinho rombudo, corpo baixo
@@ -1810,6 +1871,7 @@ class _PetPainter extends CustomPainter {
     // --- cabeça -----------------------------------------------------------
     canvas.save();
     canvas.translate(0, -30 + pose.respiro * amp * 0.7 + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     canvas.rotate(_cabecaGiro * 0.9);
     canvas.scale(_cabecaDoEstagio);
 
@@ -1946,6 +2008,7 @@ class _PetPainter extends CustomPainter {
     // --- cabeça -----------------------------------------------------------
     canvas.save();
     canvas.translate(0, -34 + pose.respiro * amp * 0.7 + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     canvas.rotate(_cabecaGiro * 0.9);
     canvas.scale(_cabecaDoEstagio);
 
@@ -2089,6 +2152,7 @@ class _PetPainter extends CustomPainter {
     // --- cabeça, na frente ------------------------------------------------
     canvas.save();
     canvas.translate(0, -36 - estica + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     canvas.rotate(_cabecaGiro * 0.8);
     canvas.scale(_cabecaDoEstagio);
 
@@ -2301,6 +2365,7 @@ class _PetPainter extends CustomPainter {
     // -28 e não -32: a ponta do tufo ficava a 3 px do topo do quadro, e ao
     // se espreguiçar (corpo 7% maior e 4 px acima) ela era cortada.
     canvas.translate(0, -28 + pose.respiro * amp * 0.6 + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     canvas.rotate(_cabecaGiro * 0.8);
     canvas.scale(_cabecaDoEstagio);
 
@@ -2334,13 +2399,27 @@ class _PetPainter extends CustomPainter {
     }
 
     // As sobrancelhas brancas e o queixo branco: a cara da buraqueira.
+    //
+    // A mancha branca **é** a sobrancelha dela, e é por ela que o humor
+    // passa. Com a ponta de dentro mais baixa que a de fora ela formava um
+    // V, e na saudade, com a sobrancelha de tristeza pintada por cima, a
+    // coruja lia como desconfiada (auditoria da Onda 3, 11b-M2). Agora a
+    // ponta de dentro sobe na tristeza e no sono, e fica reta no resto.
     final branco = Color.lerp(Cores.superficie, pelo, 0.04)!;
+    final ergue = switch (mood) {
+      Mood.missingYou => 1.0,
+      Mood.sleepy => 0.4,
+      _ => 0.0,
+    };
     for (final lado in [-1.0, 1.0]) {
+      final dentroY = -11 - 7 * ergue;
+      final foraY = -10 + 5 * ergue;
       canvas.drawPath(
         Path()
-          ..moveTo(lado * 4, -8)
-          ..quadraticBezierTo(lado * 16, -18, lado * 34, -10)
-          ..quadraticBezierTo(lado * 18, -13, lado * 4, -4)
+          ..moveTo(lado * 4, dentroY)
+          ..quadraticBezierTo(lado * 16, -18 - 2 * ergue, lado * 34, foraY)
+          ..quadraticBezierTo(
+              lado * 18, -13 + 2 * ergue, lado * 4, dentroY + 5)
           ..close(),
         _p(branco),
       );
@@ -2354,8 +2433,9 @@ class _PetPainter extends CustomPainter {
       _p(branco),
     );
 
-    _olho(canvas, const Offset(-19, 2), 9, coruja: true);
-    _olho(canvas, const Offset(19, 2), 9, coruja: true);
+    // Sem a sobrancelha de tristeza por cima: a branca já faz esse papel.
+    _olho(canvas, const Offset(-19, 2), 9, coruja: true, sobrancelha: false);
+    _olho(canvas, const Offset(19, 2), 9, coruja: true, sobrancelha: false);
 
     // Bico claro, amarelado, entre os discos.
     canvas.drawPath(
@@ -2431,6 +2511,7 @@ class _PetPainter extends CustomPainter {
     // --- cabeça -----------------------------------------------------------
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     canvas.rotate(_cabecaGiro * 0.9);
     canvas.scale(_cabecaDoEstagio);
 
@@ -2604,6 +2685,7 @@ class _PetPainter extends CustomPainter {
     // --- cabeça -----------------------------------------------------------
     canvas.save();
     canvas.translate(0, -34 + pose.respiro * amp * 0.6 + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     canvas.rotate(_cabecaGiro * 0.9);
     canvas.scale(_cabecaDoEstagio);
 
@@ -2632,10 +2714,16 @@ class _PetPainter extends CustomPainter {
           ..close(),
         branco,
       );
-      // A pele rosada entre o olho e o bico.
+      // A pele rosada entre o olho e o bico. No auge ela cresce e aviva,
+      // como na época de ninho: é a marca real do adulto pleno.
+      final auge = estagio == EstagioDoBicho.pleno;
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(lado * 8, 2), width: 7, height: 5),
-        _p(const Color(0xFFE7A3A0)),
+        Rect.fromCenter(
+          center: Offset(lado * 8, 2),
+          width: auge ? 10 : 7,
+          height: auge ? 7 : 5,
+        ),
+        _p(auge ? const Color(0xFFEE8E8B) : const Color(0xFFE7A3A0)),
       );
     }
     canvas.restore();
@@ -2691,13 +2779,16 @@ class _PetPainter extends CustomPainter {
     // como castor (laudo 08, R6). O humor decide a forma — em pé com a
     // ponta em gancho é o cumprimento do gato ao humano (radiante); baixa e
     // enrolada nos pés na saudade e no sono.
-    final (topoX, topoY, gancho) = switch (mood) {
-      Mood.radiant => (52.0, -34.0, 1.0),
-      Mood.content => (60.0, -14.0, 0.5),
-      Mood.neutral => (64.0, 4.0, 0.2),
-      Mood.sleepy => (40.0, 52.0, 0.0),
-      Mood.missingYou => (46.0, 50.0, 0.0),
-    };
+    (double, double, double) formaDoRabo(Mood m) => switch (m) {
+          Mood.radiant => (52.0, -34.0, 1.0),
+          Mood.content => (60.0, -14.0, 0.5),
+          Mood.neutral => (64.0, 4.0, 0.2),
+          Mood.sleepy => (40.0, 52.0, 0.0),
+          Mood.missingYou => (46.0, 50.0, 0.0),
+        };
+    final topoX = _porHumor((m) => formaDoRabo(m).$1);
+    final topoY = _porHumor((m) => formaDoRabo(m).$2);
+    final gancho = _porHumor((m) => formaDoRabo(m).$3);
     final rabo = Path()
       ..moveTo(26, 40)
       ..cubicTo(
@@ -2746,19 +2837,20 @@ class _PetPainter extends CustomPainter {
     // --- cabeça -----------------------------------------------------------
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     canvas.rotate(_cabecaGiro * 0.9);
     canvas.scale(_cabecaDoEstagio);
 
     // Orelhas triangulares de ponta fina, com a concha por dentro. Antes da
     // cabeça: a base some sob o contorno. O humor as gira para os lados —
     // nunca para trás, que no gato é medo (laudo 08, R4).
-    final abre = switch (mood) {
-      Mood.radiant => -0.04,
-      Mood.content => 0.0,
-      Mood.neutral => 0.10,
-      Mood.sleepy => 0.30,
-      Mood.missingYou => 0.40,
-    };
+    final abre = _porHumor((m) => switch (m) {
+          Mood.radiant => -0.04,
+          Mood.content => 0.0,
+          Mood.neutral => 0.10,
+          Mood.sleepy => 0.30,
+          Mood.missingYou => 0.40,
+        });
     for (final lado in [-1.0, 1.0]) {
       final treme = pose.orelha * 0.6 * lado;
       canvas.save();
@@ -2877,13 +2969,13 @@ class _PetPainter extends CustomPainter {
     // (laudo 08, R5). Sai baixa, atrás do corpo, e engrossa até a ponta.
     // O humor mexe nela: sobe no radiante, cai e encosta no chão na saudade
     // (laudo 08, R4 — a cauda é o canal que a raposa mais usa).
-    final ergue = switch (mood) {
-      Mood.radiant => -12.0,
-      Mood.content => 0.0,
-      Mood.neutral => 4.0,
-      Mood.sleepy => 12.0,
-      Mood.missingYou => 16.0,
-    };
+    final ergue = _porHumor((m) => switch (m) {
+          Mood.radiant => -12.0,
+          Mood.content => 0.0,
+          Mood.neutral => 4.0,
+          Mood.sleepy => 12.0,
+          Mood.missingYou => 16.0,
+        });
     final pontaX = 74 + balanca * 6;
     final pontaY = 2 + balanca * 7 + ergue;
     final cauda = Path()
@@ -2937,19 +3029,20 @@ class _PetPainter extends CustomPainter {
     // --- cabeça -----------------------------------------------------------
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     canvas.rotate(_cabecaGiro * 0.9);
     canvas.scale(_cabecaDoEstagio);
 
     // Orelhas grandes, em três camadas: pelo, concha branca e ponta escura.
     // O humor as abre para os lados: "orelha de avião" na saudade, quase
     // deitadas no sono, em pé no radiante.
-    final abre = switch (mood) {
-      Mood.radiant => -0.05,
-      Mood.content => 0.0,
-      Mood.neutral => 0.12,
-      Mood.sleepy => 0.38,
-      Mood.missingYou => 0.48,
-    };
+    final abre = _porHumor((m) => switch (m) {
+          Mood.radiant => -0.05,
+          Mood.content => 0.0,
+          Mood.neutral => 0.12,
+          Mood.sleepy => 0.38,
+          Mood.missingYou => 0.48,
+        });
     for (final lado in [-1.0, 1.0]) {
       final treme = pose.orelha * 0.6 * lado;
       final t = treme * 7;
@@ -3141,13 +3234,13 @@ class _PetPainter extends CustomPainter {
   /// boca ou sobrancelha. Num bicho cuja marca registrada **é** a orelha,
   /// desperdiçá-la como enfeite fixo seria jogar fora o melhor canal.
   double get _orelhaTomba {
-    final doHumor = switch (mood) {
-      Mood.radiant => 0.0,
-      Mood.content => 0.05,
-      Mood.neutral => 0.18,
-      Mood.sleepy => 0.58,
-      Mood.missingYou => 0.82,
-    };
+    final doHumor = _porHumor((m) => switch (m) {
+          Mood.radiant => 0.0,
+          Mood.content => 0.05,
+          Mood.neutral => 0.18,
+          Mood.sleepy => 0.58,
+          Mood.missingYou => 0.82,
+        });
     // Cochilando ela cai mesmo com humor alegre: o bicho está dormindo, e
     // orelha ereta num bicho de olhos fechados lê como bicho fingindo.
     return math.max(doHumor, acao == AcaoDoBicho.cochilo ? 0.62 : 0.0);
@@ -3173,6 +3266,7 @@ class _PetPainter extends CustomPainter {
     // passar de uns 9 px do topo — foi o que cortou o tufo da coruja.
     canvas.save();
     canvas.translate(0, -29 + pose.respiro * amp * 0.7 + _cabecaDesce);
+    _cabecaSemFolego(canvas);
     // A inclinação de cabeça do cão que não entende por que você sumiu. Meio
     // grau só; mais que isso e ele fica tonto em vez de sentido.
     canvas.rotate(_cabecaGiro * 0.9 + (triste ? 0.05 : 0));
@@ -3911,26 +4005,11 @@ class _PetPainter extends CustomPainter {
           }
         }
       case Species.penguin:
-        if (!temChapeu) {
-          for (final (dx, alto, inclina) in const [
-            (-4.0, 9.0, -0.4),
-            (0.0, 12.0, 0.0),
-            (4.0, 9.0, 0.4),
-          ]) {
-            canvas.save();
-            canvas.translate(dx, topo + 3);
-            canvas.rotate(inclina);
-            canvas.drawPath(
-              Path()
-                ..moveTo(-2.2, 0)
-                ..quadraticBezierTo(-1.5, -alto * 0.7, 0, -alto)
-                ..quadraticBezierTo(1.5, -alto * 0.7, 2.2, 0)
-                ..close(),
-              _p(const Color(0xFFF2C14E)),
-            );
-            canvas.restore();
-          }
-        }
+        // O magalhães não tem crista: a dourada de antes era de outro
+        // pinguim (auditoria da Onda 3, 11b-M3). No auge, a pele rosa entre
+        // o olho e o bico fica maior e mais viva, como na época de ninho —
+        // desenhada na própria cabeça ([_pinguim]).
+        break;
       case Species.cat:
         _borboleta(
             canvas, Offset(w * 0.62, topo - 4), const Color(0xFFE9A0C4));
@@ -4533,14 +4612,17 @@ class _PetPainter extends CustomPainter {
       // pelo aparecia em volta como uma viseira.
       canvas.save();
       canvas.clipPath(Path()..addOval(Rect.fromCircle(center: o, radius: r)));
+      // Na coruja a pálpebra é mais fina e mais clara: cor de pelo cobrindo
+      // metade do olho amarelo fazia um olhar de lado, meio fechado.
+      final sobe = coruja ? Offset(0, -r * 0.30) : Offset.zero;
       canvas.drawPath(
         Path()
-          ..moveTo(g.palpebraDentro.dx, g.palpebraDentro.dy)
-          ..lineTo(g.palpebraFora.dx, g.palpebraFora.dy)
+          ..moveTo(g.palpebraDentro.dx, g.palpebraDentro.dy + sobe.dy)
+          ..lineTo(g.palpebraFora.dx, g.palpebraFora.dy + sobe.dy)
           ..lineTo(g.palpebraFora.dx, o.dy - r * 1.35)
           ..lineTo(g.palpebraDentro.dx, o.dy - r * 1.35)
           ..close(),
-        _p(pelo),
+        _p(coruja ? Color.lerp(pelo, Cores.superficie, 0.35)! : pelo),
       );
       canvas.restore();
     }
@@ -4935,6 +5017,9 @@ class _PetPainter extends CustomPainter {
   bool shouldRepaint(covariant _PetPainter old) {
     return old.species != species ||
         old.mood != mood ||
+        old.corpoDe != corpoDe ||
+        old.corpoPara != corpoPara ||
+        old.mistura != mistura ||
         old.activity != activity ||
         old.pose.acao != pose.acao ||
         old.pose.ciclo != pose.ciclo ||

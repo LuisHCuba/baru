@@ -64,6 +64,8 @@ class _Desistencia extends StatelessWidget {
                   activity: Activity.idle,
                   coat: app.color,
                   estagio: app.estagioVisivel,
+                  roupas: app.roupasDoBicho,
+                  roupaDeCabeca: app.roupaDeCabeca,
                   scale: 1.15,
                 ),
                 const SizedBox(height: 22),

@@ -19,6 +19,24 @@ class PaywallScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(26, 22, 26, 34),
       child: Column(
         children: [
+          // Uma saída à vista: sem ela, só o voltar do aparelho tirava a
+          // pessoa daqui, e paywall sem saída é cerco (simulador, médio 18).
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Semantics(
+              button: true,
+              label: t.back,
+              child: GestureDetector(
+                onTap: app.voltar,
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: AppIcon(Icons.close_rounded, size: 24),
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -30,6 +48,8 @@ class PaywallScreen extends StatelessWidget {
                   activity: Activity.nap,
                   coat: app.color,
                   estagio: app.estagioVisivel,
+                  roupas: app.roupasDoBicho,
+                  roupaDeCabeca: app.roupaDeCabeca,
                 ),
                 const SizedBox(height: 18),
                 Text(

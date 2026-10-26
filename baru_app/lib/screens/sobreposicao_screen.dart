@@ -618,6 +618,8 @@ class _Balao extends StatelessWidget {
             activity: Activity.idle,
             coat: app.color,
             estagio: app.estagioVisivel,
+            roupas: app.roupasDoBicho,
+            roupaDeCabeca: app.roupaDeCabeca,
             scale: 0.62,
             interativo: false,
           ),

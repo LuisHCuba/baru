@@ -301,7 +301,10 @@ class _CenaDoCrescimentoState extends State<CenaDoCrescimento>
           animation: _c,
           builder: (context, _) {
             final v = _c.value;
-            final veu = (v / 0.08).clamp(0.0, 1.0);
+            // Começa já escuro: vindo logo depois da cena da raiz, um véu
+            // que nasce transparente deixava o resultado piscar aceso por
+            // um quadro entre as duas (simulador, médio 10).
+            final veu = 0.7 + 0.3 * (v / 0.08).clamp(0.0, 1.0);
 
             Widget palco;
             var clarao = 0.0;
@@ -383,7 +386,9 @@ class _CenaDoCrescimentoState extends State<CenaDoCrescimento>
 
             final texto = ((v - _textoDe) / (1 - _textoDe)).clamp(0.0, 1.0);
             return ColoredBox(
-              color: Cores.tintaA(0.93 * veu),
+              // Opaco: o resultado atrás aparecia pelo véu e brigava com a
+              // cena (simulador da Fase 4, médio 10).
+              color: Cores.tintaA(0.98 * veu),
               child: Stack(
                 children: [
                   Center(
@@ -451,8 +456,21 @@ class _CenaDoCrescimentoState extends State<CenaDoCrescimento>
                   if (clarao > 0)
                     Positioned.fill(
                       child: IgnorePointer(
-                        child: ColoredBox(
-                          color: Colors.white.withValues(alpha: clarao * 0.9),
+                        // O clarão é luz no bicho, não um véu branco na tela
+                        // inteira — sobre o fundo escuro aquilo virava um
+                        // flash cinza.
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              radius: 0.55,
+                              colors: [
+                                Colors.white.withValues(alpha: clarao * 0.95),
+                                Colors.white.withValues(alpha: clarao * 0.35),
+                                Colors.white.withValues(alpha: 0),
+                              ],
+                              stops: const [0, 0.45, 1],
+                            ),
+                          ),
                         ),
                       ),
                     ),

@@ -137,11 +137,19 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
   }
 
   void _onUserMessage(String message) {
+    // Na sessão o único botão da tela ("Desistir") fica embaixo: o recado
+    // sobe para não tapá-lo (simulador da Fase 4, médio 16).
+    final naSessao = state.screen == AppScreen.session;
+    final ctx = _scaffoldKey.currentState?.context;
+    final alto = ctx == null ? 0.0 : MediaQuery.sizeOf(ctx).height;
     _scaffoldKey.currentState?.showSnackBar(
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 5),
+        margin: naSessao && alto > 0
+            ? EdgeInsets.fromLTRB(16, 0, 16, alto * 0.62)
+            : null,
       ),
     );
   }

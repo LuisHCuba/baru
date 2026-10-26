@@ -112,6 +112,12 @@ class AppState extends ChangeNotifier {
       estagio.index > (estagioCelebrado[species.name] ?? 0);
 
   /// De onde a cena parte: o último estágio que a pessoa viu.
+  /// A atividade do bicho fora do habitat, onde não há água: o nado vira
+  /// ócio. Num cartão liso a linha d'água cortava o corpo no meio
+  /// (simulador da Fase 4, médio 9).
+  Activity get atividadeForaDaAgua =>
+      activity == Activity.swim ? Activity.idle : activity;
+
   /// O estágio que as telas desenham: o já visto, enquanto a cena de
   /// crescimento não passou.
   ///
@@ -970,6 +976,8 @@ class AppState extends ChangeNotifier {
   /// Fala de descanso, não de foco: são missões diferentes, e o texto de
   /// uma no lugar da outra confunde quem está lendo de relance.
   Future<void> _comecaAVigiarODescanso() async {
+    // Na web não há sobreposição: o aviso de permissão não se aplica.
+    if (kIsWeb) return;
     if (!await OverlayService.instance.temPermissao()) {
       onUserMessage?.call(t.vigiaSemPermissao);
       return;
@@ -1343,6 +1351,15 @@ class AppState extends ChangeNotifier {
   void abrePorEndereco(AppScreen tela) {
     // Quem não terminou o onboarding não entra por link.
     if (_pilha.first == AppScreen.onb && !companionshipStarted) return;
+    // Sessão em curso: um endereço (o voltar do navegador, um link) não a
+    // larga calado — pergunta, como o voltar do aparelho (simulador, 7).
+    if (running && tela != AppScreen.session) {
+      askQuit();
+      return;
+    }
+    // A sessão sem sessão: o voltar a partir do resultado caía num 00:00
+    // com "Desistir" ativo (simulador, 8).
+    if (tela == AppScreen.session && !running) tela = AppScreen.home;
     if (screen == tela) return;
     _restauraPilha(tela);
     notifyListeners();
@@ -2128,6 +2145,8 @@ class AppState extends ChangeNotifier {
   /// executa em segundo plano, e o único gatilho do companheiro só disparava
   /// quando a pessoa **voltava** — tarde demais para servir.
   Future<void> _comecaAVigiar() async {
+    // Na web não há sobreposição: o aviso de permissão não se aplica.
+    if (kIsWeb) return;
     // Sem "desenhar sobre outros apps" o vigia sobe, vê que a pessoa saiu, e
     // não consegue aparecer — em silêncio. Silêncio aqui é indistinguível de
     // "o app não funciona", que foi exatamente o relato.

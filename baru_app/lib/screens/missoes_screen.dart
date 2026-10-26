@@ -56,6 +56,8 @@ class MissoesScreen extends StatelessWidget {
     }
 
     final descanso = app.missaoDoDescanso;
+    final descansoPossivel =
+        descanso.estado != EstadoDaMissao.precisaPermissao;
     final retomada = app.missaoDeRetomada;
     final todas = [...app.missoesDiarias, ...app.missoesSemanais];
 
@@ -141,7 +143,10 @@ class MissoesScreen extends StatelessWidget {
           ),
         ],
         const SizedBox(height: Espaco.md),
-        CartaoDoDescanso(app: app),
+        // Sem o acesso ao uso o descanso não é a principal do dia: ele não
+        // tem como ser cumprido. Desce para "à espera", com o convite para
+        // conceder (simulador da Fase 4, médio 12).
+        if (descansoPossivel) CartaoDoDescanso(app: app),
         // Logo abaixo da principal, e acima de tudo o que é sorteado: no dia
         // em que ela existe, é o assunto do dia. Nos outros o bloco some
         // inteiro, porque `_Bloco` não desenha rótulo sobre lista vazia.
@@ -189,7 +194,10 @@ class MissoesScreen extends StatelessWidget {
         ),
         _Bloco(
           rotulo: t.mqEspera,
-          filhos: [for (final m in espera) CartaoDeMissao(app: app, missao: m)],
+          filhos: [
+            if (!descansoPossivel) CartaoDoDescanso(app: app),
+            for (final m in espera) CartaoDeMissao(app: app, missao: m),
+          ],
         ),
         _Bloco(
           rotulo: t.mqFeitas,
@@ -332,12 +340,14 @@ class CartaoDoDescanso extends StatelessWidget {
               spacing: Espaco.xs,
               runSpacing: Espaco.xs,
               children: [
-                Etiqueta(
-                  texto: t.mqPrincipal,
-                  cor: Cores.folha600,
-                  forte: !semPermissao,
-                  icone: Icons.bedtime_rounded,
-                ),
+                // "A principal" só quando dá para cumpri-la.
+                if (!semPermissao)
+                  Etiqueta(
+                    texto: t.mqPrincipal,
+                    cor: Cores.folha600,
+                    forte: true,
+                    icone: Icons.bedtime_rounded,
+                  ),
                 _Recompensa(
                   folhas: m.folhas,
                   xp: m.xp,

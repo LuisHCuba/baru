@@ -1138,7 +1138,7 @@ const _pt = <String, Object>{
   },
   'shareMeta': 'Imagem · 402 × 296',
   'shareNote':
-      'Folha de compartilhamento nativa. A fase 1 compartilha um screenshot do habitat.',
+      'Vai como imagem: o habitat de hoje, do jeito que está.',
   'shareDone': 'Pronto',
   'shareFail': 'Não deu para compartilhar agora. Tente de novo.',
   'streakOne': 'Raiz de 1 dia',
@@ -1681,7 +1681,7 @@ const _en = <String, Object>{
   },
   'shareMeta': 'Image · 402 × 296',
   'shareNote':
-      'Native share sheet. Phase 1 shares a screenshot of the habitat.',
+      'It goes as an image: today’s habitat, just as it is.',
   'shareDone': 'Done',
   'shareFail': "Couldn't share just now. Try again.",
   'streakOne': '1-day roots',
@@ -2225,7 +2225,7 @@ const _es = <String, Object>{
   },
   'shareMeta': 'Imagen · 402 × 296',
   'shareNote':
-      'Hoja de compartir nativa. La fase 1 comparte una captura del hábitat.',
+      'Va como imagen: el hábitat de hoy, tal como está.',
   'shareDone': 'Listo',
   'shareFail': 'No se pudo compartir ahora. Inténtalo de nuevo.',
   'streakOne': 'Raíz de 1 día',
@@ -2734,7 +2734,7 @@ const _zh = <String, Object>{
     'frenchie': '法国斗牛犬',
   },
   'shareMeta': '图片 · 402 × 296',
-  'shareNote': '系统分享面板。第一阶段分享栖息地截图。',
+  'shareNote': '以图片分享：今天的栖息地，原样呈现。',
   'shareDone': '完成',
   'shareFail': '现在无法分享。请再试一次。',
   'streakOne': '1 天的根',

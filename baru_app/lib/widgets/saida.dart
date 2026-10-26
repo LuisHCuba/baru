@@ -91,9 +91,11 @@ class _FolhaDeSaidaState extends State<FolhaDeSaida>
                             child: PetView(
                               species: app.species,
                               mood: app.mood,
-                              activity: app.activity,
+                              activity: app.atividadeForaDaAgua,
                               coat: app.color,
                               estagio: app.estagioVisivel,
+                              roupas: app.roupasDoBicho,
+                              roupaDeCabeca: app.roupaDeCabeca,
                               scale: 0.9,
                               interativo: false,
                             ),

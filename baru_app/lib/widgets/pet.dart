@@ -498,14 +498,28 @@ class _PetViewState extends State<PetView>
   /// O motor pede um gesto da coreografia (sacudir ao cair do colo, depois
   /// de um espirro; espreguiçar ao sair do descanso; coçar).
   void _eventoDaVida(EventoDaVida e) {
-    if (!mounted || !_continuoLigado || _gestoAtual != GestoOcioso.nenhum) {
+    if (!mounted || !_continuoLigado) return;
+    // A orelha é independente do resto: mexe vigiando, mexe sonhando.
+    if (e == EventoDaVida.orelha) {
+      if (!_orelha.isAnimating) {
+        _orelha.forward(from: 0).then((_) {
+          if (mounted) _orelha.value = 0;
+        });
+      }
       return;
     }
-    if (_acao != AcaoDoBicho.ocioso && e != EventoDaVida.sacode) return;
+    if (_gestoAtual != GestoOcioso.nenhum) return;
+    if (_acaoDesenhada != AcaoDoBicho.ocioso &&
+        e != EventoDaVida.sacode &&
+        e != EventoDaVida.fareja) {
+      return;
+    }
     final gesto = switch (e) {
       EventoDaVida.sacode => GestoOcioso.sacode,
       EventoDaVida.espreguica => GestoOcioso.espreguica,
       EventoDaVida.coca => GestoOcioso.coca,
+      EventoDaVida.fareja => GestoOcioso.fareja,
+      EventoDaVida.orelha => GestoOcioso.nenhum,
     };
     setState(() => _gestoAtual = gesto);
     PetView.observadorDeGesto?.value = gesto;
@@ -552,6 +566,17 @@ class _PetViewState extends State<PetView>
       ..ocupado = acao == AcaoDoBicho.cochilo ||
           acao == AcaoDoBicho.voo ||
           _comendo >= 0
+      ..modo = switch (acao) {
+        AcaoDoBicho.pasto => ModoDaAtividade.pastar,
+        AcaoDoBicho.petisco => ModoDaAtividade.petiscar,
+        AcaoDoBicho.nado => ModoDaAtividade.nadar,
+        AcaoDoBicho.brincadeira => ModoDaAtividade.brincar,
+        // O recém-nascido no ninho só dorme: sem sonho nem virar de lado.
+        AcaoDoBicho.cochilo => widget.estagio == EstagioDoBicho.inicio
+            ? ModoDaAtividade.livre
+            : ModoDaAtividade.dormir,
+        _ => ModoDaAtividade.livre,
+      }
       ..dormindo = acao == AcaoDoBicho.cochilo
       ..nadando = acao == AcaoDoBicho.nado
       ..posturaLivre = _acaoDesenhada == AcaoDoBicho.ocioso
@@ -776,6 +801,16 @@ class _PetViewState extends State<PetView>
     final a = _acao;
     if (a == AcaoDoBicho.nado || a == AcaoDoBicho.cochilo) return a;
     if (_comendo >= 0) return AcaoDoBicho.petisco;
+    final q = _quadroDaVida.value;
+    // Brincar agora é do motor (botes, disparadas, reverências, pulos): o
+    // desenho fica no corpo livre. E na pausa entre os episódios de comer,
+    // também: é ali que cabem o espreguiçar, o coçar, o farejar.
+    if (q.atividadeAtiva &&
+        (a == AcaoDoBicho.brincadeira ||
+            ((a == AcaoDoBicho.pasto || a == AcaoDoBicho.petisco) &&
+                q.corpoLivre))) {
+      return AcaoDoBicho.ocioso;
+    }
     if (_vida.noColo ||
         _vida.interessado ||
         _vida.intencao == IntencaoDoBicho.festejar ||
@@ -902,7 +937,7 @@ class _PetViewState extends State<PetView>
     final espera = Duration(milliseconds: 5000 + _sorte.nextInt(7000));
     _proximoGesto = Timer(espera, () async {
       if (!mounted || !_continuoLigado) return;
-      if (_acao != AcaoDoBicho.ocioso ||
+      if (_acaoDesenhada != AcaoDoBicho.ocioso ||
           _toque.isAnimating ||
           _vida.noColo ||
           _vida.intencao == IntencaoDoBicho.passear ||
@@ -1242,12 +1277,17 @@ class _PetViewState extends State<PetView>
               // do petisco (0,26–0,72) esticada nos 2,4 s.
               ciclo: _comendo >= 0
                   ? 0.27 + 0.44 * _comendo
-                  : _quadroDaVida.value.ciclo,
+                  : _quadroDaVida.value.atividadeAtiva &&
+                          _acaoDesenhada == AcaoDoBicho.nado
+                      // A remada só anda remando: desliza parada, boia lenta.
+                      ? _quadroDaVida.value.cicloDaAtividade
+                      : _quadroDaVida.value.ciclo,
               respiro: _quadroDaVida.value.respiro,
               boia: _quadroDaVida.value.boia,
               cauda: _quadroDaVida.value.cauda,
               vida: _quadroDaVida.value,
               sombra: widget.sombra,
+              comendoDaMao: _comendo >= 0,
               pisca: math.max(_pisca.value, _quadroDaVida.value.pisca),
               orelha: _orelha.value,
               toque: _toque.value,
@@ -1443,7 +1483,11 @@ class _Pose {
     this.gosto = 0,
     this.vida = const SaidaDaVida(),
     this.sombra = false,
+    this.comendoDaMao = false,
   });
+
+  /// Comendo a castanha que a pessoa deu: a mastigação é a do laço.
+  final bool comendoDaMao;
 
   /// O quadro do motor de vida: passeio, salto, colo, inclinação,
   /// achatamento. Zerado no quadro fixo e com movimento reduzido.
@@ -1601,7 +1645,7 @@ class _Pose {
   /// pelo próprio alcance. Na água a excursão passa de 1 de propósito:
   /// remada curta lê como tremor, não como braçada.
   double get pernas => switch (acao) {
-        AcaoDoBicho.nado => math.sin(_volta) * 2.4,
+        AcaoDoBicho.nado => math.sin(_volta) * 2.4 * _forcaDoNado,
         AcaoDoBicho.brincadeira => math.sin(_volta) * 1.6,
         // Andando, as patas seguem o passo do motor de vida.
         _ => boia + vida.passada * 3,
@@ -1611,9 +1655,14 @@ class _Pose {
   /// remada; no resto, só acompanham a respiração como sempre acompanharam.
   double get asa => switch (acao) {
         AcaoDoBicho.voo => math.sin(_volta) * 3.6,
-        AcaoDoBicho.nado => math.sin(_volta - math.pi / 2) * 1.7,
+        AcaoDoBicho.nado =>
+          math.sin(_volta - math.pi / 2) * 1.7 * _forcaDoNado,
         _ => respiro,
       };
+
+  /// Remando forte, 1; deslizando, as patas param; boiando, mal mexem.
+  double get _forcaDoNado =>
+      vida.atividadeAtiva ? 0.15 + 0.85 * vida.forcaDaAtividade : 1;
 
   /// O corpo sobe na batida de asa — e sobe **atrasado** em relação a ela.
   /// Em fase, a coruja parecia um elevador; atrasada, ela voa.
@@ -1644,6 +1693,12 @@ class _Pose {
   /// diferente de `idle` para quem pediu menos movimento. A parcela animada
   /// é que reduz.
   double get cabecaDesce => switch (acao) {
+        // Em episódios, o motor diz onde está a cabeça (bocada, mastigar de
+        // cabeça erguida, vigiar); o laço fica para o quadro fixo.
+        AcaoDoBicho.pasto when vida.atividadeAtiva && !comendoDaMao =>
+          6 + vida.cabecaNoChao * 26 * amplitude,
+        AcaoDoBicho.petisco when vida.atividadeAtiva && !comendoDaMao =>
+          4 + vida.cabecaNoChao * 17 * amplitude,
         AcaoDoBicho.pasto =>
           6 + _fase(ciclo, 0.04, 0.12, 0.14, 0.66) * 26 * amplitude,
         AcaoDoBicho.petisco =>
@@ -1653,6 +1708,9 @@ class _Pose {
 
   /// Mastigar: 0 a 1, a boca abrindo e fechando na janela de comer.
   double get mastiga {
+    if (pastando && vida.atividadeAtiva && !comendoDaMao) {
+      return vida.mastigando * amplitude;
+    }
     final janela = switch (acao) {
       AcaoDoBicho.pasto => _fase(ciclo, 0.16, 0.06, 0.06, 0.62),
       AcaoDoBicho.petisco => _fase(ciclo, 0.26, 0.06, 0.08, 0.72),
@@ -1667,7 +1725,8 @@ class _Pose {
 
   /// A varredura de cabeça de quem levantou do pasto e olha em volta.
   double get olhadaDoPasto {
-    if (!pastando) return 0;
+    // Em episódios a vigilância é do olhar do motor (a virada da cabeça).
+    if (!pastando || vida.atividadeAtiva) return 0;
     final janela = _fase(ciclo, 0.70, 0.08, 0.10, 0.94);
     if (janela <= 0) return 0;
     return math.sin((ciclo - 0.70) / 0.24 * math.pi * 2) * janela * amplitude;
@@ -1974,7 +2033,11 @@ class _PetPainter extends CustomPainter {
       // Na água o corpo sobe e desce com a braçada, não com a boia: é a
       // remada que levanta o dorso, e o atraso de meia fase é o que dá peso.
       AcaoDoBicho.nado =>
-        afunda + math.sin(pose.ciclo * math.pi * 2 - 0.9) * 3.4 * amp,
+        afunda +
+            math.sin(pose.ciclo * math.pi * 2 - 0.9) *
+                3.4 *
+                amp *
+                pose._forcaDoNado,
       AcaoDoBicho.voo => -14 - pose.impulsoDoVoo * 7,
       AcaoDoBicho.cochilo => 6 + sopro * 2.6,
       AcaoDoBicho.pasto || AcaoDoBicho.petisco => boia * 1.2,
@@ -2056,7 +2119,10 @@ class _PetPainter extends CustomPainter {
       // Rola de um lado para o outro na braçada — é a ondulação do nado.
       // Quem mergulha rola mais: o corpo dele é o remo.
       AcaoDoBicho.nado => -0.04 +
-          math.sin(pose.ciclo * math.pi * 2) * (mergulha ? 0.10 : 0.045) * amp,
+          math.sin(pose.ciclo * math.pi * 2) *
+              (mergulha ? 0.10 : 0.045) *
+              amp *
+              pose._forcaDoNado,
       AcaoDoBicho.voo => math.sin(pose.ciclo * math.pi * 2) * 0.05 * amp,
       // A inclinação acompanha a cabeça: quanto mais baixa, mais o corpo
       // vai junto. Cabeça descendo com o corpo reto lê como pescoço quebrado.

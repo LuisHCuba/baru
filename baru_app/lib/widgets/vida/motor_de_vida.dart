@@ -34,6 +34,8 @@ import 'dart:ui' show Offset;
 
 import 'dinamica.dart';
 
+part 'episodios.dart';
+
 /// O que o bicho está fazendo por conta própria.
 enum IntencaoDoBicho {
   /// Parado, respirando, olhando por aí.
@@ -68,6 +70,12 @@ enum EventoDaVida {
 
   /// Coçar.
   coca,
+
+  /// Uma orelha que mexe (vigiando, sonhando).
+  orelha,
+
+  /// Fungadas de focinho no chão (chegou num tufo novo).
+  fareja,
 }
 
 /// Onde o dedo está no corpo, para o carinho.
@@ -133,7 +141,32 @@ class SaidaDaVida {
     this.cabecaAtraso = Offset.zero,
     this.cabecaGiro = 0,
     this.cabecaDesce = 0,
+    this.atividadeAtiva = false,
+    this.corpoLivre = true,
+    this.cabecaNoChao = 0,
+    this.mastigando = 0,
+    this.forcaDaAtividade = 1,
+    this.cicloDaAtividade = 0,
   });
+
+  /// A atividade está em episódios (o motor conduz). Falso no quadro fixo e
+  /// com movimento reduzido: aí o desenho usa a pose de repouso do laço.
+  final bool atividadeAtiva;
+
+  /// O episódio da vez é a pausa: o desenho mostra o ócio.
+  final bool corpoLivre;
+
+  /// 0..1: a cabeça no chão (pastando).
+  final double cabecaNoChao;
+
+  /// 0..1: a boca abrindo, na bocada ou na mastigação.
+  final double mastigando;
+
+  /// 0..1: o esforço da atividade (remando forte, deslizando, boiando).
+  final double forcaDaAtividade;
+
+  /// 0..1, dando a volta: a fase da remada, que só anda remando.
+  final double cicloDaAtividade;
 
   /// O quanto a cabeça ficou para trás do corpo (unidades), pela mola que
   /// a faz seguir o corpo com atraso.
@@ -273,6 +306,37 @@ class MotorDeVida {
   /// 0..1: a energia do humor. Radiante festeja e passeia mais; com sono,
   /// quase nada.
   double energia = 0.6;
+
+  /// O que a atividade pede: pastar, nadar, brincar, dormir — ou nada.
+  ModoDaAtividade modo = ModoDaAtividade.livre;
+
+  // --- episódios (ver episodios.dart) ----------------------------------
+  Episodio _ep = Episodio.pausa;
+  ModoDaAtividade _modoAntes = ModoDaAtividade.livre;
+  double _epInicio = 0;
+  double _epFim = 0;
+  final List<Episodio> _historico = [];
+  int _mordidasFaltando = 0;
+  double _proximaMordida = 0;
+  double _faseMordida = 1;
+  double _ritmoMastiga = 2.2;
+  double _faseMastiga = 0;
+  double _mastigando = 0;
+  double _ritmoRemada = 1.2;
+  double _faseAtividade = 0;
+  bool _boteSaltou = false;
+  int _voltasDaDisparada = 0;
+  int _giros = 0;
+  double _proximoGiro = 0;
+  int _pulosFaltando = 0;
+  double _suspiroT = 0;
+  double _proximoTremelique = 0;
+  bool _corpoLivre = true;
+  final _cabecaNoChao = Mola(f: 2, zeta: 0.7);
+  final _forcaDaAtividade = Mola(f: 1.4, zeta: 0.9);
+
+  /// O episódio da vez (para teste e diagnóstico).
+  Episodio get episodio => _ep;
 
   /// A bola ou o petisco no habitat. Nulo: nada chamando a atenção.
   InteresseDoBicho? interesse;
@@ -697,7 +761,12 @@ class MotorDeVida {
             0.22 * _rFundura.em(_t * 0.07) +
             (descansando ? 0.25 : 0) +
             (_agitacao > 0.5 ? 0.3 : 0);
-    final respiro = math.sin(_faseRespiro * 2 * math.pi) * fundura;
+    // O suspiro do sono: um fôlego bem mais fundo, uma vez.
+    final suspiro = modo == ModoDaAtividade.dormir && _ep == Episodio.suspiro
+        ? math.sin((_suspiroT / 2.6).clamp(0.0, 1.0) * math.pi) * 1.3
+        : 0.0;
+    final respiro =
+        math.sin(_faseRespiro * 2 * math.pi) * fundura * (1 + suspiro);
 
     // O laço da atividade: cadência ±15%.
     _faseCiclo += dt / (periodoCiclo * (1 + 0.15 * _rCadencia.em(_t * 0.05)));
@@ -718,19 +787,29 @@ class MotorDeVida {
     _rebola = 0;
     final perseguia = _perseguindo;
     _perseguindo = interessado && !ocupado && podeAndar;
+    var livre = true;
     if (_perseguindo) {
       _persegue();
-    } else if (!ocupado) {
-      _largaAEspreita();
-      _olhouAntesDeIr = -1;
-      // Perdeu o interesse no meio do caminho: para onde está.
-      if (perseguia) _alvoX = _px;
-      _decide();
-      _comportamento();
-    } else if (_intencao != IntencaoDoBicho.estar) {
-      _mudaPara(IntencaoDoBicho.estar, 1);
-      _alvoDoOlhar = Offset.zero;
+    } else {
+      // A atividade em episódios; na pausa, o corpo volta ao cérebro livre.
+      if (modo != ModoDaAtividade.livre &&
+          !reduzido &&
+          (!ocupado || modo == ModoDaAtividade.dormir)) {
+        livre = _passoDosEpisodios(dt);
+      }
+      if (!ocupado && livre) {
+        _largaAEspreita();
+        _olhouAntesDeIr = -1;
+        // Perdeu o interesse no meio do caminho: para onde está.
+        if (perseguia) _alvoX = _px;
+        _decide();
+        _comportamento();
+      } else if (ocupado && _intencao != IntencaoDoBicho.estar) {
+        _mudaPara(IntencaoDoBicho.estar, 1);
+        _alvoDoOlhar = Offset.zero;
+      }
     }
+    _corpoLivre = livre;
     // Ocupado (comendo, dormindo) ou sem poder andar: os pés ficam.
     if (ocupado || !podeAndar) _alvoX = _px;
     if (_desviraEm > 0 && _t >= _desviraEm) {
@@ -897,6 +976,12 @@ class MotorDeVida {
       cabecaAtraso: atraso * a,
       cabecaGiro: gesto.dx * a,
       cabecaDesce: gesto.dy * a,
+      atividadeAtiva: modo != ModoDaAtividade.livre && !reduzido,
+      corpoLivre: _corpoLivre,
+      cabecaNoChao: _cabecaNoChao.valor.clamp(0.0, 1.2),
+      mastigando: _mastigando,
+      forcaDaAtividade: _forcaDaAtividade.valor.clamp(0.0, 1.0),
+      cicloDaAtividade: _faseAtividade % 1,
     );
   }
 

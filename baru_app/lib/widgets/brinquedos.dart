@@ -544,6 +544,9 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     final c = _castanha;
     const alvoDaBola = 56.0;
     final pote = widget.ondeDoPote == null ? 46.0 : 34 * _g.escala;
+    // O alvo do dedo nunca é menor que 48: a tigela em 320 px tinha 34
+    // (auditoria de dcf82c9, 3). O desenho fica no meio.
+    final alvo = math.max(48.0, pote);
     final poteCheio = _t >= _poteVoltaEm && c == null;
     final o = widget.ondeDoPote;
     return Stack(
@@ -569,11 +572,11 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
         // O potinho de petiscos: no canto de baixo, ou onde a cena disser.
         if (widget.comPote)
           Positioned(
-            left: o == null ? 10 : o.dx - pote / 2,
+            left: o == null ? 10 : o.dx - alvo / 2,
             bottom: o == null ? 10 : null,
-            top: o == null ? null : o.dy - pote * 0.9,
-            width: pote,
-            height: pote,
+            top: o == null ? null : o.dy - pote * 0.9 - (alvo - pote) / 2,
+            width: alvo,
+            height: alvo,
             child: Semantics(
               button: true,
               label: widget.rotuloDoPetisco,
@@ -588,14 +591,19 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
                   anda: (d) => _arrastaCastanha(d.delta),
                   fim: (_) => _soltaCastanha(),
                 ),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 300),
-                  opacity: poteCheio || o != null ? 1 : 0.45,
-                  child: CustomPaint(
-                    painter: _PintaPote(
-                      cheio: poteCheio,
-                      petisco: petiscoDe(widget.especie),
-                      noChao: o != null,
+                child: Center(
+                  child: SizedBox.square(
+                    dimension: pote,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: poteCheio || o != null ? 1 : 0.45,
+                      child: CustomPaint(
+                        painter: _PintaPote(
+                          cheio: poteCheio,
+                          petisco: petiscoDe(widget.especie),
+                          noChao: o != null,
+                        ),
+                      ),
                     ),
                   ),
                 ),

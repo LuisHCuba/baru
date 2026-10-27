@@ -291,6 +291,9 @@ class MotorDeVida {
   /// A cena quer ele na água (o humor pede nadar): chegando à beira, entra.
   bool chamadoPelaAgua = false;
 
+  /// Está na água agora (ver `PetView.naAgua`).
+  bool naAgua = false;
+
   /// Onde ele está, em unidades (para a cena saber a zona).
   double get posicao => _px;
 

@@ -168,7 +168,6 @@ class MundoDoBaruState extends State<MundoDoBaru>
 
   GeometriaDoMundo? _g;
   bool _parado = false;
-  double _baixo = 0;
 
   @override
   void initState() {
@@ -365,13 +364,22 @@ class MundoDoBaruState extends State<MundoDoBaru>
       label: app.displayName,
       child: LayoutBuilder(
         builder: (context, c) {
-          // O maior "pé" já visto: com uma folha aberta o painel some, e o
-          // mundo não pode pular por isso.
-          _baixo = math.max(_baixo, MediaQuery.paddingOf(context).bottom);
-          final g = GeometriaDoMundo(
-            Size(c.maxWidth, c.maxHeight),
-            baixo: _baixo,
-          );
+          // O pé é a altura medida do painel. Com outra coisa por cima (uma
+          // folha, uma tela de detalhe entrando) o mundo fica como estava:
+          // o corpo encolhia no meio da transição e o chão pulava 150 px
+          // (auditoria de dcf82c9, 2).
+          final anterior = _g;
+          final GeometriaDoMundo g;
+          if (anterior != null && !(ModalRoute.isCurrentOf(context) ?? true)) {
+            g = anterior;
+          } else {
+            g = GeometriaDoMundo(
+              Size(c.maxWidth, c.maxHeight),
+              baixo: app.alturaDoPainel > 0
+                  ? app.alturaDoPainel
+                  : MediaQuery.paddingOf(context).bottom,
+            );
+          }
           final primeira = _g == null;
           _g = g;
           if (primeira) {
@@ -487,6 +495,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                     ? g.faixa(ZonasDoMundo.brinquedos)
                                     : g.terra,
                                 destino: _destino(app, g),
+                                naAgua: naAgua,
                                 chamadoPelaAgua:
                                     !naAgua && _querAgua(app) ||
                                     naAgua && !_querAgua(app),
@@ -505,8 +514,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                     brinquedos.currentState?.alcancou(tipo, x),
                                 aoMudarDeLugar:
                                     _nadador(app) &&
-                                        app.species != Species.axolotl &&
-                                        app.activity != Activity.nap
+                                        app.species != Species.axolotl
                                     ? (agua) => _trocaDeLugar(app, agua)
                                     : null,
                                 ausenciaAoAbrir: Duration(

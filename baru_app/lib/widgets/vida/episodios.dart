@@ -523,11 +523,7 @@ extension _Episodios on MotorDeVida {
         // Da terra a água chama para entrar; da água, a terra chama para
         // sair. Sempre "entrar" fazia o nadador ir e voltar à beira para
         // sempre (auditoria de d59006a, 2).
-        _comecaEpisodio(
-          modo == ModoDaAtividade.nadar
-              ? Episodio.sairDaAgua
-              : Episodio.entrarNaAgua,
-        );
+        _comecaEpisodio(naAgua ? Episodio.sairDaAgua : Episodio.entrarNaAgua);
       } else {
         _escolheEpisodio();
       }

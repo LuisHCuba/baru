@@ -304,6 +304,7 @@ class PetView extends StatefulWidget {
     this.limites,
     this.destino,
     this.chamadoPelaAgua = false,
+    this.naAgua = false,
     this.posicao,
   });
 
@@ -315,6 +316,11 @@ class PetView extends StatefulWidget {
 
   /// O humor pede nadar: chegando à beira, ele entra.
   final bool chamadoPelaAgua;
+
+  /// Está na água agora (no mundo da home). É o que diz se a beira chama
+  /// para entrar ou para sair — o modo não diz: dormindo na água o modo é
+  /// "dormir", e ele pulava na água em que já estava.
+  final bool naAgua;
 
   /// Escrito a cada quadro: onde ele está (unidades), para a câmera do
   /// mundo e a zona.
@@ -618,6 +624,7 @@ class _PetViewState extends State<PetView>
       ..limiteDireito = widget.limites?.$2
       ..destino = widget.destino
       ..chamadoPelaAgua = widget.chamadoPelaAgua
+      ..naAgua = widget.naAgua
       ..dormindo = acao == AcaoDoBicho.cochilo
       ..nadando = acao == AcaoDoBicho.nado
       ..posturaLivre = _acaoDesenhada == AcaoDoBicho.ocioso

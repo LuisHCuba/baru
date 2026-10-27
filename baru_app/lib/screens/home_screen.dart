@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n_humor.dart';
 import '../l10n_loja.dart';
+import '../l10n_missoes.dart';
 import '../data/crescimento.dart';
 import '../models.dart';
 import '../state.dart';
@@ -161,19 +162,24 @@ class AcessorioDaHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final t = app.t;
+    if (app.missoesResgataveis > 0) garanteTextosDeMissoes();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // A alça: tocar ou puxar para cima abre o resto do dia.
         Semantics(
           button: true,
-          label: t.seuDia,
+          // O pontinho de "tem prêmio" também se ouve (auditoria, 6).
+          label: app.missoesResgataveis > 0
+              ? '${t.seuDia}, '
+                    '${t.fill(t.mqQuantasColher, {'n': app.missoesResgataveis})}'
+              : t.seuDia,
           child: GestureDetector(
             key: HomeScreen.seuDiaKey,
             behavior: HitTestBehavior.opaque,
-            onTap: () => _abreSeuDia(context),
+            onTap: _abreSeuDia,
             onVerticalDragEnd: (d) {
-              if ((d.primaryVelocity ?? 0) < -150) _abreSeuDia(context);
+              if ((d.primaryVelocity ?? 0) < -150) _abreSeuDia();
             },
             child: SizedBox(
               height: 34,
@@ -243,8 +249,10 @@ class AcessorioDaHome extends StatelessWidget {
                   expande: false,
                   icone: const Icon(Icons.timer_outlined, size: 18),
                   rotulo: _rotuloDaDuracao(app, app.dur),
-                  aoTocar: () =>
-                      _escolheDuracao(navegador.currentContext ?? context, app),
+                  aoTocar: () {
+                    final c = navegador.currentContext;
+                    if (c != null) _escolheDuracao(c, app);
+                  },
                 ),
               ),
             ],
@@ -254,8 +262,12 @@ class AcessorioDaHome extends StatelessWidget {
     );
   }
 
-  void _abreSeuDia(BuildContext context) =>
-      SeuDia.abre(navegador.currentContext ?? context);
+  // Sem o contexto do `Navigator` não há onde abrir a folha: o da casca
+  // fica fora dele (auditoria, 7).
+  void _abreSeuDia() {
+    final c = navegador.currentContext;
+    if (c != null) SeuDia.abre(c);
+  }
 
   static String _rotuloDaDuracao(AppState app, int min) =>
       app.lang == 'zh' ? '$min分' : '$min${app.lang == 'en' ? 'm' : 'min'}';
@@ -552,40 +564,43 @@ class SeuDia extends StatelessWidget {
         backgroundColor: Colors.transparent,
         builder: (context) => AppScope(
           state: app,
-          child: DraggableScrollableSheet(
-            initialChildSize: 0.72,
-            minChildSize: 0.4,
-            maxChildSize: 0.94,
-            expand: false,
-            builder: (context, rolagem) => Container(
-              decoration: const BoxDecoration(
-                color: Cores.superficie,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              ),
-              child: ListenableBuilder(
-                listenable: app,
-                builder: (context, _) => ListView(
-                  controller: rolagem,
-                  padding: EdgeInsets.fromLTRB(
-                    Espaco.lg,
-                    Espaco.sm,
-                    Espaco.lg,
-                    Espaco.xl + MediaQuery.paddingOf(context).bottom,
-                  ),
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 42,
-                        height: 5,
-                        margin: const EdgeInsets.only(bottom: Espaco.md),
-                        decoration: BoxDecoration(
-                          color: Cores.tinta.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(9),
+          child: _FechaAoSair(
+            app: app,
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.72,
+              minChildSize: 0.4,
+              maxChildSize: 0.94,
+              expand: false,
+              builder: (context, rolagem) => Container(
+                decoration: const BoxDecoration(
+                  color: Cores.superficie,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: ListenableBuilder(
+                  listenable: app,
+                  builder: (context, _) => ListView(
+                    controller: rolagem,
+                    padding: EdgeInsets.fromLTRB(
+                      Espaco.lg,
+                      Espaco.sm,
+                      Espaco.lg,
+                      Espaco.xl + MediaQuery.paddingOf(context).bottom,
+                    ),
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 42,
+                          height: 5,
+                          margin: const EdgeInsets.only(bottom: Espaco.md),
+                          decoration: BoxDecoration(
+                            color: Cores.tinta.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
                         ),
                       ),
-                    ),
-                    SeuDia(app: app),
-                  ],
+                      SeuDia(app: app),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -978,4 +993,46 @@ class _ResumoDeMissoes extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Fecha a folha quando um cartão dela leva para outra tela: deixá-la
+/// aberta por baixo fazia ela voltar no "voltar", e o painel da home ficava
+/// escondido enquanto isso (auditoria de dcf82c9, 4).
+class _FechaAoSair extends StatefulWidget {
+  const _FechaAoSair({required this.app, required this.child});
+
+  final AppState app;
+  final Widget child;
+
+  @override
+  State<_FechaAoSair> createState() => _FechaAoSairState();
+}
+
+class _FechaAoSairState extends State<_FechaAoSair> {
+  @override
+  void initState() {
+    super.initState();
+    widget.app.addListener(_ouve);
+  }
+
+  @override
+  void dispose() {
+    widget.app.removeListener(_ouve);
+    super.dispose();
+  }
+
+  void _ouve() {
+    if (widget.app.screen == AppScreen.home) return;
+    widget.app.removeListener(_ouve);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final rota = ModalRoute.of(context);
+      if (rota != null && rota.isActive) {
+        Navigator.of(context).removeRoute(rota);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

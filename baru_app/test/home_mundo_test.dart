@@ -143,4 +143,39 @@ void main() {
     expect(acao.top, greaterThan(892 * 0.7));
     await _fecha(tester);
   });
+
+  testWidgets('o painel sai da frente do pedido para sair', (tester) async {
+    // O "Começar foco" mora na casca, fora da cena: sem isto ele ficava
+    // tocável por baixo do pedido para sair (auditoria de dcf82c9, 1).
+    final app = await _abre(tester);
+    expect(find.text('Começar foco'), findsOneWidget);
+    app.pedindoParaSair = true;
+    app.notifyListeners();
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(find.text('Começar foco').hitTestable(), findsNothing);
+    await _fecha(tester);
+  });
+
+  testWidgets('um cartão do "Seu dia" fecha a folha ao sair', (tester) async {
+    final app = await _abre(tester);
+    await tester.tap(find.byKey(HomeScreen.seuDiaKey));
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(app.folhasDaHome, 1);
+    app.go(AppScreen.report);
+    for (var i = 0; i < 16; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(app.folhasDaHome, 0);
+    app.voltar();
+    for (var i = 0; i < 16; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(app.screen, AppScreen.home);
+    expect(find.text('Começar foco'), findsOneWidget);
+    await _fecha(tester);
+  });
 }

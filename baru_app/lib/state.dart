@@ -762,6 +762,17 @@ class AppState extends ChangeNotifier {
   /// o painel de baixo sai da frente. Não se grava: é só da tela.
   int folhasDaHome = 0;
 
+  /// A altura do painel de baixo da home (abas e acessório), medida. O
+  /// mundo se arruma acima dela. Ler o `padding` do `MediaQuery` não serve:
+  /// ele muda no meio da troca de tela e o chão pulava.
+  double alturaDoPainel = 0;
+
+  void defineAlturaDoPainel(double h) {
+    if ((h - alturaDoPainel).abs() < 0.5) return;
+    alturaDoPainel = h;
+    notifyListeners();
+  }
+
   /// Abre uma folha da home contando-a enquanto durar.
   Future<void> comFolhaDaHome(Future<void> Function() abre) async {
     folhasDaHome++;

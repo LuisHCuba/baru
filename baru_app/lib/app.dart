@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'data/app_snapshot.dart';
 import 'data/repositories.dart';
@@ -293,6 +294,38 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
   }
 }
 
+/// Mede a altura do filho a cada layout e avisa depois do quadro.
+class _MedeAltura extends SingleChildRenderObjectWidget {
+  const _MedeAltura({required this.aoMedir, required super.child});
+
+  final ValueChanged<double> aoMedir;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderMedeAltura(aoMedir);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderMedeAltura r) =>
+      r.aoMedir = aoMedir;
+}
+
+class _RenderMedeAltura extends RenderProxyBox {
+  _RenderMedeAltura(this.aoMedir);
+
+  ValueChanged<double> aoMedir;
+  double? _ultima;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    final h = size.height;
+    if (h == _ultima) return;
+    _ultima = h;
+    // Mudar estado no meio do layout é proibido: avisa depois do quadro.
+    WidgetsBinding.instance.addPostFrameCallback((_) => aoMedir(h));
+  }
+}
+
 class _Casca extends StatelessWidget {
   const _Casca({required this.navegador, required this.chave});
 
@@ -342,8 +375,24 @@ class _Casca extends StatelessWidget {
         // Com uma folha da home (ou o compartilhar) aberta, o painel sai da
         // frente: a folha é a camada de cima, e não um cartão espremido
         // entre o mundo e as abas, com duas alças à vista.
-        child: app.showTabs && !(home && (app.folhasDaHome > 0 || app.sharing))
-            ? BottomTabs(acima: home ? AcessorioDaHome(navegador: chave) : null)
+        // Atrás de uma celebração ou do pedido para sair, também: o
+        // "Começar foco" mora aqui fora e ficava tocável por baixo deles
+        // (auditoria de dcf82c9, 1).
+        child:
+            app.showTabs &&
+                !(home &&
+                    (app.folhasDaHome > 0 ||
+                        app.sharing ||
+                        app.cenaNaFrente ||
+                        app.pedindoParaSair))
+            ? (home
+                  ? _MedeAltura(
+                      aoMedir: app.defineAlturaDoPainel,
+                      child: BottomTabs(
+                        acima: AcessorioDaHome(navegador: chave),
+                      ),
+                    )
+                  : const BottomTabs())
             : const SizedBox(width: 412),
       ),
     );

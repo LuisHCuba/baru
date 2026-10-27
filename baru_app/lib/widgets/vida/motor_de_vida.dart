@@ -130,7 +130,18 @@ class SaidaDaVida {
     this.derretido = 0,
     this.passada = 0,
     this.virada = Offset.zero,
+    this.cabecaAtraso = Offset.zero,
+    this.cabecaGiro = 0,
+    this.cabecaDesce = 0,
   });
+
+  /// O quanto a cabeça ficou para trás do corpo (unidades), pela mola que
+  /// a faz seguir o corpo com atraso.
+  final Offset cabecaAtraso;
+
+  /// O gesto de cabeça da vez: giro (rad) e descida (unidades).
+  final double cabecaGiro;
+  final double cabecaDesce;
 
   /// -1..1 nos dois eixos: para onde a cabeça está virada. Segue o olhar
   /// devagar e sem passar do ponto; as pupilas, rápidas, vão na frente.
@@ -259,6 +270,10 @@ class MotorDeVida {
   /// A hora do dia (0–23): muda os pesos do cérebro.
   int hora = 12;
 
+  /// 0..1: a energia do humor. Radiante festeja e passeia mais; com sono,
+  /// quase nada.
+  double energia = 0.6;
+
   /// A bola ou o petisco no habitat. Nulo: nada chamando a atenção.
   InteresseDoBicho? interesse;
 
@@ -283,12 +298,12 @@ class MotorDeVida {
 
   // --- olhar ------------------------------------------------------------
   final _pupila = Mola2(f: 11, zeta: 0.88);
-  final _cabeca = Mola2(f: 1.6, zeta: 1);
+  final _cabeca = Mola2(f: 1.8, zeta: 0.7);
 
   /// A cabeça virando para onde ele olha: lenta (os olhos chegam antes) e
   /// sem balanço. Segue a fixação, não a pupila, para as olhadelas rápidas
   /// não sacudirem o rosto.
-  final _virada = Mola2(f: 1.1, zeta: 1);
+  final _virada = Mola2(f: 1.6, zeta: 0.72);
   Offset _alvoDoOlhar = Offset.zero;
   Offset _fixacao = Offset.zero;
   double _proximaSacada = 0.6;
@@ -301,15 +316,31 @@ class MotorDeVida {
   bool _piscadaDupla = false;
 
   // --- o corpo ------------------------------------------------------------
-  // Amortecimento crítico (zeta 1) em tudo que é corpo: chega no lugar sem
-  // passar do ponto e voltar. Balanço de mola, o corpo indo e vindo depois
-  // de um toque, lê como gelatina, não como bicho. Só a cauda e o corpo
-  // pendurado pelo dedo guardam um resto de embalo, que é o deles.
-  final _inclina = Mola(f: 1.2, zeta: 1);
-  final _achata = Mola(f: 3, zeta: 1);
-  final _cauda = Mola(f: 3, zeta: 0.75);
-  final _colo = Mola2(f: 2.8, zeta: 0.9);
-  final _balancoNoColo = Mola(f: 1.6, zeta: 0.6);
+  // Vivo, mas controlado: cada mola passa do ponto **uma vez** e assenta
+  // (zeta 0,45–0,6), como o quique de personagem animado. Zeta 0,3 fazia o
+  // corpo ir e vir três vezes — gelatina; zeta 1 deixava tudo duro.
+  // O achatar é só do corpo: a cabeça vai por cima, com atraso próprio
+  // ([_cabecaSegue]) — cabeça e corpo independentes, como o Duolingo monta
+  // os personagens no Rive.
+  final _inclina = Mola(f: 1.6, zeta: 0.55);
+  final _achata = Mola(f: 4, zeta: 0.45);
+  final _cauda = Mola(f: 3, zeta: 0.35);
+  final _colo = Mola2(f: 2.8, zeta: 0.6);
+  final _balancoNoColo = Mola(f: 1.6, zeta: 0.3);
+
+  /// A cabeça seguindo o corpo com atraso: o corpo sobe, a cabeça vem
+  /// depois; o corpo pousa, a cabeça afunda um fio a mais e volta. É o
+  /// "follow-through" que separa as duas massas no movimento.
+  final _cabecaSegue = Mola2(f: 3.2, zeta: 0.42);
+
+  /// Gestos de cabeça por cima do que o corpo faz (aceno, inclinar de
+  /// curiosidade, erguer o queixo): a camada de cabeça que, combinada às
+  /// intenções do corpo, não deixa o ócio virar laço.
+  double _gestoCabecaT = -1;
+  double _gestoCabecaDura = 1;
+  int _gestoCabecaTipo = 0;
+  double _proximoGestoCabeca = 3;
+  final _cabecaGesto = Mola2(f: 2.2, zeta: 0.55);
 
   // --- andar ------------------------------------------------------------
   // Ele anda: acelera, mantém o passo e freia antes de chegar, com as patas
@@ -320,6 +351,7 @@ class MotorDeVida {
   double _alvoX = 0;
   bool _correndo = false;
   double _faseDoPasso = 0;
+  double _ondaAntes = 0;
   double _rebola = 0;
 
   void _andar(double dt) {
@@ -440,7 +472,7 @@ class MotorDeVida {
     } else if (n == 2) {
       // Susto: um pulinho.
       _achata.empurra(4);
-      pula(150);
+      pula(240);
     } else if (n <= 4) {
       // Cócegas: tremidinha rápida, olhinho apertado, cauda a mil.
       _agitacao = 1;
@@ -777,7 +809,13 @@ class MotorDeVida {
     final intensidade = andandoNoChao ? math.min(1.0, _vx.abs() / 8) : 0.0;
     final onda = math.sin(_faseDoPasso * 2 * math.pi);
     final passada = onda * intensidade + _rebola;
-    final sobeNoPasso = onda.abs() * 1.8 * intensidade;
+    // Passo com quique: o corpo sobe entre os apoios e achata um pouco em
+    // cada um.
+    final sobeNoPasso = onda.abs() * 3.2 * intensidade;
+    if (intensidade > 0.2 && (onda >= 0) != (_ondaAntes >= 0)) {
+      _achata.empurra(4 * intensidade);
+    }
+    _ondaAntes = onda;
     var desloca = Offset(_px, 0);
     var balanco = 0.0;
     var inclinaNoColo = 0.0;
@@ -802,7 +840,7 @@ class MotorDeVida {
           _y = 0;
           final impacto = (-_vy / 500).clamp(0.0, 1.6);
           _achata.alvo = 0;
-          _achata.empurra(impacto * 6);
+          _achata.empurra(impacto * 11);
           _vy = 0;
           _noChao = true;
           if (_veioDoColo) {
@@ -822,6 +860,22 @@ class MotorDeVida {
 
     final pisca = _piscar(dt);
 
+    // --- a cabeça por cima do corpo ----------------------------------------
+    // O ponto onde a cabeça se apoia desce quando o corpo achata (a ~90
+    // unidades dos pés). A cabeça persegue esse ponto com mola: chega
+    // depois, passa um fio e assenta. Só a diferença sai.
+    final apoio = Offset(
+      desloca.dx,
+      desloca.dy + _achata.valor.clamp(-0.6, 0.6) * 0.18 * 90,
+    );
+    _cabecaSegue.alvo = apoio;
+    final segue = _cabecaSegue.passo(dt) - apoio;
+    final atraso = Offset(
+      segue.dx.clamp(-6.0, 6.0),
+      segue.dy.clamp(-7.0, 7.0),
+    );
+    final gesto = _gestosDeCabeca(dt);
+
     return SaidaDaVida(
       respiro: respiro * a,
       boia: boia * a,
@@ -840,7 +894,51 @@ class MotorDeVida {
       derretido: _derretido,
       passada: passada * a,
       virada: _virada.valor * a,
+      cabecaAtraso: atraso * a,
+      cabecaGiro: gesto.dx * a,
+      cabecaDesce: gesto.dy * a,
     );
+  }
+
+  /// A camada de gestos de cabeça: aceno, inclinar curioso, erguer o
+  /// queixo, balançar. Sorteados a cada 3–8 s, por cima de qualquer coisa
+  /// que o corpo esteja fazendo — a combinação das duas camadas é o que
+  /// não repete (o Duolingo combina 8 de cabeça × 8 de corpo na Lily).
+  /// Saída: (giro em radianos, descida em unidades).
+  Offset _gestosDeCabeca(double dt) {
+    var alvo = Offset.zero;
+    if (_gestoCabecaT >= 0) {
+      _gestoCabecaT += dt;
+      final u = (_gestoCabecaT / _gestoCabecaDura).clamp(0.0, 1.0);
+      final e = math.sin(u * math.pi); // entra e sai sem corte
+      alvo = switch (_gestoCabecaTipo) {
+        // Aceno: duas descidas curtas.
+        0 => Offset(0, math.max(0.0, math.sin(u * math.pi * 4)) * 5 * e),
+        // Inclinar de curiosidade, para um lado.
+        1 => Offset(0.13 * e * (_virado ? -1 : 1), -1.5 * e),
+        // Erguer o queixo.
+        2 => Offset(-0.03 * e, -4 * e),
+        // Balançar de leve, de um lado ao outro.
+        _ => Offset(math.sin(u * math.pi * 2) * 0.07 * e, 0),
+      };
+      if (u >= 1) _gestoCabecaT = -1;
+    } else if (_t >= _proximoGestoCabeca &&
+        posturaLivre &&
+        !dormindo &&
+        !noColo &&
+        !reduzido) {
+      _gestoCabecaT = 0;
+      _gestoCabecaTipo = _sorte.nextInt(4);
+      _gestoCabecaDura = switch (_gestoCabecaTipo) {
+        0 => 1.1,
+        1 => 1.6 + _sorte.nextDouble(),
+        2 => 1.2,
+        _ => 1.8,
+      };
+      _proximoGestoCabeca = _t + 3 + _sorte.nextDouble() * 5;
+    }
+    _cabecaGesto.alvo = alvo;
+    return _cabecaGesto.passo(dt);
   }
 
   // ======================================================================
@@ -976,12 +1074,19 @@ class MotorDeVida {
     final opcoes = <(IntencaoDoBicho, double)>[
       (IntencaoDoBicho.estar, 2.6),
       (IntencaoDoBicho.observar, 3),
-      if (anda) (IntencaoDoBicho.passear, tarde ? 3.6 : noite ? 1.2 : 2.8),
+      if (anda)
+        (
+          IntencaoDoBicho.passear,
+          (tarde ? 3.6 : noite ? 1.2 : 2.8) * (0.6 + energia * 0.8),
+        ),
       if (podeAndar && !reduzido && !nadando) (IntencaoDoBicho.farejar, 1.6),
       (IntencaoDoBicho.chamar, semInteracao > 25 ? 2.2 : 0.5),
       (IntencaoDoBicho.descansar, noite ? 2.8 : manha ? 0.6 : 1.0),
       if (podeAndar && !reduzido && !nadando)
-        (IntencaoDoBicho.festejar, tarde ? 0.7 : 0.35),
+        (
+          IntencaoDoBicho.festejar,
+          (tarde ? 0.7 : 0.35) * (0.3 + energia * 2.2),
+        ),
     ];
     var total = 0.0;
     final pesos = <double>[];
@@ -1075,8 +1180,8 @@ class MotorDeVida {
       case IntencaoDoBicho.festejar:
         _alvoDoOlhar = const Offset(0, -0.2);
         if (_noChao && _t >= _proximoPulo) {
-          pula(160 + _sorte.nextDouble() * 40);
-          _proximoPulo = _t + 0.75;
+          pula(220 + _sorte.nextDouble() * 70);
+          _proximoPulo = _t + 0.5 + _sorte.nextDouble() * 0.15;
         }
     }
   }
@@ -1099,7 +1204,7 @@ class MotorDeVida {
     // Pediu e a pessoa atendeu: festa curta antes de correr.
     if (!i.convite && _pediuEm > 0) {
       if (_t - _pediuEm < 10) {
-        pula(170);
+        pula(260);
         _agitacao = 1;
         _cauda.empurra(24);
       }

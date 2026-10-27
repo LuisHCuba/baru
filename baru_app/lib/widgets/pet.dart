@@ -535,6 +535,13 @@ class _PetViewState extends State<PetView>
       // A cabeça do motor segue tudo que o olho segue: o dedo, o toque, o
       // gesto de olhar em volta. Antes isso ia só para as pupilas, e a
       // cabeça ficava para trás.
+      ..energia = switch (widget.mood) {
+        Mood.radiant => 1.0,
+        Mood.content => 0.6,
+        Mood.neutral => 0.4,
+        Mood.missingYou => 0.3,
+        Mood.sleepy => 0.15,
+      }
       ..olharDeFora = _dedo != null || _toque.isAnimating
           ? _olhar
           : _gestoAtual == GestoOcioso.olhaEmVolta
@@ -1496,11 +1503,11 @@ class _Pose {
   /// um pixel, e feedback invisível é feedback que não existe.
   double get amplitudeToque => math.max(amplitude, 0.55);
 
-  /// O toque: o corpo cede uma vez e volta, sem oscilar. Era um seno
-  /// amortecido (cede, sobe, cede de novo) e todo toque virava um "boing".
+  /// O toque: o corpo cede, volta passando um fio do ponto, e assenta —
+  /// um quique só. Eram três (seno amortecido de 1,5 volta): gelatina.
   double get quique {
     if (toque == 0) return 0;
-    return math.sin(toque * math.pi) * math.exp(-toque * 2.5) * 0.8;
+    return math.sin(toque * math.pi * 2) * math.exp(-toque * 3.5);
   }
 
   /// Fase de "carinho": alta logo depois do toque, some devagar.
@@ -2033,9 +2040,16 @@ class _PetPainter extends CustomPainter {
       canvas.rotate(vida.inclina);
       canvas.translate(0, -pivoDaInclinacao);
     }
-    // O corpo não se deforma: achatar e esticar o desenho inteiro lia como
-    // gelatina. Agachar é só baixar um pouco o corpo.
-    if (vida.achata > 0) canvas.translate(0, vida.achata.clamp(0.0, 1.0) * 3);
+    // Achatar e esticar com volume preservado, pelos pés. Vale para o
+    // corpo: a cabeça desfaz a escala no ponto em que se apoia
+    // ([_posicionaCabeca]) e vai por cima, com atraso próprio. Achatando o
+    // desenho inteiro, a cabeça amassava junto e o bicho virava gelatina.
+    final (ax, ay) = _achataDoCorpo;
+    if (ay != 1) {
+      canvas.translate(0, _pes);
+      canvas.scale(ax, ay);
+      canvas.translate(0, -_pes);
+    }
 
     final giro = switch (acao) {
       AcaoDoBicho.cochilo => -0.16,
@@ -2268,10 +2282,26 @@ class _PetPainter extends CustomPainter {
   /// pelo pescoço — o queixo fica, o alto da cabeça vai. Girando pelo
   /// centro, o queixo escorregava por cima do corpo.
   void _posicionaCabeca(Canvas c, double giro, {double pescoco = 30}) {
-    c.translate(_virada.dx * 2.2 * pose.amplitudeToque, 0);
+    final vida = pose.vida;
+    // A cabeça não amassa com o corpo: só desce junto com ele.
+    final (ax, ay) = _achataDoCorpo;
+    if (ay != 1) c.scale(1 / ax, 1 / ay);
+    // Atrasada em relação ao corpo, e com o gesto de cabeça da vez.
+    c.translate(
+      vida.cabecaAtraso.dx + _virada.dx * 2.2 * pose.amplitudeToque,
+      vida.cabecaAtraso.dy + vida.cabecaDesce,
+    );
     c.translate(0, pescoco);
-    c.rotate(giro);
+    c.rotate(giro + vida.cabecaGiro);
     c.translate(0, -pescoco);
+  }
+
+  /// A escala do corpo achatado (largura, altura), com volume preservado.
+  (double, double) get _achataDoCorpo {
+    final a = pose.vida.achata;
+    if (a == 0) return (1, 1);
+    final sy = (1 - a * 0.18).clamp(0.6, 1.6);
+    return (1 / math.sqrt(sy), sy);
   }
 
   /// A sombra que a cabeça faz no corpo, logo abaixo do queixo. É o que

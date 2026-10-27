@@ -8,6 +8,7 @@ import 'package:baru_app/widgets/saida.dart';
 import 'package:baru_app/screens/settings_screen.dart';
 import 'package:baru_app/screens/shop_screen.dart';
 import 'package:baru_app/state.dart';
+import 'package:baru_app/widgets/share_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -210,6 +211,31 @@ void main() {
       expect(fechou, isFalse, reason: 'era exatamente a queixa do usuário');
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.byType(ShopScreen), findsNothing);
+    });
+
+    testWidgets('com a folha de compartilhar aberta, fecha só a folha',
+        (tester) async {
+      await _abre(tester, AppScreen.shop);
+      final app =
+          (tester.state(find.byType(BaruApp)) as dynamic).state as AppState;
+      app.openShare();
+      await tester.pump();
+      expect(find.byType(ShareSheet), findsOneWidget);
+
+      final fechou = await _voltarDoSistemaFechaOApp(tester);
+
+      expect(fechou, isFalse);
+      expect(find.byType(ShareSheet), findsNothing);
+      expect(find.byType(ShopScreen), findsOneWidget,
+          reason: 'a tela de baixo fica; só a folha sai');
+    });
+
+    test('o voltar do navegador também fecha a folha', () {
+      final s = _estado(AppScreen.shop)..openShare();
+      addTearDown(s.dispose);
+      s.abrePorEndereco(AppScreen.home);
+      expect(s.sharing, isFalse);
+      expect(s.screen, AppScreen.home);
     });
 
     testWidgets('numa aba que não é a home, vai para a home', (tester) async {

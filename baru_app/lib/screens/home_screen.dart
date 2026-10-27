@@ -103,7 +103,13 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Espaco.md),
-        const HabitatScene(),
+        // Em tela baixa (640 dp) a cena de 372 empurrava o "Começar foco"
+        // para baixo da dobra (simulador da Onda 4). Ela encolhe até 40% da
+        // altura, sem passar do tamanho de sempre.
+        HabitatScene(
+          height: (MediaQuery.sizeOf(context).height * 0.40)
+              .clamp(240.0, HabitatScene.alturaPadrao),
+        ),
         const SizedBox(height: Espaco.sm),
         // O crescimento do bicho, logo abaixo dele: quanto falta e o que vem.
         const BarraDoCrescimento(),
@@ -135,11 +141,12 @@ class HomeScreen extends StatelessWidget {
           key: const Key('home-humor-sub'),
           style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
         ),
-        if (primeira) ...[
-          const SizedBox(height: Espaco.md),
-          ..._secaoDeFoco(app),
-        ],
-        if (!primeira) const SizedBox(height: Espaco.md),
+        // A ação do app logo depois da fala, em qualquer dia. No fim da
+        // lista — depois do relatório, da semana e da loja — ela sumia da
+        // tela a partir da segunda sessão (simulador da Onda 4).
+        const SizedBox(height: Espaco.md),
+        ..._secaoDeFoco(app),
+        if (!primeira) const SizedBox(height: Espaco.xl),
         if (!primeira)
         GestureDetector(
           onTap: () => app.go(AppScreen.report),
@@ -301,10 +308,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-        if (!primeira) ...[
-          const SizedBox(height: Espaco.xl),
-          ..._secaoDeFoco(app),
-        ],
         const SizedBox(height: Espaco.md),
       ],
     );

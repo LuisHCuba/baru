@@ -1428,6 +1428,13 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return true;
     }
+    // A folha de compartilhar fica por cima das páginas: o voltar a fecha
+    // antes de mexer na pilha. Sem isto a tela de baixo saía e a folha
+    // ficava sobre a home (simulador da Onda 4).
+    if (sharing) {
+      closeShare();
+      return true;
+    }
     if (_pilha.length > 1) {
       _pilha.removeLast();
       notifyListeners();
@@ -1478,7 +1485,13 @@ class AppState extends ChangeNotifier {
     // A sessão sem sessão: o voltar a partir do resultado caía num 00:00
     // com "Desistir" ativo (simulador, 8).
     if (tela == AppScreen.session && !running) tela = AppScreen.home;
-    if (screen == tela) return;
+    // O voltar do navegador com a folha de compartilhar aberta: ela não
+    // sobrevive à troca de tela.
+    if (sharing) sharing = false;
+    if (screen == tela) {
+      notifyListeners();
+      return;
+    }
     _restauraPilha(tela);
     notifyListeners();
   }

@@ -185,6 +185,9 @@ class BotaoDeCompartilharRaizRaizState extends State<BotaoDeCompartilharRaiz> {
 
   @override
   Widget build(BuildContext context) {
+    // O rótulo do botão é lido aqui, antes de o cartão (que registrava os
+    // textos) ser construído: a chave aparecia crua na tela.
+    garanteTextosDoCartaoDaRaiz();
     final app = widget.app;
     if (app.streak <= 0) {
       // Raiz que ainda não existe não se mostra. Oferecer o botão no dia

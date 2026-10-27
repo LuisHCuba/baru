@@ -15,6 +15,6 @@ void main() {
     await tester.pumpWidget(AuthGate(repos: repos));
     await tester.pumpAndSettle();
 
-    expect(find.text('Em que idioma você quer falar com ele?'), findsOneWidget);
+    expect(find.text('Em que idioma vamos conversar?'), findsOneWidget);
   });
 }

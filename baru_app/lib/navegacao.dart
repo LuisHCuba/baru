@@ -289,7 +289,7 @@ class BaruRouterDelegate extends RouterDelegate<AppScreen>
     // Uma cena de conquista é desenhada por cima de tudo, páginas e folhas.
     // Ela fecha primeiro: senão o `Navigator` tirava a tela de resultado
     // de baixo dela e só o 2º voltar fechava a cena (auditoria, V2).
-    if (app.cenaNaFrente) return app.voltar();
+    if (app.cenaNaFrente || app.sharing) return app.voltar();
     final nav = navigatorKey.currentState;
     if (nav != null && nav.canPop()) return nav.maybePop();
     return app.voltar();

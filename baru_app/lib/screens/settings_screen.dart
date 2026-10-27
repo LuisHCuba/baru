@@ -341,7 +341,14 @@ class SettingsScreen extends StatelessWidget {
           // Travada mostra o passo que a abre. Sumir com ela esconderia
           // metade do elenco e o motivo de subir a trilha; deixá-la
           // tocável sem efeito faria a pessoa achar que o app quebrou.
-          for (final e in Species.values)
+          // As abertas primeiro; as travadas na ordem em que a trilha as
+          // abre — na ordem do enum saía "passo 7, 8, 17, 13, 16…".
+          for (final e in [...Species.values]..sort((a, b) {
+            int ordem(Species x) => app.especiesEscolhiveis.contains(x)
+                ? -1
+                : ProgressoDaTrilha.passoQueAbre(x) ?? 999;
+            return ordem(a).compareTo(ordem(b));
+          }))
             if (app.especiesEscolhiveis.contains(e))
               _Opcao(
                 rotulo: t.animalName(e.name),

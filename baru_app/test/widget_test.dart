@@ -7,7 +7,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(412, 892));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(const BaruApp());
-    expect(find.text('Em que idioma você quer falar com ele?'), findsOneWidget);
+    expect(find.text('Em que idioma vamos conversar?'), findsOneWidget);
     expect(find.text('Português'), findsOneWidget);
     expect(find.text('Continuar'), findsOneWidget);
   });

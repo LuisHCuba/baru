@@ -233,9 +233,9 @@ const _respiracaoNoEsforco = Duration(milliseconds: 2200);
   final dentro = o.dx < 0 ? 1.0 : -1.0;
   return (
     palpebraDentro:
-        Offset(o.dx + dentro * r * 1.05, o.dy - r * (triste ? 0.82 : 0.42)),
+        Offset(o.dx + dentro * r * 1.05, o.dy - r * (triste ? 1.0 : 0.42)),
     palpebraFora:
-        Offset(o.dx - dentro * r * 1.05, o.dy - r * (triste ? 0.30 : 0.42)),
+        Offset(o.dx - dentro * r * 1.05, o.dy - r * (triste ? 0.52 : 0.42)),
     sobrancelhaDentro: o + Offset(dentro * r * 0.35, -r * 1.85),
     sobrancelhaFora: o + Offset(-dentro * r * 0.95, -r * 1.25),
   );
@@ -4622,7 +4622,8 @@ class _PetPainter extends CustomPainter {
     bool coruja = false,
     bool sobrancelha = true,
   }) {
-    r *= _olhoDoEstagio;
+    // Olho um pouco maior na saudade: é o olhar pidão que pede, não fecha.
+    r *= _olhoDoEstagio * (triste ? 1.1 : 1.0);
     final f = fechamento;
 
     if (f > 0.94) {
@@ -4649,24 +4650,36 @@ class _PetPainter extends CustomPainter {
       _p(coruja ? const Color(0xFFF2C94C) : Cores.superficie),
     );
 
-    final desvio = _olhoDesvio + (triste ? const Offset(0.6, 1.4) : Offset.zero);
+    // Na saudade o olhar sobe para quem chegou, grande e marejado: o "olhar
+    // pidão". Olhando para baixo, com a boca virada, ele lia como emburrado —
+    // e um bicho emburrado depois de uma desistência é cobrança.
+    final desvio =
+        _olhoDesvio + (triste ? const Offset(0.4, -0.7) : Offset.zero);
     final iris = o + desvio;
-    canvas.drawCircle(
-      iris,
-      r * (coruja ? 0.42 : (feliz ? 0.56 : 0.50)),
-      _p(Cores.tinta),
-    );
+    final raioDaIris =
+        r * (coruja ? (triste ? 0.50 : 0.42) : (feliz || triste ? 0.58 : 0.50));
+    canvas.drawCircle(iris, raioDaIris, _p(Cores.tinta));
 
     canvas.drawCircle(
       iris + Offset(-r * 0.30, -r * 0.32),
-      r * 0.20,
+      r * (triste ? 0.25 : 0.20),
       _p(Colors.white),
     );
     canvas.drawCircle(
       iris + Offset(r * 0.20, r * 0.16),
-      r * 0.10,
+      r * (triste ? 0.13 : 0.10),
       _p(Colors.white70),
     );
+    if (triste) {
+      // O brilho de baixo, em meia-lua: olho úmido, não fechado.
+      canvas.drawArc(
+        Rect.fromCircle(center: iris, radius: raioDaIris * 0.72),
+        0.5,
+        math.pi - 1.0,
+        false,
+        _traco(Colors.white.withValues(alpha: 0.75), r * 0.09),
+      );
+    }
 
     // Pálpebra caída quando neutro ou triste, **espelhada por olho**.
     //
@@ -4799,10 +4812,12 @@ class _PetPainter extends CustomPainter {
           t,
         );
       case Mood.missingYou:
+        // Boquinha pequena e pouco curva: saudade, não bronca. A boca larga
+        // virada para baixo era o que fechava a cara.
         canvas.drawArc(
-          Rect.fromCenter(center: o + const Offset(0, 6), width: w * 0.8, height: w * 0.5),
-          math.pi + 0.3,
-          math.pi - 0.6,
+          Rect.fromCenter(center: o + const Offset(0, 5), width: w * 0.46, height: w * 0.26),
+          math.pi + 0.45,
+          math.pi - 0.9,
           false,
           t,
         );

@@ -556,6 +556,11 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                     naAgua && !_querAgua(app),
                                 posicao: _posicao,
                                 sombra: true,
+                                corDaAgua: Color.lerp(
+                                  cenario.aguaCom(luz.agua),
+                                  cenario.aguaFundaCom(luz.aguaFunda),
+                                  0.35,
+                                ),
                                 species: app.species,
                                 mood: app.mood,
                                 activity: atividade,

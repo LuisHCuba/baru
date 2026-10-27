@@ -297,6 +297,7 @@ class PetView extends StatefulWidget {
     this.cutucadas,
     this.areaDeAndar = 0,
     this.sombra = false,
+    this.corDaAgua,
     this.interesse,
     this.aoAlcancar,
     this.ausenciaAoAbrir,
@@ -359,6 +360,10 @@ class PetView extends StatefulWidget {
   /// carregado. O habitat desenhava uma fixa no centro; com o bicho andando
   /// ela tem de ir junto.
   final bool sombra;
+
+  /// A cor da lagoa do mundo: o corpo debaixo d'água some nela, mais quanto
+  /// mais fundo. Nula: o tom fixo de antes (o cartão do habitat).
+  final Color? corDaAgua;
 
   /// Para onde ele olha, mandado de fora (-1..1 nos dois eixos): o dedo
   /// passeando pela cena da sessão, longe dele, e ele acompanhando.
@@ -1390,6 +1395,7 @@ class _PetViewState extends State<PetView>
               cauda: _quadroDaVida.value.cauda,
               vida: _quadroDaVida.value,
               sombra: widget.sombra,
+              corDaAgua: widget.corDaAgua,
               comendoDaMao: _comendo >= 0,
               pisca: math.max(_pisca.value, _quadroDaVida.value.pisca),
               orelha: _orelha.value,
@@ -1586,6 +1592,7 @@ class _Pose {
     this.gosto = 0,
     this.vida = const SaidaDaVida(),
     this.sombra = false,
+    this.corDaAgua,
     this.comendoDaMao = false,
   });
 
@@ -1598,6 +1605,9 @@ class _Pose {
 
   /// Desenhar a sombra no chão (o habitat).
   final bool sombra;
+
+  /// A cor da água onde ele nada (no mundo da home). Nula: o tom de sempre.
+  final Color? corDaAgua;
 
   /// O que ele está fazendo — já traduzido para a espécie.
   final AcaoDoBicho acao;
@@ -2322,11 +2332,28 @@ class _PetPainter extends CustomPainter {
       canvas.clipRect(
         Rect.fromLTRB(folga.left, linhaDagua, folga.right, folga.bottom),
       );
+      // No mundo a água tem a cor da lagoa e engrossa com a profundidade:
+      // com o tom fixo a 44% o corpo inteiro aparecia, em pé, como numa
+      // caixa esverdeada.
+      final agua = pose.corDaAgua;
       canvas.drawRect(
         folga,
-        Paint()
-          ..color = _tomDaAgua
-          ..blendMode = BlendMode.srcATop,
+        agua == null
+            ? (Paint()
+                ..color = _tomDaAgua
+                ..blendMode = BlendMode.srcATop)
+            : (Paint()
+                ..blendMode = BlendMode.srcATop
+                ..shader = LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    agua.withValues(alpha: 0.62),
+                    agua.withValues(alpha: 0.95),
+                  ],
+                ).createShader(
+                  Rect.fromLTRB(0, linhaDagua, size.width, linhaDagua + 40),
+                )),
       );
       canvas.restore();
       canvas.restore(); // fecha a camada do corpo

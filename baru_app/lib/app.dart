@@ -316,8 +316,15 @@ class _Casca extends StatelessWidget {
           children: [
             navegador,
             if (app.sharing) const ShareSheet(),
+            // A cena tira a tela de baixo do leitor de tela: sem isto ele
+            // lia o resultado atrás da toca, e um toque pela acessibilidade
+            // ia parar no "+10 folhas" escondido.
             if (app.temCelebracaoPendente && !app.celebracoesEmEspera)
-              _celebracao(app),
+              Positioned.fill(
+                child: BlockSemantics(
+                  child: Stack(children: [_celebracao(app)]),
+                ),
+              ),
             if (app.pedindoParaSair) const FolhaDeSaida(),
           ],
         ),

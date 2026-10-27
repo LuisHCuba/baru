@@ -26,8 +26,8 @@ async function passaCenas(sim, rotulo, max = 8) {
     // Toca das missões ("Tem algo enterrado aqui").
     if (nos.some(n => TOCA.test(n))) {
       await sim.foto(`${rotulo}-toca`);
-      const r = await sim.acha(/^\+\d+ (folhas|XP)/);
-      const c = r || { x: W / 2, y: H / 2 };
+      // O monte de terra fica abaixo do texto da toca, no centro.
+      const c = { x: W / 2, y: H * 0.59 };
       await sim.quadros(`${rotulo}-toca-cavando`, {
         total: 24, passo: 100,
         acao: async () => sim.comDedo(async () => { for (let k = 0; k < 3; k++) { await sim.page.mouse.click(c.x, c.y); await sim.espera(250, 50); } }),

@@ -47,8 +47,11 @@ Rect caixaDaArte(String id, List<ShapePart> pecas) {
 
 /// Desenha o objeto [id] em coordenadas da cena.
 ///
-/// [fase] vai de 0 a 1 e volta (a deriva de 14 s do habitat): o fogo
-/// tremula, os peixes nadam, os vaga-lumes piscam. Parado, fica em 0.
+/// [fase] anda de 0 a 2 e recomeça (a deriva de 14 s do habitat, ida e
+/// volta, contada sempre para a frente): o fogo tremula, os peixes nadam, os
+/// vaga-lumes piscam. Com a fase que ia e voltava, neve, fagulhas e pétalas
+/// subiam metade do tempo. Todo movimento aqui tem período que divide 2,
+/// para a volta ao zero não dar salto. Parado, fica em 0.
 /// Objeto sem arte própria cai nas peças, como antes — nunca some.
 void pintaItem(
   Canvas canvas,
@@ -130,8 +133,9 @@ class _Pincel {
     ..strokeCap = StrokeCap.round
     ..strokeJoin = StrokeJoin.round;
 
-  Paint gradV(Rect r, Color topo, Color base) => Paint()
-    ..shader = Gradient.linear(r.topCenter, r.bottomCenter, [topo, base]);
+  Paint gradV(Rect r, Color topo, Color base) =>
+      Paint()
+        ..shader = Gradient.linear(r.topCenter, r.bottomCenter, [topo, base]);
 
   Paint brilho(Offset centro, double raio, Color cor) => Paint()
     ..shader = Gradient.radial(centro, raio, [cor, cor.withValues(alpha: 0)]);
@@ -139,7 +143,11 @@ class _Pincel {
   /// Sombra de contato no chão.
   void sombra(double cx, double y, double largura, [double alfa = 0.16]) {
     c.drawOval(
-      Rect.fromCenter(center: Offset(cx, y), width: largura, height: largura * 0.18),
+      Rect.fromCenter(
+        center: Offset(cx, y),
+        width: largura,
+        height: largura * 0.18,
+      ),
       Paint()
         ..color = const Color(0xFF3E2F23).withValues(alpha: alfa)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
@@ -154,10 +162,7 @@ class _Pincel {
       height: largura * 0.22,
     );
     c.drawOval(r, traco(const Color(0x66FFFFFF), 1.4));
-    c.drawOval(
-      r.inflate(4 + 2 * onda(3)),
-      traco(const Color(0x33FFFFFF), 1),
-    );
+    c.drawOval(r.inflate(4 + 2 * onda(3)), traco(const Color(0x33FFFFFF), 1));
   }
 }
 
@@ -220,7 +225,10 @@ void _vitoriaRegia(_Pincel p) {
   for (var i = 0; i < 6; i++) {
     final ang = -math.pi / 2 + (i - 2.5) * 0.42;
     final ponta = f + Offset(math.cos(ang) * 7.5, math.sin(ang) * 6.5);
-    c.drawPath(_folha(f, ponta, 4.4), p.cor(i.isEven ? petala : _claro(petala, 0.35)));
+    c.drawPath(
+      _folha(f, ponta, 4.4),
+      p.cor(i.isEven ? petala : _claro(petala, 0.35)),
+    );
   }
   c.drawCircle(f + const Offset(0, -1), 2, p.cor(const Color(0xFFF2C14E)));
 }
@@ -232,8 +240,22 @@ void _pedra(_Pincel p) {
   p.anel(r.center.dx, r.bottom - 4, r.width * 1.05);
   final corpo = Path()
     ..moveTo(r.left + 2, r.bottom - 5)
-    ..cubicTo(r.left - 2, r.top + 18, r.left + 14, r.top + 2, r.left + 30, r.top + 1)
-    ..cubicTo(r.left + 46, r.top - 1, r.right - 4, r.top + 10, r.right - 1, r.bottom - 9)
+    ..cubicTo(
+      r.left - 2,
+      r.top + 18,
+      r.left + 14,
+      r.top + 2,
+      r.left + 30,
+      r.top + 1,
+    )
+    ..cubicTo(
+      r.left + 46,
+      r.top - 1,
+      r.right - 4,
+      r.top + 10,
+      r.right - 1,
+      r.bottom - 9,
+    )
     ..quadraticBezierTo(r.right, r.bottom - 2, r.right - 10, r.bottom - 2)
     ..lineTo(r.left + 8, r.bottom - 1)
     ..quadraticBezierTo(r.left + 2, r.bottom - 1, r.left + 2, r.bottom - 5)
@@ -242,7 +264,14 @@ void _pedra(_Pincel p) {
   // A face de cima, onde bate a luz.
   final face = Path()
     ..moveTo(r.left + 12, r.top + 12)
-    ..cubicTo(r.left + 18, r.top + 4, r.left + 40, r.top + 2, r.right - 14, r.top + 9)
+    ..cubicTo(
+      r.left + 18,
+      r.top + 4,
+      r.left + 40,
+      r.top + 2,
+      r.right - 14,
+      r.top + 9,
+    )
     ..quadraticBezierTo(r.left + 36, r.top + 16, r.left + 12, r.top + 12)
     ..close();
   c.drawPath(face, p.cor(_claro(luz, 0.35)));
@@ -281,7 +310,10 @@ void _deque(_Pincel p) {
   final topo = Rect.fromLTWH(tabua.x, tabua.y, tabua.w, tabua.h);
   // A espessura da prancha.
   c.drawRRect(
-    RRect.fromRectAndRadius(topo.shift(const Offset(0, 3)), const Radius.circular(3)),
+    RRect.fromRectAndRadius(
+      topo.shift(const Offset(0, 3)),
+      const Radius.circular(3),
+    ),
     p.cor(_escuro(madeira, 0.35)),
   );
   c.drawRRect(
@@ -294,7 +326,11 @@ void _deque(_Pincel p) {
       Offset(x, topo.bottom - 1),
       p.traco(_escuro(madeira, 0.35).withValues(alpha: 0.55), 1),
     );
-    c.drawCircle(Offset(x - 3, topo.center.dy), 0.9, p.cor(_escuro(madeira, 0.5)));
+    c.drawCircle(
+      Offset(x - 3, topo.center.dy),
+      0.9,
+      p.cor(_escuro(madeira, 0.5)),
+    );
   }
   c.drawRRect(
     RRect.fromRectAndRadius(topo, const Radius.circular(3)),
@@ -319,7 +355,12 @@ void _barco(_Pincel p) {
   final vx = mastro.x + mastro.w / 2 + 2;
   final velaP = Path()
     ..moveTo(vx, mastro.y - 2)
-    ..quadraticBezierTo(vx + vela.w + 6, vela.y + vela.h * 0.5, vx + 1, r.top + 1)
+    ..quadraticBezierTo(
+      vx + vela.w + 6,
+      vela.y + vela.h * 0.5,
+      vx + 1,
+      r.top + 1,
+    )
     ..close();
   c.drawPath(velaP, p.cor(_claro(vela.c, 0.3)));
   c.drawPath(velaP, _contorno(vela.c));
@@ -413,7 +454,12 @@ void _pedrasDoRiacho(_Pincel p) {
     c.drawOval(o.shift(const Offset(0, 1.5)), p.cor(_escuro(q.c, 0.3)));
     c.drawOval(o, p.gradV(o, _claro(q.c, 0.25), q.c));
     c.drawOval(
-      Rect.fromLTWH(o.left + o.width * 0.2, o.top + 1.5, o.width * 0.35, o.height * 0.3),
+      Rect.fromLTWH(
+        o.left + o.width * 0.2,
+        o.top + 1.5,
+        o.width * 0.35,
+        o.height * 0.3,
+      ),
       p.cor(const Color(0x55FFFFFF)),
     );
     c.drawOval(o, _contorno(q.c, 1));
@@ -448,8 +494,16 @@ void _cardume(_Pincel p) {
   // Duas bolhas subindo.
   final s = p.caixa;
   final sobe = p.onda(2);
-  c.drawCircle(Offset(s.left + 6, s.top - 4 - sobe * 6), 1.6, p.traco(const Color(0x88FFFFFF), 0.9));
-  c.drawCircle(Offset(s.left + 12, s.top - 9 - sobe * 4), 1.1, p.traco(const Color(0x77FFFFFF), 0.8));
+  c.drawCircle(
+    Offset(s.left + 6, s.top - 4 - sobe * 6),
+    1.6,
+    p.traco(const Color(0x88FFFFFF), 0.9),
+  );
+  c.drawCircle(
+    Offset(s.left + 12, s.top - 9 - sobe * 4),
+    1.1,
+    p.traco(const Color(0x77FFFFFF), 0.8),
+  );
 }
 
 void _folhasDeOutono(_Pincel p) {
@@ -463,7 +517,11 @@ void _folhasDeOutono(_Pincel p) {
     p.anel(centro.dx, centro.dy + 2, q.w * 1.3);
     final folha = _folha(de, ate, q.h * 1.3);
     c.drawPath(folha, p.cor(q.c));
-    c.drawLine(de, ate, p.traco(_escuro(q.c, 0.35).withValues(alpha: 0.6), 0.8));
+    c.drawLine(
+      de,
+      ate,
+      p.traco(_escuro(q.c, 0.35).withValues(alpha: 0.6), 0.8),
+    );
     c.drawPath(folha, _contorno(q.c, 0.8));
   }
 }
@@ -481,7 +539,12 @@ void _bambu(_Pincel p) {
     final caule = Path()
       ..moveTo(r.left, r.bottom)
       ..lineTo(r.left + ginga, r.top + 2)
-      ..quadraticBezierTo(r.center.dx + ginga, r.top - 2, r.right + ginga, r.top + 2)
+      ..quadraticBezierTo(
+        r.center.dx + ginga,
+        r.top - 2,
+        r.right + ginga,
+        r.top + 2,
+      )
       ..lineTo(r.right, r.bottom)
       ..close();
     c.drawPath(
@@ -527,19 +590,28 @@ void _arvore(_Pincel p) {
   // Tronco que alarga no pé, com duas raízes.
   final t = Path()
     ..moveTo(cx - tronco.w * 0.4, copa.y + copa.h * 0.7)
-    ..quadraticBezierTo(cx - tronco.w * 0.45, chao - 12, cx - tronco.w * 1.1, chao)
+    ..quadraticBezierTo(
+      cx - tronco.w * 0.45,
+      chao - 12,
+      cx - tronco.w * 1.1,
+      chao,
+    )
     ..lineTo(cx + tronco.w * 1.1, chao)
-    ..quadraticBezierTo(cx + tronco.w * 0.45, chao - 12, cx + tronco.w * 0.4, copa.y + copa.h * 0.7)
+    ..quadraticBezierTo(
+      cx + tronco.w * 0.45,
+      chao - 12,
+      cx + tronco.w * 0.4,
+      copa.y + copa.h * 0.7,
+    )
     ..close();
   final rt = Rect.fromLTWH(tronco.x - 6, tronco.y, tronco.w + 12, tronco.h);
   c.drawPath(
     t,
     Paint()
-      ..shader = Gradient.linear(
-        rt.centerLeft,
-        rt.centerRight,
-        [_claro(tronco.c, 0.2), _escuro(tronco.c, 0.15)],
-      ),
+      ..shader = Gradient.linear(rt.centerLeft, rt.centerRight, [
+        _claro(tronco.c, 0.2),
+        _escuro(tronco.c, 0.15),
+      ]),
   );
   c.drawLine(
     Offset(cx + 1, chao - 22),
@@ -565,8 +637,16 @@ void _arvore(_Pincel p) {
   for (final (pos, raio, cor) in bolas) {
     c.drawCircle(o + pos, raio, p.cor(cor));
   }
-  c.drawCircle(o + Offset(w * 0.4, h * 0.26), w * 0.14, p.cor(_claro(copa.c, 0.22)));
-  c.drawCircle(o + Offset(w * 0.68, h * 0.28), w * 0.08, p.cor(_claro(copa.c, 0.18)));
+  c.drawCircle(
+    o + Offset(w * 0.4, h * 0.26),
+    w * 0.14,
+    p.cor(_claro(copa.c, 0.22)),
+  );
+  c.drawCircle(
+    o + Offset(w * 0.68, h * 0.28),
+    w * 0.08,
+    p.cor(_claro(copa.c, 0.18)),
+  );
   // As frutas.
   for (final f in [
     Offset(fruta.x + fruta.w / 2, fruta.y + fruta.h / 2),
@@ -574,7 +654,11 @@ void _arvore(_Pincel p) {
     o + Offset(w * 0.2, h * 0.5),
   ]) {
     c.drawCircle(f + Offset(ginga, 0), fruta.w * 0.45, p.cor(fruta.c));
-    c.drawCircle(f + Offset(ginga - 1.2, -1.2), fruta.w * 0.14, p.cor(const Color(0x88FFFFFF)));
+    c.drawCircle(
+      f + Offset(ginga - 1.2, -1.2),
+      fruta.w * 0.14,
+      p.cor(const Color(0x88FFFFFF)),
+    );
   }
 }
 
@@ -591,7 +675,12 @@ void _juncos(_Pincel p) {
     final ponta = Offset(q.x + q.w / 2 + ginga + (i - 1) * 3, q.y - 2);
     final haste = Path()
       ..moveTo(pe.dx, pe.dy)
-      ..quadraticBezierTo(pe.dx + (i - 1) * 2, (pe.dy + ponta.dy) / 2, ponta.dx, ponta.dy);
+      ..quadraticBezierTo(
+        pe.dx + (i - 1) * 2,
+        (pe.dy + ponta.dy) / 2,
+        ponta.dx,
+        ponta.dy,
+      );
     c.drawPath(haste, p.traco(_escuro(q.c, 0.1), 2));
     // A taboa: a espiga marrom no alto.
     final espiga = Rect.fromCenter(
@@ -603,7 +692,11 @@ void _juncos(_Pincel p) {
       RRect.fromRectAndRadius(espiga, Radius.circular(espiga.width / 2)),
       p.gradV(espiga, _claro(cabeca.c, 0.15), _escuro(cabeca.c, 0.15)),
     );
-    c.drawLine(ponta, ponta + const Offset(0, -4), p.traco(_escuro(q.c, 0.2), 1));
+    c.drawLine(
+      ponta,
+      ponta + const Offset(0, -4),
+      p.traco(_escuro(q.c, 0.2), 1),
+    );
     // Uma lâmina de folha de cada lado.
     c.drawPath(
       _folha(pe, pe + Offset((i - 1) * 9 - 4, -(chao - q.y) * 0.65), 3.5),
@@ -618,7 +711,12 @@ void _cogumelos(_Pincel p) {
   p.sombra(p.caixa.center.dx, chao, p.caixa.width + 6);
   // Peças 0/1: o grande; 2/3: o pequeno.
   for (final (pe, chapeu) in [(p[0], p[1]), (p[2], p[3])]) {
-    final caule = Rect.fromLTRB(pe.x, chapeu.y + chapeu.h * 0.6, pe.x + pe.w, chao);
+    final caule = Rect.fromLTRB(
+      pe.x,
+      chapeu.y + chapeu.h * 0.6,
+      pe.x + pe.w,
+      chao,
+    );
     c.drawRRect(
       RRect.fromRectAndCorners(
         caule,
@@ -632,12 +730,21 @@ void _cogumelos(_Pincel p) {
       ..moveTo(r.left, chapeu.y + chapeu.h)
       ..quadraticBezierTo(r.left, r.top - 2, r.center.dx, r.top)
       ..quadraticBezierTo(r.right, r.top - 2, r.right, chapeu.y + chapeu.h)
-      ..quadraticBezierTo(r.center.dx, chapeu.y + chapeu.h + 2.4, r.left, chapeu.y + chapeu.h)
+      ..quadraticBezierTo(
+        r.center.dx,
+        chapeu.y + chapeu.h + 2.4,
+        r.left,
+        chapeu.y + chapeu.h,
+      )
       ..close();
     c.drawPath(cupula, p.gradV(r, _claro(chapeu.c, 0.15), chapeu.c));
     // As pintas brancas.
     final w = chapeu.w;
-    for (final (dx, dy, raio) in [(0.3, 0.45, 0.1), (0.62, 0.3, 0.08), (0.75, 0.65, 0.06)]) {
+    for (final (dx, dy, raio) in [
+      (0.3, 0.45, 0.1),
+      (0.62, 0.3, 0.08),
+      (0.75, 0.65, 0.06),
+    ]) {
       c.drawCircle(
         Offset(r.left + w * dx, chapeu.y + chapeu.h * dy),
         math.max(0.8, w * raio),
@@ -658,11 +765,14 @@ void _samambaia(_Pincel p) {
   const angulos = [-2.55, -2.05, -1.57, -1.09, -0.6];
   for (var i = 0; i < angulos.length; i++) {
     final cor = p[i % p.pecas.length].c;
-    final ginga = (p.onda(1.2, i * 0.2) - 0.5) * 0.08;
+    final ginga = (p.onda(1, i * 0.2) - 0.5) * 0.08;
     final a = angulos[i] + ginga;
     final comp = (i == 2 ? 30.0 : 24.0) * (r.height / 29);
     final ponta = pe + Offset(math.cos(a), math.sin(a)) * comp;
-    final dobra = pe + Offset(math.cos(a), math.sin(a)) * comp * 0.55 + const Offset(0, -4);
+    final dobra =
+        pe +
+        Offset(math.cos(a), math.sin(a)) * comp * 0.55 +
+        const Offset(0, -4);
     final eixo = Path()
       ..moveTo(pe.dx, pe.dy)
       ..quadraticBezierTo(dobra.dx, dobra.dy, ponta.dx, ponta.dy);
@@ -673,8 +783,14 @@ void _samambaia(_Pincel p) {
       final tam = 6.5 * (1 - t * 0.7);
       final n = Offset(-math.sin(a), math.cos(a));
       final base = Offset(x, y);
-      c.drawPath(_folha(base, base + n * tam + Offset(0, -tam * 0.3), 2.8), p.cor(cor));
-      c.drawPath(_folha(base, base - n * tam + Offset(0, -tam * 0.3), 2.8), p.cor(_claro(cor, 0.12)));
+      c.drawPath(
+        _folha(base, base + n * tam + Offset(0, -tam * 0.3), 2.8),
+        p.cor(cor),
+      );
+      c.drawPath(
+        _folha(base, base - n * tam + Offset(0, -tam * 0.3), 2.8),
+        p.cor(_claro(cor, 0.12)),
+      );
     }
     c.drawPath(eixo, p.traco(_escuro(cor, 0.25), 1.1));
   }
@@ -705,10 +821,20 @@ void _troncoCaido(_Pincel p) {
   c.drawOval(corte.deflate(4.2), p.traco(const Color(0xFFB98C5A), 0.8));
   c.drawOval(corte, _contorno(ponta.c, 1));
   // Musgo e um broto: o tronco virou casa.
-  c.drawOval(Rect.fromLTWH(r.left + 40, r.top - 2.5, 18, 5.5), p.cor(const Color(0xFF8DAA6B)));
+  c.drawOval(
+    Rect.fromLTWH(r.left + 40, r.top - 2.5, 18, 5.5),
+    p.cor(const Color(0xFF8DAA6B)),
+  );
   final broto = Offset(r.left + 64, r.top + 1);
-  c.drawLine(broto, broto + const Offset(0, -6), p.traco(const Color(0xFF6E9150), 1.2));
-  c.drawPath(_folha(broto + const Offset(0, -5), broto + const Offset(5, -9), 3), p.cor(const Color(0xFF8DAA6B)));
+  c.drawLine(
+    broto,
+    broto + const Offset(0, -6),
+    p.traco(const Color(0xFF6E9150), 1.2),
+  );
+  c.drawPath(
+    _folha(broto + const Offset(0, -5), broto + const Offset(5, -9), 3),
+    p.cor(const Color(0xFF8DAA6B)),
+  );
   c.drawRRect(
     RRect.fromRectAndRadius(r, Radius.circular(r.height / 2)),
     _contorno(corpo.c),
@@ -720,7 +846,12 @@ void _casaDePassaro(_Pincel p) {
   final poste = p[0], caixa = p[1], telhado = p[2], furo = p[3];
   final chao = poste.y + poste.h;
   p.sombra(poste.x + poste.w / 2, chao, 26);
-  final rp = Rect.fromLTWH(poste.x, caixa.y + caixa.h - 4, poste.w, chao - caixa.y - caixa.h + 4);
+  final rp = Rect.fromLTWH(
+    poste.x,
+    caixa.y + caixa.h - 4,
+    poste.w,
+    chao - caixa.y - caixa.h + 4,
+  );
   c.drawRect(rp, p.gradV(rp, _escuro(poste.c, 0.1), poste.c));
   // A casinha: parede com empena.
   final r = Rect.fromLTWH(caixa.x, caixa.y, caixa.w, caixa.h);
@@ -738,10 +869,7 @@ void _casaDePassaro(_Pincel p) {
     ..moveTo(telhado.x - 1, r.top + 9)
     ..lineTo(r.center.dx, r.top - 10)
     ..lineTo(telhado.x + telhado.w + 1, r.top + 9);
-  c.drawPath(
-    tl,
-    p.traco(telhado.c, 5)..strokeCap = StrokeCap.round,
-  );
+  c.drawPath(tl, p.traco(telhado.c, 5)..strokeCap = StrokeCap.round);
   c.drawPath(tl, p.traco(_escuro(telhado.c, 0.3).withValues(alpha: 0.5), 1));
   // O furo e o poleiro.
   final f = Offset(furo.x + furo.w / 2, furo.y + furo.h / 2 + 2);
@@ -764,10 +892,22 @@ void _lampiao(_Pincel p) {
   c.translate(topo.dx, topo.dy);
   c.rotate(balanco);
   c.translate(-topo.dx, -topo.dy);
-  c.drawLine(topo, Offset(topo.dx, corpo.y + 2), p.traco(const Color(0x993E2F23), 1.2));
+  c.drawLine(
+    topo,
+    Offset(topo.dx, corpo.y + 2),
+    p.traco(const Color(0x993E2F23), 1.2),
+  );
   final r = Rect.fromLTWH(corpo.x, corpo.y, corpo.w, corpo.h);
   final pulso = 0.85 + 0.15 * p.onda(5);
-  c.drawCircle(r.center, r.width * 1.5, p.brilho(r.center, r.width * 1.5, Color.fromRGBO(255, 190, 110, 0.45 * pulso)));
+  c.drawCircle(
+    r.center,
+    r.width * 1.5,
+    p.brilho(
+      r.center,
+      r.width * 1.5,
+      Color.fromRGBO(255, 190, 110, 0.45 * pulso),
+    ),
+  );
   // Lanterna de papel: um balão com gomos.
   final balao = Rect.fromLTWH(r.left, r.top + 4, r.width, r.height - 8);
   c.drawOval(
@@ -784,19 +924,45 @@ void _lampiao(_Pincel p) {
     final x = balao.left + balao.width * k;
     final curva = Path()
       ..moveTo(balao.center.dx, balao.top)
-      ..quadraticBezierTo(x + (k - 0.5) * balao.width * 0.9, balao.center.dy, balao.center.dx, balao.bottom);
-    c.drawPath(curva, p.traco(_escuro(corpo.c, 0.3).withValues(alpha: 0.45), 0.9));
+      ..quadraticBezierTo(
+        x + (k - 0.5) * balao.width * 0.9,
+        balao.center.dy,
+        balao.center.dx,
+        balao.bottom,
+      );
+    c.drawPath(
+      curva,
+      p.traco(_escuro(corpo.c, 0.3).withValues(alpha: 0.45), 0.9),
+    );
   }
   const tampa = Color(0xFF5A4030);
   c.drawRRect(
-    RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(r.center.dx, r.top + 4), width: r.width * 0.5, height: 5), const Radius.circular(2)),
+    RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(r.center.dx, r.top + 4),
+        width: r.width * 0.5,
+        height: 5,
+      ),
+      const Radius.circular(2),
+    ),
     p.cor(tampa),
   );
   c.drawRRect(
-    RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(r.center.dx, r.bottom - 4), width: r.width * 0.5, height: 5), const Radius.circular(2)),
+    RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(r.center.dx, r.bottom - 4),
+        width: r.width * 0.5,
+        height: 5,
+      ),
+      const Radius.circular(2),
+    ),
     p.cor(tampa),
   );
-  c.drawLine(Offset(r.center.dx, r.bottom - 2), Offset(r.center.dx, r.bottom + 5), p.traco(const Color(0xFFE07A5F), 1.4));
+  c.drawLine(
+    Offset(r.center.dx, r.bottom - 2),
+    Offset(r.center.dx, r.bottom + 5),
+    p.traco(const Color(0xFFE07A5F), 1.4),
+  );
   c.restore();
 }
 
@@ -805,10 +971,21 @@ void _vagalumes(_Pincel p) {
   for (var i = 0; i < p.pecas.length; i++) {
     final q = p.pecas[i];
     final pisca = p.onda(4, i * 0.37);
-    final voo = Offset(math.sin((p.fase * 3 + i * 0.4) * 2 * math.pi) * 5, math.cos((p.fase * 2 + i * 0.3) * 2 * math.pi) * 4);
+    final voo = Offset(
+      math.sin((p.fase * 3 + i * 0.4) * 2 * math.pi) * 5,
+      math.cos((p.fase * 2 + i * 0.3) * 2 * math.pi) * 4,
+    );
     final o = Offset(q.x + q.w / 2, q.y + q.h / 2) + voo;
-    c.drawCircle(o, q.w * 1.8, p.brilho(o, q.w * 1.8, q.c.withValues(alpha: 0.35 + 0.45 * pisca)));
-    c.drawCircle(o, q.w * 0.32, p.cor(_claro(q.c, 0.5).withValues(alpha: 0.6 + 0.4 * pisca)));
+    c.drawCircle(
+      o,
+      q.w * 1.8,
+      p.brilho(o, q.w * 1.8, q.c.withValues(alpha: 0.35 + 0.45 * pisca)),
+    );
+    c.drawCircle(
+      o,
+      q.w * 0.32,
+      p.cor(_claro(q.c, 0.5).withValues(alpha: 0.6 + 0.4 * pisca)),
+    );
   }
 }
 
@@ -817,17 +994,24 @@ void _neve(_Pincel p) {
   for (var i = 0; i < p.pecas.length; i++) {
     final q = p.pecas[i];
     final cai = (p.fase * 14 + i * 2.3) % 14;
-    final o = Offset(q.x + q.w / 2 + math.sin((p.fase * 2 + i * 0.2) * 2 * math.pi) * 4, q.y + q.h / 2 + cai);
+    final o = Offset(
+      q.x + q.w / 2 + math.sin((p.fase * 2 + i * 0.2) * 2 * math.pi) * 4,
+      q.y + q.h / 2 + cai,
+    );
     if (q.w >= 7) {
       // Os grandes são flocos de seis pontas.
       for (var k = 0; k < 3; k++) {
-        final a = k * math.pi / 3 + p.fase;
+        final a = k * math.pi / 3 + p.fase * math.pi;
         final d = Offset(math.cos(a), math.sin(a)) * q.w * 0.7;
         c.drawLine(o - d, o + d, p.traco(const Color(0xEEFFFFFF), 1.1));
       }
       c.drawCircle(o, 1.2, p.cor(const Color(0xFFFFFFFF)));
     } else {
-      c.drawCircle(o, q.w * 0.75, p.brilho(o, q.w * 0.75, const Color(0xEEFFFFFF)));
+      c.drawCircle(
+        o,
+        q.w * 0.75,
+        p.brilho(o, q.w * 0.75, const Color(0xEEFFFFFF)),
+      );
       c.drawCircle(o, q.w * 0.32, p.cor(const Color(0xFFFFFFFF)));
     }
   }
@@ -853,18 +1037,43 @@ void _varalDeLuzes(_Pincel p) {
     final topo = Offset(x, curva(x));
     final pisca = p.onda(3, i * 0.21);
     final lampada = topo + const Offset(0, 6);
-    c.drawCircle(lampada, q.w * 1.3, p.brilho(lampada, q.w * 1.3, q.c.withValues(alpha: 0.35 + 0.3 * pisca)));
+    c.drawCircle(
+      lampada,
+      q.w * 1.3,
+      p.brilho(lampada, q.w * 1.3, q.c.withValues(alpha: 0.35 + 0.3 * pisca)),
+    );
     c.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: topo + const Offset(0, 1.5), width: 3.4, height: 3), const Radius.circular(1)),
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: topo + const Offset(0, 1.5),
+          width: 3.4,
+          height: 3,
+        ),
+        const Radius.circular(1),
+      ),
       p.cor(const Color(0xFF5A4636)),
     );
     final gota = Path()
       ..moveTo(topo.dx - q.w * 0.3, topo.dy + 3)
-      ..quadraticBezierTo(topo.dx - q.w * 0.5, topo.dy + 9, topo.dx, topo.dy + 11)
-      ..quadraticBezierTo(topo.dx + q.w * 0.5, topo.dy + 9, topo.dx + q.w * 0.3, topo.dy + 3)
+      ..quadraticBezierTo(
+        topo.dx - q.w * 0.5,
+        topo.dy + 9,
+        topo.dx,
+        topo.dy + 11,
+      )
+      ..quadraticBezierTo(
+        topo.dx + q.w * 0.5,
+        topo.dy + 9,
+        topo.dx + q.w * 0.3,
+        topo.dy + 3,
+      )
       ..close();
     c.drawPath(gota, p.cor(_claro(q.c, 0.2 + 0.2 * pisca)));
-    c.drawCircle(topo + const Offset(-1, 6), 0.9, p.cor(const Color(0xAAFFFFFF)));
+    c.drawCircle(
+      topo + const Offset(-1, 6),
+      0.9,
+      p.cor(const Color(0xAAFFFFFF)),
+    );
   }
 }
 
@@ -873,11 +1082,23 @@ void _fogueira(_Pincel p) {
   final lenha = p[0], fogo = p[2], brasa = p[3];
   final base = lenha.y + lenha.h;
   final cx = lenha.x + lenha.w / 2;
-  c.drawCircle(Offset(cx, base - 14), 26, p.brilho(Offset(cx, base - 14), 26, Color.fromRGBO(255, 170, 90, 0.28 + 0.12 * p.onda(9))));
+  c.drawCircle(
+    Offset(cx, base - 14),
+    26,
+    p.brilho(
+      Offset(cx, base - 14),
+      26,
+      Color.fromRGBO(255, 170, 90, 0.28 + 0.12 * p.onda(9)),
+    ),
+  );
   // As pedras em roda.
   for (var i = 0; i < 6; i++) {
     final x = lenha.x - 2 + i * (lenha.w + 4) / 5;
-    final o = Rect.fromCenter(center: Offset(x, base - 1), width: 8, height: 5.5);
+    final o = Rect.fromCenter(
+      center: Offset(x, base - 1),
+      width: 8,
+      height: 5.5,
+    );
     c.drawOval(o, p.gradV(o, const Color(0xFFB8B0A3), const Color(0xFF8C8478)));
   }
   // Duas toras cruzadas.
@@ -885,26 +1106,63 @@ void _fogueira(_Pincel p) {
     c.save();
     c.translate(cx, base - 4);
     c.rotate(0.32 * s);
-    final r = Rect.fromCenter(center: Offset.zero, width: lenha.w * 0.9, height: 5.5);
-    c.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(2.7)), p.gradV(r, _claro(lenha.c, 0.2), lenha.c));
-    c.drawOval(Rect.fromCenter(center: Offset(r.right - 1.5 * s * s, 0), width: 3.5, height: 5), p.cor(const Color(0xFFD9B184)));
+    final r = Rect.fromCenter(
+      center: Offset.zero,
+      width: lenha.w * 0.9,
+      height: 5.5,
+    );
+    c.drawRRect(
+      RRect.fromRectAndRadius(r, const Radius.circular(2.7)),
+      p.gradV(r, _claro(lenha.c, 0.2), lenha.c),
+    );
+    c.drawOval(
+      Rect.fromCenter(
+        center: Offset(r.right - 1.5 * s * s, 0),
+        width: 3.5,
+        height: 5,
+      ),
+      p.cor(const Color(0xFFD9B184)),
+    );
     c.restore();
   }
   // As chamas, em três camadas que tremulam fora de fase.
   Path chama(double largura, double altura, double inclina) => Path()
     ..moveTo(cx - largura / 2, base - 6)
-    ..quadraticBezierTo(cx - largura * 0.6, base - 6 - altura * 0.55, cx + inclina, base - 6 - altura)
-    ..quadraticBezierTo(cx + largura * 0.6, base - 6 - altura * 0.5, cx + largura / 2, base - 6)
+    ..quadraticBezierTo(
+      cx - largura * 0.6,
+      base - 6 - altura * 0.55,
+      cx + inclina,
+      base - 6 - altura,
+    )
+    ..quadraticBezierTo(
+      cx + largura * 0.6,
+      base - 6 - altura * 0.5,
+      cx + largura / 2,
+      base - 6,
+    )
     ..close();
   final t1 = p.onda(11), t2 = p.onda(13, 0.3), t3 = p.onda(17, 0.6);
-  c.drawPath(chama(fogo.w * 1.1, fogo.h + 4 + 3 * t1, (t2 - 0.5) * 4), p.cor(const Color(0xFFE76F51)));
-  c.drawPath(chama(fogo.w * 0.8, fogo.h - 1 + 3 * t2, (t3 - 0.5) * 3), p.cor(fogo.c));
-  c.drawPath(chama(fogo.w * 0.45, fogo.h * 0.6 + 2 * t3, (t1 - 0.5) * 2), p.cor(const Color(0xFFFFE08A)));
+  c.drawPath(
+    chama(fogo.w * 1.1, fogo.h + 4 + 3 * t1, (t2 - 0.5) * 4),
+    p.cor(const Color(0xFFE76F51)),
+  );
+  c.drawPath(
+    chama(fogo.w * 0.8, fogo.h - 1 + 3 * t2, (t3 - 0.5) * 3),
+    p.cor(fogo.c),
+  );
+  c.drawPath(
+    chama(fogo.w * 0.45, fogo.h * 0.6 + 2 * t3, (t1 - 0.5) * 2),
+    p.cor(const Color(0xFFFFE08A)),
+  );
   // Fagulhas subindo.
   for (var i = 0; i < 3; i++) {
     final sobe = (p.fase * 9 + i / 3) % 1;
     final o = Offset(cx + math.sin((sobe + i) * 6) * 5, base - 22 - sobe * 18);
-    c.drawCircle(o, 1.2 * (1 - sobe) + 0.3, p.cor(brasa.c.withValues(alpha: 1 - sobe)));
+    c.drawCircle(
+      o,
+      1.2 * (1 - sobe) + 0.3,
+      p.cor(brasa.c.withValues(alpha: 1 - sobe)),
+    );
   }
 }
 
@@ -917,9 +1175,19 @@ void _cerejeira(_Pincel p) {
   // Tronco torto com um galho.
   final t = Path()
     ..moveTo(cx - tronco.w * 0.9, chao)
-    ..quadraticBezierTo(cx - 2, chao - tronco.h * 0.5, cx - tronco.w * 0.3, copa.y + copa.h * 0.6)
+    ..quadraticBezierTo(
+      cx - 2,
+      chao - tronco.h * 0.5,
+      cx - tronco.w * 0.3,
+      copa.y + copa.h * 0.6,
+    )
     ..lineTo(cx + tronco.w * 0.4, copa.y + copa.h * 0.6)
-    ..quadraticBezierTo(cx + 3, chao - tronco.h * 0.45, cx + tronco.w * 0.9, chao)
+    ..quadraticBezierTo(
+      cx + 3,
+      chao - tronco.h * 0.45,
+      cx + tronco.w * 0.9,
+      chao,
+    )
     ..close();
   c.drawPath(t, p.cor(tronco.c));
   c.drawLine(
@@ -941,13 +1209,24 @@ void _cerejeira(_Pincel p) {
     (Offset(w * 0.5, h * 0.78), w * 0.22, copa2.c),
   ];
   for (final (pos, raio, cor) in cachos) {
-    c.drawCircle(o + pos + const Offset(0, 1.6), raio, p.cor(_escuro(cor, 0.12)));
+    c.drawCircle(
+      o + pos + const Offset(0, 1.6),
+      raio,
+      p.cor(_escuro(cor, 0.12)),
+    );
   }
   for (final (pos, raio, cor) in cachos) {
     c.drawCircle(o + pos, raio, p.cor(cor));
   }
   // Florzinhas brancas pontuando a copa.
-  for (final (dx, dy) in [(0.28, 0.4), (0.58, 0.32), (0.72, 0.6), (0.42, 0.66), (0.86, 0.48), (0.16, 0.6)]) {
+  for (final (dx, dy) in [
+    (0.28, 0.4),
+    (0.58, 0.32),
+    (0.72, 0.6),
+    (0.42, 0.66),
+    (0.86, 0.48),
+    (0.16, 0.6),
+  ]) {
     final f = o + Offset(w * dx, h * dy);
     c.drawCircle(f, 1.5, p.cor(const Color(0xF0FFF6F8)));
     c.drawCircle(f, 0.6, p.cor(const Color(0xFFE38FA6)));
@@ -958,7 +1237,10 @@ void _cerejeira(_Pincel p) {
     final cai = (p.fase * 3 + i * 0.33) % 1;
     final x = q.x + q.w / 2 - i * 8 + math.sin((cai + i) * 6) * 3;
     final y = q.y + q.h / 2 + cai * 26;
-    c.drawPath(_folha(Offset(x, y), Offset(x + 3.5, y + 1.5), 2.6), p.cor(q.c.withValues(alpha: 1 - cai * 0.6)));
+    c.drawPath(
+      _folha(Offset(x, y), Offset(x + 3.5, y + 1.5), 2.6),
+      p.cor(q.c.withValues(alpha: 1 - cai * 0.6)),
+    );
   }
 }
 
@@ -966,19 +1248,47 @@ void _cerejeira(_Pincel p) {
 
 void _nuvens(_Pincel p) {
   final c = p.c;
-  final deriva = (p.fase - 0.5) * 10;
+  final deriva = (p.onda(0.5) - 0.5) * 10;
   for (var i = 0; i < p.pecas.length; i++) {
     final q = p.pecas[i];
     final r = Rect.fromLTWH(q.x + deriva * (i.isEven ? 1 : 0.6), q.y, q.w, q.h);
     final nuvem = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(r.left, r.top + r.height * 0.45, r.width, r.height * 0.55),
-        Radius.circular(r.height * 0.3),
-      ))
-      ..addOval(Rect.fromCircle(center: Offset(r.left + r.width * 0.32, r.top + r.height * 0.5), radius: r.height * 0.42))
-      ..addOval(Rect.fromCircle(center: Offset(r.left + r.width * 0.6, r.top + r.height * 0.36), radius: r.height * 0.52))
-      ..addOval(Rect.fromCircle(center: Offset(r.left + r.width * 0.82, r.top + r.height * 0.58), radius: r.height * 0.32));
-    c.drawPath(nuvem.shift(const Offset(0, 2)), p.cor(_escuro(q.c, 0.12).withValues(alpha: 0.45)));
-    c.drawPath(nuvem, p.gradV(r.inflate(r.height * 0.5), _claro(q.c, 0.6), q.c));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            r.left,
+            r.top + r.height * 0.45,
+            r.width,
+            r.height * 0.55,
+          ),
+          Radius.circular(r.height * 0.3),
+        ),
+      )
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(r.left + r.width * 0.32, r.top + r.height * 0.5),
+          radius: r.height * 0.42,
+        ),
+      )
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(r.left + r.width * 0.6, r.top + r.height * 0.36),
+          radius: r.height * 0.52,
+        ),
+      )
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(r.left + r.width * 0.82, r.top + r.height * 0.58),
+          radius: r.height * 0.32,
+        ),
+      );
+    c.drawPath(
+      nuvem.shift(const Offset(0, 2)),
+      p.cor(_escuro(q.c, 0.12).withValues(alpha: 0.45)),
+    );
+    c.drawPath(
+      nuvem,
+      p.gradV(r.inflate(r.height * 0.5), _claro(q.c, 0.6), q.c),
+    );
   }
 }

@@ -633,17 +633,11 @@ class _MissaoQueAndou extends StatelessWidget {
               ],
             ),
           ),
+          // Sem botão "Colher" aqui: a cena "Missão cumprida!" vem logo
+          // depois com o dela, e dois "Colher" seguidos era um a mais.
           if (pronta) ...[
             const SizedBox(width: Espaco.sm),
-            BotaoBaru(
-              key: Key('resultado-colher-${d.id}'),
-              rotulo: tx.resColher,
-              aoTocar: () => app.go(AppScreen.missoes),
-              papel: PapelDoBotao.recompensa,
-              altura: BotaoBaru.alturaCompacta,
-              expande: false,
-              tamanhoDoTexto: 14,
-            ),
+            const GlifoFolha(tamanho: 22),
           ],
         ],
       ),

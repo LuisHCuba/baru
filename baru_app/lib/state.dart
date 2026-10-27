@@ -312,6 +312,38 @@ class AppState extends ChangeNotifier {
   /// Em memória, como [raizACelebrar]: a festa é do momento em que fechou.
   List<MissaoTocada> missoesCumpridas = const [];
 
+  /// O descanso do dia fechou e a cena ainda não passou.
+  bool descansoNaCena = false;
+
+  /// O descanso entra na cena se ainda estiver para colher.
+  bool get descansoACumprir =>
+      descansoNaCena && missaoDoDescanso.resgatavel;
+
+  /// O quadro como estava no último aviso: é comparando com ele que se vê
+  /// o que acabou de ficar pronto.
+  Map<String, Missao>? _quadroVisto;
+
+  /// Missão que fecha **fora** da sessão — carinho, tempo de tela, as da
+  /// semana — também ganha a cena (auditoria da Onda 4, M5). Antes só a
+  /// sessão acendia o "Missão cumprida!".
+  ///
+  /// Roda a cada aviso de mudança. A primeira chamada só tira o retrato: o
+  /// que já estava pronto ao abrir o app não é novidade.
+  void _notaMissoesQueFecharam() {
+    final agora = [...missoes, if (missaoDeRetomada case final r?) r];
+    final antes = _quadroVisto;
+    _quadroVisto = {for (final m in agora) m.id: m};
+    if (antes == null) return;
+    final ja = {for (final c in missoesCumpridas) c.depois.id};
+    final novas = [
+      for (final m in agora)
+        if (antes[m.id] case final a?
+            when !a.resgatavel && m.resgatavel && !ja.contains(m.id))
+          MissaoTocada(antes: a, depois: m),
+    ];
+    if (novas.isNotEmpty) missoesCumpridas = [...missoesCumpridas, ...novas];
+  }
+
   /// As que ainda esperam colheita. Colhida por outro caminho (a tela de
   /// missões) não volta a ganhar festa.
   List<Missao> get missoesACumprir {
@@ -333,7 +365,9 @@ class AppState extends ChangeNotifier {
   /// esta mesma colheita pode ter subido) sem que ela aparecesse.
   void colheAsCumpridas() {
     resgataTodas(missoesACumprir);
+    if (descansoACumprir) resgataODescanso();
     missoesCumpridas = const [];
+    descansoNaCena = false;
     notifyListeners();
   }
 
@@ -351,6 +385,7 @@ class AppState extends ChangeNotifier {
   bool get temCelebracaoPendente =>
       raizACelebrar != null ||
       missoesACumprir.isNotEmpty ||
+      descansoACumprir ||
       cresceuSemCelebrar ||
       subiuDeNivel ||
       marcosACelebrar.isNotEmpty ||
@@ -375,9 +410,10 @@ class AppState extends ChangeNotifier {
     }
     // Logo depois da raiz: colher pode dar o XP que sobe o nível, e o
     // nível então vem na sequência, e não antes do prêmio que o causou.
-    if (missoesCumpridas.isNotEmpty) {
-      final havia = missoesACumprir.isNotEmpty;
+    if (missoesCumpridas.isNotEmpty || descansoNaCena) {
+      final havia = missoesACumprir.isNotEmpty || descansoACumprir;
       missoesCumpridas = const [];
+      descansoNaCena = false;
       if (havia) {
         notifyListeners();
         return;
@@ -1035,6 +1071,7 @@ class AppState extends ChangeNotifier {
     if (l.acabou) {
       onUserMessage?.call(recadoDoDescanso(t, missaoDoDescanso));
       _fechaODescanso();
+      if (missaoDoDescanso.resgatavel) descansoNaCena = true;
     }
     _markSync(_syncSession);
   }
@@ -3026,6 +3063,7 @@ class AppState extends ChangeNotifier {
 
   @override
   void notifyListeners() {
+    _notaMissoesQueFecharam();
     super.notifyListeners();
     _schedulePersist();
   }

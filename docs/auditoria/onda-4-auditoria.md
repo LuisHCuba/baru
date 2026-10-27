@@ -361,3 +361,26 @@ Não houve uma passada geral pelo app.
 2. M1, M2 e M3.
 3. M4, M5, M6 e M7.
 4. Os baixos.
+
+---
+
+## Situação das correções (2026-10-27)
+
+| Achado | Situação | Onde |
+|---|---|---|
+| A1 "Colher agora" engolia a próxima cena | Corrigido; teste falha no código antigo | `state.dart` `colheAsCumpridas`; `fim_de_sessao_test` |
+| A2 nome perdia o foco a cada letra | Corrigido (`ValueKey(speciesKey)`); teste falha no código antigo | `pet_profile.dart`; `ajustes_test` |
+| M1 dia congelado pintava um dia a mais | Corrigido; teste falha no código antigo | `state.dart` `ultimos7Dias`; `calendar_test` |
+| M2 transbordo em 360×640 | Cena da missão rola e mantém os botões fixos; sessão mede a área útil e reduz o relógio quando aperta | `cena_da_missao.dart`, `session_screen.dart` |
+| M3 pelagem sem trava | Corrigido (`pelagemDe`) | `settings_screen.dart` |
+| M4 habitat reconstruído a cada quadro | O olhar segue a borboleta por `ValueNotifier` em degraus de 0,05; o habitat só reconstrói quando o degrau muda. Itens animados continuam repintando com a deriva (não tratado) | `session_screen.dart` |
+| M5 pop-up só para missão da sessão | Vigia genérico no `notifyListeners`: carinho, tela e semanais acendem a cena; o descanso também | `state.dart`, `app.dart`; testes novos |
+| M6 broto em cima da pedra | Broto num vaso em primeiro plano, no canto | `session_screen.dart` |
+| M7 arte esticada | Escala única ancorada no pé (ou no alto, para o que pende do céu) | `habitat.dart` |
+| Neve/fagulhas subindo | Fase contada para a frente (0..2) e períodos que dividem 2 | `habitat.dart`, `arte_dos_itens.dart` |
+| Sombra como faixa | Elipse nos pés; nenhuma dentro d'água | `habitat.dart` |
+| Borboleta parada com "reduzir movimento" | Não aparece | `session_screen.dart` |
+| Leitor de tela | Cena da missão bloqueia a tela de baixo; "Colho depois" é botão; a sessão tem rótulo próprio | `cena_da_missao.dart`, `habitat.dart` |
+| "Ele não trava nada" | Trocado por "Isso não trava nada" | `l10n_sobreposicao.dart` |
+| "Colher" duas vezes | Botão do resultado trocado por um selo de folha | `result_screen.dart` |
+| Espaçamento parcial | Passada geral (187 literais) em 6eca04e; a dica da sessão usa tokens | vários |

@@ -360,10 +360,14 @@ class _Casca extends StatelessWidget {
       );
     }
     final cumpridas = app.missoesACumprir;
-    if (cumpridas.isNotEmpty) {
+    if (cumpridas.isNotEmpty || app.descansoACumprir) {
+      final descanso = app.missaoDoDescanso;
       final antes = {for (final c in app.missoesCumpridas) c.antes.id: c.antes};
       return CenaDaMissao(
-        key: ValueKey('missao-${cumpridas.map((m) => m.id).join()}'),
+        key: ValueKey(
+          'missao-${cumpridas.map((m) => m.id).join()}'
+          '${app.descansoACumprir ? '-descanso' : ''}',
+        ),
         missoes: [
           for (final m in cumpridas)
             MissaoNaCena(
@@ -372,9 +376,18 @@ class _Casca extends StatelessWidget {
               folhas: m.folhas,
               xp: m.xp,
             ),
+          if (app.descansoACumprir)
+            MissaoNaCena(
+              titulo: tituloDoDescanso(t, descanso),
+              de: 0,
+              folhas: descanso.folhas,
+              xp: descanso.xp,
+            ),
         ],
         bicho: _bichoComemorando(app),
-        titulo: cumpridas.length == 1 ? t.missaoCumprida : t.missoesCumpridas,
+        titulo: cumpridas.length + (app.descansoACumprir ? 1 : 0) == 1
+            ? t.missaoCumprida
+            : t.missoesCumpridas,
         rotuloColher: t.colherAgora,
         rotuloDepois: t.colherDepois,
         aoColher: app.colheAsCumpridas,

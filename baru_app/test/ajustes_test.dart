@@ -2,7 +2,6 @@ import 'package:baru_app/l10n.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/state.dart';
 import 'package:baru_app/theme.dart';
-import 'package:baru_app/widgets/common.dart';
 import 'package:baru_app/widgets/pet_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

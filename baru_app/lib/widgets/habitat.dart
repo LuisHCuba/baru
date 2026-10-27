@@ -305,7 +305,12 @@ class HabitatScene extends StatefulWidget {
     this.moldura = true,
     this.olharDoBicho,
     this.cutucadas,
+    this.rotulo,
   });
+
+  /// O que o leitor de tela diz da cena. Sem ele, a fala do humor da home —
+  /// que na sessão não descreve o que está acontecendo.
+  final String? rotulo;
 
   /// O que o bicho faz, quando não é o do humor: na sessão ele está no banho
   /// (ou brincando na beira), e radiante.
@@ -502,8 +507,9 @@ class _HabitatSceneState extends State<HabitatScene>
       image: true,
       // Quem usa leitor de tela ouvia "Baru está radiante" — o sentimento
       // sem o fato. A cena é a mesma; a descrição dela tem de ser também.
-      label: '${app.frase(app.t.humorCap(app.falaDoHumor), app.falaDoHumor.valores)} '
-          '${app.frase(app.t.humorSub(app.falaDoHumor), app.falaDoHumor.valores)}',
+      label: widget.rotulo ??
+          '${app.frase(app.t.humorCap(app.falaDoHumor), app.falaDoHumor.valores)} '
+              '${app.frase(app.t.humorSub(app.falaDoHumor), app.falaDoHumor.valores)}',
       child: RepaintBoundary(
         key: HabitatScene.cenaKey,
         child: Container(
@@ -535,6 +541,11 @@ class _HabitatSceneState extends State<HabitatScene>
                 animation: Listenable.merge([_deriva, ..._chegadas.values]),
                 builder: (context, _) {
                   final fase = _deriva.value;
+                  // Para os itens, a deriva conta sempre para a frente (0..2):
+                  // na volta do vaivém a neve subia (ver `pintaItem`).
+                  final faseDosItens = _deriva.status == AnimationStatus.reverse
+                      ? 2 - fase
+                      : fase;
                   return Stack(
                     fit: StackFit.expand,
                     children: [
@@ -563,7 +574,7 @@ class _HabitatSceneState extends State<HabitatScene>
                         ),
                       ),
                       for (final item in possuidos)
-                        _objeto(item, sx, sy, fase),
+                        _objeto(item, sx, sy, faseDosItens),
                       // O companheiro ocupa o lugar da cena que combina com
                       // o que está fazendo: dentro d'água ao nadar, na
                       // margem ao pastar, na areia ao cochilar.
@@ -572,23 +583,30 @@ class _HabitatSceneState extends State<HabitatScene>
                       // cena: os pés dele ficam a ~26 unidades do chão da
                       // caixa de 150 px, e é a escala que decide onde isso
                       // cai. Presa ao `sy`, a sombra ficaria no tornozelo.
-                      AnimatedPositioned(
-                        duration: _mudaDeLugar,
-                        curve: Curves.easeInOut,
-                        left: 0,
-                        right: 0,
-                        bottom: _alturaDoPet(app) * sy + 26 * escalaDoPet,
-                        child: Center(
-                          child: Container(
-                            width: 141 * escalaDoPet,
-                            height: 13 * sy,
-                            decoration: BoxDecoration(
-                              color: Cores.tintaA(_naAgua(app) ? 0.07 : 0.13),
-                              borderRadius: Raio.todos(Raio.pilula),
+                      //
+                      // Era uma pílula de 141 de largura a 26 unidades do
+                      // pé, com altura pelo `sy`: na cena alta da sessão ela
+                      // virava uma faixa cinza atrás do quadril (auditoria da
+                      // Onda 4). Agora é uma elipse curta, nos pés, e some
+                      // dentro d'água — onde sombra de chão não existe.
+                      if (!_naAgua(app))
+                        AnimatedPositioned(
+                          duration: _mudaDeLugar,
+                          curve: Curves.easeInOut,
+                          left: 0,
+                          right: 0,
+                          bottom: _alturaDoPet(app) * sy - 4 * escalaDoPet,
+                          child: Center(
+                            child: Container(
+                              width: 92 * escalaDoPet,
+                              height: 12 * escalaDoPet,
+                              decoration: BoxDecoration(
+                                color: Cores.tintaA(0.14),
+                                borderRadius: Raio.todos(Raio.pilula),
+                              ),
                             ),
                           ),
                         ),
-                      ),
                       // A troca de lugar anda junto com a troca de humor
                       // (350 ms no bicho): o corpo ia da margem para a água
                       // num quadro só (auditoria da Onda 3, 11a-M2).
@@ -699,6 +717,8 @@ class _HabitatSceneState extends State<HabitatScene>
   }
 }
 
+const _doCeu = {'lantern', 'varal_de_luzes', 'nuvens', 'vagalumes', 'neve'};
+
 class _ObjetoPintado extends CustomPainter {
   const _ObjetoPintado({
     required this.item,
@@ -714,15 +734,22 @@ class _ObjetoPintado extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final caixa = caixaDasPecas(item.parts);
+    // O lugar segue a cena (sx, sy); o desenho, não: escala única, senão na
+    // sessão de tela alta tudo saía 1,6× esticado na vertical (auditoria da
+    // Onda 4, M7). O que pende do céu se prende pelo alto; o resto, pelo pé.
+    final doCeu = _doCeu.contains(item.id);
+    final ancora = doCeu ? caixa.topCenter : caixa.bottomCenter;
+    final k = math.min(sx, sy);
     canvas.save();
-    canvas.scale(sx, sy);
+    canvas.translate(ancora.dx * sx, ancora.dy * sy);
+    canvas.scale(k, k);
     if (chegada < 1) {
-      // Cai de 26 unidades e cresce de 60% até o tamanho, pelo centro.
-      canvas.translate(caixa.center.dx, caixa.center.dy - (1 - chegada) * 26);
-      final k = 0.6 + 0.4 * chegada;
-      canvas.scale(k, k);
-      canvas.translate(-caixa.center.dx, -caixa.center.dy);
+      // Cai de 26 unidades e cresce de 60% até o tamanho.
+      canvas.translate(0, -(1 - chegada) * 26);
+      final c = 0.6 + 0.4 * chegada;
+      canvas.scale(c, c);
     }
+    canvas.translate(-ancora.dx, -ancora.dy);
     pintaItem(canvas, item.id, item.parts, fase: fase);
     canvas.restore();
   }

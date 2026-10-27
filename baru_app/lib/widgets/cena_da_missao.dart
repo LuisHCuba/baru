@@ -128,167 +128,211 @@ class _CenaDaMissaoState extends State<CenaDaMissao>
     final xp = widget.missoes.fold<int>(0, (s, m) => s + m.xp);
     return Positioned.fill(
       key: CenaDaMissao.chave,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_c, _raios]),
-        builder: (context, _) {
-          final entra = Curves.easeOutBack.transform(_faixa(0, 0.16));
-          final titulo = Curves.easeOutBack.transform(_faixa(_cheia, 0.70));
-          final botoes = _faixa(0.86, 1);
-          return Material(
-            color: Colors.transparent,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color.lerp(Cores.mel400, Colors.white, 0.25)!
-                        .withValues(alpha: _faixa(0, 0.1)),
-                    Cores.mel400.withValues(alpha: _faixa(0, 0.1)),
-                  ],
-                ),
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Espaco.lg,
-                    Espaco.lg,
-                    Espaco.lg,
-                    Espaco.md,
+      // A tela de baixo some para o leitor de tela enquanto a cena estiver
+      // na frente.
+      child: BlockSemantics(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_c, _raios]),
+          builder: (context, _) {
+            final entra = Curves.easeOutBack.transform(_faixa(0, 0.16));
+            final titulo = Curves.easeOutBack.transform(_faixa(_cheia, 0.70));
+            final botoes = _faixa(0.86, 1);
+            return Material(
+              color: Colors.transparent,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color.lerp(
+                        Cores.mel400,
+                        Colors.white,
+                        0.25,
+                      )!.withValues(alpha: _faixa(0, 0.1)),
+                      Cores.mel400.withValues(alpha: _faixa(0, 0.1)),
+                    ],
                   ),
-                  child: Column(
-                    children: [
-                      const Spacer(),
-                      // O bicho, pulando de alegria, sobre os raios.
-                      SizedBox(
-                        height: 190,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          clipBehavior: Clip.none,
-                          children: [
-                            CustomPaint(
-                              size: const Size(320, 320),
-                              painter: _Raios(
-                                giro: _raios.value * math.pi * 2,
-                                forca: _faixa(0.05, 0.3),
-                              ),
-                            ),
-                            CustomPaint(
-                              size: const Size(320, 320),
-                              painter: _Estouro(t: _faixa(_cheia, 0.95)),
-                            ),
-                            Transform.translate(
-                              offset: Offset(
-                                0,
-                                -18 *
-                                    math.max(
-                                      0,
-                                      math.sin(
-                                        _faixa(_cheia, 0.9) * math.pi * 3,
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Espaco.lg,
+                      Espaco.lg,
+                      Espaco.lg,
+                      Espaco.md,
+                    ),
+                    // Os botões ficam sempre à vista, embaixo; o resto rola se não
+                    // couber. Em 360×640 com duas ou três missões o "Colher"
+                    // ia para fora da tela (auditoria da Onda 4, M2).
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, c) => SingleChildScrollView(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: c.maxHeight,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // O bicho, pulando de alegria, sobre os raios.
+                                    SizedBox(
+                                      height: c.maxHeight < 480 ? 130 : 190,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          CustomPaint(
+                                            size: const Size(320, 320),
+                                            painter: _Raios(
+                                              giro: _raios.value * math.pi * 2,
+                                              forca: _faixa(0.05, 0.3),
+                                            ),
+                                          ),
+                                          CustomPaint(
+                                            size: const Size(320, 320),
+                                            painter: _Estouro(
+                                              t: _faixa(_cheia, 0.95),
+                                            ),
+                                          ),
+                                          Transform.translate(
+                                            offset: Offset(
+                                              0,
+                                              -18 *
+                                                  math.max(
+                                                    0,
+                                                    math.sin(
+                                                      _faixa(_cheia, 0.9) *
+                                                          math.pi *
+                                                          3,
+                                                    ),
+                                                  ),
+                                            ),
+                                            child: Transform.scale(
+                                              scale: 0.5 + 0.5 * entra,
+                                              child: widget.bicho,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                              ),
-                              child: Transform.scale(
-                                scale: 0.5 + 0.5 * entra,
-                                child: widget.bicho,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: Espaco.md),
-                      Opacity(
-                        opacity: titulo.clamp(0.0, 1.0),
-                        child: Transform.scale(
-                          scale: 0.6 + 0.4 * titulo,
-                          child: Text(
-                            widget.titulo,
-                            textAlign: TextAlign.center,
-                            style: estilo(Tipo.display),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: Espaco.lg),
-                      for (final (i, m) in widget.missoes.indexed)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: Espaco.sm),
-                          child: Opacity(
-                            opacity: entra.clamp(0.0, 1.0),
-                            child: _CartaoDaMissao(
-                              missao: m,
-                              fracao: m.de +
-                                  (1 - m.de) *
-                                      Curves.easeInOutCubic.transform(
-                                        _faixa(0.16 + i * 0.05, _cheia),
+                                    const SizedBox(height: Espaco.md),
+                                    Opacity(
+                                      opacity: titulo.clamp(0.0, 1.0),
+                                      child: Transform.scale(
+                                        scale: 0.6 + 0.4 * titulo,
+                                        child: Text(
+                                          widget.titulo,
+                                          textAlign: TextAlign.center,
+                                          style: estilo(Tipo.display),
+                                        ),
                                       ),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: Espaco.sm),
-                      // As recompensas, uma de cada vez.
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _Premio(
-                            t: Curves.easeOutBack.transform(_faixa(0.66, 0.78)),
-                            icone: const GlifoFolha(tamanho: 22),
-                            texto: '+$folhas',
-                            cor: Cores.folha700,
-                          ),
-                          const SizedBox(width: Espaco.sm),
-                          _Premio(
-                            t: Curves.easeOutBack.transform(_faixa(0.74, 0.86)),
-                            icone: const GlifoXp(tamanho: 20),
-                            texto: '+$xp XP',
-                            cor: Cores.mel700,
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      IgnorePointer(
-                        ignoring: botoes < 1,
-                        child: Opacity(
-                          opacity: botoes,
-                          child: Column(
-                            children: [
-                              BotaoBaru(
-                                key: CenaDaMissao.chaveColher,
-                                rotulo: widget.rotuloColher,
-                                aoTocar: widget.aoColher,
-                                icone: const GlifoFolha(
-                                  tamanho: 20,
-                                  cor: Cores.tintaClara,
+                                    ),
+                                    const SizedBox(height: Espaco.lg),
+                                    for (final (i, m) in widget.missoes.indexed)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: Espaco.sm,
+                                        ),
+                                        child: Opacity(
+                                          opacity: entra.clamp(0.0, 1.0),
+                                          child: _CartaoDaMissao(
+                                            missao: m,
+                                            fracao:
+                                                m.de +
+                                                (1 - m.de) *
+                                                    Curves.easeInOutCubic
+                                                        .transform(
+                                                          _faixa(
+                                                            0.16 + i * 0.05,
+                                                            _cheia,
+                                                          ),
+                                                        ),
+                                          ),
+                                        ),
+                                      ),
+                                    const SizedBox(height: Espaco.sm),
+                                    // As recompensas, uma de cada vez.
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        _Premio(
+                                          t: Curves.easeOutBack.transform(
+                                            _faixa(0.66, 0.78),
+                                          ),
+                                          icone: const GlifoFolha(tamanho: 22),
+                                          texto: '+$folhas',
+                                          cor: Cores.folha700,
+                                        ),
+                                        const SizedBox(width: Espaco.sm),
+                                        _Premio(
+                                          t: Curves.easeOutBack.transform(
+                                            _faixa(0.74, 0.86),
+                                          ),
+                                          icone: const GlifoXp(tamanho: 20),
+                                          texto: '+$xp XP',
+                                          cor: Cores.mel700,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: Espaco.xs),
-                              GestureDetector(
-                                onTap: widget.aoFechar,
-                                behavior: HitTestBehavior.opaque,
-                                child: SizedBox(
-                                  height: 48,
-                                  child: Center(
-                                    child: Text(
-                                      widget.rotuloDepois,
-                                      style: nunito(
-                                        size: 15,
-                                        weight: FontWeight.w700,
-                                        color: Cores.tinta,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Espaco.sm),
+                        IgnorePointer(
+                          ignoring: botoes < 1,
+                          child: Opacity(
+                            opacity: botoes,
+                            child: Column(
+                              children: [
+                                BotaoBaru(
+                                  key: CenaDaMissao.chaveColher,
+                                  rotulo: widget.rotuloColher,
+                                  aoTocar: widget.aoColher,
+                                  icone: const GlifoFolha(
+                                    tamanho: 20,
+                                    cor: Cores.tintaClara,
+                                  ),
+                                ),
+                                const SizedBox(height: Espaco.xs),
+                                Semantics(
+                                  button: true,
+                                  child: GestureDetector(
+                                    onTap: widget.aoFechar,
+                                    behavior: HitTestBehavior.opaque,
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: Center(
+                                        child: Text(
+                                          widget.rotuloDepois,
+                                          style: nunito(
+                                            size: 15,
+                                            weight: FontWeight.w700,
+                                            color: Cores.tinta,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -408,8 +452,11 @@ class _Premio extends StatelessWidget {
               const SizedBox(width: Espaco.xs),
               Text(
                 texto,
-                style: estilo(Tipo.subtitulo, color: cor, tabular: true)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: estilo(
+                  Tipo.subtitulo,
+                  color: cor,
+                  tabular: true,
+                ).copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -496,8 +543,9 @@ class _Estouro extends CustomPainter {
             ..quadraticBezierTo(0, 6, -7, 0)
             ..close(),
           Paint()
-            ..color = (i.isEven ? Cores.folha500 : Cores.folha600)
-                .withValues(alpha: some),
+            ..color = (i.isEven ? Cores.folha500 : Cores.folha600).withValues(
+              alpha: some,
+            ),
         );
       }
       canvas.restore();

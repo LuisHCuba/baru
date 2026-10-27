@@ -90,9 +90,33 @@ class _SessionScreenState extends State<SessionScreen>
   Offset? _dedoDesceu;
   DateTime? _quandoDesceu;
 
+  /// Para onde ele olha seguindo a borboleta, em degraus de 0,05.
+  ///
+  /// Era um `AnimatedBuilder` do voo em volta do habitat: a cena inteira era
+  /// reconstruída a cada quadro, por 25 minutos (auditoria da Onda 4, M4).
+  /// Agora só muda quando o olhar muda de degrau.
+  final _olharDaBorboleta = ValueNotifier<Offset?>(null);
+  Size _cena = Size.zero;
+
+  void _segueABorboleta() {
+    if (_cena.isEmpty) return;
+    final b = _ondeABorboleta();
+    final o = _olharPara(
+      Offset(b.dx * _cena.width, b.dy * _cena.height),
+      _cena,
+    );
+    final degrau = Offset(
+      (o.dx * 20).roundToDouble() / 20,
+      (o.dy * 20).roundToDouble() / 20,
+    );
+    if (degrau != _olharDaBorboleta.value) _olharDaBorboleta.value = degrau;
+  }
+
   @override
   void initState() {
     super.initState();
+    _voo.addListener(_segueABorboleta);
+    _susto.addListener(_segueABorboleta);
     _agendaPausa();
     _someDica = Timer(const Duration(seconds: 12), () {
       if (mounted) setState(() => _dica = false);
@@ -144,6 +168,7 @@ class _SessionScreenState extends State<SessionScreen>
     _voo.dispose();
     _susto.dispose();
     _cutucadas.dispose();
+    _olharDaBorboleta.dispose();
     super.dispose();
   }
 
@@ -192,7 +217,8 @@ class _SessionScreenState extends State<SessionScreen>
       if (mounted && _dedoDesceu == null) setState(() => _olhar = null);
     });
     if (desceu == null || quando == null) return;
-    final foiToque = (local - desceu).distance < 14 &&
+    final foiToque =
+        (local - desceu).distance < 14 &&
         DateTime.now().difference(quando) < const Duration(milliseconds: 350);
     if (!foiToque || _noBicho(local, cena)) return;
     final b = _ondeABorboleta();
@@ -215,8 +241,7 @@ class _SessionScreenState extends State<SessionScreen>
     garanteTextosDoPet();
     final app = AppScope.of(context);
     final t = app.t;
-    final atividade =
-        _descansando ? Activity.idle : SessionScreen.atividade;
+    final atividade = _descansando ? Activity.idle : SessionScreen.atividade;
     final acao = acaoNoEstagio(app.species, atividade, app.estagioVisivel);
     final acaoDaSessao = acaoNoEstagio(
       app.species,
@@ -224,151 +249,134 @@ class _SessionScreenState extends State<SessionScreen>
       app.estagioVisivel,
     );
     final total = app.sessionMinutes * 60;
-    final pct =
-        total == 0 ? 0.0 : ((total - app.remaining) / total).clamp(0.0, 1.0);
+    final pct = total == 0
+        ? 0.0
+        : ((total - app.remaining) / total).clamp(0.0, 1.0);
     final mm = (app.remaining ~/ 60).toString().padLeft(2, '0');
     final ss = (app.remaining % 60).toString().padLeft(2, '0');
-    final altura = MediaQuery.sizeOf(context).height;
-    final alturaDaCena = (altura * 0.56).clamp(300.0, 520.0);
+    final reduzido = Movimento.reduzido(context);
+    final rotulo = t.fill(
+      t.petFazendoNoEstagio(acao, app.estagioVisivel, app.species),
+      {'n': app.displayName},
+    );
 
     return Stack(
       children: [
         ColoredBox(
           color: AppColors.sessionBg,
-          child: Column(
-            children: [
-              SizedBox(
-                key: SessionScreen.chaveDaCena,
-                height: alturaDaCena,
-                width: double.infinity,
-                child: LayoutBuilder(
-                  builder: (context, c) {
-                    final cena = Size(c.maxWidth, c.maxHeight);
-                    final sx = cena.width / HabitatScene.design.width;
-                    final sy = cena.height / HabitatScene.design.height;
-                    final escala =
-                        HabitatScene.presencaDoPet * math.min(sx, sy);
-                    return Listener(
-                      behavior: HitTestBehavior.translucent,
-                      onPointerDown: (e) {
-                        _dedoDesceu = e.localPosition;
-                        _quandoDesceu = DateTime.now();
-                        _dedoNaCena(e.localPosition, cena);
-                      },
-                      onPointerMove: (e) => _dedoNaCena(e.localPosition, cena),
-                      onPointerUp: (e) => _soltouADedo(e.localPosition, cena),
-                      onPointerCancel: (_) => setState(() => _olhar = null),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(Raio.cena),
-                        ),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Sem dedo na cena, ele segue a borboleta com os
-                            // olhos — o que dá vida ao tempo parado.
-                            AnimatedBuilder(
-                              animation: _voo,
-                              builder: (context, _) {
-                                final b = _ondeABorboleta();
-                                return HabitatScene(
-                                  height: cena.height,
-                                  moldura: false,
-                                  atividade: atividade,
-                                  humor: Mood.radiant,
-                                  olharDoBicho: _olhar ??
-                                      _olharPara(
-                                        Offset(b.dx * cena.width,
-                                            b.dy * cena.height),
-                                        cena,
+          // A altura sai da área útil, não da tela: em 360×640 com a barra
+          // do sistema a cena de 56% da tela empurrava o "Desistir" para
+          // fora (auditoria da Onda 4, M2). Embaixo fica o que o relógio, a
+          // frase e o botão precisam, com fonte grande inclusive.
+          child: LayoutBuilder(
+            builder: (context, tela) {
+              final escalaDoTexto = MediaQuery.textScalerOf(context).scale(1);
+              final precisaEmbaixo = 240.0 * escalaDoTexto.clamp(1.0, 1.4);
+              final alturaDaCena = math
+                  .min(tela.maxHeight * 0.56, tela.maxHeight - precisaEmbaixo)
+                  .clamp(200.0, 520.0);
+              final apertado =
+                  tela.maxHeight - alturaDaCena < precisaEmbaixo + 20;
+              return Column(
+                children: [
+                  SizedBox(
+                    key: SessionScreen.chaveDaCena,
+                    height: alturaDaCena,
+                    width: double.infinity,
+                    child: LayoutBuilder(
+                      builder: (context, c) {
+                        final cena = Size(c.maxWidth, c.maxHeight);
+                        final sx = cena.width / HabitatScene.design.width;
+                        final sy = cena.height / HabitatScene.design.height;
+                        final escala =
+                            HabitatScene.presencaDoPet * math.min(sx, sy);
+                        _cena = cena;
+                        return Listener(
+                          behavior: HitTestBehavior.translucent,
+                          onPointerDown: (e) {
+                            _dedoDesceu = e.localPosition;
+                            _quandoDesceu = DateTime.now();
+                            _dedoNaCena(e.localPosition, cena);
+                          },
+                          onPointerMove: (e) =>
+                              _dedoNaCena(e.localPosition, cena),
+                          onPointerUp: (e) =>
+                              _soltouADedo(e.localPosition, cena),
+                          onPointerCancel: (_) => setState(() => _olhar = null),
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              bottom: Radius.circular(Raio.cena),
+                            ),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // Sem dedo na cena, ele segue a borboleta com os
+                                // olhos — o que dá vida ao tempo parado.
+                                ValueListenableBuilder<Offset?>(
+                                  valueListenable: _olharDaBorboleta,
+                                  builder: (context, olhar, _) => HabitatScene(
+                                    height: cena.height,
+                                    moldura: false,
+                                    atividade: atividade,
+                                    humor: Mood.radiant,
+                                    olharDoBicho: _olhar ?? olhar,
+                                    cutucadas: _cutucadas,
+                                    rotulo: rotulo,
+                                  ),
+                                ),
+                                // O broto, num vasinho em primeiro plano, no
+                                // canto: crescendo com o foco. Solto na margem ele
+                                // caía em cima da pedra ou boiava na água.
+                                Positioned(
+                                  left: cena.width * 0.80,
+                                  bottom: Espaco.xs,
+                                  width: 64 * escala,
+                                  height: 104 * escala,
+                                  child: IgnorePointer(
+                                    child: AnimatedBuilder(
+                                      animation: _vento,
+                                      builder: (context, _) => CustomPaint(
+                                        painter: _Broto(
+                                          progresso: pct,
+                                          vento: _vento.value * 2 - 1,
+                                        ),
                                       ),
-                                  cutucadas: _cutucadas,
-                                );
-                              },
-                            ),
-                            // O broto, na margem à esquerda, crescendo com o
-                            // foco. Pés no chão onde o bicho pisa na margem.
-                            Positioned(
-                              left: cena.width * 0.70,
-                              bottom: 30 * sy,
-                              width: 64 * escala,
-                              height: 104 * escala,
-                              child: IgnorePointer(
-                                child: AnimatedBuilder(
-                                  animation: _vento,
-                                  builder: (context, _) => CustomPaint(
-                                    painter: _Broto(
-                                      progresso: pct,
-                                      vento: _vento.value * 2 - 1,
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                child: CustomPaint(
-                                  painter: _FolhinhasDoToque(_toques),
-                                ),
-                              ),
-                            ),
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                child: AnimatedBuilder(
-                                  animation: Listenable.merge([_voo, _susto]),
-                                  builder: (context, _) => CustomPaint(
-                                    painter: _Borboleta(
-                                      onde: _ondeABorboleta(),
-                                      bate: _voo.value * 23 * 9,
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: CustomPaint(
+                                      painter: _FolhinhasDoToque(_toques),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            // O que é esta sessão, num selo sobre a cena.
-                            Positioned(
-                              top: MediaQuery.paddingOf(context).top +
-                                  Espaco.md,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: Espaco.md,
-                                    vertical: Espaco.xs,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        Cores.superficie.withValues(alpha: 0.9),
-                                    borderRadius: Raio.todos(Raio.pilula),
-                                  ),
-                                  child: Text(
-                                    t
-                                        .fill(t.petRotuloDaSessao(acaoDaSessao),
-                                            {'m': app.sessionMinutes})
-                                        .toUpperCase(),
-                                    style: nunito(
-                                      size: 12,
-                                      weight: FontWeight.w700,
-                                      letterSpacing: 1.2,
-                                      color: Cores.tinta700,
+                                // Com "reduzir movimento" ela não aparece: parada
+                                // no ar, ficava uma borboleta empalhada.
+                                if (!reduzido)
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: AnimatedBuilder(
+                                        animation: Listenable.merge([
+                                          _voo,
+                                          _susto,
+                                        ]),
+                                        builder: (context, _) => CustomPaint(
+                                          painter: _Borboleta(
+                                            onde: _ondeABorboleta(),
+                                            bate: _voo.value * 23 * 9,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
-                            // A dica de carinho, enquanto ninguém tocou —
-                            // logo abaixo do selo, longe do broto e do bicho.
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              top: MediaQuery.paddingOf(context).top +
-                                  Espaco.md +
-                                  40,
-                              child: IgnorePointer(
-                                child: AnimatedOpacity(
-                                  opacity: _dica ? 1 : 0,
-                                  duration: Tempo.componente,
+                                // O que é esta sessão, num selo sobre a cena.
+                                Positioned(
+                                  top:
+                                      MediaQuery.paddingOf(context).top +
+                                      Espaco.md,
+                                  left: 0,
+                                  right: 0,
                                   child: Center(
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
@@ -376,83 +384,126 @@ class _SessionScreenState extends State<SessionScreen>
                                         vertical: Espaco.xs,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Cores.tinta
-                                            .withValues(alpha: 0.72),
-                                        borderRadius:
-                                            Raio.todos(Raio.pilula),
+                                        color: Cores.superficie.withValues(
+                                          alpha: 0.9,
+                                        ),
+                                        borderRadius: Raio.todos(Raio.pilula),
                                       ),
                                       child: Text(
-                                        t.fill(t.s('sessaoDicaCarinho'),
-                                            {'n': app.displayName}),
+                                        t.fill(
+                                          t.petRotuloDaSessao(acaoDaSessao),
+                                          {'m': app.sessionMinutes},
+                                        ).toUpperCase(),
                                         style: nunito(
-                                          size: 13,
+                                          size: 12,
                                           weight: FontWeight.w700,
-                                          color: Cores.tintaClara,
+                                          letterSpacing: 1.2,
+                                          color: Cores.tinta700,
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
+                                // A dica de carinho, enquanto ninguém tocou —
+                                // logo abaixo do selo, longe do broto e do bicho.
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  top:
+                                      MediaQuery.paddingOf(context).top +
+                                      Espaco.md +
+                                      Espaco.xxl +
+                                      Espaco.xs,
+                                  child: IgnorePointer(
+                                    child: AnimatedOpacity(
+                                      opacity: _dica ? 1 : 0,
+                                      duration: Tempo.componente,
+                                      child: Center(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: Espaco.md,
+                                            vertical: Espaco.xs,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Cores.tinta.withValues(
+                                              alpha: 0.72,
+                                            ),
+                                            borderRadius: Raio.todos(
+                                              Raio.pilula,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            t.fill(t.s('sessaoDicaCarinho'), {
+                                              'n': app.displayName,
+                                            }),
+                                            style: nunito(
+                                              size: 13,
+                                              weight: FontWeight.w700,
+                                              color: Cores.tintaClara,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        Espaco.xl,
+                        Espaco.lg,
+                        Espaco.xl,
+                        Espaco.md,
+                      ),
+                      child: Column(
+                        children: [
+                          const Spacer(),
+                          Semantics(
+                            liveRegion: true,
+                            label: '$mm:$ss',
+                            child: Text(
+                              '$mm:$ss',
+                              style: nunito(
+                                size: apertado ? 52 : 66,
+                                weight: FontWeight.w800,
+                                height: 1,
+                                letterSpacing: -2,
+                                tabular: true,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Espaco.xl,
-                    Espaco.lg,
-                    Espaco.xl,
-                    Espaco.md,
-                  ),
-                  child: Column(
-                    children: [
-                      const Spacer(),
-                      Semantics(
-                        liveRegion: true,
-                        label: '$mm:$ss',
-                        child: Text(
-                          '$mm:$ss',
-                          style: nunito(
-                            size: 66,
-                            weight: FontWeight.w800,
-                            height: 1,
-                            letterSpacing: -2,
-                            tabular: true,
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: Espaco.sm),
-                      AnimatedSwitcher(
-                        duration: Tempo.componente,
-                        child: Text(
-                          t.fill(
-                            t.petFazendoNoEstagio(
-                              acao,
-                              app.estagioVisivel,
-                              app.species,
+                          const SizedBox(height: Espaco.sm),
+                          AnimatedSwitcher(
+                            duration: Tempo.componente,
+                            child: Text(
+                              rotulo,
+                              key: ValueKey(acao),
+                              textAlign: TextAlign.center,
+                              style: nunito(size: 15.5, color: Cores.tinta700),
                             ),
-                            {'n': app.displayName},
                           ),
-                          key: ValueKey(acao),
-                          textAlign: TextAlign.center,
-                          style: nunito(size: 15.5, color: Cores.tinta700),
-                        ),
+                          const SizedBox(height: Espaco.lg),
+                          TrackFill(pct: pct, height: 8),
+                          const Spacer(),
+                          TextAction(
+                            label: t.give,
+                            onTap: app.askQuit,
+                            height: 50,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: Espaco.lg),
-                      TrackFill(pct: pct, height: 8),
-                      const Spacer(),
-                      TextAction(label: t.give, onTap: app.askQuit, height: 50),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
         if (app.confirming) _QuitSheet(app: app),
@@ -526,8 +577,10 @@ class _FolhinhasDoToque extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final agora = DateTime.now();
     for (final t in toques) {
-      final u = (agora.difference(t.quando).inMilliseconds / 1000.0)
-          .clamp(0.0, 1.0);
+      final u = (agora.difference(t.quando).inMilliseconds / 1000.0).clamp(
+        0.0,
+        1.0,
+      );
       final some = 1 - u;
       canvas.drawCircle(
         t.onde,
@@ -541,14 +594,18 @@ class _FolhinhasDoToque extends CustomPainter {
       for (var i = 0; i < 5; i++) {
         final ang = -math.pi / 2 + (sorte.nextDouble() - 0.5) * 2.2;
         final forca = 40 + sorte.nextDouble() * 34;
-        final p = t.onde +
-            Offset(math.cos(ang) * forca * u,
-                math.sin(ang) * forca * u + 60 * u * u);
+        final p =
+            t.onde +
+            Offset(
+              math.cos(ang) * forca * u,
+              math.sin(ang) * forca * u + 60 * u * u,
+            );
         canvas.save();
         canvas.translate(p.dx, p.dy);
         canvas.rotate(u * 5 * (i.isEven ? 1 : -1));
-        final cor = (i % 3 == 0 ? Cores.mel400 : Cores.folha500)
-            .withValues(alpha: some);
+        final cor = (i % 3 == 0 ? Cores.mel400 : Cores.folha500).withValues(
+          alpha: some,
+        );
         canvas.drawPath(
           Path()
             ..moveTo(-6, 0)
@@ -576,16 +633,49 @@ class _Broto extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final base = Offset(size.width / 2, size.height);
-    // O montinho de terra.
+    // O vasinho de barro: o broto é da sessão, não do habitat, e vem para
+    // a frente da cena com o próprio chão.
+    final vaso = size.height * 0.22;
+    final larguraDoVaso = size.width * 0.62;
+    final cx = size.width / 2;
+    final boca = size.height - vaso;
     canvas.drawOval(
       Rect.fromCenter(
-        center: base.translate(0, -3),
-        width: size.width * 0.62,
-        height: 10,
+        center: Offset(cx, size.height - 1),
+        width: larguraDoVaso * 1.1,
+        height: 6,
       ),
-      Paint()..color = const Color(0xFF8A6440),
+      Paint()..color = const Color(0x333E2F23),
     );
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx - larguraDoVaso / 2, boca)
+        ..lineTo(cx + larguraDoVaso / 2, boca)
+        ..lineTo(cx + larguraDoVaso * 0.36, size.height)
+        ..lineTo(cx - larguraDoVaso * 0.36, size.height)
+        ..close(),
+      Paint()..color = const Color(0xFFC8734A),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(cx, boca + 2),
+          width: larguraDoVaso * 1.08,
+          height: 7,
+        ),
+        const Radius.circular(3),
+      ),
+      Paint()..color = const Color(0xFFD98A5F),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(cx, boca),
+        width: larguraDoVaso * 0.9,
+        height: 4,
+      ),
+      Paint()..color = const Color(0xFF6B4A30),
+    );
+    final base = Offset(cx, boca + 2);
     // Já nasce com um palmo e duas folhinhas: um broto que só aparece
     // depois de minutos é um broto que ninguém viu nascer.
     final cresce =
@@ -601,7 +691,12 @@ class _Broto extends CustomPainter {
     canvas.drawPath(
       Path()
         ..moveTo(base.dx, base.dy - 4)
-        ..quadraticBezierTo(base.dx - 4, base.dy - alto * 0.5, ponta.dx, ponta.dy),
+        ..quadraticBezierTo(
+          base.dx - 4,
+          base.dy - alto * 0.5,
+          ponta.dx,
+          ponta.dy,
+        ),
       caule,
     );
     // Uma folha a cada quarto do caminho, alternando os lados.
@@ -644,11 +739,7 @@ class _Broto extends CustomPainter {
       canvas.drawCircle(ponta, r * 0.5, Paint()..color = Cores.mel400);
     } else {
       // O botão, fechado, na ponta.
-      canvas.drawCircle(
-        ponta,
-        3.6,
-        Paint()..color = Cores.folha500,
-      );
+      canvas.drawCircle(ponta, 3.6, Paint()..color = Cores.folha500);
     }
   }
 
@@ -669,7 +760,12 @@ class _QuitSheet extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.xxl, Espaco.xl, Espaco.xxxl),
+          padding: const EdgeInsets.fromLTRB(
+            Espaco.xl,
+            Espaco.xxl,
+            Espaco.xl,
+            Espaco.xxxl,
+          ),
           decoration: const BoxDecoration(
             color: AppColors.cream,
             borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -693,7 +789,12 @@ class _QuitSheet extends StatelessWidget {
               Text(
                 app.t.fill(app.t.quitTitle, {'n': app.displayName}),
                 textAlign: TextAlign.center,
-                style: nunito(size: 23, weight: FontWeight.w800, height: 1.25, letterSpacing: -0.3),
+                style: nunito(
+                  size: 23,
+                  weight: FontWeight.w800,
+                  height: 1.25,
+                  letterSpacing: -0.3,
+                ),
               ),
               const SizedBox(height: Espaco.xs),
               Text(

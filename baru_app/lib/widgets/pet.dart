@@ -4657,7 +4657,7 @@ class _PetPainter extends CustomPainter {
         _olhoDesvio + (triste ? const Offset(0.4, -0.7) : Offset.zero);
     final iris = o + desvio;
     final raioDaIris =
-        r * (coruja ? (triste ? 0.50 : 0.42) : (feliz || triste ? 0.58 : 0.50));
+        r * (coruja ? (triste ? 0.50 : 0.42) : (triste ? 0.58 : (feliz ? 0.56 : 0.50)));
     canvas.drawCircle(iris, raioDaIris, _p(Cores.tinta));
 
     canvas.drawCircle(

@@ -267,6 +267,45 @@ void main() {
       expect(s.temCelebracaoPendente, isTrue);
     });
 
+    test('missão que fecha fora da sessão (carinho) também ganha a cena',
+        () {
+      final s = AppState()
+        ..onb = 9
+        ..companionshipStarted = true;
+      addTearDown(s.dispose);
+      for (var i = 0; !s.missoes.any((m) => m.id == 'carinho_no_bicho'); i++) {
+        s.sementeDasMissoes = 'teste-$i';
+      }
+      s.notifyListeners(); // o retrato de partida
+      expect(s.missoesACumprir, isEmpty);
+      s.recebeCarinho();
+      s.recebeCarinho();
+      expect(s.missoesACumprir, isEmpty, reason: 'faltava um');
+      s.recebeCarinho();
+      expect(s.missoesACumprir.map((m) => m.id), ['carinho_no_bicho']);
+      expect(s.temCelebracaoPendente, isTrue);
+      final folhas = s.leaves;
+      s.colheAsCumpridas();
+      expect(s.leaves, folhas + 14);
+      expect(s.missoesACumprir, isEmpty);
+      s.recebeCarinho();
+      expect(s.missoesACumprir, isEmpty, reason: 'já colhida não volta');
+    });
+
+    test('o que já estava pronto ao abrir não vira festa', () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      s.missoesCumpridas = const []; // a cena da sessão já passou
+      final volta = AppState(snapshot: s.toSnapshot())
+        ..sementeDasMissoes = s.sementeDasMissoes;
+      addTearDown(volta.dispose);
+      volta.notifyListeners();
+      volta.notifyListeners();
+      expect(volta.missoesResgataveis, greaterThan(0));
+      expect(volta.missoesACumprir, isEmpty);
+    });
+
     test('colhida pela tela de missões, a cena não aparece', () {
       final s = _app();
       addTearDown(s.dispose);

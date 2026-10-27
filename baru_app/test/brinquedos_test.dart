@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:baru_app/models.dart';
 import 'package:baru_app/services/som_service.dart';
 import 'package:baru_app/state.dart';
@@ -131,12 +133,102 @@ void main() {
     final bola = tester.getCenter(find.byKey(BrinquedosDoHabitat.bolaKey));
     final g = await tester.startGesture(bola);
     await tester.pump(const Duration(milliseconds: 16));
-    await g.moveBy(const Offset(-90, -30));
-    await tester.pump(const Duration(milliseconds: 16));
+    // Leva a bola devagar para o outro lado dele e solta: cai parada,
+    // longe — ele tem de acordar e atravessar a cena.
+    for (var i = 0; i < 10; i++) {
+      await g.moveBy(const Offset(-20, -3));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pump(const Duration(milliseconds: 300));
     await g.up();
-    await _passa(tester, 4);
+    // Ele vai até ela (e depois chuta, então mede-se o caminho, não o fim).
+    var maisPerto = bicho.dx;
+    for (var i = 0; i < 150; i++) {
+      await tester.pump(const Duration(milliseconds: 33));
+      maisPerto = math.min(maisPerto, PetView.observadorDoCentro!.value!.dx);
+    }
+    expect(maisPerto, lessThan(bicho.dx - 40), reason: 'foi até ela');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('de vez em quando ele vai buscar a bola e pede para brincar', (
+    tester,
+  ) async {
+    BrinquedosDoHabitat.esperaDoConvite = const Duration(seconds: 1);
+    addTearDown(() => BrinquedosDoHabitat.esperaDoConvite = null);
+    await tester.pumpWidget(_cena(_crescido()));
+    await _passa(tester, 0.3);
+    final bola = tester.getCenter(find.byKey(BrinquedosDoHabitat.bolaKey));
+    final bicho = PetView.observadorDoCentro!.value!;
+    await _passa(tester, 8);
     final depois = PetView.observadorDoCentro!.value!;
-    expect((depois.dx - bicho.dx).abs(), greaterThan(10));
+    final bolaDepois = tester.getCenter(
+      find.byKey(BrinquedosDoHabitat.bolaKey),
+    );
+    expect(
+      (depois.dx - bicho.dx).abs(),
+      greaterThan(10),
+      reason: 'foi até a bola sozinho',
+    );
+    expect(
+      (bolaDepois.dx - bola.dx).abs(),
+      greaterThan(5),
+      reason: 'empurrou a bola',
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('quem volta depois de dias é recebido com festa', (tester) async {
+    PetView.saudouNaAbertura = false;
+    addTearDown(() => PetView.saudouNaAbertura = false);
+    final app = _crescido()..daysAway = 3;
+    await tester.pumpWidget(_cena(app));
+    await _passa(tester, 0.2);
+    final repouso = PetView.observadorDoCentro!.value!.dy;
+    var maisAlto = repouso;
+    for (var i = 0; i < 90; i++) {
+      await tester.pump(const Duration(milliseconds: 33));
+      final y = PetView.observadorDoCentro!.value!.dy;
+      if (y < maisAlto) maisAlto = y;
+    }
+    expect(PetView.saudouNaAbertura, isTrue);
+    expect(repouso - maisAlto, greaterThan(8), reason: 'pulou de alegria');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('dormindo: um toque mexe a orelha, o segundo acorda', (
+    tester,
+  ) async {
+    final gestos = PetView.observadorDeGesto = ValueNotifier(
+      GestoOcioso.nenhum,
+    );
+    addTearDown(() => PetView.observadorDeGesto = null);
+    final vistos = <GestoOcioso>[];
+    gestos.addListener(() => vistos.add(gestos.value));
+    final app = _crescido()
+      ..usageAccess = true
+      ..usage = 300
+      ..goal = 100;
+    await tester.pumpWidget(_cena(app));
+    await _passa(tester, 0.5);
+    final centro = PetView.observadorDoCentro!.value!;
+    await tester.tapAt(centro);
+    await _passa(tester, 1);
+    expect(
+      vistos,
+      isNot(contains(GestoOcioso.espreguica)),
+      reason: 'um toque só não acorda',
+    );
+    await tester.tapAt(centro);
+    await _passa(tester, 1);
+    expect(
+      vistos,
+      contains(GestoOcioso.espreguica),
+      reason: 'acordou se espreguiçando',
+    );
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));
   });

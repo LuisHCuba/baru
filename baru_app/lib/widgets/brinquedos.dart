@@ -73,7 +73,16 @@ class BrinquedosDoHabitat extends StatefulWidget {
     required this.interesse,
     required this.rotuloDaBola,
     required this.rotuloDoPetisco,
+    this.podeConvidar = true,
   });
+
+  /// Ele pode vir pedir para brincar (acordado, fora do foco).
+  final bool podeConvidar;
+
+  /// De quanto em quanto tempo de tela ele pede para brincar: 3 a 5 min,
+  /// no máximo (pesquisa 20, mecânica 7). Fixável no teste.
+  @visibleForTesting
+  static Duration? esperaDoConvite;
 
   final GeometriaDosBrinquedos geometria;
 
@@ -92,7 +101,7 @@ class BrinquedosDoHabitat extends StatefulWidget {
 
 class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     with SingleTickerProviderStateMixin {
-  late final Ticker _relogio = createTicker(_tique);
+  late final Ticker _relogio;
   Duration _antes = Duration.zero;
   final _sorte = math.Random();
 
@@ -114,6 +123,10 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
 
   /// Há quanto tempo ele persegue sem alcançar: a tartaruga desiste.
   double _semAlcancar = 0;
+
+  /// Foi ele quem foi buscar a bola, para pedir brincadeira.
+  bool _convidando = false;
+  Timer? _proximoConvite;
 
   // --- castanha -----------------------------------------------------------
   Offset? _castanha;
@@ -142,9 +155,45 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Criado já: preguiçoso, ele nasceria no `dispose`, com o elemento
+    // desativado, e o `createTicker` quebra procurando o `TickerMode`.
+    _relogio = createTicker(_tique);
+    _agendaConvite();
+  }
+
+  @override
   void dispose() {
+    _proximoConvite?.cancel();
     _relogio.dispose();
     super.dispose();
+  }
+
+  void _agendaConvite() {
+    _proximoConvite?.cancel();
+    _proximoConvite = Timer(
+      BrinquedosDoHabitat.esperaDoConvite ??
+          Duration(seconds: 180 + _sorte.nextInt(120)),
+      _convida,
+    );
+  }
+
+  /// Ele vai buscar a bola sozinho — se nada estiver acontecendo.
+  void _convida() {
+    if (!mounted) return;
+    _agendaConvite();
+    if (!widget.podeConvidar ||
+        _bolaNaMao ||
+        _castanha != null ||
+        _vontade > 0 ||
+        _relogio.isActive) {
+      return;
+    }
+    _convidando = true;
+    _vontade = 1;
+    _semAlcancar = 0;
+    _publica();
   }
 
   /// O bicho chegou na coisa. [xDoBicho] em unidades do desenho dele.
@@ -162,7 +211,22 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
       case TipoDeInteresse.bola:
         final b = _bola;
         if (b == null || _bolaNaMao || _vontade <= 0) return;
+        // Quadro longo: ele "alcançou" uma posição velha. Só chuta perto.
+        if ((b.dx - _g.naCena(xDoBicho)).abs() > 40 * _g.escala) return;
         _vontade -= 1;
+        if (_convidando) {
+          // O empurrão de quem quer brincar: devagar, para o meio da cena.
+          _convidando = false;
+          final meio = _g.largura / 2 - b.dx;
+          final lado = meio.abs() < 20
+              ? (_sorte.nextBool() ? 1.0 : -1.0)
+              : meio.sign;
+          _vBola = Offset(lado * 110 * _g.escala, -150 * _g.escala);
+          HapticFeedback.selectionClick();
+          _publica();
+          _liga();
+          return;
+        }
         final ondeEle = _g.naCena(xDoBicho);
         var lado = (b.dx - ondeEle).sign;
         if (lado == 0) lado = _sorte.nextBool() ? 1 : -1;
@@ -222,6 +286,7 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
         _semAlcancar += dt;
         if (_semAlcancar > 14) {
           _vontade = 0;
+          _convidando = false;
           _semAlcancar = 0;
         }
       }
@@ -249,6 +314,9 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     _farelos.removeWhere((f) => f.vida <= 0);
     mexe |= _farelos.isNotEmpty;
     mexe |= _t < _poteVoltaEm;
+    // Com vontade ele está indo atrás: o relógio segue para ele poder
+    // desistir se não alcançar.
+    mexe |= _vontade > 0;
 
     _publica();
     setState(() {});
@@ -281,6 +349,12 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     if (noChao) {
       v = Offset(v.dx * math.exp(-(_g.agua ? 1.2 : 2.2) * dt), 0);
     }
+    // O teto da cena: arremesso forte bate e volta, não some por cima da
+    // tela (sem moldura a cena não recorta).
+    if (p.dy < r) {
+      p = Offset(p.dx, r);
+      v = Offset(v.dx, v.dy.abs() * 0.5);
+    }
     final x = _limitaX(p.dx, r);
     if (x != p.dx) {
       impacto = math.max(impacto, v.dx.abs());
@@ -306,6 +380,7 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
             _g.paraOBicho(b),
             TipoDeInteresse.bola,
             noAr: _bolaNaMao,
+            convite: _convidando,
           )
         : null;
   }
@@ -331,6 +406,8 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
 
   void _pegaBola(Offset onde) {
     _bolaNaMao = true;
+    _convidando = false;
+    _agendaConvite();
     _pegouEm = DateTime.now();
     _vBola = Offset.zero;
     HapticFeedback.selectionClick();
@@ -343,7 +420,7 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     if (b == null || !_bolaNaMao) return;
     _bola = Offset(
       _limitaX(b.dx + delta.dx, _raioDaBola),
-      math.min(b.dy + delta.dy, _chaoDe(_raioDaBola)),
+      (b.dy + delta.dy).clamp(_raioDaBola, _chaoDe(_raioDaBola)),
     );
   }
 
@@ -366,6 +443,8 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
 
   void _pegaCastanha(Offset global) {
     if (_t < _poteVoltaEm || _castanha != null) return;
+    _convidando = false;
+    _agendaConvite();
     final caixa = context.findRenderObject() as RenderBox?;
     if (caixa == null) return;
     _castanha = caixa.globalToLocal(global) - Offset(0, 24 * _g.escala);
@@ -381,7 +460,7 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     if (c == null || !_castanhaNaMao) return;
     _castanha = Offset(
       (c.dx + delta.dx).clamp(0.0, _g.largura),
-      math.min(c.dy + delta.dy, _chaoDe(_raioDaCastanha)),
+      (c.dy + delta.dy).clamp(_raioDaCastanha, _chaoDe(_raioDaCastanha)),
     );
   }
 

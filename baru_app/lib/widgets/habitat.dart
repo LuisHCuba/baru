@@ -552,8 +552,11 @@ class _HabitatSceneState extends State<HabitatScene>
               final escalaDoPet =
                   HabitatScene.presencaDoPet * math.min(sx, sy);
               // O ovo e o recém-nascido no ninho não brincam.
+              // Com "reduzir movimento" o bicho não anda nem persegue: a
+              // castanha caída ficaria no chão para sempre.
               final comBrinquedos = widget.brinquedos &&
                   widget.animado &&
+                  !Movimento.reduzido(context) &&
                   app.estagioVisivel != EstagioDoBicho.inicio;
               return AnimatedBuilder(
                 animation: Listenable.merge([_deriva, ..._chegadas.values]),
@@ -647,6 +650,15 @@ class _HabitatSceneState extends State<HabitatScene>
                             roupas: app.roupasDoBicho,
                             roupaDeCabeca: app.roupaDeCabeca,
                             interesse: comBrinquedos ? _interesse : null,
+                            // Na home, a volta da pessoa: dias fora contam;
+                            // sem eles, só o "oi" de quem abriu o app.
+                            ausenciaAoAbrir: comBrinquedos
+                                ? Duration(
+                                    minutes: app.daysAway > 0
+                                        ? app.daysAway * 24 * 60
+                                        : 20,
+                                  )
+                                : null,
                             aoAlcancar: (tipo, x) =>
                                 _brinquedos.currentState?.alcancou(tipo, x),
                           ),
@@ -659,6 +671,7 @@ class _HabitatSceneState extends State<HabitatScene>
                             interesse: _interesse,
                             rotuloDaBola: app.t.brinqBola,
                             rotuloDoPetisco: app.t.brinqPetisco,
+                            podeConvidar: _atividade(app) != Activity.nap,
                             geometria: GeometriaDosBrinquedos(
                               largura: c.maxWidth,
                               escala: escalaDoPet,

@@ -3,7 +3,8 @@
 // próxima segue do ponto em que o app ficou.
 'use strict';
 
-const CENA_BOTAO = /^(Continuar|Ver no habitat)$/;
+// "Colher agora" é o botão da cena "Missão cumprida!".
+const CENA_BOTAO = /^(Continuar|Ver no habitat|Colher agora)$/;
 const TOCA = /Tem algo enterrado|Toque na terra/;
 
 // Passa pelas cenas de conquista que estiverem na frente (raiz, crescimento,
@@ -19,7 +20,7 @@ async function passaCenas(sim, rotulo, max = 8) {
     for (let t = 0; t < 10; t++) {
       await sim.espera(500);
       nos = await sim.nos();
-      const temCena = nos.some(n => TOCA.test(n) || /^button\|Continuar\|/.test(n) || /^button\|Ver no habitat\|/.test(n) || (/^button\|.+\|0,0 (\d+)x(\d+)$/.test(n) && +n.match(/(\d+)x(\d+)$/)[1] >= W - 2 && +n.match(/(\d+)x(\d+)$/)[2] >= H - 2));
+      const temCena = nos.some(n => TOCA.test(n) || /^button\|Continuar\|/.test(n) || /^button\|Ver no habitat\|/.test(n) || /^button\|Colher agora\|/.test(n) || (/^button\|.+\|0,0 (\d+)x(\d+)$/.test(n) && +n.match(/(\d+)x(\d+)$/)[1] >= W - 2 && +n.match(/(\d+)x(\d+)$/)[2] >= H - 2));
       if (temCena) break;
     }
     // Toca das missões ("Tem algo enterrado aqui").

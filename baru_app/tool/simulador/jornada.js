@@ -131,9 +131,11 @@ module.exports = async function jornada(sim) {
     await sim.foto('onb-promessa');
     await sim.voltar();
     await sim.foto('onb-promessa-apos-voltar');
-    if (await sim.tem(/^Continuar$/)) await sim.toca(/^Continuar$/);
-    // A promessa trocou "Começar foco" por "Continuar".
-    await sim.toca(/^Continuar$|^Começar foco$/);
+    // Idioma e promessa: os dois seguem com "Continuar" (a promessa dizia
+    // "Começar foco"). Toca até chegar ao quiz.
+    for (let k = 0; k < 3 && await sim.tem(/^Continuar$|^Começar foco$/); k++) {
+      await sim.toca(/^Continuar$|^Começar foco$/);
+    }
     // quiz: 6 perguntas; escolher já avança. Responde o que estiver na tela
     // (o recarregar e o voltar podem mudar a pergunta atual).
     const escolhas = [/^Terra/, /^De manhã cedo/, /^Água quente/, /^Redes sociais/, /^Perto da natureza/, /^Mais foco/];

@@ -27,6 +27,9 @@ class OnboardingScreen extends StatelessWidget {
             // seis telas seguidas, ela sugeria que nada estava acontecendo.
             fracaoDoAtual: app.onb == 2 ? app.fracaoDoQuiz : 1,
           ),
+          // Um respiro entre a barra e o conteúdo: colado nela, o texto que
+          // rolava parecia passar por baixo dos segmentos.
+          const SizedBox(height: Espaco.sm),
           Expanded(child: _step(app)),
           const SizedBox(height: Espaco.xs),
           _cta(app),

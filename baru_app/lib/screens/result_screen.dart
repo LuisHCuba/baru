@@ -299,8 +299,29 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
+                    // O pé da área que rola esmaece: em 320×640 a lista de
+                    // missões ficava cortada rente aos botões e o título
+                    // "Missões que andaram" parecia solto (simulador da
+                    // Onda 4). O esmaecido diz "tem mais aqui embaixo".
                     Expanded(
-                      child: SingleChildScrollView(
+                      child: ShaderMask(
+                        blendMode: BlendMode.dstIn,
+                        shaderCallback: (r) => LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: const [
+                            Color(0xFFFFFFFF),
+                            Color(0xFFFFFFFF),
+                            Color(0x00FFFFFF),
+                          ],
+                          stops: [
+                            0,
+                            1 - Espaco.xl / math.max(r.height, Espaco.xl),
+                            1,
+                          ],
+                        ).createShader(r),
+                        child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(bottom: Espaco.xl),
                         child: Column(
                           children: [
                             PetView(
@@ -311,7 +332,9 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                               estagio: app.estagioVisivel,
                               roupas: app.roupasDoBicho,
                               roupaDeCabeca: app.roupaDeCabeca,
-                              scale: 1.05,
+                              scale: MediaQuery.sizeOf(context).height < 700
+                                  ? 0.8
+                                  : 1.05,
                             ),
                             const SizedBox(height: Espaco.sm),
                             _Ganho(
@@ -362,6 +385,7 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                             ],
                           ],
                         ),
+                      ),
                       ),
                     ),
                     const SizedBox(height: Espaco.sm),

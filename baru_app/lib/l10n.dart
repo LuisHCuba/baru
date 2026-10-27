@@ -154,6 +154,7 @@ class T {
   String get quizWait => s('quizWait');
   String get quizVoltar => s('quizVoltar');
   String get revealTrocar => s('revealTrocar');
+  String get revealPersonalizar => s('revealPersonalizar');
   String get contaApagar => s('contaApagar');
   String get contaApagarSub => s('contaApagarSub');
   String get contaApagarConfirma => s('contaApagarConfirma');
@@ -951,6 +952,7 @@ const _pt = <String, Object>{
   'quizWait': 'Faltam {n}',
   'quizVoltar': 'Voltar uma',
   'revealTrocar': 'Prefere outro?',
+  'revealPersonalizar': 'Personalizar: sexo, pelagem ou outro bicho',
   'contaApagar': 'Apagar meus dados',
   'contaApagarSub': 'Some com tudo: sessões, folhas, habitat, trilha, respostas e a sua conta. Aqui e no servidor.',
   'contaApagarConfirma': 'Isso não tem volta. Tudo o que você construiu com {n} vai embora, deste aparelho e da nuvem.',
@@ -1525,6 +1527,7 @@ const _en = <String, Object>{
   'quizWait': '{n} to go',
   'quizVoltar': 'Back one',
   'revealTrocar': 'Prefer another?',
+  'revealPersonalizar': 'Customize: sex, coat or another animal',
   'contaApagar': 'Delete my data',
   'contaApagarSub': 'Wipes everything: sessions, leaves, habitat, trail, answers and your account. Here and on the server.',
   'contaApagarConfirma': 'There is no undo. Everything you built with {n} goes, from this device and from the cloud.',
@@ -2089,6 +2092,7 @@ const _es = <String, Object>{
   'quizWait': 'Faltan {n}',
   'quizVoltar': 'Volver una',
   'revealTrocar': '¿Prefieres otro?',
+  'revealPersonalizar': 'Personalizar: sexo, pelaje u otro animal',
   'contaApagar': 'Borrar mis datos',
   'contaApagarSub': 'Borra todo: sesiones, hojas, hábitat, camino, respuestas y tu cuenta. Aquí y en el servidor.',
   'contaApagarConfirma': 'Esto no tiene vuelta. Todo lo que construiste con {n} se va, de este dispositivo y de la nube.',
@@ -2648,6 +2652,7 @@ const _zh = <String, Object>{
   'quizWait': '还差 {n} 个',
   'quizVoltar': '返回上一题',
   'revealTrocar': '想换一个？',
+  'revealPersonalizar': '自定义：性别、毛色或换一只',
   'contaApagar': '删除我的数据',
   'contaApagarSub': '清空全部：专注记录、叶子、栖息地、旅程、答案和你的账户。本机和服务器都清。',
   'contaApagarConfirma': '无法撤销。你和{n}一起建立的一切都会消失，本机和云端都是。',

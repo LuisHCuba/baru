@@ -145,6 +145,13 @@ void main() {
 
       expect(app.onb, 3);
       expect(find.byType(PetNameField), findsOneWidget);
+      // A escolha fina abre num toque (pesquisa 23): a revelação começa com
+      // o bicho, o nome e o botão.
+      expect(find.byType(CoatPicker), findsNothing);
+      await tester.tap(find.byKey(const Key('onb-personalizar')));
+      // Dois quadros: o `AnimatedSize` só começa a contar no primeiro.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       expect(find.byType(CoatPicker), findsOneWidget);
       expect(find.byType(SpeciesPicker), findsOneWidget);
       expect(find.text(app.t.setSexo.toUpperCase()), findsOneWidget);
@@ -166,6 +173,10 @@ void main() {
       app.nextOnb();
       await tester.pump();
 
+      await tester.tap(find.byKey(const Key('onb-personalizar')));
+      // Dois quadros: o `AnimatedSize` só começa a contar no primeiro.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       final antes = app.species;
       final outra =
           Species.values.firstWhere((e) => e != antes && e.index < 4);

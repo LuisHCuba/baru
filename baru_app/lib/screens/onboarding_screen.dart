@@ -18,7 +18,12 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.sm, Espaco.xl, Espaco.xxl),
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.xl,
+        Espaco.sm,
+        Espaco.xl,
+        Espaco.xxl,
+      ),
       child: Column(
         children: [
           OnbDots(
@@ -111,11 +116,7 @@ class OnboardingScreen extends StatelessWidget {
                 const SizedBox(height: Espaco.sm),
                 Text(
                   app.t.langSub,
-                  style: nunito(
-                    size: 15,
-                    height: 1.5,
-                    color: Cores.tinta700,
-                  ),
+                  style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
                 ),
                 const SizedBox(height: Espaco.xl),
                 for (final l in langs) ...[
@@ -124,7 +125,9 @@ class OnboardingScreen extends StatelessWidget {
                     child: Container(
                       height: 60,
                       margin: const EdgeInsets.only(bottom: Espaco.xs),
-                      padding: const EdgeInsets.symmetric(horizontal: Espaco.lg),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Espaco.lg,
+                      ),
                       decoration: BoxDecoration(
                         color: app.lang == l.id
                             ? AppColors.greenA(0.14)
@@ -319,55 +322,15 @@ class OnboardingScreen extends StatelessWidget {
           initial: app.displayName,
           onChanged: app.setName,
         ),
-        const SizedBox(height: Espaco.lg),
-        SectionLabel(app.t.setSexo),
-        const SizedBox(height: Espaco.xs),
-        Row(
-          children: [
-            // Sem `Expanded` por fora: `expand: true` já põe o dele, e dois
-            // competindo pelo mesmo RenderObject é assert na hora.
-            for (final sexo in Sexo.values) ...[
-              if (sexo != Sexo.values.first) const SizedBox(width: Espaco.xs),
-              SelectChip(
-                label: _rotuloDoSexo(app, sexo),
-                selected: app.sexo == sexo,
-                onTap: () => app.setSexo(sexo),
-                expand: true,
-                height: 48,
-                radius: 14,
-                size: 13,
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: Espaco.lg),
-        CoatPicker(
-          selected: app.color,
-          onPick: app.setColor,
-          label: app.t.coat,
-          especie: app.species,
-        ),
-        const SizedBox(height: Espaco.lg),
-        SpeciesPicker(
-          selected: app.species,
-          onPick: app.pickSpecies,
-          label: app.t.revealTrocar,
-          speciesLabel: (s) => app.t.animalName(s.name),
-          // No onboarding as quatro de origem estão abertas; as cinco da
-          // trilha aparecem travadas, dizendo onde abrem. Escondê-las tiraria
-          // o motivo de subir antes mesmo de a pessoa começar.
-          liberadas: app.especiesEscolhiveis,
-          rotuloDeTravada: (s) => app.t.animalName(s.name),
-        ),
+        const SizedBox(height: Espaco.md),
+        // O que é escolha fina mora um toque abaixo (divulgação progressiva,
+        // pesquisa 23): a revelação abre com ele, o nome e o botão. Antes
+        // eram nome, sexo, seis pelagens e nove bichos numa tela só, com a
+        // lista cortada pelo botão.
+        _Personalizar(app: app),
       ],
     );
   }
-
-  static String _rotuloDoSexo(AppState app, Sexo s) => switch (s) {
-        Sexo.naoDito => app.t.setSexoNao,
-        Sexo.macho => app.t.setSexoM,
-        Sexo.femea => app.t.setSexoF,
-      };
 
   Widget _goal(AppState app) {
     return ListView(
@@ -428,11 +391,7 @@ class OnboardingScreen extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 app.t.goalNote,
-                style: nunito(
-                  size: 13.5,
-                  height: 1.5,
-                  color: Cores.tinta700,
-                ),
+                style: nunito(size: 13.5, height: 1.5, color: Cores.tinta700),
               ),
             ],
           ),
@@ -468,8 +427,7 @@ class AssistenteDePermissoes extends StatefulWidget {
   static const chavePular = Key('onb-permissao-pular');
 
   @override
-  State<AssistenteDePermissoes> createState() =>
-      _AssistenteDePermissoesState();
+  State<AssistenteDePermissoes> createState() => _AssistenteDePermissoesState();
 }
 
 class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
@@ -515,7 +473,9 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
     setState(() => _estado = lidas);
     // Concedeu: segue sozinho. Fazer a pessoa tocar em "continuar" logo
     // depois de dizer sim é pedir duas vezes a mesma coisa.
-    if (avancaSeConcedeu && (lidas[atual] ?? false) && _pedidas.contains(atual)) {
+    if (avancaSeConcedeu &&
+        (lidas[atual] ?? false) &&
+        _pedidas.contains(atual)) {
       _avanca();
     }
   }
@@ -597,11 +557,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
               const SizedBox(height: Espaco.sm),
               Text(
                 t.fill(t.sobPermSub, {'n': app.displayName}),
-                style: nunito(
-                  size: 14.5,
-                  height: 1.5,
-                  color: Cores.tinta700,
-                ),
+                style: nunito(size: 14.5, height: 1.5, color: Cores.tinta700),
               ),
               const SizedBox(height: Espaco.lg),
               CartaoDePermissao(
@@ -625,11 +581,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
               else
                 Text(
                   t.sobPermRevisita,
-                  style: nunito(
-                    size: 12.5,
-                    height: 1.5,
-                    color: Cores.tinta700,
-                  ),
+                  style: nunito(size: 12.5, height: 1.5, color: Cores.tinta700),
                 ),
             ],
           ),
@@ -712,6 +664,127 @@ class _OpcaoGrande extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Sexo, pelagem e outro bicho, num bloco que abre no lugar.
+class _Personalizar extends StatefulWidget {
+  const _Personalizar({required this.app});
+
+  final AppState app;
+
+  static const chave = Key('onb-personalizar');
+
+  @override
+  State<_Personalizar> createState() => _PersonalizarState();
+}
+
+class _PersonalizarState extends State<_Personalizar> {
+  bool _aberto = false;
+
+  static String _rotuloDoSexo(AppState app, Sexo s) => switch (s) {
+    Sexo.naoDito => app.t.setSexoNao,
+    Sexo.macho => app.t.setSexoM,
+    Sexo.femea => app.t.setSexoF,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final app = widget.app;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          button: true,
+          expanded: _aberto,
+          child: GestureDetector(
+            key: _Personalizar.chave,
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _aberto = !_aberto),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: Toque.minimo),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      app.t.revealPersonalizar,
+                      textAlign: TextAlign.center,
+                      style: estilo(Tipo.corpoForte, color: Cores.tinta700),
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _aberto ? 0.5 : 0,
+                    duration: Tempo.componente,
+                    child: const Icon(
+                      Icons.expand_more_rounded,
+                      size: 22,
+                      color: Cores.tinta700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: Tempo.componente,
+          curve: Curvas.padrao,
+          alignment: Alignment.topCenter,
+          child: !_aberto
+              ? const SizedBox(width: double.infinity)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: Espaco.md),
+                    SectionLabel(app.t.setSexo),
+                    const SizedBox(height: Espaco.xs),
+                    Row(
+                      children: [
+                        // Sem `Expanded` por fora: `expand: true` já põe o
+                        // dele, e dois competindo pelo mesmo RenderObject é
+                        // assert na hora.
+                        for (final sexo in Sexo.values) ...[
+                          if (sexo != Sexo.values.first)
+                            const SizedBox(width: Espaco.xs),
+                          SelectChip(
+                            label: _rotuloDoSexo(app, sexo),
+                            selected: app.sexo == sexo,
+                            onTap: () => app.setSexo(sexo),
+                            expand: true,
+                            height: 48,
+                            radius: 14,
+                            size: 13,
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: Espaco.lg),
+                    CoatPicker(
+                      selected: app.color,
+                      onPick: app.setColor,
+                      label: app.t.coat,
+                      especie: app.species,
+                    ),
+                    const SizedBox(height: Espaco.lg),
+                    SpeciesPicker(
+                      selected: app.species,
+                      onPick: app.pickSpecies,
+                      label: app.t.revealTrocar,
+                      speciesLabel: (s) => app.t.animalName(s.name),
+                      // No onboarding as quatro de origem estão abertas; as
+                      // cinco da trilha aparecem travadas, dizendo onde
+                      // abrem. Escondê-las tiraria o motivo de subir antes
+                      // mesmo de a pessoa começar.
+                      liberadas: app.especiesEscolhiveis,
+                      rotuloDeTravada: (s) => app.t.animalName(s.name),
+                    ),
+                    const SizedBox(height: Espaco.lg),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 }

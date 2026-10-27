@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../models.dart';
@@ -26,7 +28,9 @@ class PetNameField extends StatefulWidget {
 }
 
 class _PetNameFieldState extends State<PetNameField> {
-  late final TextEditingController _c = TextEditingController(text: widget.initial);
+  late final TextEditingController _c = TextEditingController(
+    text: widget.initial,
+  );
 
   @override
   void didUpdateWidget(PetNameField old) {
@@ -82,7 +86,10 @@ class _PetNameFieldState extends State<PetNameField> {
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: Espaco.lg, vertical: Espaco.md),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: Espaco.lg,
+          vertical: Espaco.md,
+        ),
         counterText: '',
       ),
     );
@@ -111,45 +118,55 @@ class CoatPicker extends StatelessWidget {
       children: [
         SectionLabel(label),
         const SizedBox(height: Espaco.sm),
-        Wrap(
-          alignment: WrapAlignment.center,
-          children: List.generate(AppColors.coatDe(especie).length, (i) {
-            final on = selected == i;
-            return Semantics(
-              button: true,
-              selected: on,
-              label: '$label ${i + 1}',
-              child: GestureDetector(
-                onTap: () => onPick(i),
-                child: SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: AppColors.coatDe(especie)[i],
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      if (on)
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.ink, width: 2.5),
+        // Uma linha só: seis bolinhas quebravam em cinco e uma órfã.
+        LayoutBuilder(
+          builder: (context, c) {
+            final n = AppColors.coatDe(especie).length;
+            final cela = math.min(60.0, c.maxWidth / n);
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(n, (i) {
+                final on = selected == i;
+                return Semantics(
+                  button: true,
+                  selected: on,
+                  label: '$label ${i + 1}',
+                  child: GestureDetector(
+                    onTap: () => onPick(i),
+                    child: SizedBox(
+                      width: cela,
+                      height: cela,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: cela * 0.77,
+                            height: cela * 0.77,
+                            decoration: BoxDecoration(
+                              color: AppColors.coatDe(especie)[i],
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                    ],
+                          if (on)
+                            Container(
+                              width: cela * 0.93,
+                              height: cela * 0.93,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.ink,
+                                  width: 2.5,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              }),
             );
-          }),
+          },
         ),
       ],
     );
@@ -188,7 +205,10 @@ class SpeciesPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionLabel(label, padding: const EdgeInsets.fromLTRB(0, 0, 0, Espaco.sm)),
+        SectionLabel(
+          label,
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, Espaco.sm),
+        ),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -233,7 +253,12 @@ class CompanionCard extends StatelessWidget {
     final sp = t.species(app.speciesKey);
     if (!completo) return _cartaoCompacto(app, sp[0]);
     return Container(
-      padding: const EdgeInsets.fromLTRB(Espaco.lg, Espaco.lg, Espaco.lg, Espaco.lg),
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.lg,
+        Espaco.lg,
+        Espaco.lg,
+        Espaco.lg,
+      ),
       decoration: BoxDecoration(
         color: AppColors.greenA(0.10),
         borderRadius: BorderRadius.circular(24),
@@ -266,7 +291,11 @@ class CompanionCard extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: nunito(size: 13, weight: FontWeight.w600, color: AppColors.green),
+            style: nunito(
+              size: 13,
+              weight: FontWeight.w600,
+              color: AppColors.green,
+            ),
           ),
           const SizedBox(height: Espaco.md),
           PetNameField(
@@ -313,7 +342,11 @@ class CompanionCard extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFFF4E6CB), Color(0xFFFAF1E3), Color(0xFFC5D8B6)],
+                colors: [
+                  Color(0xFFF4E6CB),
+                  Color(0xFFFAF1E3),
+                  Color(0xFFC5D8B6),
+                ],
                 stops: [0, 0.62, 0.62],
               ),
             ),
@@ -367,7 +400,6 @@ class CompanionCard extends StatelessWidget {
   }
 }
 
-
 /// Uma espécie que a trilha ainda não abriu.
 ///
 /// Aparece de propósito: esconder o que falta tira o motivo de subir. É o
@@ -384,7 +416,10 @@ class _EspecieTravada extends StatelessWidget {
       enabled: false,
       label: rotulo,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: Espaco.md, vertical: Espaco.sm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Espaco.md,
+          vertical: Espaco.sm,
+        ),
         decoration: BoxDecoration(
           color: Cores.tintaA(0.05),
           borderRadius: Raio.todos(Raio.pilula),
@@ -394,10 +429,7 @@ class _EspecieTravada extends StatelessWidget {
           children: [
             Icon(Icons.lock_outline_rounded, size: 15, color: Cores.tinta500),
             const SizedBox(width: 6),
-            Text(
-              rotulo,
-              style: estilo(Tipo.rotulo, color: Cores.tinta700),
-            ),
+            Text(rotulo, style: estilo(Tipo.rotulo, color: Cores.tinta700)),
           ],
         ),
       ),

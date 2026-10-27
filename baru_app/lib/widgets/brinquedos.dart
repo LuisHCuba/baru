@@ -89,11 +89,16 @@ class BrinquedosDoHabitat extends StatefulWidget {
     required this.especie,
     this.podeConvidar = true,
     this.comPote = true,
+    this.ondeDoPote,
   });
 
   /// Desenhar o potinho no canto da cena. Falso no mundo da home, onde ele
   /// mora na barra lateral e chama [BrinquedosDoHabitatState.pegaPetisco].
   final bool comPote;
+
+  /// Onde o pote fica, em px da cena (o meio da base dele). Nulo: no canto
+  /// de baixo, à esquerda.
+  final Offset? ondeDoPote;
 
   /// De quem é o potinho: o petisco é o que esse bicho gosta.
   final Species especie;
@@ -154,6 +159,10 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
   Offset? _castanha;
   Offset _vCastanha = Offset.zero;
   bool _castanhaNaMao = false;
+
+  /// Há quanto tempo o petisco está no chão sem ele chegar: passa do
+  /// ponto, some, e o pote enche de novo (auditoria, 5).
+  double _castanhaParada = 0;
   double _poteVoltaEm = 0;
   double _t = 0;
   final List<_Farelo> _farelos = [];
@@ -326,6 +335,13 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
       _castanha = p;
       _vCastanha = v;
       mexe |= ativo;
+      _castanhaParada = ativo ? 0 : _castanhaParada + dt;
+      if (_castanhaParada > 12) {
+        _castanha = null;
+        _castanhaParada = 0;
+        _poteVoltaEm = _t + 1;
+      }
+      mexe = true;
     }
 
     for (final f in _farelos) {
@@ -463,14 +479,25 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     _liga();
   }
 
-  /// O potinho fora da cena (a barra lateral da home) dá o petisco por
-  /// estes três.
-  void pegaPetisco(Offset global) => _pegaCastanha(global);
-  void arrastaPetisco(Offset delta) => _arrastaCastanha(delta);
-  void soltaPetisco() => _soltaCastanha();
-
   /// Tem petisco para dar (o pote enche de novo uns segundos depois).
   bool get temPetisco => _t >= _poteVoltaEm && _castanha == null;
+
+  /// Um petisco cai do pote, ao lado dele.
+  void _daPetiscoDoPote() {
+    if (!temPetisco) return;
+    final o = widget.ondeDoPote ?? Offset(10 + 23, _g.chao);
+    _castanha = Offset(
+      _limitaX(o.dx + 40 * _g.escala, _raioDaCastanha),
+      o.dy - 60 * _g.escala,
+    );
+    _castanhaNaMao = false;
+    _castanhaParada = 0;
+    _vCastanha = Offset.zero;
+    _convidando = false;
+    _agendaConvite();
+    _publica();
+    _liga();
+  }
 
   void _pegaCastanha(Offset global) {
     if (_t < _poteVoltaEm || _castanha != null) return;
@@ -480,6 +507,7 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     if (caixa == null) return;
     _castanha = caixa.globalToLocal(global) - Offset(0, 24 * _g.escala);
     _castanhaNaMao = true;
+    _castanhaParada = 0;
     _vCastanha = Offset.zero;
     HapticFeedback.selectionClick();
     _publica();
@@ -515,8 +543,9 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     final b = _bola!;
     final c = _castanha;
     const alvoDaBola = 56.0;
-    const pote = 46.0;
+    final pote = widget.ondeDoPote == null ? 46.0 : 34 * _g.escala;
     final poteCheio = _t >= _poteVoltaEm && c == null;
+    final o = widget.ondeDoPote;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -537,17 +566,20 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
             ),
           ),
         ),
-        // O potinho de petiscos, no canto de baixo (no mundo da home ele
-        // fica na barra lateral, fora da cena: ver [pegaPetisco]).
+        // O potinho de petiscos: no canto de baixo, ou onde a cena disser.
         if (widget.comPote)
           Positioned(
-            left: 10,
-            bottom: 10,
+            left: o == null ? 10 : o.dx - pote / 2,
+            bottom: o == null ? 10 : null,
+            top: o == null ? null : o.dy - pote * 0.9,
             width: pote,
             height: pote,
             child: Semantics(
               button: true,
               label: widget.rotuloDoPetisco,
+              // Pelo leitor de tela não há arrasto: o toque deixa o petisco
+              // cair ao lado do pote, e ele vem buscar (auditoria, 9).
+              onTap: _daPetiscoDoPote,
               child: RawGestureDetector(
                 key: BrinquedosDoHabitat.poteKey,
                 behavior: HitTestBehavior.opaque,
@@ -558,11 +590,12 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
                 ),
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 300),
-                  opacity: poteCheio ? 1 : 0.45,
+                  opacity: poteCheio || o != null ? 1 : 0.45,
                   child: CustomPaint(
                     painter: _PintaPote(
                       cheio: poteCheio,
                       petisco: petiscoDe(widget.especie),
+                      noChao: o != null,
                     ),
                   ),
                 ),
@@ -741,14 +774,25 @@ class _PintaBrinquedos extends CustomPainter {
 
 /// O potinho de madeira com castanhas.
 class _PintaPote extends CustomPainter {
-  const _PintaPote({required this.cheio, required this.petisco});
+  const _PintaPote({
+    required this.cheio,
+    required this.petisco,
+    this.noChao = false,
+  });
 
   final bool cheio;
   final Comida petisco;
 
+  /// Uma tigela no chão do mundo, com sombra — e não um botão redondo.
+  final bool noChao;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
+    if (noChao) {
+      _pintaNoChao(canvas, w, h);
+      return;
+    }
     final fundo = Paint()
       ..color = Cores.superficieElevada.withValues(alpha: 0.86);
     canvas.drawCircle(Offset(w / 2, h / 2), w / 2, fundo);
@@ -789,6 +833,56 @@ class _PintaPote extends CustomPainter {
         ..color = Cores.madeiraEscura
         ..strokeWidth = 2
         ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  void _pintaNoChao(Canvas canvas, double w, double h) {
+    // A sombra no capim.
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w / 2, h * 0.9),
+        width: w * 0.92,
+        height: h * 0.16,
+      ),
+      Paint()..color = Cores.tintaA(0.16),
+    );
+    final r = w * 0.12;
+    if (cheio) {
+      for (final (x, y, a) in const [
+        (0.34, 0.5, -0.4),
+        (0.52, 0.44, 0.15),
+        (0.68, 0.52, 0.5),
+      ]) {
+        pintaComida(canvas, petisco, Offset(w * x, h * y), r * 1.3, angulo: a);
+      }
+    }
+    final borda = h * 0.56;
+    final tigela = Path()
+      ..moveTo(w * 0.1, borda)
+      ..cubicTo(w * 0.12, h * 0.86, w * 0.88, h * 0.86, w * 0.9, borda)
+      ..close();
+    canvas.drawPath(tigela, Paint()..color = Cores.madeira);
+    // Um brilho de verniz na barriga da tigela.
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.22, borda + h * 0.08)
+        ..quadraticBezierTo(w * 0.3, h * 0.78, w * 0.44, h * 0.8),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.22)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = h * 0.035
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w / 2, borda),
+        width: w * 0.8,
+        height: h * 0.1,
+      ),
+      Paint()
+        ..color = Cores.madeiraEscura
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2,
     );
   }
 

@@ -393,12 +393,14 @@ void main() {
       observador.value = GestoOcioso.nenhum;
       await monta(Species.owl);
       var achou = false;
-      // O gesto sai entre 7 e 15 s.
-      for (var i = 0; i < 180 && !achou; i++) {
+      // O gesto sai entre 7 e 15 s de ócio; com os episódios, o primeiro
+      // ócio pode vir depois de um episódio longo (uma remada, um cochilo
+      // curto), então a janela é de 30 s.
+      for (var i = 0; i < 300 && !achou; i++) {
         await tester.pump(const Duration(milliseconds: 100));
         achou = observador.value == g.key;
       }
-      expect(achou, isTrue, reason: 'o gesto ${g.key.name} não veio em 18 s');
+      expect(achou, isTrue, reason: 'o gesto ${g.key.name} não veio em 30 s');
       // Instante escolhido dentro do gesto (ele dura 1600 ms).
       await tester.pump(Duration(milliseconds: g.value.$2));
       await _salva(tester, PetView.cenaKey, g.value.$1);

@@ -41,12 +41,7 @@ import 'widgets/saida.dart';
 import 'widgets/share_sheet.dart';
 
 class BaruApp extends StatefulWidget {
-  const BaruApp({
-    super.key,
-    this.repos,
-    this.snapshot,
-    this.bootstrapNotice,
-  });
+  const BaruApp({super.key, this.repos, this.snapshot, this.bootstrapNotice});
 
   final BaruRepositories? repos;
   final AppSnapshot? snapshot;
@@ -121,10 +116,7 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
 
   void _onSyncError(String message) {
     _scaffoldKey.currentState?.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -218,7 +210,9 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
     }
     await BaruNotifications.instance.mostraDescanso(
       terminaEm: fim,
-      titulo: state.t.fill(state.t.descansoVigiaTitulo, {'n': state.displayName}),
+      titulo: state.t.fill(state.t.descansoVigiaTitulo, {
+        'n': state.displayName,
+      }),
       corpo: state.t.descansoVigiaCorpo,
       rotuloEncerrar: state.t.notifDescansoDesistir,
     );
@@ -289,8 +283,9 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
             // compartilhamento — envolve o `Navigator`. Ela não é uma rota:
             // a barra é fixa e sobrevive à troca de tela, que é o que §4B
             // pede.
-            builder: (context, navegador) =>
-                AppFrame(child: _Casca(navegador: navegador!)),
+            builder: (context, navegador) => AppFrame(
+              child: _Casca(navegador: navegador!, chave: _rotas.navigatorKey),
+            ),
           );
         },
       ),
@@ -299,15 +294,19 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
 }
 
 class _Casca extends StatelessWidget {
-  const _Casca({required this.navegador});
+  const _Casca({required this.navegador, required this.chave});
 
   final Widget navegador;
+
+  /// O `Navigator` das telas: a casca fica fora dele, e as folhas que o
+  /// painel da home abre precisam dele.
+  final GlobalKey<NavigatorState> chave;
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     // A home é o mundo dele, de borda a borda: passa por baixo da barra de
-    // status e das abas, que flutuam por cima.
+    // status e dos cantos arredondados do painel de baixo.
     final home = app.screen == AppScreen.home;
     return Scaffold(
       extendBody: home,
@@ -340,8 +339,11 @@ class _Casca extends StatelessWidget {
         duration: Tempo.componente,
         curve: Curvas.padrao,
         alignment: Alignment.topCenter,
-        child: app.showTabs
-            ? BottomTabs(flutuante: home)
+        // Com uma folha da home (ou o compartilhar) aberta, o painel sai da
+        // frente: a folha é a camada de cima, e não um cartão espremido
+        // entre o mundo e as abas, com duas alças à vista.
+        child: app.showTabs && !(home && (app.folhasDaHome > 0 || app.sharing))
+            ? BottomTabs(acima: home ? AcessorioDaHome(navegador: chave) : null)
             : const SizedBox(width: 412),
       ),
     );
@@ -349,17 +351,17 @@ class _Casca extends StatelessWidget {
 
   /// O bicho da pessoa — espécie, pelagem, estágio e roupa — radiante.
   Widget _bichoComemorando(AppState app) => PetView(
-        species: app.species,
-        mood: Mood.radiant,
-        activity: Activity.idle,
-        coat: app.color,
-        estagio: app.estagioVisivel,
-        roupas: app.roupasDoBicho,
-        roupaDeCabeca: app.roupaDeCabeca,
-        interativo: false,
-        width: 180,
-        height: 150,
-      );
+    species: app.species,
+    mood: Mood.radiant,
+    activity: Activity.idle,
+    coat: app.color,
+    estagio: app.estagioVisivel,
+    roupas: app.roupasDoBicho,
+    roupaDeCabeca: app.roupaDeCabeca,
+    interativo: false,
+    width: 180,
+    height: 150,
+  );
 
   /// Conquista aparece por cima de qualquer tela, inclusive da sessão.
   Widget _celebracao(AppState app) {
@@ -450,8 +452,10 @@ class _Casca extends StatelessWidget {
     return Celebracao(
       titulo: t.celebMarco,
       // O prêmio pelo nome, e não só o marco: "+20 folhas" não aparecia.
-      subtitulo: [tituloDoMarco(app, marco), ...premiosDoMarco(app, marco)]
-          .join(' · '),
+      subtitulo: [
+        tituloDoMarco(app, marco),
+        ...premiosDoMarco(app, marco),
+      ].join(' · '),
       tituloDaToca: t.tocaTitulo,
       ajudaDaToca: t.tocaAjuda,
       cor: Cores.mel400,
@@ -463,5 +467,4 @@ class _Casca extends StatelessWidget {
       aoFechar: app.celebrou,
     );
   }
-
 }

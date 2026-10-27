@@ -40,7 +40,9 @@ class FundoDoMundo extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
+    // As alturas do cenário seguem o horizonte (que segue a parte visível,
+    // acima do painel), não a tela inteira.
+    final w = size.width, h = g.horizonte / 0.56;
     final cam = math.max(0.0, camera.value);
     final t = tempo.value;
     final noite = _noite(luz);
@@ -449,8 +451,9 @@ class FundoDoMundo extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     for (var i = 0; i < 70; i++) {
       final x = rt.nextDouble() * beira;
-      final y = g.horizonte + 16 + rt.nextDouble() * (h - g.horizonte - 30);
-      final s = 0.6 + (y - g.horizonte) / h * 1.6;
+      final y =
+          g.horizonte + 16 + rt.nextDouble() * (g.visivel - g.horizonte - 30);
+      final s = 0.6 + (y - g.horizonte) / g.visivel * 1.6;
       final v = math.sin(t * 1.4 + x / 40) * 2 * s;
       for (final d in const [-1.0, 0.0, 1.0]) {
         canvas.drawLine(
@@ -493,7 +496,8 @@ class FrenteDoMundo extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final h = size.height;
+    // O capim da frente nasce no pé do que se vê, logo acima do painel.
+    final h = g.visivel;
     final cam = math.max(0.0, camera.value);
     final t = tempo.value;
     final escuro = Color.lerp(

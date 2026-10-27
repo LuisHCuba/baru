@@ -10,37 +10,39 @@ import '../models.dart';
 import '../state.dart';
 import 'trilha_screen.dart';
 import '../theme.dart';
-import '../widgets/brinquedos.dart';
-import '../widgets/comida.dart';
 import '../widgets/common.dart';
 import '../widgets/crescimento.dart';
 import '../widgets/mundo/mundo.dart';
 
 /// A home é o mundo dele.
 ///
-/// Era uma lista: o bicho num cartão de 372 px e, embaixo, seis cartões
-/// disputando a atenção (o "hub lotado" que as críticas do Finch apontam).
-/// Agora a tela inteira é o lugar onde ele vive (`MundoDoBaru`), e a
-/// interface flutua por cima, em vidro: quem é ele e quanto falta para o
-/// próximo nível, as folhas, a raiz; a fala dele num balão junto da
-/// cabeça; o potinho, decorar e foto na lateral; e embaixo, sempre à vista,
-/// a única ação que importa — a duração e o "Começar foco". O resto do dia
-/// (tempo de tela, semana, nível, missões, relatório, próximo item) mora na
-/// folha "Seu dia", a um gesto.
+/// A tela inteira é o lugar onde ele vive (`MundoDoBaru`), e a interface
+/// fica nas bordas, o mínimo possível (pesquisa 23):
+///
+/// * **No alto, um indicador só**: a raiz e as folhas, juntas, no canto —
+///   informação, como a posição e o mapa nos cantos do Mario Kart (NN/g,
+///   heurística 8 aplicada a jogos).
+/// * **No meio, o mundo**: o que se faz com ele se faz nele — carinho no
+///   bicho, a bola e o pote de petiscos no chão (diegético). Nada de botão
+///   flutuando por cima da cena.
+/// * **Embaixo, um painel só**: a alça do "Seu dia" (o resto do dia, um
+///   nível abaixo — divulgação progressiva), a única ação da tela, "Começar
+///   foco" com a duração no mesmo botão (botão dividido do Material 3), e
+///   as abas, que só navegam (Apple HIG, Tab bars). É o padrão do acessório
+///   preso à barra de abas, como o MiniPlayer do Music.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   static const seuDiaKey = Key('home-seu-dia');
   static const balaoKey = Key('home-balao');
+  static const indicadorKey = Key('home-indicador');
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _mundo = GlobalKey<MundoDoBaruState>();
   final _cabeca = ValueNotifier<Offset?>(null);
-  final _zona = ValueNotifier<ZonaDoMundo>(ZonaDoMundo.margem);
   bool _balaoAberto = true;
   Timer? _recolheBalao;
 
@@ -58,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _recolheBalao?.cancel();
     _cabeca.dispose();
-    _zona.dispose();
     super.dispose();
   }
 
@@ -92,109 +93,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        MundoDoBaru(key: _mundo, cabecaNaTela: _cabeca, zonaNaTela: _zona),
+        MundoDoBaru(cabecaNaTela: _cabeca),
 
-        // --- topo: quem é ele, as folhas, a raiz ---------------------------
+        // --- no alto: o indicador, num canto -------------------------------
         Positioned(
           top: pad.top + Espaco.sm,
-          left: Espaco.md,
           right: Espaco.md,
-          child: Row(
-            children: [
-              _Avatar(app: app),
-              const Spacer(),
-              Semantics(
-                button: true,
-                child: GestureDetector(
-                  onTap: () => app.go(AppScreen.folhas),
-                  behavior: HitTestBehavior.opaque,
-                  child: LeafBadge(leaves: app.leaves),
-                ),
-              ),
-              const SizedBox(width: Espaco.xs),
-              Semantics(
-                button: true,
-                child: GestureDetector(
-                  onTap: () => app.go(AppScreen.sequencia),
-                  behavior: HitTestBehavior.opaque,
-                  child: Vidro(
-                    key: const Key('home-sequencia'),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Espaco.sm,
-                      vertical: 7,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const GlifoRaiz(tamanho: 18),
-                        const SizedBox(width: Espaco.xxs),
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: tela.width * 0.28,
-                          ),
-                          child: Text(
-                            app.streakText,
-                            overflow: TextOverflow.ellipsis,
-                            style: nunito(
-                              size: 13,
-                              weight: FontWeight.w800,
-                              color: Cores.raiz600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // --- as zonas do mundo: onde a câmera está, e para onde ir ---------
-        Positioned(
-          top: pad.top + 62,
-          left: 0,
-          right: 0,
-          child: ValueListenableBuilder<ZonaDoMundo>(
-            valueListenable: _zona,
-            builder: (context, z, _) => Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (final (zona, nome) in [
-                  (ZonaDoMundo.toca, t.zonaToca),
-                  (ZonaDoMundo.brinquedos, t.zonaBrinquedos),
-                  (ZonaDoMundo.margem, t.zonaMargem),
-                  (ZonaDoMundo.lagoa, t.zonaLagoa),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: GestureDetector(
-                      onTap: () => _mundo.currentState?.mostra(zona),
-                      child: Vidro(
-                        cor: zona == z
-                            ? Cores.folha600.withValues(alpha: 0.88)
-                            : null,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        child: Text(
-                          nome,
-                          style: nunito(
-                            size: 11.5,
-                            weight: FontWeight.w800,
-                            color: zona == z
-                                ? Cores.tintaClara
-                                : Cores.tinta700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          child: _Indicador(app: app),
         ),
 
         // --- a fala dele, num balão junto da cabeça ------------------------
@@ -235,129 +140,112 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
+      ],
+    );
+  }
+}
 
-        // --- a lateral: petisco, decorar, foto ------------------------------
-        // Quando ele nada até a ponta da lagoa, a câmera encosta no fim do
-        // mundo e ele passa por baixo dos botões. Os botões dão passagem
-        // (ficam translúcidos, continuam tocáveis) em vez de tapar o bicho.
-        Positioned(
-          right: Espaco.md,
-          bottom: pad.bottom + 150,
-          child: ValueListenableBuilder<Offset?>(
-            valueListenable: _cabeca,
-            builder: (context, cabeca, coluna) => AnimatedOpacity(
-              opacity:
-                  cabeca != null &&
-                      cabeca.dx > MediaQuery.sizeOf(context).width - 150
-                  ? 0.4
-                  : 1,
-              duration: Tempo.componente,
-              child: coluna,
-            ),
-            child: Column(
-              children: [
-                _BotaoDoPetisco(app: app, mundo: _mundo),
-                const SizedBox(height: Espaco.sm),
-                _BotaoRedondo(
-                  icone: Icons.palette_outlined,
-                  rotulo: t.dockDecorar,
-                  aoTocar: () => app.go(AppScreen.shop),
+/// O que fica preso em cima das abas na home: a alça do "Seu dia" e a ação
+/// da tela. Vive na mesma superfície das abas ([BottomTabs.acima]), para
+/// que o pé da tela seja um painel só, e não três camadas de botões.
+class AcessorioDaHome extends StatelessWidget {
+  const AcessorioDaHome({super.key, required this.navegador});
+
+  static const duracaoKey = Key('home-duracao');
+
+  /// O painel mora na casca, fora do `Navigator` das telas: as folhas abrem
+  /// pelo contexto dele.
+  final GlobalKey<NavigatorState> navegador;
+
+  @override
+  Widget build(BuildContext context) {
+    final app = AppScope.of(context);
+    final t = app.t;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // A alça: tocar ou puxar para cima abre o resto do dia.
+        Semantics(
+          button: true,
+          label: t.seuDia,
+          child: GestureDetector(
+            key: HomeScreen.seuDiaKey,
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _abreSeuDia(context),
+            onVerticalDragEnd: (d) {
+              if ((d.primaryVelocity ?? 0) < -150) _abreSeuDia(context);
+            },
+            child: SizedBox(
+              height: 34,
+              width: double.infinity,
+              child: ExcludeSemantics(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Cores.tinta.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          t.seuDia,
+                          style: nunito(
+                            size: 12,
+                            weight: FontWeight.w800,
+                            color: Cores.tinta700,
+                          ),
+                        ),
+                        if (app.missoesResgataveis > 0) ...[
+                          const SizedBox(width: Espaco.xxs),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Cores.mel400,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: Espaco.sm),
-                _BotaoRedondo(
-                  icone: Icons.photo_camera_outlined,
-                  rotulo: t.dockFoto,
-                  aoTocar: app.openShare,
-                ),
-              ],
+              ),
             ),
           ),
         ),
-
-        // --- embaixo: o seu dia e o foco ------------------------------------
-        Positioned(
-          left: Espaco.md,
-          right: Espaco.md,
-          bottom: pad.bottom + Espaco.sm,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Espaco.md,
+            Espaco.xxs,
+            Espaco.md,
+            Espaco.xs,
+          ),
+          // Botão dividido: a ação e, colada nela, a escolha que a muda.
+          child: Row(
             children: [
-              GestureDetector(
-                key: HomeScreen.seuDiaKey,
-                onTap: () => SeuDia.abre(context),
-                onVerticalDragEnd: (d) {
-                  if ((d.primaryVelocity ?? 0) < -200) SeuDia.abre(context);
-                },
-                child: Vidro(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Espaco.md,
-                    vertical: 6,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.keyboard_arrow_up_rounded,
-                        size: 18,
-                        color: Cores.tinta700,
-                      ),
-                      const SizedBox(width: Espaco.xxs),
-                      Text(
-                        t.seuDia,
-                        style: nunito(
-                          size: 13,
-                          weight: FontWeight.w800,
-                          color: Cores.tinta700,
-                        ),
-                      ),
-                      if (app.missoesResgataveis > 0) ...[
-                        const SizedBox(width: Espaco.xs),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Cores.mel400,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+              Expanded(
+                child: BotaoBaru(rotulo: t.start, aoTocar: app.startSession),
               ),
-              const SizedBox(height: Espaco.sm),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => _escolheDuracao(context, app),
-                    child: Vidro(
-                      key: const Key('home-duracao'),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Espaco.md,
-                        vertical: 18,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _rotuloDaDuracao(app, app.dur),
-                            style: nunito(size: 16, weight: FontWeight.w800),
-                          ),
-                          const Icon(Icons.arrow_drop_down_rounded, size: 22),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: Espaco.sm),
-                  Expanded(
-                    child: BotaoBaru(
-                      rotulo: t.start,
-                      aoTocar: app.startSession,
-                      altura: 60,
-                      tamanhoDoTexto: 18,
-                    ),
-                  ),
-                ],
+              const SizedBox(width: Espaco.xs),
+              Semantics(
+                label: t.duracaoT,
+                child: BotaoBaru(
+                  key: duracaoKey,
+                  papel: PapelDoBotao.secundario,
+                  expande: false,
+                  icone: const Icon(Icons.timer_outlined, size: 18),
+                  rotulo: _rotuloDaDuracao(app, app.dur),
+                  aoTocar: () =>
+                      _escolheDuracao(navegador.currentContext ?? context, app),
+                ),
               ),
             ],
           ),
@@ -366,59 +254,130 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _rotuloDaDuracao(AppState app, int min) =>
+  void _abreSeuDia(BuildContext context) =>
+      SeuDia.abre(navegador.currentContext ?? context);
+
+  static String _rotuloDaDuracao(AppState app, int min) =>
       app.lang == 'zh' ? '$min分' : '$min${app.lang == 'en' ? 'm' : 'min'}';
 
-  void _escolheDuracao(BuildContext context, AppState app) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Cores.superficie,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (context) => AppScope(
-        state: app,
-        child: Padding(
-          // As abas flutuam por cima da folha: o conteúdo para acima delas.
-          padding: EdgeInsets.fromLTRB(
-            Espaco.lg,
-            Espaco.lg,
-            Espaco.lg,
-            Espaco.xl + MediaQuery.paddingOf(context).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                app.t.duracaoT,
-                style: nunito(size: 18, weight: FontWeight.w800),
-              ),
-              const SizedBox(height: Espaco.md),
-              Row(
-                children: [
-                  for (var i = 0; i < durations.length; i++) ...[
-                    if (i > 0) const SizedBox(width: Espaco.xs),
-                    SelectChip(
-                      label: i == 3
-                          ? app.t.custom
-                          : _rotuloDaDuracao(app, durations[i]),
-                      selected: app.dur == durations[i],
-                      onTap: () {
-                        app.pickDur(durations[i]);
-                        Navigator.of(context).pop();
-                      },
-                      expand: true,
-                      height: 46,
-                      radius: 14,
-                      size: 14,
-                    ),
+  static void _escolheDuracao(BuildContext context, AppState app) {
+    app.comFolhaDaHome(
+      () => showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Cores.superficie,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        builder: (context) => AppScope(
+          state: app,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              Espaco.lg,
+              Espaco.lg,
+              Espaco.lg,
+              Espaco.xl + MediaQuery.paddingOf(context).bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  app.t.duracaoT,
+                  style: nunito(size: 18, weight: FontWeight.w800),
+                ),
+                const SizedBox(height: Espaco.md),
+                Row(
+                  children: [
+                    for (var i = 0; i < durations.length; i++) ...[
+                      if (i > 0) const SizedBox(width: Espaco.xs),
+                      SelectChip(
+                        label: i == 3
+                            ? app.t.custom
+                            : _rotuloDaDuracao(app, durations[i]),
+                        selected: app.dur == durations[i],
+                        onTap: () {
+                          app.pickDur(durations[i]);
+                          Navigator.of(context).pop();
+                        },
+                        expand: true,
+                        height: 46,
+                        radius: 14,
+                        size: 14,
+                      ),
+                    ],
                   ],
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A raiz e as folhas, juntas, num canto: o placar dele. Cada metade leva
+/// à sua tela.
+class _Indicador extends StatelessWidget {
+  const _Indicador({required this.app});
+
+  final AppState app;
+
+  @override
+  Widget build(BuildContext context) {
+    final estilo = nunito(size: 14, weight: FontWeight.w800, tabular: true);
+    Widget metade({
+      required String rotulo,
+      required VoidCallback aoTocar,
+      required Widget glifo,
+      required Widget numero,
+      required EdgeInsets padding,
+    }) => Semantics(
+      button: true,
+      label: rotulo,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: aoTocar,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Padding(
+            padding: padding,
+            child: ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [glifo, const SizedBox(width: 5), numero],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return Vidro(
+      key: HomeScreen.indicadorKey,
+      padding: EdgeInsets.zero,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          metade(
+            rotulo: app.streakText,
+            aoTocar: () => app.go(AppScreen.sequencia),
+            glifo: const GlifoRaiz(tamanho: 18),
+            numero: Text('${app.streak}', style: estilo),
+            padding: const EdgeInsets.fromLTRB(14, 0, 10, 0),
+          ),
+          Container(
+            width: 1,
+            height: 18,
+            color: Cores.tinta.withValues(alpha: 0.12),
+          ),
+          metade(
+            rotulo: '${app.leaves} ${app.t.leavesLbl}',
+            aoTocar: () => app.go(AppScreen.folhas),
+            glifo: const GlifoFolha(tamanho: 17),
+            numero: ContadorAnimado(valor: app.leaves, estiloTexto: estilo),
+            padding: const EdgeInsets.fromLTRB(10, 0, 14, 0),
+          ),
+        ],
       ),
     );
   }
@@ -460,61 +419,6 @@ class Vidro extends StatelessWidget {
             padding: padding,
             color: cor ?? Cores.superficieElevada.withValues(alpha: 0.74),
             child: child,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// O nome dele com o anel do nível: quanto falta para o próximo.
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.app});
-
-  final AppState app;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label:
-          '${app.displayName}, ${app.t.fill(app.t.nivelRotulo, {'n': app.nivel})}',
-      child: GestureDetector(
-        onTap: () => app.go(AppScreen.trilha),
-        child: Vidro(
-          padding: const EdgeInsets.fromLTRB(5, 5, 14, 5),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 32,
-                height: 32,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: app.progressoNoNivel.clamp(0.0, 1.0),
-                      strokeWidth: 3.2,
-                      backgroundColor: Cores.tinta.withValues(alpha: 0.12),
-                      valueColor: const AlwaysStoppedAnimation(Cores.folha600),
-                    ),
-                    Text(
-                      '${app.nivel}',
-                      style: nunito(size: 12.5, weight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: Espaco.xs),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 110),
-                child: Text(
-                  app.displayName,
-                  overflow: TextOverflow.ellipsis,
-                  style: nunito(size: 14, weight: FontWeight.w800),
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -632,82 +536,6 @@ class _PontaDoBalao extends CustomPainter {
   bool shouldRepaint(_PontaDoBalao old) => old.cor != cor;
 }
 
-class _BotaoRedondo extends StatelessWidget {
-  const _BotaoRedondo({
-    required this.icone,
-    required this.rotulo,
-    required this.aoTocar,
-  });
-
-  final IconData icone;
-  final String rotulo;
-  final VoidCallback aoTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: rotulo,
-      child: GestureDetector(
-        onTap: aoTocar,
-        child: Vidro(
-          padding: const EdgeInsets.all(12),
-          child: Icon(icone, size: 22, color: Cores.tinta700),
-        ),
-      ),
-    );
-  }
-}
-
-/// O potinho na lateral: arrasta o petisco dele até a boca.
-class _BotaoDoPetisco extends StatelessWidget {
-  const _BotaoDoPetisco({required this.app, required this.mundo});
-
-  final AppState app;
-  final GlobalKey<MundoDoBaruState> mundo;
-
-  @override
-  Widget build(BuildContext context) {
-    BrinquedosDoHabitatState? b() =>
-        mundo.currentState?.brinquedos.currentState;
-    return Semantics(
-      button: true,
-      label: app.t.brinqPetisco,
-      child: GestureDetector(
-        key: BrinquedosDoHabitat.poteKey,
-        onPanStart: (d) => b()?.pegaPetisco(d.globalPosition),
-        onPanUpdate: (d) => b()?.arrastaPetisco(d.delta),
-        onPanEnd: (_) => b()?.soltaPetisco(),
-        onPanCancel: () => b()?.soltaPetisco(),
-        child: Vidro(
-          padding: const EdgeInsets.all(9),
-          child: SizedBox(
-            width: 28,
-            height: 28,
-            child: CustomPaint(
-              painter: _PetiscoNoBotao(petiscoDe(app.species)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PetiscoNoBotao extends CustomPainter {
-  const _PetiscoNoBotao(this.c);
-
-  final Comida c;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    pintaComida(canvas, c, size.center(Offset.zero), size.width * 0.38);
-  }
-
-  @override
-  bool shouldRepaint(_PetiscoNoBotao old) => old.c != c;
-}
-
 /// O resto do dia, numa folha que sobe da home: crescimento, relatório,
 /// semana, tempo de tela, nível, missões e o próximo item da loja.
 class SeuDia extends StatelessWidget {
@@ -717,46 +545,48 @@ class SeuDia extends StatelessWidget {
 
   static Future<void> abre(BuildContext context) {
     final app = AppScope.of(context);
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => AppScope(
-        state: app,
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.72,
-          minChildSize: 0.4,
-          maxChildSize: 0.94,
-          expand: false,
-          builder: (context, rolagem) => Container(
-            decoration: const BoxDecoration(
-              color: Cores.superficie,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            child: ListenableBuilder(
-              listenable: app,
-              builder: (context, _) => ListView(
-                controller: rolagem,
-                padding: EdgeInsets.fromLTRB(
-                  Espaco.lg,
-                  Espaco.sm,
-                  Espaco.lg,
-                  Espaco.xl + MediaQuery.paddingOf(context).bottom,
-                ),
-                children: [
-                  Center(
-                    child: Container(
-                      width: 42,
-                      height: 5,
-                      margin: const EdgeInsets.only(bottom: Espaco.md),
-                      decoration: BoxDecoration(
-                        color: Cores.tinta.withValues(alpha: 0.22),
-                        borderRadius: BorderRadius.circular(9),
+    return app.comFolhaDaHome(
+      () => showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => AppScope(
+          state: app,
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.72,
+            minChildSize: 0.4,
+            maxChildSize: 0.94,
+            expand: false,
+            builder: (context, rolagem) => Container(
+              decoration: const BoxDecoration(
+                color: Cores.superficie,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: ListenableBuilder(
+                listenable: app,
+                builder: (context, _) => ListView(
+                  controller: rolagem,
+                  padding: EdgeInsets.fromLTRB(
+                    Espaco.lg,
+                    Espaco.sm,
+                    Espaco.lg,
+                    Espaco.xl + MediaQuery.paddingOf(context).bottom,
+                  ),
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: Espaco.md),
+                        decoration: BoxDecoration(
+                          color: Cores.tinta.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
                       ),
                     ),
-                  ),
-                  SeuDia(app: app),
-                ],
+                    SeuDia(app: app),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1003,6 +833,31 @@ class SeuDia extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: Espaco.xs),
+              const Chevron(),
+            ],
+          ),
+        ),
+        const SizedBox(height: Espaco.sm),
+        // A foto saiu de cima do mundo: mora aqui, com o resto do dia.
+        SoftCard(
+          onTap: () {
+            Navigator.of(context).pop();
+            app.openShare();
+          },
+          child: Row(
+            children: [
+              const AppIcon(
+                Icons.photo_camera_outlined,
+                size: 18,
+                color: AppColors.green,
+              ),
+              const SizedBox(width: Espaco.sm),
+              Expanded(
+                child: Text(
+                  t.fotoDoBicho,
+                  style: nunito(size: 14, weight: FontWeight.w700),
+                ),
+              ),
               const Chevron(),
             ],
           ),

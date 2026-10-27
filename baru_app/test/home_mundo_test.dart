@@ -116,15 +116,31 @@ void main() {
     await _fecha(tester);
   });
 
-  testWidgets('o chip da lagoa leva a câmera até lá', (tester) async {
+  testWidgets('o bicho responde ao toque em qualquer ponto do mundo', (
+    tester,
+  ) async {
+    // A caixa do mundo tinha uma tela de largura: o toque não chegava ao
+    // bicho, que nasce no meio de um mundo de 2,6 telas (auditoria, 1).
     await _abre(tester);
-    final mundo = tester.state<MundoDoBaruState>(find.byType(MundoDoBaru));
-    final antes = mundo.cameraX;
-    await tester.tap(find.text('Lagoa'));
-    for (var i = 0; i < 40; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-    }
-    expect(mundo.cameraX, greaterThan(antes + 50));
+    expect(find.byKey(const Key('mundo-pet')).hitTestable(), findsOneWidget);
+    await _fecha(tester);
+  });
+
+  testWidgets('a home tem um indicador, um painel e nada por cima do mundo', (
+    tester,
+  ) async {
+    await _abre(tester);
+    expect(find.byKey(HomeScreen.indicadorKey), findsOneWidget);
+    // Sem chips de zona nem botões soltos sobre a cena (pesquisa 23).
+    expect(find.text('Lagoa'), findsNothing);
+    expect(find.text('Toca'), findsNothing);
+    expect(find.byIcon(Icons.palette_outlined), findsNothing);
+    expect(find.byIcon(Icons.photo_camera_outlined), findsNothing);
+    // A ação e a duração vivem no painel das abas, embaixo de tudo.
+    final acao = tester.getRect(find.text('Começar foco'));
+    final aba = tester.getRect(find.text('Missões'));
+    expect(acao.bottom, lessThan(aba.top));
+    expect(acao.top, greaterThan(892 * 0.7));
     await _fecha(tester);
   });
 }

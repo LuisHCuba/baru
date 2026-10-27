@@ -520,7 +520,14 @@ extension _Episodios on MotorDeVida {
     if (_t >= _epFim) {
       // Chegou à beira e a água chama: entra.
       if (_ep == Episodio.irParaZona && chamadoPelaAgua) {
-        _comecaEpisodio(Episodio.entrarNaAgua);
+        // Da terra a água chama para entrar; da água, a terra chama para
+        // sair. Sempre "entrar" fazia o nadador ir e voltar à beira para
+        // sempre (auditoria de d59006a, 2).
+        _comecaEpisodio(
+          modo == ModoDaAtividade.nadar
+              ? Episodio.sairDaAgua
+              : Episodio.entrarNaAgua,
+        );
       } else {
         _escolheEpisodio();
       }
@@ -850,7 +857,10 @@ extension _Episodios on MotorDeVida {
     _forcaDaAtividade.alvo = forca;
     _forcaDaAtividade.passo(dt);
     _mastigando = mastiga;
-    _desenhaLivre = _desenhoLivre.contains(_ep);
+    // Indo para a beira pela água ele nada, não anda (auditoria, 11).
+    _desenhaLivre =
+        _desenhoLivre.contains(_ep) &&
+        !(_ep == Episodio.irParaZona && modo == ModoDaAtividade.nadar);
     return _ep == Episodio.pausa;
   }
 }

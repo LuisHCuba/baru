@@ -37,8 +37,10 @@ class _ShareSheetState extends State<ShareSheet> {
     final app = AppScope.of(context);
     // O que sai do app tem de dizer o mesmo que a tela: quem recebe a
     // imagem não tem contexto nenhum além desta linha.
-    final caption =
-        app.frase(app.t.humorCap(app.falaDoHumor), app.falaDoHumor.valores);
+    final caption = app.frase(
+      app.t.humorCap(app.falaDoHumor),
+      app.falaDoHumor.valores,
+    );
     final ok = await HabitatShare.share(boundaryKey: _boundary, text: caption);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -79,10 +81,19 @@ class _ShareSheetState extends State<ShareSheet> {
                 onTap: () {},
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.lg, Espaco.md, Espaco.xxl),
+                  // Na home as abas ficam por cima do corpo: o botão de fechar para
+                  // acima delas.
+                  padding: EdgeInsets.fromLTRB(
+                    Espaco.md,
+                    Espaco.lg,
+                    Espaco.md,
+                    Espaco.xxl + MediaQuery.paddingOf(context).bottom,
+                  ),
                   decoration: const BoxDecoration(
                     color: AppColors.shareSheet,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.share)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(AppRadii.share),
+                    ),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -133,7 +144,10 @@ class _ShareSheetState extends State<ShareSheet> {
                                   children: [
                                     Text(
                                       'habitat.png',
-                                      style: nunito(size: 14.5, weight: FontWeight.w700),
+                                      style: nunito(
+                                        size: 14.5,
+                                        weight: FontWeight.w700,
+                                      ),
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
@@ -159,7 +173,11 @@ class _ShareSheetState extends State<ShareSheet> {
                       Text(
                         app.t.shareNote,
                         textAlign: TextAlign.center,
-                        style: nunito(size: 12.5, height: 1.5, color: Cores.tinta700),
+                        style: nunito(
+                          size: 12.5,
+                          height: 1.5,
+                          color: Cores.tinta700,
+                        ),
                       ),
                       const SizedBox(height: Espaco.md),
                       GestureDetector(

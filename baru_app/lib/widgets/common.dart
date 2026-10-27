@@ -1,6 +1,3 @@
-import 'dart:math' as math;
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
 import '../l10n_missoes.dart';
@@ -38,10 +35,7 @@ class _HoverState extends State<_Hover> {
       onEnter: live ? (_) => setState(() => hover = true) : null,
       onExit: live ? (_) => setState(() => hover = false) : null,
       cursor: live ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: widget.builder(hover),
-      ),
+      child: GestureDetector(onTap: widget.onTap, child: widget.builder(hover)),
     );
   }
 }
@@ -94,7 +88,10 @@ class SelectChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.padding = const EdgeInsets.symmetric(horizontal: Espaco.md, vertical: Espaco.sm),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: Espaco.md,
+      vertical: Espaco.sm,
+    ),
     this.radius = 14,
     this.size = 14,
     this.expand = false,
@@ -177,7 +174,12 @@ class SoftCard extends StatelessWidget {
   const SoftCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.fromLTRB(Espaco.lg, Espaco.md, Espaco.lg, Espaco.md),
+    this.padding = const EdgeInsets.fromLTRB(
+      Espaco.lg,
+      Espaco.md,
+      Espaco.lg,
+      Espaco.md,
+    ),
     this.onTap,
     this.muted = false,
   });
@@ -194,9 +196,7 @@ class SoftCard extends StatelessWidget {
         duration: const Duration(milliseconds: 140),
         padding: padding,
         decoration: BoxDecoration(
-          color: muted
-              ? AppColors.inkA(hover ? 0.07 : 0.045)
-              : AppColors.card,
+          color: muted ? AppColors.inkA(hover ? 0.07 : 0.045) : AppColors.card,
           borderRadius: BorderRadius.circular(AppRadii.card),
           border: muted ? null : Border.all(color: AppColors.inkA(0.085)),
           boxShadow: muted ? null : AppShadows.card,
@@ -206,7 +206,10 @@ class SoftCard extends StatelessWidget {
     }
 
     if (onTap == null) return box();
-    return _Hover(onTap: onTap, builder: (hover) => box(hover: hover));
+    return _Hover(
+      onTap: onTap,
+      builder: (hover) => box(hover: hover),
+    );
   }
 }
 
@@ -216,11 +219,7 @@ class SoftCard extends StatelessWidget {
 /// da percepção. O usuário resgata uma missão e precisa ver as folhas
 /// chegarem, não descobrir depois que o número mudou.
 class LeafBadge extends StatelessWidget {
-  const LeafBadge({
-    super.key,
-    required this.leaves,
-    this.filled = true,
-  });
+  const LeafBadge({super.key, required this.leaves, this.filled = true});
 
   final int leaves;
   final bool filled;
@@ -231,7 +230,12 @@ class LeafBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: chave,
-      padding: const EdgeInsets.fromLTRB(Espaco.sm, Espaco.xs, Espaco.md, Espaco.xs),
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.sm,
+        Espaco.xs,
+        Espaco.md,
+        Espaco.xs,
+      ),
       decoration: BoxDecoration(
         color: filled ? AppColors.card : AppColors.greenA(0.13),
         borderRadius: BorderRadius.circular(99),
@@ -383,8 +387,8 @@ class OnbDots extends StatelessWidget {
                 widthFactor: cheio
                     ? 1
                     : atual
-                        ? fracaoDoAtual.clamp(0.0, 1.0)
-                        : 0,
+                    ? fracaoDoAtual.clamp(0.0, 1.0)
+                    : 0,
                 child: AnimatedContainer(
                   duration: Tempo.componente,
                   curve: Curvas.padrao,
@@ -429,8 +433,11 @@ class ItemSwatch extends StatelessWidget {
       );
     }
     final caixa = caixaDaArte(item.id, item.parts);
-    final k = [maxW / caixa.width, maxH / caixa.height, 1.0]
-        .reduce((a, b) => a < b ? a : b);
+    final k = [
+      maxW / caixa.width,
+      maxH / caixa.height,
+      1.0,
+    ].reduce((a, b) => a < b ? a : b);
     return SizedBox(
       width: maxW,
       height: maxH,
@@ -468,11 +475,12 @@ class _AmostraDoItem extends CustomPainter {
 }
 
 class BottomTabs extends StatelessWidget {
-  const BottomTabs({super.key, this.flutuante = false});
+  const BottomTabs({super.key, this.acima});
 
-  /// Na home: uma pílula de vidro flutuando sobre o mundo dele, em vez da
-  /// faixa colada na borda.
-  final bool flutuante;
+  /// O que fica preso em cima das abas, na mesma superfície (na home: a
+  /// alça do "Seu dia" e o "Começar foco"). Um painel só no pé da tela, como
+  /// o acessório da barra de abas na Apple HIG.
+  final Widget? acima;
 
   @override
   Widget build(BuildContext context) {
@@ -488,132 +496,134 @@ class BottomTabs extends StatelessWidget {
       AppScreen.profile,
     ];
     final linha = Row(
-          children: List.generate(4, (i) {
-            final on = app.screen == ids[i];
-            // O que está pronto para colher aparece na aba, de qualquer
-            // tela: prêmio parado sem ninguém ver é prêmio perdido.
-            final aColher =
-                ids[i] == AppScreen.missoes ? app.missoesResgataveis : 0;
-            if (aColher > 0) garanteTextosDeMissoes();
-            return Expanded(
-              child: Semantics(
-                button: true,
-                selected: on,
-                label: aColher > 0
-                    ? '${app.t.tabs[i]}, '
-                        '${app.t.fill(app.t.mqQuantasColher, {'n': aColher})}'
-                    : app.t.tabs[i],
-                child: GestureDetector(
-                  onTap: () => app.go(ids[i]),
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ExcludeSemantics(
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              AppIcon(
-                                on ? tabGlyphs[i].on : tabGlyphs[i].off,
-                                size: 22,
-                                color:
-                                    on ? AppColors.green : Cores.tinta500,
-                              ),
-                              if (aColher > 0)
-                                Positioned(
-                                  key: const Key('aba-missoes-a-colher'),
-                                  right: -9,
-                                  top: -5,
-                                  child: Container(
-                                    constraints: const BoxConstraints(
-                                      minWidth: 16,
-                                      minHeight: 16,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: Espaco.xxs,
-                                    ),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: Cores.mel400,
-                                      borderRadius: BorderRadius.circular(99),
-                                      border: Border.all(
-                                        color: AppColors.cream,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      '$aColher',
-                                      style: nunito(
-                                        size: 10,
-                                        weight: FontWeight.w800,
-                                        color: Cores.tinta,
-                                      ),
-                                    ),
+      children: List.generate(4, (i) {
+        final on = app.screen == ids[i];
+        // O que está pronto para colher aparece na aba, de qualquer
+        // tela: prêmio parado sem ninguém ver é prêmio perdido.
+        final aColher = ids[i] == AppScreen.missoes
+            ? app.missoesResgataveis
+            : 0;
+        if (aColher > 0) garanteTextosDeMissoes();
+        return Expanded(
+          child: Semantics(
+            button: true,
+            selected: on,
+            label: aColher > 0
+                ? '${app.t.tabs[i]}, '
+                      '${app.t.fill(app.t.mqQuantasColher, {'n': aColher})}'
+                : app.t.tabs[i],
+            child: GestureDetector(
+              onTap: () => app.go(ids[i]),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ExcludeSemantics(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          AppIcon(
+                            on ? tabGlyphs[i].on : tabGlyphs[i].off,
+                            size: 22,
+                            color: on ? AppColors.green : Cores.tinta500,
+                          ),
+                          if (aColher > 0)
+                            Positioned(
+                              key: const Key('aba-missoes-a-colher'),
+                              right: -9,
+                              top: -5,
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: Espaco.xxs,
+                                ),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: Cores.mel400,
+                                  borderRadius: BorderRadius.circular(99),
+                                  border: Border.all(
+                                    color: AppColors.cream,
+                                    width: 1.5,
                                   ),
                                 ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          app.t.tabs[i],
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: nunito(
-                            size: 10.5,
-                            weight: FontWeight.w700,
-                            color: on ? AppColors.green : Cores.tinta700,
-                          ),
-                        ),
-                      ],
+                                child: Text(
+                                  '$aColher',
+                                  style: nunito(
+                                    size: 10,
+                                    weight: FontWeight.w800,
+                                    color: Cores.tinta,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 5),
+                    Text(
+                      app.t.tabs[i],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: nunito(
+                        size: 10.5,
+                        weight: FontWeight.w700,
+                        color: on ? AppColors.green : Cores.tinta700,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            );
-          }),
-        );
-    if (flutuante) {
-      final base = MediaQuery.paddingOf(context).bottom;
-      return Padding(
-        padding: EdgeInsets.fromLTRB(
-          Espaco.md,
-          0,
-          Espaco.md,
-          math.max(base, Espaco.sm) + Espaco.xs,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Cores.tinta.withValues(alpha: 0.14),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Espaco.sm,
-                  vertical: Espaco.xxs,
-                ),
-                color: AppColors.cream.withValues(alpha: 0.78),
-                child: linha,
               ),
             ),
+          ),
+        );
+      }),
+    );
+    final topo = acima;
+    if (topo != null) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.cream,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          boxShadow: [
+            BoxShadow(
+              color: Cores.tinta.withValues(alpha: 0.12),
+              blurRadius: 18,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              topo,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Espaco.sm,
+                  Espaco.xxs,
+                  Espaco.sm,
+                  Espaco.sm,
+                ),
+                child: linha,
+              ),
+            ],
           ),
         ),
       );
     }
     return Container(
-      padding: const EdgeInsets.fromLTRB(Espaco.sm, Espaco.sm, Espaco.sm, Espaco.sm),
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.sm,
+        Espaco.sm,
+        Espaco.sm,
+        Espaco.sm,
+      ),
       decoration: BoxDecoration(
         color: AppColors.cream.withValues(alpha: 0.92),
         border: Border(top: BorderSide(color: AppColors.inkA(0.08))),
@@ -644,7 +654,11 @@ class SemTempoDeTela extends StatelessWidget {
       onTap: () => app.go(AppScreen.tempo),
       child: Row(
         children: [
-          const AppIcon(Icons.lock_clock_outlined, size: 22, color: Cores.tinta500),
+          const AppIcon(
+            Icons.lock_clock_outlined,
+            size: 22,
+            color: Cores.tinta500,
+          ),
           const SizedBox(width: Espaco.sm),
           Expanded(
             child: Column(

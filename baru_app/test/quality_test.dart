@@ -168,11 +168,15 @@ void main() {
   });
 
   testWidgets('home anuncia tabs e streak no singular', (tester) async {
+    final semantica = tester.ensureSemantics();
     await pumpAt412(tester, AppScreen.home);
-    expect(find.text(T('pt').streakOne), findsWidgets);
+    // Na home a raiz é um número no indicador; o texto inteiro ("Raiz de 1
+    // dia") é o que o leitor de tela anuncia.
+    expect(find.bySemanticsLabel(T('pt').streakOne), findsWidgets);
     expect(find.text('Habitat'), findsWidgets);
     expect(find.text('Missões'), findsOneWidget);
     // A home é o mundo dele: o foco fica sempre à vista, sem rolar.
     expect(find.text('Começar foco'), findsOneWidget);
+    semantica.dispose();
   });
 }

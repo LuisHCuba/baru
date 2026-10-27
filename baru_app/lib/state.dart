@@ -757,6 +757,22 @@ class AppState extends ChangeNotifier {
   bool som = true;
   bool missed = true;
   bool sharing = false;
+
+  /// Folhas da home abertas agora (o "Seu dia", a duração). Com uma aberta
+  /// o painel de baixo sai da frente. Não se grava: é só da tela.
+  int folhasDaHome = 0;
+
+  /// Abre uma folha da home contando-a enquanto durar.
+  Future<void> comFolhaDaHome(Future<void> Function() abre) async {
+    folhasDaHome++;
+    notifyListeners();
+    try {
+      await abre();
+    } finally {
+      folhasDaHome--;
+      notifyListeners();
+    }
+  }
   PayPlan payPlan = PayPlan.annual;
 
   /// Comprime o relógio da sessão em 60× (contrato de produto §12).

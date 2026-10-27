@@ -17,7 +17,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../data/crescimento.dart';
-import '../../l10n_humor.dart';
 import '../../models.dart';
 import '../../state.dart';
 import '../../theme.dart';
@@ -48,12 +47,25 @@ enum ZonaDoMundo { toca, margem, brinquedos, lagoa }
 
 /// A geometria do mundo para uma tela.
 class GeometriaDoMundo {
-  GeometriaDoMundo(this.tela)
+  /// [baixo]: quanto do pé da tela o painel de baixo cobre. O mundo se
+  /// arruma na parte que se vê: em 320×640 o chão a 70% da tela inteira
+  /// caía atrás do painel, e o bicho ficava sem pés.
+  GeometriaDoMundo(this.tela, {double baixo = 0})
     : largura = tela.width * ZonasDoMundo.telas,
-      escala = (tela.width / 412 * 1.6).clamp(1.2, 2.2);
+      visivel = math.max(tela.height * 0.5, tela.height - baixo),
+      escala =
+          (math.min(
+                    tela.width / 412,
+                    math.max(tela.height * 0.5, tela.height - baixo) / 725,
+                  ) *
+                  1.6)
+              .clamp(1.0, 2.2);
 
   final Size tela;
   final double largura;
+
+  /// A altura que fica à vista, acima do painel.
+  final double visivel;
 
   /// Px por unidade do desenho do bicho.
   final double escala;
@@ -61,11 +73,11 @@ class GeometriaDoMundo {
   double get altura => tela.height;
 
   /// Onde ficam os pés dele na terra, e a lâmina d'água da lagoa.
-  double get chao => altura * 0.70;
-  double get linhaDagua => altura * 0.735;
+  double get chao => visivel * 0.86;
+  double get linhaDagua => visivel * 0.905;
 
   /// A linha do horizonte, onde o chão encontra as colinas.
-  double get horizonte => altura * 0.56;
+  double get horizonte => visivel * 0.69;
 
   double x(double fracao) => largura * fracao;
 
@@ -110,18 +122,10 @@ class GeometriaDoMundo {
 }
 
 class MundoDoBaru extends StatefulWidget {
-  const MundoDoBaru({
-    super.key,
-    this.cabecaNaTela,
-    this.zonaNaTela,
-    this.agora,
-  });
+  const MundoDoBaru({super.key, this.cabecaNaTela, this.agora});
 
   /// Onde está a cabeça dele na tela (para o balão de fala da home).
   final ValueNotifier<Offset?>? cabecaNaTela;
-
-  /// Qual zona a câmera mostra (para os chips de zona da home).
-  final ValueNotifier<ZonaDoMundo>? zonaNaTela;
 
   /// Injetável para o teste ver a cena num horário.
   final DateTime? agora;
@@ -152,6 +156,10 @@ class MundoDoBaruState extends State<MundoDoBaru>
 
   /// O que ele escolheu sozinho: ir para a água (true) ou para a terra.
   bool? _escolha;
+
+  /// A atividade que o humor pedia da última vez: quando muda, a escolha
+  /// dele de antes deixa de valer (auditoria de d59006a, 3).
+  Activity? _pedidoAntes;
   ZonaDoMundo _zona = ZonaDoMundo.margem;
 
   /// O "+3 XP" do carinho, subindo da cabeça.
@@ -159,6 +167,8 @@ class MundoDoBaruState extends State<MundoDoBaru>
   double _premioDesde = -10;
 
   GeometriaDoMundo? _g;
+  bool _parado = false;
+  double _baixo = 0;
 
   @override
   void initState() {
@@ -181,26 +191,15 @@ class MundoDoBaruState extends State<MundoDoBaru>
   @visibleForTesting
   double get cameraX => _camera.value;
 
-  /// Leva a câmera a uma zona (os chips da home), por alguns segundos.
-  void mostra(ZonaDoMundo z) {
-    final g = _g;
-    if (g == null) return;
-    _manualAte = _t + 6;
-    _camAlvoManual = (g.centroDe(z) - g.tela.width / 2).clamp(
-      0.0,
-      g.largura - g.tela.width,
-    );
-  }
-
-  double? _camAlvoManual;
-
   void _tique(Duration agora) {
     final dt = _antes == Duration.zero
         ? 1 / 60
         : ((agora - _antes).inMicroseconds / 1e6).clamp(0.0, 0.05);
     _antes = agora;
     _t += dt;
-    _tempo.value = _t;
+    // Sem movimento pedido o capim e as nuvens param: nada redesenha o
+    // fundo a cada quadro (auditoria, 7).
+    if (!_parado) _tempo.value = _t;
     final g = _g;
     if (g == null) return;
     final petPx = g.px(_posicao.value);
@@ -208,16 +207,10 @@ class MundoDoBaruState extends State<MundoDoBaru>
     final segue = (petPx - g.tela.width / 2).clamp(0.0, maxCam);
     var cam = _camera.value < 0 ? segue : _camera.value;
     if (_t < _manualAte) {
-      final alvo = _camAlvoManual;
-      if (alvo != null) {
-        cam += (alvo - cam) * (1 - math.exp(-dt * 3));
-      } else {
-        // Arrasto solto: inércia que morre.
-        cam += _camVel * dt;
-        _camVel *= math.exp(-dt * 4);
-      }
+      // Arrasto solto: inércia que morre.
+      cam += _camVel * dt;
+      _camVel *= math.exp(-dt * 4);
     } else {
-      _camAlvoManual = null;
       // A câmera segue o bicho com folga: só anda quando ele chega perto
       // da borda do quadro, e chega devagar.
       final folga = g.tela.width * 0.18;
@@ -238,7 +231,6 @@ class MundoDoBaruState extends State<MundoDoBaru>
     final y = _naAgua ? g.linhaDagua - 95 * g.escala : g.chao - 142 * g.escala;
     _cabeca.value = Offset(petPx - _camera.value, y);
     widget.cabecaNaTela?.value = _cabeca.value;
-    widget.zonaNaTela?.value = g.zonaDe(_camera.value + g.tela.width / 2);
 
     // A zona dele muda o que a cena pede (dormir só na toca etc.).
     final z = g.zonaDe(petPx);
@@ -258,9 +250,9 @@ class MundoDoBaruState extends State<MundoDoBaru>
 
   /// Quer estar na água agora?
   bool _querAgua(AppState app) {
-    if (!_nadador(app) || app.activity == Activity.nap) return false;
     // O axolote não sai da água.
     if (app.species == Species.axolotl) return true;
+    if (!_nadador(app) || app.activity == Activity.nap) return false;
     final e = _escolha;
     if (e != null) return e;
     return app.activity == Activity.swim;
@@ -268,6 +260,13 @@ class MundoDoBaruState extends State<MundoDoBaru>
 
   /// A atividade que o desenho recebe, pela zona onde ele está de fato.
   Activity _atividade(AppState app) {
+    if (_parado && !_naAgua) {
+      // Parado ele não anda até a zona: dorme, come ou fica onde está.
+      // Nadar fora d'água não existe; quem não nada, brinca ali mesmo.
+      return app.activity == Activity.swim && _nadador(app)
+          ? Activity.idle
+          : app.activity;
+    }
     if (_naAgua) {
       return app.activity == Activity.nap ? Activity.nap : Activity.swim;
     }
@@ -290,8 +289,10 @@ class MundoDoBaruState extends State<MundoDoBaru>
   }
 
   (double, double)? _destino(AppState app, GeometriaDoMundo g) {
+    if (_parado) return null;
     final querAgua = _querAgua(app);
     if (_naAgua) {
+      if (app.species == Species.axolotl) return null;
       return querAgua ? null : g.beiraNaAgua;
     }
     if (querAgua) return g.beiraNaTerra;
@@ -305,6 +306,12 @@ class MundoDoBaruState extends State<MundoDoBaru>
             : g.faixa(ZonasDoMundo.margem, folga: 30),
     };
   }
+
+  bool _brincaNoCanto(AppState app) =>
+      !_parado &&
+      app.activity == Activity.swim &&
+      !_nadador(app) &&
+      _zona == ZonaDoMundo.brinquedos;
 
   void _trocaDeLugar(AppState app, bool agua) {
     final g = _g;
@@ -341,22 +348,30 @@ class MundoDoBaruState extends State<MundoDoBaru>
         LuzDaCena.de(periodoDe(agora));
     final cenario = CenarioDoHabitat.de(app.habitatAtivo.id);
     final itens = itensDeCena.where((i) => app.estaEquipado(i.id)).toList();
-    // O axolote começa na água.
-    if (app.species == Species.axolotl &&
-        app.activity != Activity.nap &&
-        !_naAgua &&
-        _g == null) {
-      _naAgua = true;
+    _parado = Movimento.reduzido(context);
+    // O axolote mora na água, dormindo inclusive (descansa no fundo). Só
+    // "começar" nela deixava preso na beira quem abria o app no cochilo
+    // (auditoria, 4).
+    if (app.species == Species.axolotl) _naAgua = true;
+    if (_pedidoAntes != app.activity) {
+      _pedidoAntes = app.activity;
+      _escolha = null;
     }
 
+    // O balão já diz a fala: o mundo só se apresenta (repetir a fala aqui
+    // fazia o leitor de tela ler duas vezes; auditoria, 11).
     return Semantics(
       image: true,
-      label:
-          '${app.frase(app.t.humorCap(app.falaDoHumor), app.falaDoHumor.valores)} '
-          '${app.frase(app.t.humorSub(app.falaDoHumor), app.falaDoHumor.valores)}',
+      label: app.displayName,
       child: LayoutBuilder(
         builder: (context, c) {
-          final g = GeometriaDoMundo(Size(c.maxWidth, c.maxHeight));
+          // O maior "pé" já visto: com uma folha aberta o painel some, e o
+          // mundo não pode pular por isso.
+          _baixo = math.max(_baixo, MediaQuery.paddingOf(context).bottom);
+          final g = GeometriaDoMundo(
+            Size(c.maxWidth, c.maxHeight),
+            baixo: _baixo,
+          );
           final primeira = _g == null;
           _g = g;
           if (primeira) {
@@ -382,7 +397,6 @@ class MundoDoBaruState extends State<MundoDoBaru>
             key: MundoDoBaru.mundoKey,
             behavior: HitTestBehavior.translucent,
             onHorizontalDragStart: (_) {
-              _camAlvoManual = null;
               _manualAte = _t + 6;
               _camVel = 0;
             },
@@ -415,17 +429,21 @@ class MundoDoBaruState extends State<MundoDoBaru>
                       ),
                     ),
                   ),
-                  // O mundo de verdade, que anda com a câmera.
-                  AnimatedBuilder(
-                    animation: _camera,
-                    builder: (context, filho) => Transform.translate(
-                      offset: Offset(-math.max(0.0, _camera.value), 0),
-                      child: filho,
-                    ),
-                    child: OverflowBox(
-                      alignment: Alignment.topLeft,
-                      minWidth: g.largura,
-                      maxWidth: g.largura,
+                  // O mundo de verdade, que anda com a câmera. A caixa tem a
+                  // largura do mundo inteiro: com um `OverflowBox` de uma
+                  // tela, o toque só valia no primeiro terço do mundo e o
+                  // bicho, a bola e o pote não respondiam (auditoria, 1).
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    width: g.largura,
+                    height: g.altura,
+                    child: AnimatedBuilder(
+                      animation: _camera,
+                      builder: (context, filho) => Transform.translate(
+                        offset: Offset(-math.max(0.0, _camera.value), 0),
+                        child: filho,
+                      ),
                       child: SizedBox(
                         width: g.largura,
                         height: g.altura,
@@ -459,7 +477,15 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                 scale: g.escala,
                                 alignment: Alignment.bottomCenter,
                                 areaDeAndar: g.largura / g.escala / 2 - 40,
-                                limites: naAgua ? g.agua : g.terra,
+                                // Brincando no canto, o canto é o limite: a
+                                // disparada passava da zona, a cena trocava a
+                                // brincadeira por "parado" e ele voltava, em
+                                // ciclo (auditoria, 10).
+                                limites: naAgua
+                                    ? g.agua
+                                    : _brincaNoCanto(app)
+                                    ? g.faixa(ZonasDoMundo.brinquedos)
+                                    : g.terra,
                                 destino: _destino(app, g),
                                 chamadoPelaAgua:
                                     !naAgua && _querAgua(app) ||
@@ -498,13 +524,18 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                   rotuloDaBola: app.t.brinqBola,
                                   rotuloDoPetisco: app.t.brinqPetisco,
                                   especie: app.species,
-                                  comPote: false,
+                                  // O pote é uma coisa do mundo, no chão da
+                                  // margem, perto de onde ele nasce — não um
+                                  // botão por cima da cena.
+                                  ondeDoPote: Offset(g.x(0.42), g.chao),
                                   podeConvidar: app.activity != Activity.nap,
+                                  // A bola e o pote moram na terra, mesmo com
+                                  // ele nadando: com o chão da água, a bola
+                                  // afundava no gramado (auditoria, 5).
                                   geometria: GeometriaDosBrinquedos(
                                     largura: g.largura,
                                     escala: g.escala,
-                                    baseDoBicho: baseDaCaixa,
-                                    agua: naAgua,
+                                    baseDoBicho: g.chao + 5 * g.escala,
                                     xMin: g.px(g.terra.$1),
                                     xMax: g.px(g.terra.$2),
                                     xInicialDaBola: g.x(0.27),

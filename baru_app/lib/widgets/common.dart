@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../l10n_missoes.dart';
@@ -465,7 +468,11 @@ class _AmostraDoItem extends CustomPainter {
 }
 
 class BottomTabs extends StatelessWidget {
-  const BottomTabs({super.key});
+  const BottomTabs({super.key, this.flutuante = false});
+
+  /// Na home: uma pílula de vidro flutuando sobre o mundo dele, em vez da
+  /// faixa colada na borda.
+  final bool flutuante;
 
   @override
   Widget build(BuildContext context) {
@@ -480,15 +487,7 @@ class BottomTabs extends StatelessWidget {
       AppScreen.missoes,
       AppScreen.profile,
     ];
-    return Container(
-      padding: const EdgeInsets.fromLTRB(Espaco.sm, Espaco.sm, Espaco.sm, Espaco.sm),
-      decoration: BoxDecoration(
-        color: AppColors.cream.withValues(alpha: 0.92),
-        border: Border(top: BorderSide(color: AppColors.inkA(0.08))),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
+    final linha = Row(
           children: List.generate(4, (i) {
             final on = app.screen == ids[i];
             // O que está pronto para colher aparece na aba, de qualquer
@@ -575,8 +574,51 @@ class BottomTabs extends StatelessWidget {
               ),
             );
           }),
+        );
+    if (flutuante) {
+      final base = MediaQuery.paddingOf(context).bottom;
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+          Espaco.md,
+          0,
+          Espaco.md,
+          math.max(base, Espaco.sm) + Espaco.xs,
         ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Cores.tinta.withValues(alpha: 0.14),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Espaco.sm,
+                  vertical: Espaco.xxs,
+                ),
+                color: AppColors.cream.withValues(alpha: 0.78),
+                child: linha,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.fromLTRB(Espaco.sm, Espaco.sm, Espaco.sm, Espaco.sm),
+      decoration: BoxDecoration(
+        color: AppColors.cream.withValues(alpha: 0.92),
+        border: Border(top: BorderSide(color: AppColors.inkA(0.08))),
       ),
+      child: SafeArea(top: false, child: linha),
     );
   }
 }

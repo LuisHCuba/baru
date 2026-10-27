@@ -94,6 +94,10 @@ enum Episodio {
   /// Quem come na água (lontra, pinguim, tartaruga, axolote): o bote
   /// rápido — no axolote, a sucção — e a mastigação.
   comerNaAgua,
+
+  /// Ir até a zona que o momento pede (a toca para dormir, a beira para
+  /// entrar na água, o canto dos brinquedos para brincar).
+  irParaZona,
 }
 
 /// Onde cada episódio do repertório pode acontecer.
@@ -124,7 +128,7 @@ const _naAgua = {
 const _noSono = {Episodio.sonhoDePatinhas};
 
 /// Os episódios em que o desenho é o do corpo livre (não o da atividade).
-const _desenhoLivre = {..._naTerra, Episodio.pausa};
+const _desenhoLivre = {..._naTerra, Episodio.pausa, Episodio.irParaZona};
 
 extension _Episodios on MotorDeVida {
   /// Transições: de cada episódio, quanto pesa cada próximo. O peso cai
@@ -289,23 +293,23 @@ extension _Episodios on MotorDeVida {
         _epFim = _t + _dura(2.6, min: 1.2, max: 10);
         _proximoInteresse = _t;
       case Episodio.irAoTufo:
-        final lado = _px > 0
+        final lado = _px > _meio
             ? -1
-            : (_px < 0 ? 1 : (_sorte.nextBool() ? 1 : -1));
+            : (_px < _meio ? 1 : (_sorte.nextBool() ? 1 : -1));
         final dist =
             _entre(18, 55) * (_sorte.nextDouble() < 0.75 ? lado : -lado);
-        _alvoX = (_px + dist).clamp(-areaDeAndar, areaDeAndar);
+        _alvoX = (_px + dist).clamp(_min, _max);
         _epFim = _t + 6;
       case Episodio.remar:
         _ritmoRemada = _entre(0.9, 1.5);
         final lado = _sorte.nextBool() ? 1 : -1;
-        _alvoX = (lado * areaDeAndar * _entre(0.2, 0.9)).clamp(
-          -areaDeAndar,
-          areaDeAndar,
+        _alvoX = (_meio + lado * _meiaLargura * _entre(0.2, 0.9)).clamp(
+          _min,
+          _max,
         );
         _epFim = _t + _ritmoRemada * (3 + _sorte.nextInt(5));
       case Episodio.deslizar:
-        _alvoX = (_px + _vx * 0.9).clamp(-areaDeAndar, areaDeAndar);
+        _alvoX = (_px + _vx * 0.9).clamp(_min, _max);
         _epFim = _t + _dura(1.8, min: 0.8, max: 5);
       case Episodio.boiar:
         _alvoX = _px;
@@ -316,7 +320,7 @@ extension _Episodios on MotorDeVida {
         _boteSaltou = false;
       case Episodio.disparada:
         _voltasDaDisparada = 2 + _sorte.nextInt(3);
-        _alvoX = _px > 0 ? -areaDeAndar : areaDeAndar;
+        _alvoX = _px > _meio ? _min : _max;
         _epFim = _t + 9;
       case Episodio.reverencia:
         _alvoX = _px;
@@ -395,15 +399,24 @@ extension _Episodios on MotorDeVida {
       case Episodio.saltoNaAgua:
         final dir = _virado ? -1.0 : 1.0;
         _vx = dir * 50;
-        _alvoX = (_px + dir * 25).clamp(-areaDeAndar, areaDeAndar);
+        _alvoX = (_px + dir * 25).clamp(_min, _max);
         pula(250);
         _epFim = _t + 1.8;
       case Episodio.sonhoDePatinhas:
         _epFim = _t + _entre(2, 4.5);
+      case Episodio.irParaZona:
+        final d = destino;
+        if (d == null) {
+          _epFim = _t;
+          break;
+        }
+        // Para um ponto sorteado dentro da zona, não para a borda.
+        _alvoX = (_entre(d.$1, d.$2)).clamp(_min, _max);
+        _epFim = _t + 30;
       case Episodio.comerNaAgua:
         final dir = _virado ? -1.0 : 1.0;
         _vx = dir * 50;
-        _alvoX = (_px + dir * 16).clamp(-areaDeAndar, areaDeAndar);
+        _alvoX = (_px + dir * 16).clamp(_min, _max);
         _faseMastiga = 0;
         _epFim = _t + _entre(2, 3.4);
       case Episodio.entrarNaAgua:
@@ -412,7 +425,7 @@ extension _Episodios on MotorDeVida {
         _alvoX = _px;
         _epFim = _t + 4;
       case Episodio.voar:
-        if (!podeAndar || areaDeAndar < 20) {
+        if (!podeAndar || _meiaLargura < 20) {
           _epFim = _t; // sem espaço para voar: escolhe outra coisa
           break;
         }
@@ -420,10 +433,10 @@ extension _Episodios on MotorDeVida {
         _altitude.fixa(_y);
         _altitude.alvo = _entre(40, 75);
         _achata.empurra(-8); // o impulso da decolagem
-        final lado = _px > 0 ? -1.0 : 1.0;
-        _alvoX = (lado * areaDeAndar * _entre(0.5, 1)).clamp(
-          -areaDeAndar,
-          areaDeAndar,
+        final lado = _px > _meio ? -1.0 : 1.0;
+        _alvoX = (_meio + lado * _meiaLargura * _entre(0.5, 1)).clamp(
+          _min,
+          _max,
         );
         _passosDoEp = 0;
         _epFim = _t + 12; // termina quando pousa
@@ -431,39 +444,45 @@ extension _Episodios on MotorDeVida {
   }
 
   /// O episódio cabe no modo de agora?
-  bool _cabeNoModo(Episodio e) => switch (modo) {
-    ModoDaAtividade.nadar =>
-      const {Episodio.remar, Episodio.deslizar, Episodio.boiar}.contains(e) ||
-          _naAgua.contains(e),
-    ModoDaAtividade.dormir =>
-      const {
-            Episodio.sono,
-            Episodio.suspiro,
-            Episodio.sonho,
-            Episodio.ajeita,
-          }.contains(e) ||
-          _noSono.contains(e),
-    ModoDaAtividade.pastar || ModoDaAtividade.petiscar =>
-      const {
-            Episodio.comer,
-            Episodio.mastigar,
-            Episodio.vigiar,
-            Episodio.irAoTufo,
-            Episodio.pausa,
-          }.contains(e) ||
-          _naTerra.contains(e),
-    ModoDaAtividade.brincar =>
-      const {
-            Episodio.bote,
-            Episodio.disparada,
-            Episodio.reverencia,
-            Episodio.rodopio,
-            Episodio.pulinhos,
-            Episodio.pausa,
-          }.contains(e) ||
-          _naTerra.contains(e),
-    ModoDaAtividade.livre => e == Episodio.pausa || _naTerra.contains(e),
-  };
+  bool _cabeNoModo(Episodio e) =>
+      e == Episodio.irParaZona ||
+      switch (modo) {
+        ModoDaAtividade.nadar =>
+          const {
+                Episodio.remar,
+                Episodio.deslizar,
+                Episodio.boiar,
+              }.contains(e) ||
+              _naAgua.contains(e),
+        ModoDaAtividade.dormir =>
+          const {
+                Episodio.sono,
+                Episodio.suspiro,
+                Episodio.sonho,
+                Episodio.ajeita,
+              }.contains(e) ||
+              _noSono.contains(e),
+        ModoDaAtividade.pastar || ModoDaAtividade.petiscar =>
+          const {
+                Episodio.comer,
+                Episodio.mastigar,
+                Episodio.vigiar,
+                Episodio.irAoTufo,
+                Episodio.pausa,
+              }.contains(e) ||
+              _naTerra.contains(e),
+        ModoDaAtividade.brincar =>
+          const {
+                Episodio.bote,
+                Episodio.disparada,
+                Episodio.reverencia,
+                Episodio.rodopio,
+                Episodio.pulinhos,
+                Episodio.pausa,
+              }.contains(e) ||
+              _naTerra.contains(e),
+        ModoDaAtividade.livre => e == Episodio.pausa || _naTerra.contains(e),
+      };
 
   /// Um passo dos episódios. Devolve se o corpo está livre (a pausa): o
   /// desenho mostra o ócio, com gestos, e o cérebro livre decide.
@@ -486,7 +505,26 @@ extension _Episodios on MotorDeVida {
         ModoDaAtividade.livre => Episodio.pausa,
       });
     }
-    if (_t >= _epFim) _escolheEpisodio();
+    // Fora de onde o momento pede: vai para lá antes de tudo.
+    final d = destino;
+    if (d != null &&
+        _ep != Episodio.irParaZona &&
+        _ep != Episodio.entrarNaAgua &&
+        _ep != Episodio.sairDaAgua &&
+        podeAndar &&
+        _noChao &&
+        !_voando &&
+        (_px < d.$1 - 2 || _px > d.$2 + 2)) {
+      _comecaEpisodio(Episodio.irParaZona);
+    }
+    if (_t >= _epFim) {
+      // Chegou à beira e a água chama: entra.
+      if (_ep == Episodio.irParaZona && chamadoPelaAgua) {
+        _comecaEpisodio(Episodio.entrarNaAgua);
+      } else {
+        _escolheEpisodio();
+      }
+    }
 
     final u = _t - _epInicio;
     var cabeca = 0.0;
@@ -507,8 +545,8 @@ extension _Episodios on MotorDeVida {
           // Pastando, de vez em quando um passinho com a cabeça no chão.
           if (pasto && _sorte.nextDouble() < 0.18) {
             _alvoX = (_px + _entre(4, 9) * (_virado ? -1 : 1)).clamp(
-              -areaDeAndar,
-              areaDeAndar,
+              _min,
+              _max,
             );
           }
           if (_mordidasFaltando <= 0) _epFim = _t + 0.25;
@@ -566,9 +604,9 @@ extension _Episodios on MotorDeVida {
           _boteSaltou = true;
           _achata.alvo = 0;
           final dir = _virado ? -1.0 : 1.0;
-          final cabe = dir > 0 ? areaDeAndar - _px : areaDeAndar + _px;
+          final cabe = dir > 0 ? _max - _px : _px - _min;
           final salto = math.min(_entre(25, 50), cabe);
-          _alvoX = (_px + dir * salto).clamp(-areaDeAndar, areaDeAndar);
+          _alvoX = (_px + dir * salto).clamp(_min, _max);
           _vx = dir * math.min(160, salto * 3);
           pula(_entre(230, 290));
         } else if (_noChao) {
@@ -584,7 +622,7 @@ extension _Episodios on MotorDeVida {
             _epFim = math.min(_epFim, _t + 0.3);
             _agitacao = 1;
           } else {
-            _alvoX = _alvoX > 0 ? -areaDeAndar : areaDeAndar;
+            _alvoX = _alvoX > _meio ? _min : _max;
           }
         }
       case Episodio.reverencia:
@@ -656,7 +694,7 @@ extension _Episodios on MotorDeVida {
         } else if (_passosDoEp == 0) {
           // O salto de caça: alto, caindo de patas da frente.
           _passosDoEp = 1;
-          _alvoX = (_px + dir * 22).clamp(-areaDeAndar, areaDeAndar);
+          _alvoX = (_px + dir * 22).clamp(_min, _max);
           _vx = dir * 45;
           pula(340);
         } else {
@@ -748,6 +786,12 @@ extension _Episodios on MotorDeVida {
         }
       case Episodio.saltoNaAgua:
         break;
+      case Episodio.irParaZona:
+        _virado = _alvoX < _px;
+        _alvoDoOlhar = Offset(_virado ? -0.6 : 0.6, 0.1);
+        forca = 1;
+        _faseAtividade += dt / 1.1;
+        if ((_alvoX - _px).abs() < 2 && _vx.abs() < 3) _epFim = _t;
       case Episodio.comerNaAgua:
         forca = u < 0.5 ? 1 : 0.2;
         _faseAtividade += dt / (u < 0.5 ? 0.5 : 2.4);

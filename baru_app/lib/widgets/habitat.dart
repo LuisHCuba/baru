@@ -796,6 +796,18 @@ class _HabitatSceneState extends State<HabitatScene>
 
 const _doCeu = {'lantern', 'varal_de_luzes', 'nuvens', 'vagalumes', 'neve'};
 
+/// Um item comprado, desenhado no "palco" de [HabitatScene.design] escalado
+/// por ([sx], [sy]). O mundo da home usa o mesmo desenho e o mesmo lugar
+/// relativo, num palco posto sobre a lagoa.
+CustomPainter pintorDeObjetoDaCena(
+  ShopItemDef item, {
+  required double sx,
+  required double sy,
+  double fase = 0,
+  double chegada = 1,
+}) =>
+    _ObjetoPintado(item: item, sx: sx, sy: sy, fase: fase, chegada: chegada);
+
 class _ObjetoPintado extends CustomPainter {
   const _ObjetoPintado({
     required this.item,

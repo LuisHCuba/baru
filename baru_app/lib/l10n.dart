@@ -545,6 +545,14 @@ class T {
   String get vinculoSub => s('vinculoSub');
   String get vinculoTeto => s('vinculoTeto');
   String get brinqBola => s('brinqBola');
+  String get seuDia => s('seuDia');
+  String get zonaToca => s('zonaToca');
+  String get zonaMargem => s('zonaMargem');
+  String get zonaBrinquedos => s('zonaBrinquedos');
+  String get zonaLagoa => s('zonaLagoa');
+  String get dockDecorar => s('dockDecorar');
+  String get dockFoto => s('dockFoto');
+  String get duracaoT => s('duracaoT');
   String get brinqPetisco => s('brinqPetisco');
   String get missoesT => s('missoesT');
   String get missoesSub => s('missoesSub');
@@ -775,6 +783,14 @@ const _pt = <String, Object>{
   'vinculoSub': '{n} afagos',
   'vinculoTeto': '{P} já recebeu carinho de sobra hoje',
   'brinqBola': 'Bolinha. Arraste e solte para jogar',
+  'seuDia': 'Seu dia',
+  'zonaToca': 'Toca',
+  'zonaMargem': 'Margem',
+  'zonaBrinquedos': 'Brinquedos',
+  'zonaLagoa': 'Lagoa',
+  'dockDecorar': 'Decorar',
+  'dockFoto': 'Foto',
+  'duracaoT': 'Quanto tempo de foco?',
   'brinqPetisco': 'Petisco. Arraste até a boca do bicho para dar',
   'nivelFalta': '{x} XP para o nível {n}',
   'nivelMax': 'Nível máximo',
@@ -1346,6 +1362,14 @@ const _en = <String, Object>{
   'vinculoSub': '{n} cuddles',
   'vinculoTeto': '{P} have had plenty of love today',
   'brinqBola': 'Ball. Drag and let go to throw it',
+  'seuDia': 'Your day',
+  'zonaToca': 'Den',
+  'zonaMargem': 'Bank',
+  'zonaBrinquedos': 'Toys',
+  'zonaLagoa': 'Pond',
+  'dockDecorar': 'Decorate',
+  'dockFoto': 'Photo',
+  'duracaoT': 'How long will you focus?',
   'brinqPetisco': 'Treat. Drag it to your pet\'s mouth to feed it',
   'nivelFalta': '{x} XP to level {n}',
   'nivelMax': 'Max level',
@@ -1907,6 +1931,14 @@ const _es = <String, Object>{
   'vinculoSub': '{n} mimos',
   'vinculoTeto': '{P} ya recibió cariño de sobra hoy',
   'brinqBola': 'Pelotita. Arrastra y suelta para lanzarla',
+  'seuDia': 'Tu día',
+  'zonaToca': 'Madriguera',
+  'zonaMargem': 'Orilla',
+  'zonaBrinquedos': 'Juguetes',
+  'zonaLagoa': 'Laguna',
+  'dockDecorar': 'Decorar',
+  'dockFoto': 'Foto',
+  'duracaoT': '¿Cuánto tiempo de foco?',
   'brinqPetisco': 'Golosina. Arrástrala hasta la boca de tu mascota',
   'nivelFalta': '{x} XP para el nivel {n}',
   'nivelMax': 'Nivel máximo',
@@ -2470,6 +2502,14 @@ const _zh = <String, Object>{
   'vinculoSub': '{n} 次抚摸',
   'vinculoTeto': '今天{P}已经收获了满满的爱',
   'brinqBola': '小球。拖动后松手即可扔出',
+  'seuDia': '你的一天',
+  'zonaToca': '洞穴',
+  'zonaMargem': '岸边',
+  'zonaBrinquedos': '玩具',
+  'zonaLagoa': '池塘',
+  'dockDecorar': '装扮',
+  'dockFoto': '拍照',
+  'duracaoT': '专注多久？',
   'brinqPetisco': '零食。拖到宠物嘴边喂它',
   'nivelFalta': '还差 {x} XP 到等级 {n}',
   'nivelMax': '已满级',

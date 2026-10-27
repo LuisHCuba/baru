@@ -273,6 +273,27 @@ class MotorDeVida {
   /// mantém o bicho no lugar (miniaturas, sessão).
   double areaDeAndar;
 
+  /// Onde ele pode andar agora, em unidades, quando não é simétrico: no
+  /// mundo da home a terra e a lagoa são faixas diferentes. Nulos: ±
+  /// [areaDeAndar].
+  double? limiteEsquerdo;
+  double? limiteDireito;
+  double get _min => limiteEsquerdo ?? -areaDeAndar;
+  double get _max => limiteDireito ?? areaDeAndar;
+  double get _meio => (_min + _max) / 2;
+  double get _meiaLargura => (_max - _min) / 2;
+
+  /// A faixa onde o momento pede que ele esteja (a toca para dormir, a
+  /// beira da lagoa para entrar nela). Fora dela, ele vai até lá antes de
+  /// qualquer outra coisa. Nulo: onde estiver está bom.
+  (double, double)? destino;
+
+  /// A cena quer ele na água (o humor pede nadar): chegando à beira, entra.
+  bool chamadoPelaAgua = false;
+
+  /// Onde ele está, em unidades (para a cena saber a zona).
+  double get posicao => _px;
+
   late final ZonaDoCorpo zonaFavorita;
   late final ZonaDoCorpo zonaRuim;
 
@@ -482,8 +503,8 @@ class MotorDeVida {
     final acel = _noChao || nadando || _voando ? 220.0 : 0.0;
     _vx += (desejada - _vx).clamp(-acel * dt, acel * dt);
     _px += _vx * dt;
-    if (_px.abs() > areaDeAndar) {
-      _px = _px.clamp(-areaDeAndar, areaDeAndar);
+    if (_px < _min || _px > _max) {
+      _px = _px.clamp(_min, _max);
       _vx = 0;
     }
     _faseDoPasso += _vx.abs() * dt / 15;
@@ -622,9 +643,9 @@ class MotorDeVida {
       _ultimaQueixa = _t;
       _achata.empurra(-5);
       _inclina.empurra(-velocidade.dx.sign * 2.5);
-      if (podeAndar && areaDeAndar > 12) {
+      if (podeAndar && _meiaLargura > 12) {
         _alvoX = (_px - velocidade.dx.sign * 18)
-            .clamp(-areaDeAndar, areaDeAndar);
+            .clamp(_min, _max);
       }
       return;
     }
@@ -683,8 +704,7 @@ class MotorDeVida {
     final p = _colo.valor;
     _dedoNoColo = null;
     _colado = null;
-    final limite = areaDeAndar;
-    final x = p.dx.clamp(-limite, limite);
+    final x = p.dx.clamp(_min, _max);
     _px = x;
     _alvoX = x;
     _vx = 0;
@@ -1235,7 +1255,7 @@ class MotorDeVida {
     final manha = hora >= 6 && hora < 11;
     final tarde = hora >= 11 && hora < 18;
     final noite = hora >= 21 || hora < 6;
-    final anda = podeAndar && !reduzido && areaDeAndar > 12;
+    final anda = podeAndar && !reduzido && _meiaLargura > 12;
     final opcoes = <(IntencaoDoBicho, double)>[
       (IntencaoDoBicho.estar, 2.6),
       (IntencaoDoBicho.observar, 3),
@@ -1287,9 +1307,9 @@ class MotorDeVida {
     final antes = _intencao;
     _mudaPara(escolhida, dura);
     if (escolhida == IntencaoDoBicho.passear) {
-      final lado = _px > 0 ? -1 : 1;
-      _destinoX = (lado * (areaDeAndar * (0.35 + _sorte.nextDouble() * 0.6)))
-          .clamp(-areaDeAndar, areaDeAndar);
+      final lado = _px > _meio ? -1 : 1;
+      _destinoX = (_meio + lado * (_meiaLargura * (0.35 + _sorte.nextDouble() * 0.6)))
+          .clamp(_min, _max);
     }
     if (escolhida == IntencaoDoBicho.festejar) _proximoPulo = _t;
     if (escolhida == IntencaoDoBicho.chamar) _piscaAgora(lenta: true);
@@ -1329,9 +1349,9 @@ class MotorDeVida {
             0.7 + _sorte.nextDouble() * 0.3,
           );
           _proximoInteresse = _t + 0.5 + _sorte.nextDouble() * 0.9;
-          if (podeAndar && areaDeAndar > 12 && _sorte.nextDouble() < 0.35) {
+          if (podeAndar && _meiaLargura > 12 && _sorte.nextDouble() < 0.35) {
             _alvoX = (_px + (_sorte.nextDouble() * 2 - 1) * 10)
-                .clamp(-areaDeAndar, areaDeAndar);
+                .clamp(_min, _max);
           }
         }
       case IntencaoDoBicho.chamar:
@@ -1460,14 +1480,14 @@ class MotorDeVida {
       _achata.alvo = 0;
       _deuOBote = true;
       _espreitandoDesde = -1;
-      _alvoX = (_px + falta).clamp(-areaDeAndar, areaDeAndar);
+      _alvoX = (_px + falta).clamp(_min, _max);
       _vx = falta.sign * math.min(170, falta.abs() * 3);
       pula(240);
       return;
     }
     // Corre atrás: o destino é a coisa, a velocidade é a de corrida.
     _correndo = true;
-    _alvoX = i.onde.dx.clamp(-areaDeAndar, areaDeAndar);
+    _alvoX = i.onde.dx.clamp(_min, _max);
   }
 
   void _olharAoAcaso({

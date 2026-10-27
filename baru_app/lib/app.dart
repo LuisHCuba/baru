@@ -306,11 +306,16 @@ class _Casca extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    // A home é o mundo dele, de borda a borda: passa por baixo da barra de
+    // status e das abas, que flutuam por cima.
+    final home = app.screen == AppScreen.home;
     return Scaffold(
+      extendBody: home,
       backgroundColor: app.screen == AppScreen.session
           ? AppColors.sessionBg
           : AppColors.cream,
       body: SafeArea(
+        top: !home,
         bottom: !app.showTabs,
         child: Stack(
           children: [
@@ -335,7 +340,9 @@ class _Casca extends StatelessWidget {
         duration: Tempo.componente,
         curve: Curvas.padrao,
         alignment: Alignment.topCenter,
-        child: app.showTabs ? const BottomTabs() : const SizedBox(width: 412),
+        child: app.showTabs
+            ? BottomTabs(flutuante: home)
+            : const SizedBox(width: 412),
       ),
     );
   }

@@ -301,7 +301,24 @@ class PetView extends StatefulWidget {
     this.aoAlcancar,
     this.ausenciaAoAbrir,
     this.aoMudarDeLugar,
+    this.limites,
+    this.destino,
+    this.chamadoPelaAgua = false,
+    this.posicao,
   });
+
+  /// No mundo da home: onde ele pode andar agora (terra ou lagoa) e onde o
+  /// momento pede que ele esteja, em unidades do desenho relativas ao
+  /// centro da caixa. Ver `MotorDeVida.limiteEsquerdo` e `destino`.
+  final (double, double)? limites;
+  final (double, double)? destino;
+
+  /// O humor pede nadar: chegando à beira, ele entra.
+  final bool chamadoPelaAgua;
+
+  /// Escrito a cada quadro: onde ele está (unidades), para a câmera do
+  /// mundo e a zona.
+  final ValueNotifier<double>? posicao;
 
   /// Ele quer ir para a água (true) ou para a margem (false), por conta
   /// própria. Nulo: não troca de lugar (fora da home, ou quem não nada).
@@ -597,6 +614,10 @@ class _PetViewState extends State<PetView>
         _ => ModoDaAtividade.livre,
       }
       ..trocaDeLugar = widget.aoMudarDeLugar != null
+      ..limiteEsquerdo = widget.limites?.$1
+      ..limiteDireito = widget.limites?.$2
+      ..destino = widget.destino
+      ..chamadoPelaAgua = widget.chamadoPelaAgua
       ..dormindo = acao == AcaoDoBicho.cochilo
       ..nadando = acao == AcaoDoBicho.nado
       ..posturaLivre = _acaoDesenhada == AcaoDoBicho.ocioso
@@ -607,6 +628,7 @@ class _PetViewState extends State<PetView>
               acao == AcaoDoBicho.nado ||
               acao == AcaoDoBicho.brincadeira);
     _quadroDaVida.value = _vida.passo(dt);
+    widget.posicao?.value = _vida.posicao;
     final observador = PetView.observadorDoCentro;
     if (observador != null && widget.areaDeAndar > 0) {
       final caixa = context.findRenderObject();

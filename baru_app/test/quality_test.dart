@@ -172,11 +172,7 @@ void main() {
     expect(find.text(T('pt').streakOne), findsWidgets);
     expect(find.text('Habitat'), findsWidgets);
     expect(find.text('Missões'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Começar foco'),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    // A home é o mundo dele: o foco fica sempre à vista, sem rolar.
     expect(find.text('Começar foco'), findsOneWidget);
   });
 }

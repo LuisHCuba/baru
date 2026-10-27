@@ -32,7 +32,18 @@ class GeometriaDosBrinquedos {
     required this.escala,
     required this.baseDoBicho,
     this.agua = false,
+    this.xMin,
+    this.xMax,
+    this.xInicialDaBola,
   });
+
+  /// No mundo da home a bola fica na terra: entre [xMin] e [xMax] (px).
+  /// Nulos: a cena inteira, menos a margem de alcance.
+  final double? xMin;
+  final double? xMax;
+
+  /// Onde a bola começa (px). Nulo: a 78% da largura.
+  final double? xInicialDaBola;
 
   /// Largura da cena, em px.
   final double largura;
@@ -77,7 +88,12 @@ class BrinquedosDoHabitat extends StatefulWidget {
     required this.rotuloDoPetisco,
     required this.especie,
     this.podeConvidar = true,
+    this.comPote = true,
   });
+
+  /// Desenhar o potinho no canto da cena. Falso no mundo da home, onde ele
+  /// mora na barra lateral e chama [BrinquedosDoHabitatState.pegaPetisco].
+  final bool comPote;
 
   /// De quem é o potinho: o petisco é o que esse bicho gosta.
   final Species especie;
@@ -258,8 +274,8 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
   double _chaoDe(double r) => _g.agua ? _g.chao : _g.chao - r;
 
   double _limitaX(double x, double r) => x.clamp(
-    math.max(r + 4, _g.margem),
-    math.min(_g.largura - r - 4, _g.largura - _g.margem),
+    math.max(r + 4, _g.xMin ?? _g.margem),
+    math.min(_g.largura - r - 4, _g.xMax ?? _g.largura - _g.margem),
   );
 
   void _liga() {
@@ -447,6 +463,15 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
     _liga();
   }
 
+  /// O potinho fora da cena (a barra lateral da home) dá o petisco por
+  /// estes três.
+  void pegaPetisco(Offset global) => _pegaCastanha(global);
+  void arrastaPetisco(Offset delta) => _arrastaCastanha(delta);
+  void soltaPetisco() => _soltaCastanha();
+
+  /// Tem petisco para dar (o pote enche de novo uns segundos depois).
+  bool get temPetisco => _t >= _poteVoltaEm && _castanha == null;
+
   void _pegaCastanha(Offset global) {
     if (_t < _poteVoltaEm || _castanha != null) return;
     _convidando = false;
@@ -484,7 +509,7 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
   Widget build(BuildContext context) {
     // A bola começa no chão, à direita, onde ele alcança.
     _bola ??= Offset(
-      _limitaX(_g.largura * 0.78, _raioDaBola),
+      _limitaX(_g.xInicialDaBola ?? _g.largura * 0.78, _raioDaBola),
       _chaoDe(_raioDaBola),
     );
     final b = _bola!;
@@ -512,36 +537,38 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
             ),
           ),
         ),
-        // O potinho de castanhas, no canto de baixo.
-        Positioned(
-          left: 10,
-          bottom: 10,
-          width: pote,
-          height: pote,
-          child: Semantics(
-            button: true,
-            label: widget.rotuloDoPetisco,
-            child: RawGestureDetector(
-              key: BrinquedosDoHabitat.poteKey,
-              behavior: HitTestBehavior.opaque,
-              gestures: _arrasto(
-                comeca: (d) => _pegaCastanha(d.globalPosition),
-                anda: (d) => _arrastaCastanha(d.delta),
-                fim: (_) => _soltaCastanha(),
-              ),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: poteCheio ? 1 : 0.45,
-                child: CustomPaint(
-                  painter: _PintaPote(
-                    cheio: poteCheio,
-                    petisco: petiscoDe(widget.especie),
+        // O potinho de petiscos, no canto de baixo (no mundo da home ele
+        // fica na barra lateral, fora da cena: ver [pegaPetisco]).
+        if (widget.comPote)
+          Positioned(
+            left: 10,
+            bottom: 10,
+            width: pote,
+            height: pote,
+            child: Semantics(
+              button: true,
+              label: widget.rotuloDoPetisco,
+              child: RawGestureDetector(
+                key: BrinquedosDoHabitat.poteKey,
+                behavior: HitTestBehavior.opaque,
+                gestures: _arrasto(
+                  comeca: (d) => _pegaCastanha(d.globalPosition),
+                  anda: (d) => _arrastaCastanha(d.delta),
+                  fim: (_) => _soltaCastanha(),
+                ),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: poteCheio ? 1 : 0.45,
+                  child: CustomPaint(
+                    painter: _PintaPote(
+                      cheio: poteCheio,
+                      petisco: petiscoDe(widget.especie),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
         Positioned(
           left: b.dx - alvoDaBola / 2,
           top: b.dy - alvoDaBola / 2,

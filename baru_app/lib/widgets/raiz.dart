@@ -130,10 +130,56 @@ class _PintorDaRaiz extends CustomPainter {
     final chao = topo + 6;
 
     if (mostraTerra) {
-      canvas.drawRect(
+      // Um corte de terra, e não um quadrado chapado: escurece para baixo,
+      // arredonda no fundo, tem a linha do chão e o broto que esta raiz
+      // segura (auditoria tela a tela: o quadrado parecia desenho por
+      // terminar).
+      final terra = RRect.fromRectAndCorners(
         Rect.fromLTWH(0, topo, size.width, size.height - topo),
-        Paint()..color = corDaTerra,
+        bottomLeft: const Radius.circular(14),
+        bottomRight: const Radius.circular(14),
       );
+      canvas.drawRRect(
+        terra,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              corDaTerra,
+              Color.lerp(corDaTerra, cor, 0.16)!,
+            ],
+          ).createShader(terra.outerRect),
+      );
+      canvas.drawLine(
+        Offset(0, topo),
+        Offset(size.width, topo),
+        Paint()
+          ..color = cor.withValues(alpha: 0.35)
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round,
+      );
+      if (exatos > 0) {
+        final broto = Paint()
+          ..color = Cores.folha600
+          ..strokeWidth = 1.8
+          ..strokeCap = StrokeCap.round
+          ..style = PaintingStyle.stroke;
+        final base = Offset(size.width / 2, topo);
+        final alto = math.min(topo - 1, 4 + 3 * math.min(exatos, 7) / 7);
+        canvas.drawLine(base, base - Offset(0, alto), broto);
+        final folha = Paint()..color = Cores.folha600;
+        for (final lado in const [-1.0, 1.0]) {
+          canvas.drawOval(
+            Rect.fromCenter(
+              center: base + Offset(lado * 3.2, -alto + 0.5),
+              width: 5.5,
+              height: 3,
+            ),
+            folha,
+          );
+        }
+      }
     }
 
     if (exatos <= 0) {

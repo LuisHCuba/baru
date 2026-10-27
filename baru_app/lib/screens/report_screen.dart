@@ -15,38 +15,25 @@ class ReportScreen extends StatelessWidget {
     final app = AppScope.of(context);
     final t = app.t;
     final usagePct = (app.usage / (app.goal * 1.35)).clamp(0.0, 1.0);
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.md, Espaco.xl, Espaco.xxl),
+    // O mesmo topo das outras telas de detalhe (folhas, raiz, tempo): a
+    // seta ao lado do título, e não em cima dele (auditoria tela a tela).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(2, Espaco.sm, 2, Espaco.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Semantics(
-                button: true,
-                label: t.back,
-                child: GestureDetector(
-                  onTap: app.voltar,
-                  behavior: HitTestBehavior.opaque,
-                  child: const SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: AppIcon(Icons.arrow_back_rounded, size: 22),
-                  ),
-                ),
-              ),
-              Text(
-                t.fill(t.repTitle, {'n': app.displayName}),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: nunito(size: 27, weight: FontWeight.w800, height: 1.2, letterSpacing: -0.5),
-              ),
-              const SizedBox(height: 6),
-              Text(t.repDate, style: nunito(size: 14, color: Cores.tinta700)),
-            ],
-          ),
+        CabecalhoDeDetalhe(
+          titulo: t.fill(t.repTitle, {'n': app.displayName}),
+          subtitulo: t.repDate,
+          aoVoltar: app.voltar,
         ),
+        Expanded(
+          child: ListView(
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.margemTela,
+        Espaco.sm,
+        Espaco.margemTela,
+        Espaco.xxl,
+      ),
+      children: [
         if (!app.usageAccess)
           SemTempoDeTela(app: app)
         else
@@ -167,6 +154,9 @@ class ReportScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(Espaco.xxs, Espaco.xxs, Espaco.xxs, Espaco.lg),
           child: Text(t.freezeNote(app.freezesLeft), style: nunito(size: 12.5, height: 1.5, color: Cores.tinta700)),
+        ),
+      ],
+          ),
         ),
       ],
     );

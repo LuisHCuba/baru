@@ -47,11 +47,15 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _balaoAberto = true;
   Timer? _recolheBalao;
 
-  @override
-  void initState() {
-    super.initState();
-    // Disse o que tinha a dizer: o balão se recolhe e o mundo fica limpo.
-    // Um toque abre de novo.
+  /// A fala que o balão mostrou por último: quando ela muda, ele volta.
+  String? _falaMostrada;
+
+  /// Disse o que tinha a dizer: o balão some e o mundo fica limpo. Não fica
+  /// um ícone de conversa preso na cabeça dele — era mais um botão sobre a
+  /// cena. Volta quando a fala muda ou quando se volta à home.
+  void _mostraBalao() {
+    _balaoAberto = true;
+    _recolheBalao?.cancel();
     _recolheBalao = Timer(const Duration(seconds: 8), () {
       if (mounted) setState(() => _balaoAberto = false);
     });
@@ -90,6 +94,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 : 'homeBoasVindasNinho',
           )
         : app.frase(t.humorSub(fala), fala.valores);
+    if (_falaMostrada != '$cap|$sub') {
+      _falaMostrada = '$cap|$sub';
+      _mostraBalao();
+    }
 
     return Stack(
       fit: StackFit.expand,
@@ -122,17 +130,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     left: esquerda,
                     width: largura,
                     bottom: tela.height - o.dy + 6,
-                    child: GestureDetector(
-                      onTap: () {
-                        _recolheBalao?.cancel();
-                        setState(() => _balaoAberto = !_balaoAberto);
-                      },
-                      child: _Balao(
-                        key: HomeScreen.balaoKey,
-                        aberto: _balaoAberto,
-                        titulo: cap,
-                        texto: sub,
-                        pontaEm: (o.dx - esquerda).clamp(24.0, largura - 24),
+                    // Um toque dispensa a fala antes da hora.
+                    child: IgnorePointer(
+                      ignoring: !_balaoAberto,
+                      child: AnimatedOpacity(
+                        opacity: _balaoAberto ? 1 : 0,
+                        duration: Tempo.componente,
+                        child: GestureDetector(
+                          onTap: () {
+                            _recolheBalao?.cancel();
+                            setState(() => _balaoAberto = false);
+                          },
+                          child: _Balao(
+                            key: HomeScreen.balaoKey,
+                            titulo: cap,
+                            texto: sub,
+                            pontaEm: (o.dx - esquerda).clamp(
+                              24.0,
+                              largura - 24,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -438,17 +456,15 @@ class Vidro extends StatelessWidget {
   }
 }
 
-/// A fala do humor, num balão com a ponta na cabeça dele. Tocar recolhe.
+/// A fala do humor, num balão com a ponta na cabeça dele.
 class _Balao extends StatelessWidget {
   const _Balao({
     super.key,
-    required this.aberto,
     required this.titulo,
     required this.texto,
     required this.pontaEm,
   });
 
-  final bool aberto;
   final String titulo;
   final String texto;
   final double pontaEm;
@@ -459,62 +475,43 @@ class _Balao extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AnimatedSize(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          alignment: Alignment.bottomLeft,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
-            decoration: BoxDecoration(
-              color: Cores.superficieElevada.withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Cores.tinta.withValues(alpha: 0.14),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: aberto
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        titulo,
-                        key: const Key('home-humor-cap'),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: nunito(
-                          size: 15,
-                          weight: FontWeight.w800,
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        texto,
-                        key: const Key('home-humor-sub'),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                        style: nunito(
-                          size: 13,
-                          height: 1.35,
-                          color: Cores.tinta700,
-                        ),
-                      ),
-                    ],
-                  )
-                : const Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 18,
-                    color: Cores.tinta700,
-                  ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
+          decoration: BoxDecoration(
+            color: Cores.superficieElevada.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Cores.tinta.withValues(alpha: 0.14),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                titulo,
+                key: const Key('home-humor-cap'),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: nunito(size: 15, weight: FontWeight.w800, height: 1.25),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                texto,
+                key: const Key('home-humor-sub'),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: nunito(size: 13, height: 1.35, color: Cores.tinta700),
+              ),
+            ],
           ),
         ),
         Padding(
-          padding: EdgeInsets.only(left: aberto ? pontaEm - 8 : 14),
+          padding: EdgeInsets.only(left: pontaEm - 8),
           child: CustomPaint(
             size: const Size(16, 9),
             painter: _PontaDoBalao(

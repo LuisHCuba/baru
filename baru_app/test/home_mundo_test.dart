@@ -178,4 +178,17 @@ void main() {
     expect(find.text('Começar foco'), findsOneWidget);
     await _fecha(tester);
   });
+
+  testWidgets('a fala some sozinha, sem deixar ícone na cabeça dele', (
+    tester,
+  ) async {
+    await _abre(tester);
+    expect(find.byKey(HomeScreen.balaoKey).hitTestable(), findsOneWidget);
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+    expect(find.byKey(HomeScreen.balaoKey).hitTestable(), findsNothing);
+    expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsNothing);
+    await _fecha(tester);
+  });
 }

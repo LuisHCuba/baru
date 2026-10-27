@@ -868,6 +868,51 @@ class _PetViewState extends State<PetView>
           const JeitoDeCacar(velocidade: 58),
         _ => const JeitoDeCacar(),
       }
+      // O que só esta espécie faz (etograma, pesquisa 22).
+      ..repertorio = switch (widget.species) {
+        Species.capybara => const {
+            Episodio.deitar,
+            Episodio.tomarSol,
+            Episodio.espiar,
+          },
+        Species.otter => const {
+            Episodio.alisar,
+            Episodio.rolar,
+            Episodio.espiar,
+          },
+        Species.tortoise => const {
+            Episodio.recolher,
+            Episodio.tomarSol,
+            Episodio.espiar,
+          },
+        Species.owl => const {
+            Episodio.balancarCabeca,
+            Episodio.girarCabeca,
+            Episodio.alisar,
+          },
+        Species.axolotl => const {Episodio.respirar},
+        Species.penguin => const {
+            Episodio.alisar,
+            Episodio.microcochilo,
+            Episodio.zurro,
+            Episodio.saltoNaAgua,
+            Episodio.espiar,
+          },
+        Species.cat => const {
+            Episodio.piscadaLenta,
+            Episodio.amassar,
+            Episodio.alisar,
+            Episodio.sonhoDePatinhas,
+          },
+        Species.fox => const {
+            Episodio.escutar,
+            Episodio.sonhoDePatinhas,
+          },
+        Species.frenchie => const {
+            Episodio.inclinarCabeca,
+            Episodio.sonhoDePatinhas,
+          },
+      }
       // Felinos e a coruja piscam menos; o buldogue, mais.
       ..medianaDoPiscar = switch (widget.species) {
         Species.cat || Species.fox || Species.owl => 4.6,
@@ -2703,8 +2748,11 @@ class _PetPainter extends CustomPainter {
     // Nadando ela estica o pescoço para manter o focinho fora d'água — o
     // corpo afundou 13 px e sem isto a cabeça entraria junto, o que numa
     // tartaruga é afogamento, não nado.
-    final estica =
-        (pose.boia * 2.4 * amp) + pose.carinho * 7 + (nadando ? 11 : 0);
+    final estica = (pose.boia * 2.4 * amp) +
+        pose.carinho * 7 +
+        (nadando ? 11 : 0) +
+        // Recolhendo a cabeça (−) ou esticando o pescoço ao sol (+).
+        pose.vida.pescoco * 9 * amp;
 
     // Patas: saem por baixo do casco, nos cantos. Na água elas viram remos —
     // a tartaruga-de-orelha-vermelha nada com as quatro.
@@ -3075,7 +3123,7 @@ class _PetPainter extends CustomPainter {
         ..lineTo(6, 7)
         // O bico se alonga na mordida: bico não abre como boca, e sem
         // nenhum sinal a coruja petiscava de cara parada.
-        ..lineTo(0, 19 + pose.mastiga * 3)
+        ..lineTo(0, 19 + math.max(pose.mastiga, pose.vida.boca) * 3)
         ..close(),
       _p(const Color(0xFFD9C79A)),
     );
@@ -3385,7 +3433,10 @@ class _PetPainter extends CustomPainter {
       const Offset(2.6, 12),
       _traco(Color.lerp(bico, Cores.superficie, 0.45)!, 1.2),
     );
-    if (pose.bocejo > 0.3 || pose.carinho > 0.4 || pose.mastiga > 0.30) {
+    if (pose.bocejo > 0.3 ||
+        pose.carinho > 0.4 ||
+        pose.mastiga > 0.30 ||
+        pose.vida.boca > 0.3) {
       canvas.drawPath(
         Path()
           ..moveTo(-4.5, 11)
@@ -5354,7 +5405,10 @@ class _PetPainter extends CustomPainter {
   void _boca(Canvas canvas, Offset o, double w, {Color? cor}) {
     final t = _traco(cor ?? sombraForte, 1.9);
     final mastigando = pose.mastiga > 0.30;
-    final aberta = pose.bocejo > 0.3 || pose.carinho > 0.4 || mastigando;
+    final aberta = pose.bocejo > 0.3 ||
+        pose.carinho > 0.4 ||
+        mastigando ||
+        pose.vida.boca > 0.3;
 
     _naBoca(canvas, o, w);
 

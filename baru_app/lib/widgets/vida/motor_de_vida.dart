@@ -147,7 +147,15 @@ class SaidaDaVida {
     this.mastigando = 0,
     this.forcaDaAtividade = 1,
     this.cicloDaAtividade = 0,
+    this.boca = 0,
+    this.pescoco = 0,
   });
+
+  /// 0..1: a boca ou o bico abertos sem comida (zurro, alisar as penas).
+  final double boca;
+
+  /// -1..1: o pescoço da tartaruga recolhendo (-) ou esticando (+).
+  final double pescoco;
 
   /// A atividade está em episódios (o motor conduz). Falso no quadro fixo e
   /// com movimento reduzido: aí o desenho usa a pose de repouso do laço.
@@ -331,8 +339,29 @@ class MotorDeVida {
   int _pulosFaltando = 0;
   double _suspiroT = 0;
   double _proximoTremelique = 0;
-  bool _corpoLivre = true;
   final _cabecaNoChao = Mola(f: 2, zeta: 0.7);
+
+  /// Os episódios que esta espécie tem além dos comuns (etograma, pesquisa
+  /// 22): a piscada lenta da gata, o salto de caça da raposa, o balançar de
+  /// cabeça da coruja...
+  Set<Episodio> repertorio = const {};
+
+  /// Por episódio, a cada quadro: olhos, cabeça (giro, descida), boca,
+  /// pescoço (tartaruga) e corpo subindo na água.
+  double _fechaOlhos = 0;
+  final _olhosSuaves = Mola(f: 2.5, zeta: 1);
+  Offset _cabecaDoEpisodio = Offset.zero;
+  double _boca = 0;
+  double _pescoco = 0;
+  final _pescocoSuave = Mola(f: 2.2, zeta: 0.8);
+  final _sobeNaAgua = Mola(f: 1.1, zeta: 0.8);
+
+  /// Para que lado este bicho inclina a cabeça: cada cão inclina sempre
+  /// para o mesmo (Sommese et al. 2021).
+  late final double _ladoDoInclinar = zonaFavorita.index.isEven ? 1 : -1;
+  bool _desenhaLivre = true;
+  int _passosDoEp = 0;
+  double _proximoDoEp = 0;
   final _forcaDaAtividade = Mola(f: 1.4, zeta: 0.9);
 
   /// O episódio da vez (para teste e diagnóstico).
@@ -785,6 +814,11 @@ class MotorDeVida {
     _estica = 0;
     _correndo = false;
     _rebola = 0;
+    _fechaOlhos = 0;
+    _cabecaDoEpisodio = Offset.zero;
+    _boca = 0;
+    _pescoco = 0;
+    _sobeNaAgua.alvo = 0;
     final perseguia = _perseguindo;
     _perseguindo = interessado && !ocupado && podeAndar;
     var livre = true;
@@ -792,11 +826,13 @@ class MotorDeVida {
       _persegue();
     } else {
       // A atividade em episódios; na pausa, o corpo volta ao cérebro livre.
-      if (modo != ModoDaAtividade.livre &&
-          !reduzido &&
-          (!ocupado || modo == ModoDaAtividade.dormir)) {
+      if (!reduzido && (!ocupado || modo == ModoDaAtividade.dormir)) {
         livre = _passoDosEpisodios(dt);
+      } else {
+        _desenhaLivre = true;
       }
+      _pescocoSuave.alvo = _pescoco;
+      _pescocoSuave.passo(dt);
       if (!ocupado && livre) {
         _largaAEspreita();
         _olhouAntesDeIr = -1;
@@ -809,7 +845,6 @@ class MotorDeVida {
         _alvoDoOlhar = Offset.zero;
       }
     }
-    _corpoLivre = livre;
     // Ocupado (comendo, dormindo) ou sem poder andar: os pés ficam.
     if (ocupado || !podeAndar) _alvoX = _px;
     if (_desviraEm > 0 && _t >= _desviraEm) {
@@ -932,7 +967,10 @@ class MotorDeVida {
       } else if (_achata.alvo < 0 && _espirroEm < 0) {
         _achata.alvo = 0;
       }
-      desloca = Offset(desloca.dx, -_y - sobeNoPasso);
+      desloca = Offset(
+        desloca.dx,
+        -_y - sobeNoPasso - _sobeNaAgua.passo(dt),
+      );
     }
     if (anteEspirro > 0) _achata.alvo = -anteEspirro * 0.4;
     _achata.passo(dt);
@@ -976,8 +1014,10 @@ class MotorDeVida {
       cabecaAtraso: atraso * a,
       cabecaGiro: gesto.dx * a,
       cabecaDesce: gesto.dy * a,
-      atividadeAtiva: modo != ModoDaAtividade.livre && !reduzido,
-      corpoLivre: _corpoLivre,
+      atividadeAtiva: !reduzido,
+      corpoLivre: _desenhaLivre,
+      boca: _boca,
+      pescoco: _pescocoSuave.valor,
       cabecaNoChao: _cabecaNoChao.valor.clamp(0.0, 1.2),
       mastigando: _mastigando,
       forcaDaAtividade: _forcaDaAtividade.valor.clamp(0.0, 1.0),
@@ -1022,7 +1062,7 @@ class MotorDeVida {
       };
       _proximoGestoCabeca = _t + 3 + _sorte.nextDouble() * 5;
     }
-    _cabecaGesto.alvo = alvo;
+    _cabecaGesto.alvo = alvo + _cabecaDoEpisodio;
     return _cabecaGesto.passo(dt);
   }
 
@@ -1096,6 +1136,9 @@ class MotorDeVida {
       _sonolento = math.max(0, _sonolento - dt);
       base = math.max(base, 0.55 + 0.4 * (_sonolento / 0.8));
     }
+    // O episódio pede olhos fechados ou semicerrados (sol, cochilo).
+    _olhosSuaves.alvo = _fechaOlhos;
+    base = math.max(base, _olhosSuaves.passo(dt).clamp(0.0, 1.0));
     if (_piscadaT < 0) {
       if (_t >= _proximaPiscada) _piscaAgora(lenta: false);
       if (_piscadaT < 0) return base;

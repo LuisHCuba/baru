@@ -169,6 +169,19 @@ class MundoDoBaruState extends State<MundoDoBaru>
   GeometriaDoMundo? _g;
   bool _parado = false;
 
+  // --- o passeio do tempo livre -----------------------------------------
+  // Sem nada pedindo outra coisa, ele ficava a manhã inteira no mesmo
+  // palmo da margem: o mundo tinha 2,6 telas e ele usava uma. Bicho tem
+  // área de vida e a percorre (pesquisa 22): de tempos em tempos escolhe
+  // um canto — a toca, os brinquedos, outro trecho da margem —, vai até lá
+  // e fica um pouco.
+  final _sorte = math.Random();
+  bool _livre = false;
+  (double, double)? _passeio;
+  double _chegouNoPasseio = -1;
+  double _ficaNoPasseio = 0;
+  double _proximoPasseio = 18 + math.Random().nextDouble() * 20;
+
   @override
   void initState() {
     super.initState();
@@ -234,6 +247,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
     // A zona dele muda o que a cena pede (dormir só na toca etc.).
     final z = g.zonaDe(petPx);
     if (z != _zona) setState(() => _zona = z);
+    _passeia(g);
     if (_premio != null && _t - _premioDesde > 1.6) {
       setState(() => _premio = null);
     }
@@ -300,10 +314,47 @@ class MundoDoBaruState extends State<MundoDoBaru>
       Activity.swim =>
         _nadador(app) ? null : g.faixa(ZonasDoMundo.brinquedos, folga: 30),
       _ =>
-        _zona == ZonaDoMundo.margem || _zona == ZonaDoMundo.brinquedos
-            ? null
-            : g.faixa(ZonasDoMundo.margem, folga: 30),
+        _passeio ??
+            (_zona == ZonaDoMundo.margem || _zona == ZonaDoMundo.brinquedos
+                ? null
+                : g.faixa(ZonasDoMundo.margem, folga: 30)),
     };
+  }
+
+  void _passeia(GeometriaDoMundo g) {
+    final p = _passeio;
+    if (!_livre) {
+      if (p != null) setState(() => _passeio = null);
+      return;
+    }
+    if (p == null) {
+      if (_t < _proximoPasseio) return;
+      // Um trecho de 8% do mundo dentro de um canto que não é onde ele está.
+      final cantos = [
+        ZonasDoMundo.toca,
+        ZonasDoMundo.brinquedos,
+        ZonasDoMundo.margem,
+      ].where((c) => g.zonaDe(g.x((c.$1 + c.$2) / 2)) != _zona).toList();
+      final c = cantos[_sorte.nextInt(cantos.length)];
+      final largura = math.min(0.08, c.$2 - c.$1);
+      final a = c.$1 + _sorte.nextDouble() * (c.$2 - c.$1 - largura);
+      setState(() {
+        _passeio = g.faixa((a, a + largura));
+        _chegouNoPasseio = -1;
+        _ficaNoPasseio = 12 + _sorte.nextDouble() * 16;
+      });
+      return;
+    }
+    final u = _posicao.value;
+    if (u < p.$1 - 4 || u > p.$2 + 4) return;
+    if (_chegouNoPasseio < 0) {
+      _chegouNoPasseio = _t;
+    } else if (_t - _chegouNoPasseio > _ficaNoPasseio) {
+      setState(() {
+        _passeio = null;
+        _proximoPasseio = _t + 25 + _sorte.nextDouble() * 35;
+      });
+    }
   }
 
   bool _brincaNoCanto(AppState app) =>
@@ -348,6 +399,10 @@ class MundoDoBaruState extends State<MundoDoBaru>
     final cenario = CenarioDoHabitat.de(app.habitatAtivo.id);
     final itens = itensDeCena.where((i) => app.estaEquipado(i.id)).toList();
     _parado = Movimento.reduzido(context);
+    _livre =
+        !_parado &&
+        !_naAgua &&
+        (app.activity == Activity.idle || app.activity == Activity.graze);
     // O axolote mora na água, dormindo inclusive (descansa no fundo). Só
     // "começar" nela deixava preso na beira quem abria o app no cochilo
     // (auditoria, 4).

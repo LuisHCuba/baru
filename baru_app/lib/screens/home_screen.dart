@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -41,9 +42,21 @@ class _HomeScreenState extends State<HomeScreen> {
   final _cabeca = ValueNotifier<Offset?>(null);
   final _zona = ValueNotifier<ZonaDoMundo>(ZonaDoMundo.margem);
   bool _balaoAberto = true;
+  Timer? _recolheBalao;
+
+  @override
+  void initState() {
+    super.initState();
+    // Disse o que tinha a dizer: o balão se recolhe e o mundo fica limpo.
+    // Um toque abre de novo.
+    _recolheBalao = Timer(const Duration(seconds: 8), () {
+      if (mounted) setState(() => _balaoAberto = false);
+    });
+  }
 
   @override
   void dispose() {
+    _recolheBalao?.cancel();
     _cabeca.dispose();
     _zona.dispose();
     super.dispose();
@@ -204,7 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: largura,
                     bottom: tela.height - o.dy + 6,
                     child: GestureDetector(
-                      onTap: () => setState(() => _balaoAberto = !_balaoAberto),
+                      onTap: () {
+                        _recolheBalao?.cancel();
+                        setState(() => _balaoAberto = !_balaoAberto);
+                      },
                       child: _Balao(
                         key: HomeScreen.balaoKey,
                         aberto: _balaoAberto,

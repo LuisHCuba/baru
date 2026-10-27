@@ -146,7 +146,12 @@ void main() {
       );
       final s = AppState(snapshot: snap);
 
-      expect(s.leaves, sessionReward(25) + _premioDoPrimeiroFoco);
+      // Missão que a sessão de ontem fechou é colhida na virada (U12): o
+      // quanto depende do quadro sorteado para ontem.
+      expect(
+        s.leaves,
+        sessionReward(25) + _premioDoPrimeiroFoco + s.guardadasNaVirada,
+      );
       expect(
         s.week[weekdayIndex(ontem)],
         WeekDayKind.present,

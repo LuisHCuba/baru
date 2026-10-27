@@ -82,7 +82,7 @@ class _PetNameFieldState extends State<PetNameField> {
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: Espaco.lg, vertical: Espaco.md),
         counterText: '',
       ),
     );
@@ -110,7 +110,7 @@ class CoatPicker extends StatelessWidget {
     return Column(
       children: [
         SectionLabel(label),
-        const SizedBox(height: 12),
+        const SizedBox(height: Espaco.sm),
         Wrap(
           alignment: WrapAlignment.center,
           children: List.generate(AppColors.coatDe(especie).length, (i) {
@@ -188,7 +188,7 @@ class SpeciesPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionLabel(label, padding: const EdgeInsets.fromLTRB(0, 0, 0, 10)),
+        SectionLabel(label, padding: const EdgeInsets.fromLTRB(0, 0, 0, Espaco.sm)),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -200,8 +200,8 @@ class SpeciesPicker extends StatelessWidget {
                   selected: selected == s,
                   onTap: () => onPick(s),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 13,
+                    horizontal: Espaco.md,
+                    vertical: Espaco.sm,
                   ),
                 )
               else
@@ -233,7 +233,7 @@ class CompanionCard extends StatelessWidget {
     final sp = t.species(app.speciesKey);
     if (!completo) return _cartaoCompacto(app, sp[0]);
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+      padding: const EdgeInsets.fromLTRB(Espaco.lg, Espaco.lg, Espaco.lg, Espaco.lg),
       decoration: BoxDecoration(
         color: AppColors.greenA(0.10),
         borderRadius: BorderRadius.circular(24),
@@ -260,7 +260,7 @@ class CompanionCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: nunito(size: 16, weight: FontWeight.w800),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: Espaco.xxs),
           Text(
             app.streakText,
             textAlign: TextAlign.center,
@@ -268,21 +268,21 @@ class CompanionCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: nunito(size: 13, weight: FontWeight.w600, color: AppColors.green),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Espaco.md),
           PetNameField(
             key: ValueKey('${app.speciesKey}-${app.displayName}'),
             initial: app.displayName,
             onChanged: app.setName,
           ),
           if (completo) ...[
-            const SizedBox(height: 18),
+            const SizedBox(height: Espaco.md),
             CoatPicker(
               selected: app.color,
               onPick: app.setColor,
               label: t.coat,
               especie: app.species,
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: Espaco.lg),
             SpeciesPicker(
               selected: app.species,
               onPick: app.pickSpecies,
@@ -382,7 +382,7 @@ class _EspecieTravada extends StatelessWidget {
       enabled: false,
       label: rotulo,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: Espaco.md, vertical: Espaco.sm),
         decoration: BoxDecoration(
           color: Cores.tintaA(0.05),
           borderRadius: Raio.todos(Raio.pilula),

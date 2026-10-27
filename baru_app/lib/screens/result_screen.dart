@@ -281,7 +281,7 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
             key: _raiz,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(26, 14, 26, 30),
+                padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.md, Espaco.xl, Espaco.xxl),
                 child: Column(
                   children: [
                     Row(
@@ -313,12 +313,12 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                               roupaDeCabeca: app.roupaDeCabeca,
                               scale: 1.05,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: Espaco.sm),
                             _Ganho(
                               key: _ganho,
                               valor: (r.folhasDaSessao * conta).round(),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: Espaco.md),
                             Text(
                               t.fill(t.resWon, {'m': r.minutos}),
                               textAlign: TextAlign.center,
@@ -329,13 +329,13 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                                 letterSpacing: -0.4,
                               ),
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: Espaco.md),
                             _BarraDeXp(
                               resumo: r,
                               sessao: xpSessao,
                               raiz: xpRaiz,
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: Espaco.md),
                             Opacity(
                               // Logo abaixo do XP, à vista sem rolar: com quatro
                               // missões na lista ele ficava atrás dos botões.
@@ -353,7 +353,7 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                               ),
                             ),
                             if (r.missoes.isNotEmpty) ...[
-                              const SizedBox(height: 18),
+                              const SizedBox(height: Espaco.md),
                               _Missoes(
                                 app: app,
                                 missoes: r.missoes,
@@ -364,14 +364,14 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: Espaco.sm),
                     BotaoBaru(
                       rotulo: t.shareBtn,
                       aoTocar: app.openShare,
                       icone: const Icon(Icons.share_outlined),
                       papel: PapelDoBotao.secundario,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: Espaco.sm),
                     BotaoBaru(rotulo: t.back, aoTocar: app.voltar),
                   ],
                 ),
@@ -438,7 +438,7 @@ class _Ganho extends StatelessWidget {
     final t = AppScope.of(context).t;
     return Container(
       key: _Sequencia.chaveDoGanho,
-      padding: const EdgeInsets.fromLTRB(18, 12, 22, 12),
+      padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.sm, Espaco.lg, Espaco.sm),
       decoration: BoxDecoration(
         color: Cores.folha600.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(99),
@@ -447,7 +447,7 @@ class _Ganho extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const GlifoFolha(tamanho: 22),
-          const SizedBox(width: 11),
+          const SizedBox(width: Espaco.sm),
           Text(
             t.fill(t.reward, {'k': valor}),
             style: nunito(
@@ -501,7 +501,7 @@ class _BarraDeXp extends StatelessWidget {
               opacity: sessao > 0 ? 1 : 0,
               child: const GlifoXp(tamanho: 14),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: Espaco.xxs),
             Opacity(
               opacity: sessao > 0 ? 1 : 0,
               child: Text(
@@ -514,7 +514,7 @@ class _BarraDeXp extends StatelessWidget {
               ),
             ),
             if (resumo.xpDaRaiz > 0) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: Espaco.xs),
               Opacity(
                 opacity: raiz > 0 ? 1 : 0,
                 child: Text(
@@ -529,7 +529,7 @@ class _BarraDeXp extends StatelessWidget {
             ],
           ],
         ),
-        const SizedBox(height: 7),
+        const SizedBox(height: Espaco.xs),
         BarraAnimada(
           fracao: fracao,
           altura: 10,
@@ -568,10 +568,10 @@ class _Missoes extends StatelessWidget {
             color: Cores.tinta700,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Espaco.xs),
         for (final m in missoes)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: Espaco.xs),
             child: _MissaoQueAndou(app: app, m: m, t: t),
           ),
       ],
@@ -596,7 +596,7 @@ class _MissaoQueAndou extends StatelessWidget {
     final progresso =
         (m.antes.progresso + (d.progresso - m.antes.progresso) * t).round();
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
+      padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.sm, Espaco.sm, Espaco.sm),
       decoration: BoxDecoration(
         color: pronta
             ? Cores.mel400.withValues(alpha: 0.24)
@@ -621,7 +621,7 @@ class _MissaoQueAndou extends StatelessWidget {
                   altura: 7,
                   duracao: Duration.zero,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: Espaco.xxs),
                 Text(
                   pronta ? tx.resPronta : '$progresso/${d.alvo}',
                   style: nunito(
@@ -634,7 +634,7 @@ class _MissaoQueAndou extends StatelessWidget {
             ),
           ),
           if (pronta) ...[
-            const SizedBox(width: 10),
+            const SizedBox(width: Espaco.sm),
             BotaoBaru(
               key: Key('resultado-colher-${d.id}'),
               rotulo: tx.resColher,

@@ -31,7 +31,7 @@ class HomeScreen extends StatelessWidget {
     final usagePct = (app.usage / (app.goal * 1.35)).clamp(0.0, 1.0);
     final unlockPct = next == null ? 1.0 : (app.leaves / next.price).clamp(0.0, 1.0);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
+      padding: const EdgeInsets.fromLTRB(Espaco.lg, Espaco.md, Espaco.lg, Espaco.sm),
       children: [
         // Os dois números do topo levam a algum lugar. Eram os únicos do app
         // que mudavam sozinhos e não podiam ser tocados: o usuário via o
@@ -46,7 +46,7 @@ class HomeScreen extends StatelessWidget {
                 child: LeafBadge(leaves: app.leaves),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: Espaco.xs),
             Expanded(
               child: Semantics(
                 button: true,
@@ -56,8 +56,8 @@ class HomeScreen extends StatelessWidget {
                   child: Container(
                     key: const Key('home-sequencia'),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
+                      horizontal: Espaco.md,
+                      vertical: Espaco.xs,
                     ),
                     decoration: BoxDecoration(
                       color: Cores.raiz500.withValues(alpha: 0.10),
@@ -76,7 +76,7 @@ class HomeScreen extends StatelessWidget {
                         // A raiz viva desenhada em 12 px virava um rabisco
                         // (lido como "tênis" na auditoria visual).
                         const GlifoRaiz(tamanho: 18),
-                        const SizedBox(width: 7),
+                        const SizedBox(width: Espaco.xs),
                         Flexible(
                           child: Text(
                             app.streakText,
@@ -88,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: Espaco.xxs),
                         const AppIcon(
                           Icons.chevron_right_rounded,
                           size: 15,
@@ -102,12 +102,12 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: Espaco.md),
         const HabitatScene(),
-        const SizedBox(height: 10),
+        const SizedBox(height: Espaco.sm),
         // O crescimento do bicho, logo abaixo dele: quanto falta e o que vem.
         const BarraDoCrescimento(),
-        const SizedBox(height: 18),
+        const SizedBox(height: Espaco.md),
         // A legenda diz **o fato** que levou o bicho àquele humor, com o
         // número que o app mediu, e só depois o sentimento. Antes vinha de
         // `moodCap`/`moodSub`: um texto por humor, sempre igual, que dizia
@@ -125,7 +125,7 @@ class HomeScreen extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: nunito(size: 26, weight: FontWeight.w800, height: 1.2, letterSpacing: -0.4),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Espaco.xs),
         Text(
           primeira
               ? t.s(Crescimento.botaOvo(app.species)
@@ -136,15 +136,15 @@ class HomeScreen extends StatelessWidget {
           style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
         ),
         if (primeira) ...[
-          const SizedBox(height: 18),
+          const SizedBox(height: Espaco.md),
           ..._secaoDeFoco(app),
         ],
-        if (!primeira) const SizedBox(height: 16),
+        if (!primeira) const SizedBox(height: Espaco.md),
         if (!primeira)
         GestureDetector(
           onTap: () => app.go(AppScreen.report),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: Espaco.md, vertical: Espaco.sm),
             decoration: BoxDecoration(
               color: AppColors.greenA(0.12),
               borderRadius: BorderRadius.circular(16),
@@ -152,7 +152,7 @@ class HomeScreen extends StatelessWidget {
             child: Row(
               children: [
                 const AppIcon(Icons.insights, size: 16, color: AppColors.green),
-                const SizedBox(width: 10),
+                const SizedBox(width: Espaco.sm),
                 Expanded(
                   child: Text(
                     t.reportReady,
@@ -164,7 +164,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-        if (!primeira) const SizedBox(height: 12),
+        if (!primeira) const SizedBox(height: Espaco.sm),
         if (!primeira)
         SoftCard(
           child: Column(
@@ -183,7 +183,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: Espaco.md),
               Row(
                 children: [
                   for (final (i, marca) in app.ultimos7Dias)
@@ -191,7 +191,7 @@ class HomeScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           _dot(marca),
-                          const SizedBox(height: 7),
+                          const SizedBox(height: Espaco.xs),
                           Text(t.days[i], style: nunito(size: 10.5, weight: FontWeight.w600, color: Cores.tinta700)),
                         ],
                       ),
@@ -201,7 +201,7 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Espaco.sm),
         // Sem o acesso ao uso não há número: o cartão não mostra "0min de
         // 4h30", que é medição inventada (§8; simulador, alto 1).
         if (!app.usageAccess)
@@ -225,7 +225,7 @@ class HomeScreen extends StatelessWidget {
                   const Chevron(),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: Espaco.xxs),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -235,7 +235,7 @@ class HomeScreen extends StatelessWidget {
                   style: nunito(size: 13, weight: FontWeight.w600, color: Cores.tinta700),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: Espaco.sm),
               TrackFill(
                 pct: usagePct,
                 // Acima da meta é neutro, nunca alarme (laudo 03 §4.4).
@@ -244,14 +244,14 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Espaco.sm),
         // Nível e XP de verdade, com a trilha a um toque.
         CartaoNivel(app: app, compacto: true),
-        const SizedBox(height: 12),
+        const SizedBox(height: Espaco.sm),
         _ResumoDeMissoes(app: app),
-        const SizedBox(height: 12),
+        const SizedBox(height: Espaco.sm),
         SoftCard(
-          padding: const EdgeInsets.fromLTRB(17, 15, 17, 15),
+          padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.md, Espaco.md, Espaco.md),
           onTap: () => app.go(AppScreen.shop),
           child: Row(
             children: [
@@ -264,7 +264,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: next == null ? null : ItemSwatch(next, maxW: 38, maxH: 34),
               ),
-              const SizedBox(width: 13),
+              const SizedBox(width: Espaco.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,12 +291,12 @@ class HomeScreen extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: nunito(size: 13.5, weight: FontWeight.w700, height: 1.35),
                     ),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: Espaco.xs),
                     TrackFill(pct: unlockPct, height: 8, color: AppColors.green),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Espaco.xs),
               const Chevron(),
             ],
           ),
@@ -305,7 +305,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: Espaco.xl),
           ..._secaoDeFoco(app),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: Espaco.md),
       ],
     );
   }
@@ -319,7 +319,7 @@ class HomeScreen extends StatelessWidget {
             Row(
               children: [
                 for (var i = 0; i < durations.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 8),
+                  if (i > 0) const SizedBox(width: Espaco.xs),
                   SelectChip(
                     label: i == 3
                         ? t.custom
@@ -336,7 +336,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Espaco.sm),
             BotaoBaru(
               rotulo: t.start,
               aoTocar: app.startSession,
@@ -409,7 +409,7 @@ class _ResumoDeMissoes extends StatelessWidget {
             size: 18,
             color: aResgatar > 0 ? Cores.mel700 : AppColors.green,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Espaco.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +427,7 @@ class _ResumoDeMissoes extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Espaco.sm),
           if (aResgatar > 0)
             Etiqueta(
               texto: t.missaoResgatar,

@@ -362,7 +362,7 @@ class CartaoNivel extends StatelessWidget {
                 ),
               ),
               const GlifoXp(tamanho: 15),
-              const SizedBox(width: 4),
+              const SizedBox(width: Espaco.xxs),
               ContadorAnimado(
                 valor: app.xp,
                 sufixo: ' ${t.xpRotulo}',

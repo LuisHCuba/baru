@@ -669,7 +669,7 @@ class _QuitSheet extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(26, 32, 26, 40),
+          padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.xxl, Espaco.xl, Espaco.xxxl),
           decoration: const BoxDecoration(
             color: AppColors.cream,
             borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -689,19 +689,19 @@ class _QuitSheet extends StatelessWidget {
                 roupas: app.roupasDoBicho,
                 roupaDeCabeca: app.roupaDeCabeca,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Espaco.md),
               Text(
                 app.t.fill(app.t.quitTitle, {'n': app.displayName}),
                 textAlign: TextAlign.center,
                 style: nunito(size: 23, weight: FontWeight.w800, height: 1.25, letterSpacing: -0.3),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Espaco.xs),
               Text(
                 app.t.quitSub,
                 textAlign: TextAlign.center,
                 style: nunito(size: 14.5, height: 1.5, color: Cores.tinta700),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: Espaco.lg),
               BotaoBaru(rotulo: app.t.stay, aoTocar: app.resume),
               TextAction(label: app.t.leave, onTap: app.abandon),
             ],

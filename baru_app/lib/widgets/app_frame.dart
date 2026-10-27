@@ -60,7 +60,7 @@ class AppFrame extends StatelessWidget {
               key: molduraKey,
               width: width + 20,
               height: h + 20,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(Espaco.sm),
               decoration: BoxDecoration(
                 color: AppColors.ink,
                 borderRadius: BorderRadius.circular(AppRadii.device),

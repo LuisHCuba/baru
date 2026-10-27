@@ -18,11 +18,20 @@ import 'package:baru_app/widgets/loja_vitrine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-AppState _app([void Function(String)? recado]) => AppState(onUserMessage: recado)
-  ..onb = 9
-  ..companionshipStarted = true
-  ..petName = 'Nina'
-  ..debugFast = false;
+AppState _app([void Function(String)? recado]) {
+  final s = AppState(onUserMessage: recado)
+    ..onb = 9
+    ..companionshipStarted = true
+    ..petName = 'Nina'
+    ..debugFast = false;
+  // O quadro do dia é sorteado pela data. Estes testes precisam de um dia
+  // em que uma sessão feche missão — "um foco" no quadro —, seja qual for a
+  // data em que rodam.
+  for (var i = 0; !s.missoes.any((m) => m.id == 'um_foco'); i++) {
+    s.sementeDasMissoes = 'teste-$i';
+  }
+  return s;
+}
 
 void _concluiUmaSessao(AppState s) {
   s.startSession();

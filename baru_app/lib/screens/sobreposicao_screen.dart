@@ -607,7 +607,7 @@ class _Balao extends StatelessWidget {
         ),
         // Rabicho apontando para o bicho.
         Padding(
-          padding: const EdgeInsets.only(right: 34),
+          padding: const EdgeInsets.only(right: Espaco.xxl),
           child: CustomPaint(
             size: const Size(22, 12),
             painter: _Rabicho(),

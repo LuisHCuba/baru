@@ -394,7 +394,7 @@ class _AuthScreenState extends State<AuthScreen> {
             aoEnviar: senha ? null : _confirmaCodigo,
           ),
           if (senha) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Espaco.sm),
             _field(
               label: t.s('codNovaSenha'),
               controller: _password,
@@ -403,7 +403,7 @@ class _AuthScreenState extends State<AuthScreen> {
               autofill: const [AutofillHints.newPassword],
               acao: TextInputAction.next,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Espaco.sm),
             _field(
               label: t.s('codConfirmaSenha'),
               controller: _confirm,
@@ -414,12 +414,12 @@ class _AuthScreenState extends State<AuthScreen> {
               aoEnviar: _confirmaCodigo,
             ),
           ],
-          if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
+          if (_error != null) ...[const SizedBox(height: Espaco.md), _aviso(_error!)],
           if (_recado != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: Espaco.md),
             _recadoOk(_recado!),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: Espaco.xl),
           BotaoBaru(
             rotulo: _loading
                 ? t.authLoading
@@ -427,7 +427,7 @@ class _AuthScreenState extends State<AuthScreen> {
             aoTocar: _loading ? null : _confirmaCodigo,
             ativo: !_loading,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Espaco.sm),
           TextAction(
             key: AuthScreen.chaveReenviar,
             label: t.s('codReenviar'),
@@ -478,7 +478,7 @@ class _AuthScreenState extends State<AuthScreen> {
       backgroundColor: AppColors.cream,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(26, 28, 26, 34),
+          padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.xl, Espaco.xl, Espaco.xxl),
           child: _codigo != null
               ? _corpoCodigo()
               : _entrada == _Entrada.desbloqueio
@@ -509,8 +509,8 @@ class _AuthScreenState extends State<AuthScreen> {
             color: AppColors.greenDeep,
           ),
         ),
-        if (_error != null) ...[const SizedBox(height: 16), _aviso(_error!)],
-        const SizedBox(height: 28),
+        if (_error != null) ...[const SizedBox(height: Espaco.md), _aviso(_error!)],
+        const SizedBox(height: Espaco.xl),
         if (_podeBiometria)
           BotaoBaru(
             key: AuthScreen.chaveBiometria,
@@ -520,7 +520,7 @@ class _AuthScreenState extends State<AuthScreen> {
             aoTocar: _pedindoBiometria || _loading ? null : _desbloqueia,
             ativo: !_pedindoBiometria && !_loading,
           ),
-        if (_podeBiometria) const SizedBox(height: 12),
+        if (_podeBiometria) const SizedBox(height: Espaco.sm),
         TextAction(
           key: AuthScreen.chaveDigitar,
           label: t.authVoltar,
@@ -541,7 +541,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   /// Confirmação neutra (não é erro): mesmo formato do aviso, em tinta.
   Widget _recadoOk(String texto) => Container(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+    padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.sm, Espaco.md, Espaco.sm),
     decoration: BoxDecoration(
       color: AppColors.inkA(0.06),
       borderRadius: BorderRadius.circular(AppRadii.chip),
@@ -553,7 +553,7 @@ class _AuthScreenState extends State<AuthScreen> {
   );
 
   Widget _aviso(String texto) => Container(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+    padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.sm, Espaco.md, Espaco.sm),
     decoration: BoxDecoration(
       color: Cores.alerta.withValues(alpha: 0.10),
       borderRadius: BorderRadius.circular(AppRadii.chip),
@@ -576,7 +576,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 4),
+        const SizedBox(height: Espaco.xxs),
         Center(
           child: SizedBox(
             height: 132,
@@ -589,7 +589,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: Espaco.md),
         Text(
           titulo,
           textAlign: TextAlign.center,
@@ -600,13 +600,13 @@ class _AuthScreenState extends State<AuthScreen> {
             letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Espaco.xs),
         Text(
           sub,
           textAlign: TextAlign.center,
           style: nunito(size: 15, height: 1.45, color: Cores.tinta700),
         ),
-        const SizedBox(height: 26),
+        const SizedBox(height: Espaco.xl),
       ],
     );
   }
@@ -643,7 +643,7 @@ class _AuthScreenState extends State<AuthScreen> {
             autofill: const [AutofillHints.email, AutofillHints.username],
             acao: TextInputAction.next,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Espaco.sm),
           _field(
             label: t.authPassword,
             controller: _password,
@@ -672,7 +672,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             )
           else ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Espaco.sm),
             _field(
               label: t.authPasswordConfirm,
               controller: _confirm,
@@ -682,7 +682,7 @@ class _AuthScreenState extends State<AuthScreen> {
               acao: TextInputAction.done,
               aoEnviar: _submit,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Espaco.xs),
           ],
           // Lembrar é escolha explícita e reversível. O subtítulo diz onde o
           // dado fica — sem isso a pessoa tem que adivinhar se a senha foi
@@ -694,12 +694,12 @@ class _AuthScreenState extends State<AuthScreen> {
             ligado: _lembrar,
             aoTocar: () => setState(() => _lembrar = !_lembrar),
           ),
-          if (_error != null) ...[const SizedBox(height: 14), _aviso(_error!)],
+          if (_error != null) ...[const SizedBox(height: Espaco.md), _aviso(_error!)],
           if (_recado != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: Espaco.md),
             _recadoOk(_recado!),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: Espaco.lg),
           BotaoBaru(
             rotulo: _loading
                 ? t.authLoading
@@ -708,7 +708,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ativo: !_loading,
           ),
           if (_guardada != null && isLogin) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Espaco.sm),
             OutlinedButton.icon(
               key: AuthScreen.chaveDigitar,
               onPressed: () => setState(() => _entrada = _Entrada.desbloqueio),
@@ -727,7 +727,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 22),
+          const SizedBox(height: Espaco.lg),
           // Trocar entre entrar e criar conta numa linha só, no rodapé: era
           // um texto cinza solto no meio de outros dois iguais.
           Wrap(
@@ -798,8 +798,8 @@ class _AuthScreenState extends State<AuthScreen> {
         filled: true,
         fillColor: AppColors.card,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 18,
+          horizontal: Espaco.md,
+          vertical: Espaco.md,
         ),
         prefixIcon: icone == null
             ? null
@@ -885,7 +885,7 @@ class _LinhaLembrar extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: Espaco.md),
               AppToggle(on: ligado, onTap: aoTocar),
             ],
           ),

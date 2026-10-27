@@ -72,7 +72,7 @@ class BarraDoCrescimento extends StatelessWidget {
       child: ExcludeSemantics(
         child: Container(
           key: chave,
-          padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+          padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.sm, Espaco.sm, Espaco.sm),
           decoration: BoxDecoration(
             color: AppColors.greenA(0.08),
             borderRadius: BorderRadius.circular(16),
@@ -94,7 +94,7 @@ class BarraDoCrescimento extends StatelessWidget {
                             color: AppColors.greenDeep,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Espaco.xs),
                         Expanded(
                           child: Text(
                             faltaParaCrescer(t, app),
@@ -109,7 +109,7 @@ class BarraDoCrescimento extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: Espaco.xs),
                     BarraAnimada(
                       fracao: Crescimento.progressoNoEstagio(app.sessoesJuntos),
                       altura: 8,
@@ -118,7 +118,7 @@ class BarraDoCrescimento extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: Espaco.sm),
               SizedBox(
                 width: 54,
                 height: 46,

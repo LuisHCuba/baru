@@ -247,7 +247,7 @@ class _CenaDaRaizState extends State<CenaDaRaiz>
                         // Rola: com fonte grande, num telefone pequeno, o
                         // botão não pode ficar fora do alcance.
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(24, 14, 24, 10),
+                          padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.md, Espaco.xl, Espaco.sm),
                           child: Column(
                             children: [
                               Opacity(
@@ -279,12 +279,12 @@ class _CenaDaRaizState extends State<CenaDaRaiz>
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: Espaco.md),
                               Opacity(
                                 opacity: texto,
                                 child: _Faixa(app: app, hoje: hoje),
                               ),
-                              const SizedBox(height: 18),
+                              const SizedBox(height: Espaco.md),
                               IgnorePointer(
                                 ignoring: botao < 0.5,
                                 child: Opacity(

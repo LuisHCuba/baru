@@ -18,7 +18,7 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(26, 12, 26, 34),
+      padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.sm, Espaco.xl, Espaco.xxl),
       child: Column(
         children: [
           OnbDots(
@@ -28,7 +28,7 @@ class OnboardingScreen extends StatelessWidget {
             fracaoDoAtual: app.onb == 2 ? app.fracaoDoQuiz : 1,
           ),
           Expanded(child: _step(app)),
-          const SizedBox(height: 8),
+          const SizedBox(height: Espaco.xs),
           _cta(app),
         ],
       ),
@@ -103,7 +103,7 @@ class OnboardingScreen extends StatelessWidget {
                     letterSpacing: -0.6,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: Espaco.sm),
                 Text(
                   app.t.langSub,
                   style: nunito(
@@ -112,14 +112,14 @@ class OnboardingScreen extends StatelessWidget {
                     color: Cores.tinta700,
                   ),
                 ),
-                const SizedBox(height: 26),
+                const SizedBox(height: Espaco.xl),
                 for (final l in langs) ...[
                   GestureDetector(
                     onTap: () => app.setLang(l.id),
                     child: Container(
                       height: 60,
-                      margin: const EdgeInsets.only(bottom: 9),
-                      padding: const EdgeInsets.symmetric(horizontal: 22),
+                      margin: const EdgeInsets.only(bottom: Espaco.xs),
+                      padding: const EdgeInsets.symmetric(horizontal: Espaco.lg),
                       decoration: BoxDecoration(
                         color: app.lang == l.id
                             ? AppColors.greenA(0.14)
@@ -147,7 +147,7 @@ class OnboardingScreen extends StatelessWidget {
                               size: 18,
                               color: AppColors.green,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: Espaco.xs),
                           ],
                           Text(
                             l.tag,
@@ -188,7 +188,7 @@ class OnboardingScreen extends StatelessWidget {
                   coat: app.color,
                   scale: 1.15,
                 ),
-                const SizedBox(height: 26),
+                const SizedBox(height: Espaco.xl),
                 Text(
                   app.t.promiseT,
                   textAlign: TextAlign.center,
@@ -199,7 +199,7 @@ class OnboardingScreen extends StatelessWidget {
                     letterSpacing: -0.6,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: Espaco.md),
                 Text(
                   app.t.promiseB,
                   textAlign: TextAlign.center,
@@ -229,7 +229,7 @@ class OnboardingScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 26),
+        const SizedBox(height: Espaco.xl),
         Text(
           '${app.perguntaAtual + 1}/${quiz.length}',
           style: nunito(
@@ -239,7 +239,7 @@ class OnboardingScreen extends StatelessWidget {
             color: Cores.tinta700,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: Espaco.sm),
         Text(
           app.t.perguntaDoQuiz(pergunta.id),
           style: nunito(
@@ -249,13 +249,13 @@ class OnboardingScreen extends StatelessWidget {
             letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: Espaco.lg),
         Expanded(
           child: ListView(
             children: [
               for (final o in pergunta.opcoes)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: Espaco.sm),
                   child: _OpcaoGrande(
                     rotulo: app.t.opcaoDoQuiz(o.id),
                     marcada: escolhida == o.id,
@@ -277,10 +277,10 @@ class OnboardingScreen extends StatelessWidget {
   Widget _reveal(AppState app) {
     final sp = app.t.species(app.speciesKey);
     return ListView(
-      padding: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.only(top: Espaco.lg),
       children: [
         SectionLabel(app.t.revealKicker, color: AppColors.green),
-        const SizedBox(height: 10),
+        const SizedBox(height: Espaco.sm),
         Text(
           sp[0],
           textAlign: TextAlign.center,
@@ -291,13 +291,13 @@ class OnboardingScreen extends StatelessWidget {
             letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: Espaco.xs),
         Text(
           sp[1],
           textAlign: TextAlign.center,
           style: nunito(size: 14.5, height: 1.5, color: Cores.tinta700),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: Espaco.md),
         Center(
           child: PetView(
             species: app.species,
@@ -308,21 +308,21 @@ class OnboardingScreen extends StatelessWidget {
             roupaDeCabeca: app.roupaDeCabeca,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: Espaco.md),
         PetNameField(
           key: ValueKey('${app.speciesKey}-${app.color}'),
           initial: app.displayName,
           onChanged: app.setName,
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: Espaco.lg),
         SectionLabel(app.t.setSexo),
-        const SizedBox(height: 9),
+        const SizedBox(height: Espaco.xs),
         Row(
           children: [
             // Sem `Expanded` por fora: `expand: true` já põe o dele, e dois
             // competindo pelo mesmo RenderObject é assert na hora.
             for (final sexo in Sexo.values) ...[
-              if (sexo != Sexo.values.first) const SizedBox(width: 8),
+              if (sexo != Sexo.values.first) const SizedBox(width: Espaco.xs),
               SelectChip(
                 label: _rotuloDoSexo(app, sexo),
                 selected: app.sexo == sexo,
@@ -335,14 +335,14 @@ class OnboardingScreen extends StatelessWidget {
             ],
           ],
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: Espaco.lg),
         CoatPicker(
           selected: app.color,
           onPick: app.setColor,
           label: app.t.coat,
           especie: app.species,
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: Espaco.lg),
         SpeciesPicker(
           selected: app.species,
           onPick: app.pickSpecies,
@@ -366,7 +366,7 @@ class OnboardingScreen extends StatelessWidget {
 
   Widget _goal(AppState app) {
     return ListView(
-      padding: const EdgeInsets.only(top: 40),
+      padding: const EdgeInsets.only(top: Espaco.xxxl),
       children: [
         Text(
           app.t.goalT,
@@ -377,16 +377,16 @@ class OnboardingScreen extends StatelessWidget {
             letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: Espaco.sm),
         Text(
           app.t.goalB,
           style: nunito(size: 14.5, height: 1.5, color: Cores.tinta700),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: Espaco.xl),
         Row(
           children: [
             for (var i = 0; i < avgOptions.length; i++) ...[
-              if (i > 0) const SizedBox(width: 9),
+              if (i > 0) const SizedBox(width: Espaco.xs),
               SelectChip(
                 label: app.fmt(avgOptions[i]),
                 selected: app.avg == avgOptions[i],
@@ -399,9 +399,9 @@ class OnboardingScreen extends StatelessWidget {
             ],
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: Espaco.xl),
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Espaco.xl),
           decoration: BoxDecoration(
             color: AppColors.greenA(0.10),
             borderRadius: BorderRadius.circular(22),
@@ -565,7 +565,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
             // permitir chegava ao passo seguinte já rolado, com o título
             // fora da tela.
             key: ValueKey(permissao),
-            padding: const EdgeInsets.only(top: 26),
+            padding: const EdgeInsets.only(top: Espaco.xl),
             children: [
               Text(
                 t.fill(t.sobPermPasso, {
@@ -579,7 +579,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
                   color: Cores.tinta700,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: Espaco.sm),
               Text(
                 t.sobPermT,
                 style: nunito(
@@ -589,7 +589,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
                   letterSpacing: -0.4,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: Espaco.sm),
               Text(
                 t.fill(t.sobPermSub, {'n': app.displayName}),
                 style: nunito(
@@ -598,7 +598,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
                   color: Cores.tinta700,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Espaco.lg),
               CartaoDePermissao(
                 t: t,
                 nomeDoPet: app.displayName,
@@ -606,7 +606,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
                 concedida: _pedidas.contains(permissao) ? concedida : null,
                 aoPedir: () => _pede(permissao),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: Espaco.md),
               if (tudoConcedido)
                 Text(
                   t.fill(t.sobPermTudo, {'n': app.displayName}),
@@ -629,7 +629,7 @@ class _AssistenteDePermissoesState extends State<AssistenteDePermissoes>
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Espaco.xs),
         if (concedida)
           BotaoBaru(
             key: AssistenteDePermissoes.chaveContinuar,
@@ -675,7 +675,7 @@ class _OpcaoGrande extends StatelessWidget {
           duration: Tempo.microFeedback,
           curve: Curvas.padrao,
           height: 58,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
+          padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
           alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
             color: marcada ? AppColors.green : AppColors.inkA(0.05),

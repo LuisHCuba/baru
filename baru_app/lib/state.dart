@@ -550,7 +550,13 @@ class AppState extends ChangeNotifier {
   /// Semente estavel por conta: as missoes do dia sao as mesmas em qualquer
   /// aparelho, sem precisar sincronizar a escolha.
   String get _sementeDaConta =>
-      BaruSupabase.instance.currentUserEmail ?? 'local';
+      sementeDasMissoes ?? BaruSupabase.instance.currentUserEmail ?? 'local';
+
+  /// Fixa a semente do sorteio. Só teste: o quadro muda com o dia, e um
+  /// teste que espera "a primeira sessão fecha uma missão" passava ou não
+  /// conforme a data em que rodava.
+  @visibleForTesting
+  String? sementeDasMissoes;
 
   List<Missao> get missoesDiarias =>
       missoes.where((m) => m.ritmo == RitmoDaMissao.diaria).toList();

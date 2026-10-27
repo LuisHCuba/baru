@@ -54,7 +54,7 @@ class CartaoDaRaiz extends StatelessWidget {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(Espaco.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -63,7 +63,7 @@ class CartaoDaRaiz extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: Espaco.xxs),
                 Text(
                   '$dias',
                   textAlign: TextAlign.center,
@@ -78,7 +78,7 @@ class CartaoDaRaiz extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: estilo(Tipo.corpo, color: Cores.tinta700),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: Espaco.xs),
                 // A raiz ocupa o resto: ela é o assunto do cartão, não um
                 // enfeite ao lado do número.
                 Expanded(
@@ -88,7 +88,7 @@ class CartaoDaRaiz extends StatelessWidget {
                     corDaTerra: const Color(0x14000000),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: Espaco.xs),
                 Text(
                   t.fill(t.raizCartaoRodape, {'a': nomeDoPet}),
                   textAlign: TextAlign.center,

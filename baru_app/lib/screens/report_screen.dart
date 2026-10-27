@@ -16,10 +16,10 @@ class ReportScreen extends StatelessWidget {
     final t = app.t;
     final usagePct = (app.usage / (app.goal * 1.35)).clamp(0.0, 1.0);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.md, Espaco.xl, Espaco.xxl),
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(2, 10, 2, 22),
+          padding: const EdgeInsets.fromLTRB(2, Espaco.sm, 2, Espaco.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -54,7 +54,7 @@ class ReportScreen extends StatelessWidget {
           onTap: () => app.go(AppScreen.tempo),
           behavior: HitTestBehavior.opaque,
           child: Container(
-          padding: const EdgeInsets.all(22),
+          padding: const EdgeInsets.all(Espaco.lg),
           decoration: BoxDecoration(
             color: AppColors.inkA(0.045),
             borderRadius: BorderRadius.circular(24),
@@ -69,7 +69,7 @@ class ReportScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(app.fmt(app.usage), style: nunito(size: 25, weight: FontWeight.w800)),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: Espaco.xxs),
                         Text(t.repUsed, style: nunito(size: 13, color: Cores.tinta700)),
                       ],
                     ),
@@ -78,19 +78,19 @@ class ReportScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(app.fmt(app.goal), style: nunito(size: 16, weight: FontWeight.w700, color: Cores.tinta700)),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Espaco.xxs),
                       Text(t.repGoal, style: nunito(size: 13, color: Cores.tinta700)),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Espaco.md),
               TrackFill(
                 pct: usagePct,
                 height: 14,
                 color: app.underGoal ? AppColors.green : Cores.tinta500,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Espaco.md),
               Row(
                 children: [
                   Expanded(
@@ -106,9 +106,9 @@ class ReportScreen extends StatelessWidget {
           ),
         ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: Espaco.md),
         Container(
-          padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
+          padding: const EdgeInsets.fromLTRB(Espaco.lg, Espaco.md, Espaco.lg, Espaco.md),
           decoration: BoxDecoration(
             color: AppColors.greenA(0.10),
             borderRadius: BorderRadius.circular(24),
@@ -131,7 +131,7 @@ class ReportScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Espaco.xs),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +143,7 @@ class ReportScreen extends StatelessWidget {
                       app.frase(t.humorCap(app.falaDoHumor), app.falaDoHumor.valores),
                       style: nunito(size: 16.5, weight: FontWeight.w800, height: 1.3),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Espaco.xxs),
                     Text(
                       app.frase(t.humorSub(app.falaDoHumor), app.falaDoHumor.valores),
                       style: nunito(size: 13, height: 1.4, color: Cores.tinta700),
@@ -154,7 +154,7 @@ class ReportScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: Espaco.lg),
         _row(t.repSessions, '${app.completedToday}'),
         Divider(height: 1, color: AppColors.inkA(0.08)),
         _row(
@@ -165,7 +165,7 @@ class ReportScreen extends StatelessWidget {
         Divider(height: 1, color: AppColors.inkA(0.08)),
         _row(t.repPresent, app.streakText),
         Padding(
-          padding: const EdgeInsets.fromLTRB(4, 4, 4, 22),
+          padding: const EdgeInsets.fromLTRB(Espaco.xxs, Espaco.xxs, Espaco.xxs, Espaco.lg),
           child: Text(t.freezeNote(app.freezesLeft), style: nunito(size: 12.5, height: 1.5, color: Cores.tinta700)),
         ),
       ],
@@ -174,11 +174,11 @@ class ReportScreen extends StatelessWidget {
 
   Widget _row(String label, String value, {Color? color}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 16, 4, 16),
+      padding: const EdgeInsets.fromLTRB(Espaco.xxs, Espaco.md, Espaco.xxs, Espaco.md),
       child: Row(
         children: [
           Flexible(child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: nunito(size: 15, weight: FontWeight.w600))),
-          const SizedBox(width: 12),
+          const SizedBox(width: Espaco.sm),
           Flexible(
             child: Text(
               value,

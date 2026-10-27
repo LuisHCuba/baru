@@ -91,7 +91,7 @@ class SelectChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    this.padding = const EdgeInsets.symmetric(horizontal: Espaco.md, vertical: Espaco.sm),
     this.radius = 14,
     this.size = 14,
     this.expand = false,
@@ -174,7 +174,7 @@ class SoftCard extends StatelessWidget {
   const SoftCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.fromLTRB(19, 17, 19, 17),
+    this.padding = const EdgeInsets.fromLTRB(Espaco.lg, Espaco.md, Espaco.lg, Espaco.md),
     this.onTap,
     this.muted = false,
   });
@@ -228,7 +228,7 @@ class LeafBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: chave,
-      padding: const EdgeInsets.fromLTRB(11, 8, 14, 8),
+      padding: const EdgeInsets.fromLTRB(Espaco.sm, Espaco.xs, Espaco.md, Espaco.xs),
       decoration: BoxDecoration(
         color: filled ? AppColors.card : AppColors.greenA(0.13),
         borderRadius: BorderRadius.circular(99),
@@ -241,7 +241,7 @@ class LeafBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const GlifoFolha(),
-            const SizedBox(width: 8),
+            const SizedBox(width: Espaco.xs),
             ExcludeSemantics(
               child: ContadorAnimado(
                 valor: leaves,
@@ -362,7 +362,7 @@ class OnbDots extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: Espaco.sm),
       child: Row(
         children: List.generate(total, (i) {
           final cheio = i < step;
@@ -481,7 +481,7 @@ class BottomTabs extends StatelessWidget {
       AppScreen.profile,
     ];
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      padding: const EdgeInsets.fromLTRB(Espaco.sm, Espaco.sm, Espaco.sm, Espaco.sm),
       decoration: BoxDecoration(
         color: AppColors.cream.withValues(alpha: 0.92),
         border: Border(top: BorderSide(color: AppColors.inkA(0.08))),
@@ -533,7 +533,7 @@ class BottomTabs extends StatelessWidget {
                                       minHeight: 16,
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
+                                      horizontal: Espaco.xxs,
                                     ),
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(

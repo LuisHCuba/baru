@@ -24,7 +24,7 @@ void showLegalSheet(
         maxChildSize: 0.92,
         builder: (_, scroll) {
           return Padding(
-            padding: const EdgeInsets.fromLTRB(26, 16, 26, 28),
+            padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.md, Espaco.xl, Espaco.xl),
             child: Column(
               children: [
                 ExcludeSemantics(
@@ -37,9 +37,9 @@ void showLegalSheet(
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: Espaco.md),
                 const AppIcon(Icons.article_outlined, size: 26, color: AppColors.green),
-                const SizedBox(height: 10),
+                const SizedBox(height: Espaco.sm),
                 Text(
                   title,
                   textAlign: TextAlign.center,
@@ -50,7 +50,7 @@ void showLegalSheet(
                     letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: Espaco.md),
                 Expanded(
                   child: ListView(
                     controller: scroll,
@@ -66,7 +66,7 @@ void showLegalSheet(
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: Espaco.sm),
                 BotaoBaru(rotulo: close, aoTocar: () => Navigator.pop(ctx)),
               ],
             ),

@@ -16,7 +16,7 @@ class PaywallScreen extends StatelessWidget {
     final t = app.t;
     final annual = app.payPlan == PayPlan.annual;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(26, 22, 26, 34),
+      padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.lg, Espaco.xl, Espaco.xxl),
       child: Column(
         children: [
           // Uma saída à vista: sem ela, só o voltar do aparelho tirava a
@@ -41,7 +41,7 @@ class PaywallScreen extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Espaco.sm),
                 PetView(
                   species: app.species,
                   mood: Mood.radiant,
@@ -51,19 +51,19 @@ class PaywallScreen extends StatelessWidget {
                   roupas: app.roupasDoBicho,
                   roupaDeCabeca: app.roupaDeCabeca,
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: Espaco.md),
                 Text(
                   t.fill(t.payT, {'n': app.displayName}),
                   textAlign: TextAlign.center,
                   style: nunito(size: 28, weight: FontWeight.w800, height: 1.15, letterSpacing: -0.5),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: Espaco.sm),
                 Text(
                   t.payB,
                   textAlign: TextAlign.center,
                   style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: Espaco.md),
               ],
             ),
             ),
@@ -76,7 +76,7 @@ class PaywallScreen extends StatelessWidget {
             badge: t.payBest,
             onTap: () => app.pickPay(PayPlan.annual),
           ),
-          const SizedBox(height: 11),
+          const SizedBox(height: Espaco.sm),
           _plan(
             title: t.payMonthly,
             price: t.priceM,
@@ -84,19 +84,19 @@ class PaywallScreen extends StatelessWidget {
             selected: !annual,
             onTap: () => app.pickPay(PayPlan.monthly),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: Espaco.md),
           BotaoBaru(
             rotulo: app.trial ? t.payCtaActive : t.payCta,
             aoTocar: app.startTrial,
             altura: 58,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Espaco.sm),
           Text(
             t.payRemind,
             textAlign: TextAlign.center,
             style: nunito(size: 12.5, weight: FontWeight.w600, height: 1.5, color: Cores.tinta700),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Espaco.sm),
           Wrap(
             alignment: WrapAlignment.center,
             spacing: 18,
@@ -150,7 +150,7 @@ class PaywallScreen extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
+            padding: const EdgeInsets.fromLTRB(Espaco.lg, Espaco.lg, Espaco.lg, Espaco.lg),
             decoration: BoxDecoration(
               color: selected ? AppColors.greenA(0.12) : AppColors.inkA(0.05),
               borderRadius: BorderRadius.circular(22),
@@ -163,7 +163,7 @@ class PaywallScreen extends StatelessWidget {
                   children: [
                     if (selected) ...[
                       const AppIcon(Icons.check_circle_rounded, size: 18, color: AppColors.green),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: Espaco.xs),
                     ],
                     Expanded(
                       child: Text(
@@ -186,7 +186,7 @@ class PaywallScreen extends StatelessWidget {
               top: -11,
               right: 20,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: Espaco.sm, vertical: Espaco.xxs),
                 decoration: BoxDecoration(
                   // Tinta, não mel: mel é só recompensa (ADR-027).
                   color: Cores.tinta,

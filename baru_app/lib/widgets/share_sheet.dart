@@ -79,7 +79,7 @@ class _ShareSheetState extends State<ShareSheet> {
                 onTap: () {},
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(18, 22, 18, 34),
+                  padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.lg, Espaco.md, Espaco.xxl),
                   decoration: const BoxDecoration(
                     color: AppColors.shareSheet,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.share)),
@@ -95,14 +95,14 @@ class _ShareSheetState extends State<ShareSheet> {
                           borderRadius: BorderRadius.circular(99),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: Espaco.md),
                       GestureDetector(
                         onTap: () {
                           _started = false;
                           _share();
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(Espaco.md),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(18),
@@ -126,7 +126,7 @@ class _ShareSheetState extends State<ShareSheet> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 14),
+                              const SizedBox(width: Espaco.md),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,13 +155,13 @@ class _ShareSheetState extends State<ShareSheet> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: Espaco.md),
                       Text(
                         app.t.shareNote,
                         textAlign: TextAlign.center,
                         style: nunito(size: 12.5, height: 1.5, color: Cores.tinta700),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: Espaco.md),
                       GestureDetector(
                         onTap: app.closeShare,
                         child: Container(

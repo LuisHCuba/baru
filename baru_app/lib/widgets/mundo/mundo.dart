@@ -331,11 +331,15 @@ class MundoDoBaruState extends State<MundoDoBaru>
     if (p == null) {
       if (_t < _proximoPasseio) return;
       // Um trecho de 8% do mundo dentro de um canto que não é onde ele está.
+      // A zona pela posição dele na terra, e não pela `_zona` do quadro
+      // anterior: logo depois de sair da água ela ainda dizia "lagoa" e o
+      // passeio caía no trecho onde ele já estava (auditoria).
+      final aqui = g.zonaDe(g.px(_posicao.value.clamp(g.terra.$1, g.terra.$2)));
       final cantos = [
         ZonasDoMundo.toca,
         ZonasDoMundo.brinquedos,
         ZonasDoMundo.margem,
-      ].where((c) => g.zonaDe(g.x((c.$1 + c.$2) / 2)) != _zona).toList();
+      ].where((c) => g.zonaDe(g.x((c.$1 + c.$2) / 2)) != aqui).toList();
       final c = cantos[_sorte.nextInt(cantos.length)];
       final largura = math.min(0.08, c.$2 - c.$1);
       final a = c.$1 + _sorte.nextDouble() * (c.$2 - c.$1 - largura);
@@ -400,9 +404,12 @@ class MundoDoBaruState extends State<MundoDoBaru>
     final cenario = CenarioDoHabitat.de(app.habitatAtivo.id);
     final itens = itensDeCena.where((i) => app.estaEquipado(i.id)).toList();
     _parado = Movimento.reduzido(context);
+    // Ovo e ninho não andam: escolher passeio para eles deixava um alvo
+    // velho esperando o bicho crescer (auditoria).
     _livre =
         !_parado &&
         !_naAgua &&
+        app.estagioVisivel != EstagioDoBicho.inicio &&
         (app.activity == Activity.idle || app.activity == Activity.graze);
     // O axolote mora na água, dormindo inclusive (descansa no fundo). Só
     // "começar" nela deixava preso na beira quem abria o app no cochilo

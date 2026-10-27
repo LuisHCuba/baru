@@ -191,4 +191,24 @@ void main() {
     expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsNothing);
     await _fecha(tester);
   });
+
+  testWidgets('voltando de uma tela de detalhe, ele fala de novo', (
+    tester,
+  ) async {
+    final app = await _abre(tester);
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+    expect(find.byKey(HomeScreen.balaoKey).hitTestable(), findsNothing);
+    app.go(AppScreen.report);
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    app.voltar();
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(find.byKey(HomeScreen.balaoKey).hitTestable(), findsOneWidget);
+    await _fecha(tester);
+  });
 }

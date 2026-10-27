@@ -2344,16 +2344,7 @@ class _PetPainter extends CustomPainter {
                 ..blendMode = BlendMode.srcATop)
             : (Paint()
                 ..blendMode = BlendMode.srcATop
-                ..shader = LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    agua.withValues(alpha: 0.62),
-                    agua.withValues(alpha: 0.95),
-                  ],
-                ).createShader(
-                  Rect.fromLTRB(0, linhaDagua, size.width, linhaDagua + 40),
-                )),
+                ..shader = _sombraDaAgua(agua, linhaDagua, size.width)),
       );
       canvas.restore();
       canvas.restore(); // fecha a camada do corpo
@@ -5629,6 +5620,23 @@ class _PetPainter extends CustomPainter {
   /// aqui brigaria com a cena inteira.
   static const _tomDaAgua = Color(0x704E7A63);
 
+  // O degradê da água no mundo, guardado: muda só com a cor da lagoa e o
+  // tamanho do quadro, e nadando ele era refeito a cada quadro.
+  static Shader? _sombra;
+  static (Color, double, double)? _chaveDaSombra;
+
+  static Shader _sombraDaAgua(Color agua, double y, double largura) {
+    final chave = (agua, y, largura);
+    final pronta = _sombra;
+    if (pronta != null && _chaveDaSombra == chave) return pronta;
+    _chaveDaSombra = chave;
+    return _sombra = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [agua.withValues(alpha: 0.62), agua.withValues(alpha: 0.95)],
+    ).createShader(Rect.fromLTRB(0, y, largura, y + 40));
+  }
+
   /// O rastro: o que a água faz **por causa** do bicho.
   ///
   /// Três coisas, e nenhuma é decorativa. Os anéis dizem que ele se move; as
@@ -5847,6 +5855,7 @@ class _PetPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PetPainter old) {
     return old.species != species ||
+        old.pose.corDaAgua != pose.corDaAgua ||
         old.mood != mood ||
         old.corpoDe != corpoDe ||
         old.corpoPara != corpoPara ||

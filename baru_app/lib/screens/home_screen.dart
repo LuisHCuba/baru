@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// A fala que o balão mostrou por último: quando ela muda, ele volta.
   String? _falaMostrada;
+  bool _estavaCoberta = false;
 
   /// Disse o que tinha a dizer: o balão some e o mundo fica limpo. Não fica
   /// um ícone de conversa preso na cabeça dele — era mais um botão sobre a
@@ -94,10 +95,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 : 'homeBoasVindasNinho',
           )
         : app.frase(t.humorSub(fala), fala.valores);
-    if (_falaMostrada != '$cap|$sub') {
+    // Voltando de uma tela de detalhe (a home ficou por baixo, viva), ele
+    // fala de novo; coberta, o relógio do balão para (auditoria).
+    final atual = ModalRoute.isCurrentOf(context) ?? true;
+    if (!atual) {
+      _recolheBalao?.cancel();
+    } else if (_estavaCoberta || _falaMostrada != '$cap|$sub') {
       _falaMostrada = '$cap|$sub';
       _mostraBalao();
     }
+    _estavaCoberta = !atual;
 
     return Stack(
       fit: StackFit.expand,

@@ -589,7 +589,11 @@ extension _Episodios on MotorDeVida {
         // Chegou antes de acabar a remada: segue para o outro lado. Parar no
         // ponto e continuar batendo as patas era remar no lugar — na lagoa
         // do mundo a capivara ficava 20 s no mesmo palmo d'água.
-        if ((_alvoX - _px).abs() < 3 && _epFim - _t > 1.2) {
+        // Só em água larga: numa estreita todo alvo novo cai a menos de 3
+        // e ele virava de lado várias vezes por segundo (auditoria).
+        if (_meiaLargura > 12 &&
+            (_alvoX - _px).abs() < 3 &&
+            _epFim - _t > 1.2) {
           final lado = _px > _meio ? -1 : 1;
           _alvoX = (_meio + lado * _meiaLargura * _entre(0.35, 0.95)).clamp(
             _min,

@@ -351,16 +351,19 @@ class HomeScreen extends StatelessWidget {
 
   Widget _dot(WeekDayKind k) {
     switch (k) {
+      // Igual à tela da raiz: presente é verde com check, hoje é terracota
+      // (a cor da raiz). Cada tela tinha o seu jeito (simulador, D8).
       case WeekDayKind.present:
         return Container(
-          width: 13,
-          height: 13,
-          decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle),
+          width: 18,
+          height: 18,
+          decoration: const BoxDecoration(color: Cores.folha600, shape: BoxShape.circle),
+          child: const Icon(Icons.check_rounded, size: 12, color: Cores.tintaClara),
         );
       case WeekDayKind.frozen:
         return Container(
-          width: 13,
-          height: 13,
+          width: 18,
+          height: 18,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: Cores.ceu600, width: 2),
@@ -368,18 +371,18 @@ class HomeScreen extends StatelessWidget {
         );
       case WeekDayKind.today:
         return Container(
-          width: 13,
-          height: 13,
+          width: 18,
+          height: 18,
           decoration: BoxDecoration(
-            color: AppColors.greenA(0.25),
+            color: Cores.raiz500.withValues(alpha: 0.18),
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.green, width: 2),
+            border: Border.all(color: Cores.raiz500, width: 2),
           ),
         );
       case WeekDayKind.empty:
         return Container(
-          width: 13,
-          height: 13,
+          width: 18,
+          height: 18,
           decoration: BoxDecoration(color: AppColors.inkA(0.13), shape: BoxShape.circle),
         );
     }

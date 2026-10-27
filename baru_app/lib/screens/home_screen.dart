@@ -237,25 +237,40 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
 
         // --- a lateral: petisco, decorar, foto ------------------------------
+        // Quando ele nada até a ponta da lagoa, a câmera encosta no fim do
+        // mundo e ele passa por baixo dos botões. Os botões dão passagem
+        // (ficam translúcidos, continuam tocáveis) em vez de tapar o bicho.
         Positioned(
           right: Espaco.md,
           bottom: pad.bottom + 150,
-          child: Column(
-            children: [
-              _BotaoDoPetisco(app: app, mundo: _mundo),
-              const SizedBox(height: Espaco.sm),
-              _BotaoRedondo(
-                icone: Icons.palette_outlined,
-                rotulo: t.dockDecorar,
-                aoTocar: () => app.go(AppScreen.shop),
-              ),
-              const SizedBox(height: Espaco.sm),
-              _BotaoRedondo(
-                icone: Icons.photo_camera_outlined,
-                rotulo: t.dockFoto,
-                aoTocar: app.openShare,
-              ),
-            ],
+          child: ValueListenableBuilder<Offset?>(
+            valueListenable: _cabeca,
+            builder: (context, cabeca, coluna) => AnimatedOpacity(
+              opacity:
+                  cabeca != null &&
+                      cabeca.dx > MediaQuery.sizeOf(context).width - 150
+                  ? 0.4
+                  : 1,
+              duration: Tempo.componente,
+              child: coluna,
+            ),
+            child: Column(
+              children: [
+                _BotaoDoPetisco(app: app, mundo: _mundo),
+                const SizedBox(height: Espaco.sm),
+                _BotaoRedondo(
+                  icone: Icons.palette_outlined,
+                  rotulo: t.dockDecorar,
+                  aoTocar: () => app.go(AppScreen.shop),
+                ),
+                const SizedBox(height: Espaco.sm),
+                _BotaoRedondo(
+                  icone: Icons.photo_camera_outlined,
+                  rotulo: t.dockFoto,
+                  aoTocar: app.openShare,
+                ),
+              ],
+            ),
           ),
         ),
 

@@ -267,7 +267,7 @@ module.exports = async function jornada(sim) {
     sim.anota('relógio antes de desistir/recarregar: ' + await relogio());
     await sim.toca(/^Desistir/);
     await sim.foto('s2-confirma-desistir');
-    await sim.toca(/^Ficar com ele/);
+    await sim.toca(/^Continuar o foco|^Ficar com ele/);
     await sim.foto('s2-ficou');
     sim.anota('relógio antes de recarregar: ' + await relogio());
     await sim.recarrega();

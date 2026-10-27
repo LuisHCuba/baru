@@ -51,3 +51,38 @@ Fonte: capturas do Playwright em `scratchpad/sim-412` (jornada completa), `sim-3
 - **D25 — Grandes vazios verticais** no resultado (`083`, `192`), na desistência (`091`), na missão cumprida (`096`), nas permissões (`033`) e em "Sua conta" (`164`). **Correção:** centralizar o bloco na vertical ou aproximar o CTA.
 - **D26 — Loja em 320** (`sim-320/053`): o chip "Dá para levar" encosta nas bordas e "O que só existe porque ali te…" sai truncado.
 - **D27 — Faixa cinza-rosada horizontal atravessando a cena** e retângulo de sombra escuro sob o ninho ou os pés (`038`, `091`). Parecem bugs de camada, não arte. **Correção:** usar uma sombra elíptica suave e integrar a faixa à margem do lago.
+
+---
+
+## Situação das correções (2026-10-27)
+
+Conferido com testes (cada correção de comportamento tem teste que falha no
+código anterior) e com uma segunda rodada do simulador.
+
+| Achado | Situação |
+|---|---|
+| D1 chave crua "raizCompartilhar" | Corrigido: o rótulo registra os textos antes de ler |
+| D2 crescimento "apagado" | **Não é defeito**: o véu é 98% opaco; a captura pega o texto ainda entrando (o roteiro fotografa assim que o botão existe na árvore de semântica) |
+| D3 CTA fora da tela em 360/320 | Corrigido: a cena da home encolhe até 40% da altura |
+| D4 "Começar foco" some depois da 1ª sessão | Corrigido: o bloco de foco vem logo depois da fala, em qualquer dia |
+| D5 "Ficar com ele" / "falar com ele" | Corrigido: "Continuar o foco", "Em que idioma vamos conversar?"; sem sexo dito, pt/es usam o nome |
+| D6 folha de compartilhar presa + "Null check" | Corrigido nos três caminhos do voltar; na 2ª rodada, **0 erros no console** (a pilha apontava para a semântica do Flutter Web com a folha sobre uma página removida) |
+| D7 espécies travadas fora de ordem | Ordenadas pelo passo que abre. Que as espécies de origem não escolhidas voltem a travar é regra de produto, não defeito |
+| D8 cor do dia da raiz | Não tratado |
+| D9 escavação | **Refeita do zero**: corte de terra com o bicho cavando, pote de barro, túnel, luz subindo (24681cc) |
+| D10 bicho triste após desistir | O humor segue o contrato (§3, ADR-020); a cara de saudade virou "olhar pidão" em vez de emburrada (c752f48) |
+| D11 "fique com o Baru" / "Toque em Focar" | Corrigido |
+| D12 "Precisa do acesso a…" truncado | Até 2 linhas |
+| D13 rolagem sob a barra do onboarding | Espaço entre a barra e o conteúdo; o cabeçalho da loja não foi mexido |
+| D14 resultado em 320 | Pé da rolagem esmaecido; bicho menor em tela baixa |
+| D15 dica sobre a lua; vaso cortado | Corrigido |
+| D16 "Tudo feito por hoje" enganoso | Texto próprio quando o resto depende da permissão |
+| D17 trilha | Não tratado (progresso sequencial e miniaturas iguais) |
+| D18 loja chamada "Habitat" | "Loja do habitat" |
+| D19 folhas não cobrem a barra de abas | Não tratado: a barra fica fora do único `Navigator` do app; exige mudar a estrutura da casca |
+| D20 "dias seguidos presente" | Corrigido; perguntas do quiz sem "?" não tratadas |
+| D21 CTA da promessa | "Continuar" |
+| D22, D24, D26 | Não tratados |
+| D23 "Sua conta" e "Refazer o onboarding" | Corrigidos ("Refazer a apresentação") |
+| D25 vazios verticais | Parcial (escavação e cena da missão) |
+| D27 faixa/sombra retangular | Sombra do bicho virou elipse nos pés, e some na água |

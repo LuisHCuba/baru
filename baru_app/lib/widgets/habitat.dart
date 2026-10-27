@@ -589,24 +589,9 @@ class _HabitatSceneState extends State<HabitatScene>
                       // virava uma faixa cinza atrás do quadril (auditoria da
                       // Onda 4). Agora é uma elipse curta, nos pés, e some
                       // dentro d'água — onde sombra de chão não existe.
-                      if (!_naAgua(app))
-                        AnimatedPositioned(
-                          duration: _mudaDeLugar,
-                          curve: Curves.easeInOut,
-                          left: 0,
-                          right: 0,
-                          bottom: _alturaDoPet(app) * sy - 4 * escalaDoPet,
-                          child: Center(
-                            child: Container(
-                              width: 92 * escalaDoPet,
-                              height: 12 * escalaDoPet,
-                              decoration: BoxDecoration(
-                                color: Cores.tintaA(0.14),
-                                borderRadius: Raio.todos(Raio.pilula),
-                              ),
-                            ),
-                          ),
-                        ),
+                      // A sombra agora é do bicho (`PetView.sombra`): ele anda
+                      // pelo habitat e pula, e uma sombra fixa no centro
+                      // ficava para trás.
                       // A troca de lugar anda junto com a troca de humor
                       // (350 ms no bicho): o corpo ia da margem para a água
                       // num quadro só (auditoria da Onda 3, 11a-M2).
@@ -618,6 +603,18 @@ class _HabitatSceneState extends State<HabitatScene>
                         bottom: _alturaDoPet(app) * sy,
                         child: Center(
                           child: PetView(
+                            // A caixa ocupa a largura da cena: é por ela que
+                            // ele passeia, com margem para não sair do quadro.
+                            // Um pixel de folga de cada lado: a conta de
+                            // volta pela escala não pode passar da borda.
+                            width: (c.maxWidth - 2) / escalaDoPet,
+                            areaDeAndar: widget.animado
+                                ? math.max(
+                                    0,
+                                    c.maxWidth / escalaDoPet / 2 - 74,
+                                  )
+                                : 0,
+                            sombra: true,
                             species: app.species,
                             mood: widget.humor ?? app.mood,
                             activity: _atividade(app),

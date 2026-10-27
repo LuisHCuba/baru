@@ -32,12 +32,15 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../data/crescimento.dart';
 import '../models.dart';
 import '../services/som_service.dart';
 import '../theme.dart';
+import 'vida/motor_de_vida.dart';
 
 /// Um gesto de ocioso: o que o bicho faz quando ninguém está pedindo nada.
 ///
@@ -286,7 +289,19 @@ class PetView extends StatefulWidget {
     this.estagio = EstagioDoBicho.adulto,
     this.olharExterno,
     this.cutucadas,
+    this.areaDeAndar = 0,
+    this.sombra = false,
   });
+
+  /// Quanto ele pode passear para cada lado, em unidades do desenho. Com
+  /// mais que zero ele anda pelo habitat sozinho, em pulinhos, e pode ser
+  /// carregado para outro lugar. A caixa [width] precisa ter essa folga.
+  final double areaDeAndar;
+
+  /// Sombra no chão, embaixo dele, que encolhe quando ele pula ou é
+  /// carregado. O habitat desenhava uma fixa no centro; com o bicho andando
+  /// ela tem de ir junto.
+  final bool sombra;
 
   /// Para onde ele olha, mandado de fora (-1..1 nos dois eixos): o dedo
   /// passeando pela cena da sessão, longe dele, e ele acompanhando.
@@ -364,6 +379,11 @@ class PetView extends StatefulWidget {
   @visibleForTesting
   static GestoOcioso? gestoForcado;
 
+  /// Onde está o corpo do bicho que passeia, em coordenadas globais. Nulo
+  /// em produção — o teste precisa tocar nele depois que ele andou.
+  @visibleForTesting
+  static ValueNotifier<Offset?>? observadorDoCentro;
+
   @override
   State<PetView> createState() => _PetViewState();
 }
@@ -428,6 +448,66 @@ class _PetViewState extends State<PetView>
   );
 
   final _sorte = math.Random();
+
+  /// O motor de vida: respiração, boia, cauda, olhar, passeio, colo — tudo
+  /// que antes era laço de período fixo (ver `vida/motor_de_vida.dart`).
+  late final MotorDeVida _vida = MotorDeVida(
+    // Cada bicho tem a sua: zonas de carinho e jeito próprios, estáveis.
+    semente: widget.species.index * 7919 + widget.coat * 31 + 1,
+    areaDeAndar: widget.areaDeAndar,
+  )..aoEvento = _eventoDaVida;
+
+  /// O motor pede um gesto da coreografia (sacudir ao cair do colo, depois
+  /// de um espirro; espreguiçar ao sair do descanso; coçar).
+  void _eventoDaVida(EventoDaVida e) {
+    if (!mounted || !_continuoLigado || _gestoAtual != GestoOcioso.nenhum) {
+      return;
+    }
+    if (_acao != AcaoDoBicho.ocioso && e != EventoDaVida.sacode) return;
+    final gesto = switch (e) {
+      EventoDaVida.sacode => GestoOcioso.sacode,
+      EventoDaVida.espreguica => GestoOcioso.espreguica,
+      EventoDaVida.coca => GestoOcioso.coca,
+    };
+    setState(() => _gestoAtual = gesto);
+    PetView.observadorDeGesto?.value = gesto;
+    _gesto.forward(from: 0).then((_) {
+      if (!mounted) return;
+      setState(() => _gestoAtual = GestoOcioso.nenhum);
+      PetView.observadorDeGesto?.value = GestoOcioso.nenhum;
+    });
+  }
+  late final Ticker _relogio = createTicker(_tique);
+  Duration _ultimoTique = Duration.zero;
+  final _quadroDaVida = ValueNotifier<SaidaDaVida>(const SaidaDaVida());
+
+  void _tique(Duration agora) {
+    final dt = (agora - _ultimoTique).inMicroseconds / 1e6;
+    _ultimoTique = agora;
+    final acao = _acao;
+    _vida
+      ..olharDeFora = _dedo == null ? widget.olharExterno : null
+      // Dormindo ou voando o corpo é da atividade; o resto deixa ele viver.
+      ..ocupado = acao == AcaoDoBicho.cochilo || acao == AcaoDoBicho.voo
+      ..dormindo = acao == AcaoDoBicho.cochilo
+      ..nadando = acao == AcaoDoBicho.nado
+      ..posturaLivre = _acaoDesenhada == AcaoDoBicho.ocioso
+      ..podeAndar = widget.interativo &&
+          (acao == AcaoDoBicho.ocioso ||
+              acao == AcaoDoBicho.pasto ||
+              acao == AcaoDoBicho.petisco ||
+              acao == AcaoDoBicho.nado ||
+              acao == AcaoDoBicho.brincadeira);
+    _quadroDaVida.value = _vida.passo(dt);
+    final observador = PetView.observadorDoCentro;
+    if (observador != null && widget.areaDeAndar > 0) {
+      final caixa = context.findRenderObject();
+      if (caixa is RenderBox && caixa.hasSize) {
+        observador.value = caixa.localToGlobal(_centroNaTela);
+      }
+    }
+  }
+
   Timer? _proximoPiscar;
   Timer? _proximaOrelha;
   Timer? _proximoGesto;
@@ -548,6 +628,20 @@ class _PetViewState extends State<PetView>
   AcaoDoBicho get _acao =>
       acaoNoEstagio(widget.species, widget.activity, widget.estagio);
 
+  /// O que o desenho mostra: a atividade, salvo quando o motor de vida tirou
+  /// o bicho dela — andando em pulinhos, festejando, no colo — porque ninguém
+  /// pasta de cabeça baixa enquanto pula de um lado a outro.
+  AcaoDoBicho get _acaoDesenhada {
+    final a = _acao;
+    if (a == AcaoDoBicho.nado || a == AcaoDoBicho.cochilo) return a;
+    if (_vida.noColo ||
+        _vida.intencao == IntencaoDoBicho.festejar ||
+        (_vida.intencao == IntencaoDoBicho.passear && _vida.andando)) {
+      return AcaoDoBicho.ocioso;
+    }
+    return a;
+  }
+
   Duration get _duracaoDoCiclo => switch (_acao) {
         AcaoDoBicho.nado => _cicloDoNado,
         AcaoDoBicho.voo => _cicloDoVoo,
@@ -570,31 +664,37 @@ class _PetViewState extends State<PetView>
       };
 
   void _ajustaRitmo() {
-    _ciclo.duration = _duracaoDoCiclo;
-    _respiro.duration = _duracaoDaRespiracao;
-    if (!_continuoLigado) return;
-    // `duration` só vale a partir do próximo `repeat`: o ticker em curso
-    // guarda o período com que começou.
-    _ciclo.repeat();
-    _respiro.repeat(reverse: true);
+    _vida
+      ..periodoCiclo = _duracaoDoCiclo.inMicroseconds / 1e6
+      // O controlador ia e voltava: o fôlego inteiro é o dobro.
+      ..periodoRespiro = _duracaoDaRespiracao.inMicroseconds / 1e6 * 2
+      ..areaDeAndar = widget.areaDeAndar;
   }
 
   void _iniciaContinuo() {
     if (_continuoLigado) return;
     _continuoLigado = true;
-    _ciclo.duration = _duracaoDoCiclo;
-    _respiro.duration = _duracaoDaRespiracao;
-    _respiro.repeat(reverse: true);
-    _flutua.repeat(reverse: true);
-    _cauda.repeat(reverse: true);
-    _ciclo.repeat();
-    _agendaPiscar();
+    _ajustaRitmo();
+    _ultimoTique = Duration.zero;
+    _vida
+      ..hora = DateTime.now().hour
+      // Felinos e a coruja piscam menos; o buldogue, mais.
+      ..medianaDoPiscar = switch (widget.species) {
+        Species.cat || Species.fox || Species.owl => 4.6,
+        Species.frenchie => 3.0,
+        _ => 3.6,
+      };
+    if (!_relogio.isActive) _relogio.start();
+    // A piscada é do motor agora (log-normal, amarrada ao olhar); o
+    // agendador antigo só serve ao quadro fixo.
     _agendaOrelha();
     _agendaGesto();
   }
 
   void _paraContinuo() {
     _continuoLigado = false;
+    if (_relogio.isActive) _relogio.stop();
+    _quadroDaVida.value = const SaidaDaVida();
     _proximoPiscar?.cancel();
     _proximaOrelha?.cancel();
     _proximoGesto?.cancel();
@@ -622,25 +722,6 @@ class _PetViewState extends State<PetView>
       ..value = 0;
   }
 
-  /// Piscada em intervalo irregular, às vezes dupla.
-  ///
-  /// Cadência fixa parece relógio, não bicho.
-  void _agendaPiscar() {
-    _proximoPiscar?.cancel();
-    final espera = Duration(milliseconds: 1800 + _sorte.nextInt(4600));
-    _proximoPiscar = Timer(espera, () async {
-      if (!mounted || !_continuoLigado) return;
-      final vezes = _sorte.nextInt(5) == 0 ? 2 : 1;
-      for (var i = 0; i < vezes; i++) {
-        await _pisca.forward(from: 0);
-        if (!mounted) return;
-        await _pisca.reverse();
-        if (!mounted) return;
-      }
-      _agendaPiscar();
-    });
-  }
-
   void _agendaOrelha() {
     _proximaOrelha?.cancel();
     final espera = Duration(milliseconds: 3200 + _sorte.nextInt(7000));
@@ -666,7 +747,11 @@ class _PetViewState extends State<PetView>
     final espera = Duration(milliseconds: 5000 + _sorte.nextInt(7000));
     _proximoGesto = Timer(espera, () async {
       if (!mounted || !_continuoLigado) return;
-      if (_acao != AcaoDoBicho.ocioso || _toque.isAnimating) {
+      if (_acao != AcaoDoBicho.ocioso ||
+          _toque.isAnimating ||
+          _vida.noColo ||
+          _vida.intencao == IntencaoDoBicho.passear ||
+          _vida.intencao == IntencaoDoBicho.festejar) {
         _agendaGesto();
         return;
       }
@@ -709,6 +794,9 @@ class _PetViewState extends State<PetView>
     }
     unawaited(SomService.instance.toca(SomDoBaru.toque));
 
+    // O corpo reage com massa: achata no toque e volta balançando.
+    _vida.tocado(_relativoAoCorpo(detalhe.localPosition));
+
     // Olha para o dedo.
     final tamanho = Size(widget.width, widget.height);
     final local = detalhe.localPosition;
@@ -746,6 +834,76 @@ class _PetViewState extends State<PetView>
   }
 
   // ======================================================================
+  // ONDE ESTÁ O CORPO — o bicho anda, e o toque tem de achar ele
+  // ======================================================================
+
+  /// O tamanho de verdade: numa lista o bicho é esticado à largura dela, e
+  /// o desenho (centrado) vai junto.
+  Size get _caixa {
+    final s = context.size;
+    return s ?? Size(widget.width, widget.height);
+  }
+
+  /// O ponto de repouso do corpo, sem escala, na caixa do widget.
+  Offset get _repouso => Offset(_caixa.width / 2, _caixa.height / 2 + 10);
+
+  /// O ponto fixo do `Transform.scale` (o alinhamento), na caixa.
+  Offset get _pivo => widget.alignment.alongSize(_caixa);
+
+  /// Desenho → tela.
+  Offset _naTela(Offset p) => _pivo + (p - _pivo) * widget.scale;
+
+  /// Tela → desenho.
+  Offset _noDesenho(Offset tela) => _pivo + (tela - _pivo) / widget.scale;
+
+  /// O centro do corpo agora, na tela.
+  Offset get _centroNaTela =>
+      _naTela(_repouso + _quadroDaVida.value.desloca);
+
+  /// Um ponto da tela relativo ao corpo, -1..1 (o corpo tem ~70 de raio).
+  Offset _relativoAoCorpo(Offset tela) {
+    final d = (tela - _centroNaTela) / (70 * widget.scale);
+    return Offset(d.dx.clamp(-1.5, 1.5), d.dy.clamp(-1.5, 1.5));
+  }
+
+  /// O toque só é dele se cair perto do corpo: com a caixa larga do
+  /// passeio, o resto do habitat continua rolando a página.
+  bool _tocaNoCorpo(Offset tela) {
+    final d = tela - _centroNaTela;
+    final rx = 82 * widget.scale, ry = 78 * widget.scale;
+    return (d.dx * d.dx) / (rx * rx) + (d.dy * d.dy) / (ry * ry) <= 1;
+  }
+
+  // ======================================================================
+  // COLO — pegar, carregar e soltar
+  // ======================================================================
+
+  bool _noColo = false;
+
+  void _pega(LongPressStartDetails d) {
+    if (!widget.interativo || widget.areaDeAndar <= 0) return;
+    _gesto.stop();
+    _gestoAtual = GestoOcioso.nenhum;
+    final noDesenho = _noDesenho(d.localPosition) - _repouso;
+    _vida.pegou(noDesenho - _quadroDaVida.value.desloca);
+    _noColo = true;
+    HapticFeedback.mediumImpact();
+    unawaited(SomService.instance.toca(SomDoBaru.toque));
+  }
+
+  void _carrega(LongPressMoveUpdateDetails d) {
+    if (!_noColo) return;
+    _vida.carrega(_noDesenho(d.localPosition) - _repouso);
+  }
+
+  void _solta() {
+    if (!_noColo) return;
+    _noColo = false;
+    _vida.soltou();
+    HapticFeedback.lightImpact();
+  }
+
+  // ======================================================================
   // AFAGO — a mão passando, não o dedo cutucando
   // ======================================================================
 
@@ -773,6 +931,10 @@ class _PetViewState extends State<PetView>
     }
 
     _gosto.value = (_percorrido / PetView.percursoDoAfago).clamp(0.0, 1.0);
+    _vida.afagado(
+      _relativoAoCorpo(d.localPosition),
+      d.delta * 60,
+    );
 
     if (_gosto.value >= 1 && !_afagoCreditado) {
       _afagoCreditado = true;
@@ -793,6 +955,7 @@ class _PetViewState extends State<PetView>
 
   void _terminaAfago() {
     if (!widget.interativo) return;
+    _vida.soltouAfago();
     setState(() => _dedo = null);
     // Desce sozinho: a satisfação não some no instante em que a mão sai.
     if (_gosto.value > 0) _gosto.reverse();
@@ -821,6 +984,8 @@ class _PetViewState extends State<PetView>
     _gesto.dispose();
     _gosto.dispose();
     _transicao.dispose();
+    _relogio.dispose();
+    _quadroDaVida.dispose();
     super.dispose();
   }
 
@@ -832,10 +997,7 @@ class _PetViewState extends State<PetView>
       key: PetView.cenaKey,
       child: AnimatedBuilder(
         animation: Listenable.merge([
-          _respiro,
-          _flutua,
-          _cauda,
-          _ciclo,
+          _quadroDaVida,
           _pisca,
           _orelha,
           _toque,
@@ -912,24 +1074,31 @@ class _PetViewState extends State<PetView>
         estagio: widget.estagio,
         pose: widget.quadro?._pose(_acao) ??
             _Pose(
-              acao: _acao,
+              acao: _acaoDesenhada,
               // Cru, sem curva: o laço da atividade é uma fase que dá a
               // volta. Passá-lo por `easeInOut` como os contínuos criaria
               // um salto na emenda entre 1 e 0 — a braçada travava a cada
               // volta.
-              ciclo: _ciclo.value,
-              respiro: Curvas.organica.transform(_respiro.value) * 2 - 1,
-              boia: Curvas.organica.transform(_flutua.value) * 2 - 1,
-              cauda: Curvas.organica.transform(_cauda.value) * 2 - 1,
-              pisca: _pisca.value,
+              ciclo: _quadroDaVida.value.ciclo,
+              respiro: _quadroDaVida.value.respiro,
+              boia: _quadroDaVida.value.boia,
+              cauda: _quadroDaVida.value.cauda,
+              vida: _quadroDaVida.value,
+              sombra: widget.sombra,
+              pisca: math.max(_pisca.value, _quadroDaVida.value.pisca),
               orelha: _orelha.value,
               toque: _toque.value,
-              olhar: widget.olharExterno != null && _dedo == null
-                  ? widget.olharExterno!
+              // O olhar do motor já vem com mola (sacadas, assentamento) e já
+              // segue o de fora; o dedo e o gesto de olhar em volta mandam
+              // por cima.
+              olhar: _dedo != null
+                  ? _olhar
                   : _gestoAtual == GestoOcioso.olhaEmVolta
                   // Varredura da cabeça: dois lados e volta ao centro.
                   ? Offset(math.sin(_gesto.value * math.pi * 2), -0.12)
-                  : _olhar,
+                  : _toque.isAnimating
+                  ? _olhar
+                  : _quadroDaVida.value.olhar,
               animado: _toquesSeguidos >= 3,
               amplitude: amplitude,
               gesto: _gestoAtual,
@@ -945,9 +1114,24 @@ class _PetViewState extends State<PetView>
   Widget _comGestos(Widget corpo) {
     // `opaque`, não `deferToChild`: um CustomPaint sem filho não responde a
     // hit-test, então deferir ao filho deixaria o toque no bicho sem efeito.
-    return RawGestureDetector(
+    return _AreaDoBicho(
+      contem: _tocaNoCorpo,
+      child: RawGestureDetector(
       behavior: HitTestBehavior.opaque,
       gestures: {
+        // Segurar e arrastar: carrega o bicho para outro lugar.
+        if (widget.areaDeAndar > 0)
+          LongPressGestureRecognizer:
+              GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+            () => LongPressGestureRecognizer(
+              duration: const Duration(milliseconds: 320),
+            ),
+            (r) => r
+              ..onLongPressStart = _pega
+              ..onLongPressMoveUpdate = _carrega
+              ..onLongPressEnd = ((_) => _solta())
+              ..onLongPressCancel = _solta,
+          ),
         TapGestureRecognizer:
             GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
           TapGestureRecognizer.new,
@@ -964,7 +1148,39 @@ class _PetViewState extends State<PetView>
         ),
       },
       child: corpo,
+      ),
     );
+  }
+}
+
+/// Só aceita o toque onde o bicho está.
+class _AreaDoBicho extends SingleChildRenderObjectWidget {
+  const _AreaDoBicho({required this.contem, super.child});
+
+  final bool Function(Offset) contem;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderAreaDoBicho(contem);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderAreaDoBicho renderObject,
+  ) {
+    renderObject.contem = contem;
+  }
+}
+
+class _RenderAreaDoBicho extends RenderProxyBox {
+  _RenderAreaDoBicho(this.contem);
+
+  bool Function(Offset) contem;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (!contem(position)) return false;
+    return super.hitTest(result, position: position);
   }
 }
 
@@ -1062,7 +1278,16 @@ class _Pose {
     this.gestoT = 0,
     this.dedo,
     this.gosto = 0,
+    this.vida = const SaidaDaVida(),
+    this.sombra = false,
   });
+
+  /// O quadro do motor de vida: passeio, salto, colo, inclinação,
+  /// achatamento. Zerado no quadro fixo e com movimento reduzido.
+  final SaidaDaVida vida;
+
+  /// Desenhar a sombra no chão (o habitat).
+  final bool sombra;
 
   /// O que ele está fazendo — já traduzido para a espécie.
   final AcaoDoBicho acao;
@@ -1627,6 +1852,20 @@ class _PetPainter extends CustomPainter {
     );
     if (nadando) canvas.saveLayer(folga, Paint());
 
+    final vida = pose.vida;
+    // A sombra fica no chão: anda com ele, encolhe e clareia quando ele sobe.
+    if (pose.sombra && !nadando) {
+      final alto = (vida.altura / 120).clamp(0.0, 1.0);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(cx + vida.desloca.dx, cy + _pes - 1),
+          width: 88 * (1 - alto * 0.45) * _porte,
+          height: 11 * (1 - alto * 0.45),
+        ),
+        Paint()..color = Cores.tintaA(0.15 * (1 - alto * 0.6)),
+      );
+    }
+
     canvas.save();
     final corpoY = cy +
         balanco +
@@ -1634,6 +1873,26 @@ class _PetPainter extends CustomPainter {
         pose.estica * 4 -
         pose.saltinho;
     canvas.translate(cx + pose.pesoNoPe, corpoY);
+
+    // O motor de vida, por cima de tudo que a atividade já faz: o passeio e
+    // o salto movem o corpo; a inclinação gira pelos pés (ou pelo cangote,
+    // no colo); o achatamento preserva o volume — achata e alarga juntos.
+    canvas.translate(vida.desloca.dx, vida.desloca.dy);
+    if (vida.virado) canvas.scale(-1, 1);
+    if (vida.inclina != 0) {
+      final pivoDaInclinacao = vida.carregado ? -40.0 : _pes;
+      canvas.translate(0, pivoDaInclinacao);
+      canvas.rotate(vida.inclina);
+      canvas.translate(0, -pivoDaInclinacao);
+    }
+    if (vida.achata != 0) {
+      final a = vida.achata;
+      final sy = 1 - a * 0.18;
+      final sx = 1 / math.sqrt(sy.clamp(0.6, 1.6));
+      canvas.translate(0, _pes);
+      canvas.scale(sx, sy);
+      canvas.translate(0, -_pes);
+    }
 
     final giro = switch (acao) {
       AcaoDoBicho.cochilo => -0.16,

@@ -53,14 +53,17 @@ Widget _cena({
 ///
 /// `toImage()` completa na thread de rasterização, fora do fake-async do
 /// `flutter_test`: sem `runAsync` o Future nunca resolve e o teste trava.
-Future<Uint8List> _quadro(WidgetTester tester) async {
+Future<Uint8List> _quadro(WidgetTester tester, {bool confere = true}) async {
   final boundary = tester.renderObject<RenderRepaintBoundary>(
     find.byKey(PetView.cenaKey),
   );
   final bytes = await tester.runAsync(() async {
     final img = await boundary.toImage();
-    expect(img.width, _larguraDoQuadro);
-    expect(img.height, _alturaDoQuadro);
+    // Na sessão a caixa é a largura da cena (o bicho passeia por ela).
+    if (confere) {
+      expect(img.width, _larguraDoQuadro);
+      expect(img.height, _alturaDoQuadro);
+    }
     final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
     img.dispose();
     return data!.buffer.asUint8List();
@@ -733,11 +736,11 @@ void main() {
       final app = await abre(tester, Species.capybara);
       expect(app.species, Species.capybara);
 
-      final antes = await _quadro(tester);
+      final antes = await _quadro(tester, confere: false);
       // Meia braçada: se a tela estivesse com o bicho parado, isto sairia
       // byte a byte igual — foi exatamente o defeito relatado.
       await tester.pump(const Duration(milliseconds: 575));
-      final depois = await _quadro(tester);
+      final depois = await _quadro(tester, confere: false);
       expect(_mudou(antes, depois), isTrue);
     });
 

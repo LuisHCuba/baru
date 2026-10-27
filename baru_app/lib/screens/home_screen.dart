@@ -26,6 +26,7 @@ class HomeScreen extends StatelessWidget {
         app.streak == 0 &&
         app.daysAway == 0 &&
         !app.abandonedToday;
+    final focoAntes = MediaQuery.sizeOf(context).height < 760;
     final next = app.nextItem;
     final fala = app.falaDoHumor;
     final usagePct = (app.usage / (app.goal * 1.35)).clamp(0.0, 1.0);
@@ -114,6 +115,13 @@ class HomeScreen extends StatelessWidget {
         // O crescimento do bicho, logo abaixo dele: quanto falta e o que vem.
         const BarraDoCrescimento(),
         const SizedBox(height: Espaco.md),
+        // Em tela baixa (640 dp) a ação vem antes da fala: com a fala
+        // inteira na frente, o "Começar foco" ficava abaixo da dobra na
+        // primeira visita (simulador da Onda 4, 320 e 360).
+        if (focoAntes) ...[
+          ..._secaoDeFoco(app),
+          const SizedBox(height: Espaco.lg),
+        ],
         // A legenda diz **o fato** que levou o bicho àquele humor, com o
         // número que o app mediu, e só depois o sentimento. Antes vinha de
         // `moodCap`/`moodSub`: um texto por humor, sempre igual, que dizia
@@ -144,8 +152,10 @@ class HomeScreen extends StatelessWidget {
         // A ação do app logo depois da fala, em qualquer dia. No fim da
         // lista — depois do relatório, da semana e da loja — ela sumia da
         // tela a partir da segunda sessão (simulador da Onda 4).
-        const SizedBox(height: Espaco.md),
-        ..._secaoDeFoco(app),
+        if (!focoAntes) ...[
+          const SizedBox(height: Espaco.md),
+          ..._secaoDeFoco(app),
+        ],
         if (!primeira) const SizedBox(height: Espaco.xl),
         if (!primeira)
         GestureDetector(

@@ -2,6 +2,9 @@ import 'package:baru_app/l10n.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/state.dart';
 import 'package:baru_app/theme.dart';
+import 'package:baru_app/widgets/common.dart';
+import 'package:baru_app/widgets/pet_profile.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Meta editável, horário do relatório e sexo do companheiro.
@@ -11,6 +14,35 @@ import 'package:flutter_test/flutter_test.dart';
 /// de "ele".
 
 void main() {
+  // O nome no cartão de Ajustes: a chave do campo levava o nome, cada letra
+  // recriava o campo e o teclado fechava (auditoria da Onda 4, A2).
+  testWidgets('digitar o nome não derruba o foco do campo', (tester) async {
+    final s = AppState()
+      ..onb = 9
+      ..companionshipStarted = true;
+    addTearDown(s.dispose);
+    await tester.pumpWidget(AppScope(
+      state: s,
+      child: const MaterialApp(
+        home: Scaffold(body: CompanionCard(completo: false)),
+      ),
+    ));
+    final campo = find.byType(TextField);
+    await tester.tap(campo);
+    await tester.pump();
+    final antes = tester.element(find.byType(EditableText));
+    await tester.enterText(campo, 'Ni');
+    await tester.pump();
+    await tester.enterText(campo, 'Nin');
+    await tester.pump();
+    expect(s.petName, 'Nin');
+    expect(tester.element(find.byType(EditableText)), same(antes),
+        reason: 'o mesmo campo, não um recriado');
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   group('a meta', () {
     test('sobe e desce em passos, e para nos limites', () {
       final s = AppState()..pickGoal(120);

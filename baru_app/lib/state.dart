@@ -327,9 +327,14 @@ class AppState extends ChangeNotifier {
   }
 
   /// "Colher" na cena: paga as missões e passa para a próxima conquista.
+  ///
+  /// Não passa por [celebrou]: com as missões já pagas, ele acharia a cena
+  /// vazia e consumiria a **próxima** da fila (o crescimento, o nível que
+  /// esta mesma colheita pode ter subido) sem que ela aparecesse.
   void colheAsCumpridas() {
     resgataTodas(missoesACumprir);
-    celebrou();
+    missoesCumpridas = const [];
+    notifyListeners();
   }
 
   /// A chegada do dia ainda não foi comemorada.
@@ -770,8 +775,12 @@ class AppState extends ChangeNotifier {
         }
         continue;
       }
+      // O dia congelado entra na raiz (`_advanceDay` soma a presença), então
+      // desconta como os outros — senão um dia sem foco antes da raiz saía
+      // pintado.
       if (week[i] == WeekDayKind.frozen && faltam > 0) {
         marcas[k] = WeekDayKind.frozen;
+        faltam--;
         continue;
       }
       if (faltam > 0) {

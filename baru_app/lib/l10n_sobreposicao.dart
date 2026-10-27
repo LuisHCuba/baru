@@ -52,7 +52,7 @@ const textosDaSobreposicao = <String, Map<String, String>>{
     'sobPermJanelaT': 'Aparecer sobre outros apps',
     'sobPermJanelaQue':
         'Deixar {n} dar um oi num cantinho da tela enquanto você está em '
-            'outro app. Ele não trava nada, não fecha nada.',
+            'outro app. Isso não trava nada, não fecha nada.',
     'sobPermJanelaSem':
         'É esta que costuma faltar. Sem ela {n} vê você sair e não '
             'consegue aparecer — o app parece quebrado, e não está.',

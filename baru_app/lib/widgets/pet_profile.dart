@@ -270,7 +270,7 @@ class CompanionCard extends StatelessWidget {
           ),
           const SizedBox(height: Espaco.md),
           PetNameField(
-            key: ValueKey('${app.speciesKey}-${app.displayName}'),
+            key: ValueKey(app.speciesKey),
             initial: app.displayName,
             onChanged: app.setName,
           ),
@@ -337,7 +337,9 @@ class CompanionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 PetNameField(
-                  key: ValueKey('${app.speciesKey}-${app.displayName}'),
+                  // Pela espécie, não pelo nome: com o nome na chave o campo
+                  // era recriado a cada letra e o teclado fechava.
+                  key: ValueKey(app.speciesKey),
                   initial: app.displayName,
                   onChanged: app.setName,
                   compacto: true,

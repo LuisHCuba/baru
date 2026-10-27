@@ -91,6 +91,22 @@ void main() {
       );
     });
 
+    test('o dia congelado conta na raiz e não pinta um dia a mais', () {
+      // Segunda com foco, terça congelada, quarta (hoje) com foco: raiz 3.
+      final s = _em(quarta)
+        ..week = (List.filled(7, WeekDayKind.empty)
+          ..[0] = WeekDayKind.present
+          ..[1] = WeekDayKind.frozen)
+        ..streak = 3;
+      final marcas = s.ultimos7Dias.map((d) => d.$2).toList();
+      expect(marcas.sublist(4), [
+        WeekDayKind.present,
+        WeekDayKind.frozen,
+        WeekDayKind.present,
+      ]);
+      expect(marcas[3], WeekDayKind.empty, reason: 'domingo não teve foco');
+    });
+
     test('o congelamento recarrega na segunda', () {
       final s = _em(quarta, comSessao: false);
       s.freezesLeft = 1;

@@ -67,7 +67,7 @@ class SettingsScreen extends StatelessWidget {
               chave: null,
               icone: Icons.palette_outlined,
               rotulo: t.coat,
-              amostra: AppColors.coatDe(app.species)[app.color],
+              amostra: AppColors.pelagemDe(app.species, app.color),
               aoTocar: () => _abreAparencia(context, app),
             ),
           ],

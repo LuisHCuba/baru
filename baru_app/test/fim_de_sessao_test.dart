@@ -250,6 +250,23 @@ void main() {
       expect(s.missoesCumpridas, isEmpty);
     });
 
+    test('"Colher agora" não engole a conquista seguinte da fila', () {
+      final s = _app();
+      addTearDown(s.dispose);
+      _concluiUmaSessao(s);
+      s.nivelCelebrado = 0;
+      s.xp = 100000; // há um nível esperando a vez
+      s.celebrou(); // a raiz
+      expect(s.missoesACumprir, isNotEmpty);
+      final cresceu = s.cresceuSemCelebrar;
+      s.colheAsCumpridas();
+      expect(s.missoesACumprir, isEmpty);
+      expect(s.cresceuSemCelebrar, cresceu,
+          reason: 'colher não marca o crescimento como visto');
+      expect(s.subiuDeNivel, isTrue, reason: 'o nível ainda vai aparecer');
+      expect(s.temCelebracaoPendente, isTrue);
+    });
+
     test('colhida pela tela de missões, a cena não aparece', () {
       final s = _app();
       addTearDown(s.dispose);

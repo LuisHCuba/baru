@@ -126,7 +126,9 @@ class MissoesScreen extends StatelessWidget {
                 const SizedBox(width: Espaco.sm),
                 Expanded(
                   child: Text(
-                    t.missoesTodasFeitas,
+                    todas.any((m) => !m.disponivel) || !descanso.disponivel
+                        ? t.missoesFeitasSemUso
+                        : t.missoesTodasFeitas,
                     style: estilo(
                       Tipo.corpoPequeno,
                       color: Cores.primariaEscura,
@@ -598,7 +600,7 @@ class CartaoDeMissao extends StatelessWidget {
                   Flexible(
                     child: Text(
                       t.missaoPrecisaPermissao,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: estilo(
                         Tipo.rotuloPequeno,

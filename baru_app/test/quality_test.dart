@@ -131,7 +131,7 @@ void main() {
     );
     expect(find.text('Permitir acesso ao uso'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Refazer o onboarding'),
+      find.text('Refazer a apresentação'),
       120,
       scrollable: find.byType(Scrollable).first,
     );

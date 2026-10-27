@@ -328,7 +328,12 @@ class _SessionScreenState extends State<SessionScreen>
                                 // canto: crescendo com o foco. Solto na margem ele
                                 // caía em cima da pedra ou boiava na água.
                                 Positioned(
-                                  left: cena.width * 0.80,
+                                  // Dentro da margem: em 0,80 da largura o
+                                  // vaso saía cortado na borda direita.
+                                  left: math.min(
+                                    cena.width * 0.80,
+                                    cena.width - Espaco.md - 64 * escala,
+                                  ),
                                   bottom: Espaco.xs,
                                   width: 64 * escala,
                                   height: 104 * escala,
@@ -405,10 +410,11 @@ class _SessionScreenState extends State<SessionScreen>
                                   ),
                                 ),
                                 // A dica de carinho, enquanto ninguém tocou —
-                                // logo abaixo do selo, longe do broto e do bicho.
+                                // abaixo do selo, à esquerda: centrada, ela
+                                // cobria a lua no canto de cima.
                                 Positioned(
-                                  left: 0,
-                                  right: 0,
+                                  left: Espaco.md,
+                                  width: cena.width * 0.62,
                                   top:
                                       MediaQuery.paddingOf(context).top +
                                       Espaco.md +
@@ -418,7 +424,8 @@ class _SessionScreenState extends State<SessionScreen>
                                     child: AnimatedOpacity(
                                       opacity: _dica ? 1 : 0,
                                       duration: Tempo.componente,
-                                      child: Center(
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: Espaco.md,
@@ -429,7 +436,7 @@ class _SessionScreenState extends State<SessionScreen>
                                               alpha: 0.72,
                                             ),
                                             borderRadius: Raio.todos(
-                                              Raio.pilula,
+                                              Raio.campo,
                                             ),
                                           ),
                                           child: Text(

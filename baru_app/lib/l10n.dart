@@ -256,6 +256,7 @@ class T {
   String get setPrivacy => s('setPrivacy');
   String get setTerms => s('setTerms');
   String get setReplay => s('setReplay');
+  String get contaSemContaCorpo => s('contaSemContaCorpo');
   String get shareMeta => s('shareMeta');
   String get shareNote => s('shareNote');
   String get shareDone => s('shareDone');
@@ -556,6 +557,7 @@ class T {
   String get missoesVaziaT => s('missoesVaziaT');
   String get missoesVaziaB => s('missoesVaziaB');
   String get missoesTodasFeitas => s('missoesTodasFeitas');
+  String get missoesFeitasSemUso => s('missoesFeitasSemUso');
   String get msSessoes1 => s('msSessoes1');
   String get msSessoes => s('msSessoes');
   String get msMinutos => s('msMinutos');
@@ -678,6 +680,7 @@ const _pt = <String, Object>{
   'nivelRotulo': 'Nível {n}',
   'contaT': 'Sua conta',
   'contaSub': 'E-mail, senha e seus dados.',
+  'contaSemContaCorpo': 'Por enquanto, tudo o que você fez fica neste aparelho.',
   'contaEmail': 'E-mail',
   'contaEmailNaoConfirmado': 'ainda não confirmado',
   'contaTrocarEmail': 'Trocar e-mail',
@@ -852,6 +855,8 @@ const _pt = <String, Object>{
   'missoesVaziaT': 'As missões começam amanhã',
   'missoesVaziaB': 'Termine o onboarding e as três primeiras aparecem aqui.',
   'missoesTodasFeitas': 'Tudo feito por hoje. O próximo passo da trilha te espera.',
+  'missoesFeitasSemUso':
+      'Feito tudo o que dá sem o acesso ao uso. O próximo passo da trilha te espera.',
   'msSessoes1': 'Faça uma sessão de foco',
   'msSessoes': 'Faça {n} sessões de foco',
   'msMinutos': 'Some {n} min de foco',
@@ -864,7 +869,7 @@ const _pt = <String, Object>{
   'missaoGanhou': '+{n} folhas',
   'tocaTitulo': 'Tem algo enterrado aqui',
   'tocaAjuda': 'Toque na terra para cavar.',
-  'comoFoco': 'Toque em Focar na tela inicial e fique com o Baru até o fim.',
+  'comoFoco': 'Toque em Começar foco na tela inicial e vá até o fim.',
   'comoFocoLongo': 'Uma sessão só, mais longa: escolha a duração maior ao começar o foco.',
   'comoMinutos': 'Vale a soma do dia. Várias sessões curtas contam igual a uma longa.',
   'comoTela': 'Basta terminar o dia com menos tempo de tela que a sua meta.',
@@ -1100,7 +1105,7 @@ const _pt = <String, Object>{
       'Resta {n} congelamento nesta semana. Se você faltar um dia, ele te espera.',
   'repFreeze0':
       'Sem congelamento nesta semana. Se você faltar um dia, ele te espera.',
-  'shopT': 'Habitat',
+  'shopT': 'Loja do habitat',
   'shopOwned': 'No habitat',
   'shopNote':
       'Os itens ocupam um lugar fixo no habitat. Reorganizar vem depois.',
@@ -1132,7 +1137,7 @@ const _pt = <String, Object>{
   'setRestore': 'Restaurar compras',
   'setPrivacy': 'Política de privacidade',
   'setTerms': 'Termos de uso',
-  'setReplay': 'Refazer o onboarding',
+  'setReplay': 'Refazer a apresentação',
   'setPet': 'Companheiro',
   'setSpecies': 'Animal',
   'setUsage': 'Tempo de tela',
@@ -1244,6 +1249,7 @@ const _en = <String, Object>{
   'nivelRotulo': 'Level {n}',
   'contaT': 'Your account',
   'contaSub': 'Email, password and your data.',
+  'contaSemContaCorpo': 'For now, everything you have done stays on this phone.',
   'contaEmail': 'Email',
   'contaEmailNaoConfirmado': 'not confirmed yet',
   'contaTrocarEmail': 'Change email',
@@ -1418,6 +1424,8 @@ const _en = <String, Object>{
   'missoesVaziaT': 'Missions start tomorrow',
   'missoesVaziaB': 'Finish onboarding and the first three show up here.',
   'missoesTodasFeitas': 'All done for today. The next step on your path is waiting.',
+  'missoesFeitasSemUso':
+      'Everything possible without usage access is done. The next step on your path is waiting.',
   'msSessoes1': 'Do one focus session',
   'msSessoes': 'Do {n} focus sessions',
   'msMinutos': 'Add up {n} min of focus',
@@ -1430,7 +1438,7 @@ const _en = <String, Object>{
   'missaoGanhou': '+{n} leaves',
   'tocaTitulo': 'There\'s something buried here',
   'tocaAjuda': 'Tap the soil to dig.',
-  'comoFoco': 'Tap Focus on the home screen and stay with Baru to the end.',
+  'comoFoco': 'Tap Start focus on the home screen and stay to the end.',
   'comoFocoLongo': 'A single longer session: pick the longer duration when you start.',
   'comoMinutos': 'It\'s the day\'s total. Several short sessions count the same as one long one.',
   'comoTela': 'Just end the day with less screen time than your goal.',
@@ -1657,7 +1665,7 @@ const _en = <String, Object>{
       '{n} freeze left this week. If you miss a day, it waits for you.',
   'repFreeze0':
       'No freeze left this week. If you miss a day, it waits for you.',
-  'shopT': 'Habitat',
+  'shopT': 'Habitat shop',
   'shopOwned': 'In habitat',
   'shopNote':
       'Items land in a fixed spot in the habitat. Rearranging comes later.',
@@ -1800,6 +1808,7 @@ const _es = <String, Object>{
   'nivelRotulo': 'Nivel {n}',
   'contaT': 'Tu cuenta',
   'contaSub': 'Correo, contraseña y tus datos.',
+  'contaSemContaCorpo': 'Por ahora, todo lo que hiciste se queda en este teléfono.',
   'contaEmail': 'Correo',
   'contaEmailNaoConfirmado': 'aún sin confirmar',
   'contaTrocarEmail': 'Cambiar correo',
@@ -1974,6 +1983,8 @@ const _es = <String, Object>{
   'missoesVaziaT': 'Las misiones empiezan mañana',
   'missoesVaziaB': 'Termina el onboarding y las tres primeras aparecen aquí.',
   'missoesTodasFeitas': 'Todo hecho por hoy. El siguiente paso del camino te espera.',
+  'missoesFeitasSemUso':
+      'Hecho todo lo posible sin el acceso al uso. El siguiente paso del camino te espera.',
   'msSessoes1': 'Haz una sesión de enfoque',
   'msSessoes': 'Haz {n} sesiones de enfoque',
   'msMinutos': 'Suma {n} min de enfoque',
@@ -1986,7 +1997,7 @@ const _es = <String, Object>{
   'missaoGanhou': '+{n} hojas',
   'tocaTitulo': 'Hay algo enterrado aquí',
   'tocaAjuda': 'Toca la tierra para cavar.',
-  'comoFoco': 'Toca Enfocar en la pantalla inicial y quédate con Baru hasta el final.',
+  'comoFoco': 'Toca Empezar enfoque en la pantalla inicial y sigue hasta el final.',
   'comoFocoLongo': 'Una sola sesión más larga: elige la duración mayor al empezar.',
   'comoMinutos': 'Cuenta la suma del día. Varias sesiones cortas valen igual que una larga.',
   'comoTela': 'Basta terminar el día con menos tiempo de pantalla que tu meta.',
@@ -2214,7 +2225,7 @@ const _es = <String, Object>{
       'Queda {n} congelamiento esta semana. Si faltas un día, te espera.',
   'repFreeze0':
       'Sin congelamiento esta semana. Si faltas un día, te espera.',
-  'shopT': 'Hábitat',
+  'shopT': 'Tienda del hábitat',
   'shopOwned': 'En el hábitat',
   'shopNote':
       'Los objetos van a un lugar fijo del hábitat. Reordenar vendrá después.',
@@ -2358,6 +2369,7 @@ const _zh = <String, Object>{
   'nivelRotulo': '等级 {n}',
   'contaT': '你的账号',
   'contaSub': '邮箱、密码与你的数据。',
+  'contaSemContaCorpo': '目前，你做的一切都保存在这台设备上。',
   'contaEmail': '邮箱',
   'contaEmailNaoConfirmado': '尚未验证',
   'contaTrocarEmail': '更换邮箱',
@@ -2532,6 +2544,7 @@ const _zh = <String, Object>{
   'missoesVaziaT': '任务明天开始',
   'missoesVaziaB': '完成引导后，前三个任务会出现在这里。',
   'missoesTodasFeitas': '今天都完成了。路径上的下一步在等你。',
+  'missoesFeitasSemUso': '没有使用权限能做的都做完了。路径上的下一步在等你。',
   'msSessoes1': '完成一次专注',
   'msSessoes': '完成 {n} 次专注',
   'msMinutos': '累计 {n} 分钟专注',
@@ -2544,7 +2557,7 @@ const _zh = <String, Object>{
   'missaoGanhou': '+{n} 片叶子',
   'tocaTitulo': '这里埋着什么',
   'tocaAjuda': '点土堆开始挖。',
-  'comoFoco': '在主页点“专注”，陪着 Baru 到结束。',
+  'comoFoco': '在主页点“开始专注”，坚持到结束。',
   'comoFocoLongo': '只要一次更长的专注：开始时选更长的时长。',
   'comoMinutos': '算的是一天的总和。几次短专注和一次长的一样。',
   'comoTela': '只要今天的屏幕时间少于你的目标即可。',
@@ -2748,7 +2761,7 @@ const _zh = <String, Object>{
   'repPresent': '陪伴天数',
   'repFreeze': '本周还有 {n} 次冻结。如果你缺一天，它会等你。',
   'repFreeze0': '本周没有冻结次数了。如果你缺一天，它会等你。',
-  'shopT': '栖息地',
+  'shopT': '栖息地商店',
   'shopOwned': '已放置',
   'shopNote': '物品会放在固定位置。自由摆放稍后支持。',
   'items': ['睡莲', '竹丛', '温泉石', '木栈桥', '纸灯笼', '橘子树', '小船', '石桥'],

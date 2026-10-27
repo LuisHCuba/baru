@@ -57,7 +57,9 @@ class OnboardingScreen extends StatelessWidget {
       return BotaoBaru(rotulo: app.t.cont, aoTocar: app.nextOnb);
     }
     if (app.onb == 1) {
-      return BotaoBaru(rotulo: app.t.start, aoTocar: app.nextOnb);
+      // "Continuar", não "Começar foco": nesta tela o toque segue a
+      // apresentação, e foco nenhum começa (simulador da Onda 4).
+      return BotaoBaru(rotulo: app.t.cont, aoTocar: app.nextOnb);
     }
     if (app.onb == 2) {
       // Escolher já avança. O que sobra embaixo é o caminho de volta e, na

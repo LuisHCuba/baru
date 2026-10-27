@@ -239,6 +239,8 @@ class _PintorDaToca extends CustomPainter {
   static const _terra = Color(0xFF7A5A3C);
   static const _terraClara = Color(0xFF9B7550);
   static const _buraco = Color(0xFF3A2A1C);
+  static const _grama = Color(0xFF8DAA6B);
+  static const _gramaEscura = Color(0xFF6E9150);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -248,6 +250,71 @@ class _PintorDaToca extends CustomPainter {
     // O tremor some rápido: `sin` de meia onda, não um balanço que fica.
     final tremor = math.sin(pancada * math.pi) * 4;
     final larguraDoMonte = size.width * 0.62;
+
+    // O chão. A meia elipse solta no fundo escuro parecia um botão marrom
+    // flutuando (simulador da Onda 4): agora o monte está numa ilha de
+    // grama com a borda de terra à mostra, tufos e pedrinhas.
+    final ilha = Rect.fromCenter(
+      center: Offset(centro.dx, centro.dy + 30),
+      width: size.width * 0.94,
+      height: 64,
+    );
+    canvas.drawOval(ilha.shift(const Offset(0, 12)), p..color = _terra);
+    canvas.drawOval(
+      ilha,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_grama.withValues(alpha: 1), _gramaEscura],
+        ).createShader(ilha),
+    );
+    for (final (dx, alto) in [
+      (-0.40, 12.0),
+      (-0.33, 9.0),
+      (0.36, 13.0),
+      (0.42, 8.0),
+      (-0.12, 7.0),
+    ]) {
+      final base = Offset(centro.dx + ilha.width * dx, centro.dy + 34);
+      for (final inclina in [-4.0, 0.0, 4.0]) {
+        canvas.drawLine(
+          base,
+          base + Offset(inclina, -alto + inclina.abs() * 0.4),
+          Paint()
+            ..color = _gramaEscura
+            ..strokeWidth = 2.2
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+    }
+    for (final (dx, dy, r) in [
+      (0.27, 40.0, 5.0),
+      (0.31, 44.0, 3.4),
+      (-0.28, 46.0, 4.0),
+    ]) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(centro.dx + ilha.width * dx, centro.dy + dy),
+          width: r * 2.2,
+          height: r * 1.5,
+        ),
+        p..color = const Color(0xFFB8B0A3),
+      );
+    }
+    // Um brilho ou dois sobre o monte enquanto há algo enterrado.
+    if (abertura == 0) {
+      for (final (dx, dy, r) in [(-0.16, -44.0, 4.0), (0.18, -52.0, 3.0)]) {
+        final o = Offset(centro.dx + larguraDoMonte * dx, centro.dy + dy);
+        final brilho = Paint()
+          ..color = cor.withValues(alpha: 0.85)
+          ..strokeWidth = 1.6
+          ..strokeCap = StrokeCap.round;
+        canvas.drawLine(o.translate(-r, 0), o.translate(r, 0), brilho);
+        canvas.drawLine(o.translate(0, -r), o.translate(0, r), brilho);
+      }
+    }
+
     canvas.save();
     canvas.translate(0, tremor);
 
@@ -266,17 +333,35 @@ class _PintorDaToca extends CustomPainter {
         centro.dy + 26,
       )
       ..close();
-    canvas.drawPath(monte, p..color = _terraClara);
+    canvas.drawPath(
+      monte,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_terraClara, _terra],
+        ).createShader(monte.getBounds()),
+    );
+    // Torrões na encosta: terra remexida, não massa lisa.
+    for (final (dx, dy, r) in [
+      (-0.30, 14.0, 3.4),
+      (-0.18, 4.0, 2.4),
+      (0.22, 10.0, 3.0),
+      (0.32, 18.0, 2.2),
+    ]) {
+      canvas.drawCircle(
+        Offset(centro.dx + larguraDoMonte * dx, centro.dy + dy),
+        r,
+        p..color = _terra,
+      );
+    }
 
     // O buraco cresce com o que já foi cavado, e escancara na abertura —
     // **até a borda do monte**. Sem o teto ele passava da terra e virava um
     // borrão escuro solto na tela: buraco só lê como buraco enquanto tem
     // chão em volta.
     final teto = larguraDoMonte * 0.36;
-    final raio = math.min(
-      teto,
-      (10 + 44 * escavado) * (1 + 0.45 * abertura),
-    );
+    final raio = math.min(teto, (10 + 44 * escavado) * (1 + 0.45 * abertura));
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(centro.dx, centro.dy - 2),
@@ -319,7 +404,8 @@ class _PintorDaToca extends CustomPainter {
         final ang = -math.pi / 2 + (i - 3) * 0.34;
         final dist = 62 * pancada;
         final queda = 46 * pancada * pancada;
-        final pos = centro +
+        final pos =
+            centro +
             Offset(math.cos(ang) * dist, math.sin(ang) * dist + queda - 6);
         canvas.drawCircle(
           pos,

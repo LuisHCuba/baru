@@ -67,7 +67,7 @@ class _ContaScreenState extends State<ContaScreen> {
                   titulo: t.contaSemConta,
                   // Não repete o subtítulo do cartão de plano logo abaixo:
                   // a mesma frase duas vezes na tela lê como bug.
-                  corpo: t.contaSub,
+                  corpo: t.contaSemContaCorpo,
                 )
               else ...[
                 CartaoBaru(

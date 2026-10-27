@@ -73,6 +73,39 @@ enum EventoDaVida {
 /// Onde o dedo está no corpo, para o carinho.
 enum ZonaDoCorpo { cabeca, costas, barriga, nariz }
 
+/// Uma coisa do habitat que prende a atenção dele.
+enum TipoDeInteresse { bola, comida }
+
+/// O jeito de perseguir de cada espécie (pesquisa 20, mecânica 9: o cão
+/// corre direto; o gato encara, rebola e dá o bote).
+class JeitoDeCacar {
+  const JeitoDeCacar({
+    this.espreita = 0,
+    this.passo = 24,
+    this.cadencia = 0.34,
+    this.impulso = 200,
+  });
+
+  /// Segundos parado rebolando antes do bote (0 = vai direto).
+  final double espreita;
+
+  /// Quanto anda a cada pulinho, e de quanto em quanto tempo.
+  final double passo;
+  final double cadencia;
+  final double impulso;
+}
+
+/// Onde está a coisa, em unidades do desenho relativas ao repouso do corpo.
+class InteresseDoBicho {
+  const InteresseDoBicho(this.onde, this.tipo, {this.noAr = false});
+
+  final Offset onde;
+  final TipoDeInteresse tipo;
+
+  /// Sendo arrastada pelo dedo: ele olha e quer, mas não vai buscar.
+  final bool noAr;
+}
+
 /// Os números de um quadro. Tudo em unidades do desenho do bicho (a caixa de
 /// 200 × 150 em que ele é pintado).
 class SaidaDaVida {
@@ -211,6 +244,24 @@ class MotorDeVida {
   /// A hora do dia (0–23): muda os pesos do cérebro.
   int hora = 12;
 
+  /// A bola ou o petisco no habitat. Nulo: nada chamando a atenção.
+  InteresseDoBicho? interesse;
+
+  /// Como ele persegue (por espécie).
+  JeitoDeCacar jeito = const JeitoDeCacar();
+
+  /// Chegou na coisa: a cena decide (chutar a bola, comer o petisco).
+  void Function(TipoDeInteresse)? aoAlcancar;
+
+  double _espreitandoDesde = -1;
+
+  /// O pescoço esticando para a comida na mão (inclinação extra).
+  double _estica = 0;
+  double _ultimoAlcance = -100;
+
+  /// Perseguindo ou de olho em alguma coisa.
+  bool get interessado => interesse != null && !noColo;
+
   // --- olhar ------------------------------------------------------------
   final _pupila = Mola2(f: 11, zeta: 0.88);
   final _cabeca = Mola2(f: 1.8, zeta: 0.5, r: 0.2);
@@ -271,8 +322,9 @@ class MotorDeVida {
 
   /// A caminho de outro lugar (ainda não chegou).
   bool get andando =>
-      _intencao == IntencaoDoBicho.passear &&
-      ((_destinoX - _x.valor).abs() > 4 || !_noChao);
+      (_intencao == IntencaoDoBicho.passear &&
+          ((_destinoX - _x.valor).abs() > 4 || !_noChao)) ||
+      (interessado && (!_noChao || (_x.alvo - _x.valor).abs() > 2));
 
   /// O olhar mandado de fora (a borboleta, o dedo longe dele). Nulo = dele.
   set olharDeFora(Offset? o) => _olharDeFora = o;
@@ -439,6 +491,16 @@ class MotorDeVida {
     _interagiu();
   }
 
+  /// Terminou de comer: satisfeito, a piscada lenta e um pulinho.
+  void comeu() {
+    _ultimaInteracao = _t;
+    _agitacao = 1;
+    _derretido = math.max(_derretido, 0.7);
+    _inclina.alvo = 0;
+    _piscaAgora(lenta: true);
+    pula(150);
+  }
+
   /// Um pulo daqui (velocidade inicial, unidades/s).
   void pula(double v) {
     if (!_noChao || reduzido) return;
@@ -511,7 +573,11 @@ class MotorDeVida {
         posturaLivre ? _rBoia.em(_t * 0.18, oitavas: 3) * 1.1 : 0.0;
 
     // --- cérebro -----------------------------------------------------------
-    if (!ocupado) {
+    _estica = 0;
+    if (interessado && !ocupado && podeAndar) {
+      _persegue();
+    } else if (!ocupado) {
+      _espreitandoDesde = -1;
       _decide();
       _comportamento();
     } else if (_intencao != IntencaoDoBicho.estar) {
@@ -581,7 +647,8 @@ class MotorDeVida {
         : (noColo ? 0 : _cabeca.valor.dx * 0.12) +
             curioso * (_virado ? -1 : 1) +
             _rPeso.em(_t * 0.13) * 0.025 -
-            anteEspirro * 0.12;
+            anteEspirro * 0.12 +
+            _estica;
     _inclina.passo(dt);
 
     // --- salto, queda, colo ----------------------------------------------
@@ -876,6 +943,92 @@ class MotorDeVida {
           pula(230 + _sorte.nextDouble() * 60);
           _proximoPulo = _t + 0.55;
         }
+    }
+  }
+
+  /// A bola rolando, o petisco no dedo: tudo o mais espera.
+  void _persegue() {
+    final i = interesse!;
+    // Olha para a coisa (o corpo tem ~70 de raio: normaliza por ele).
+    final rel = i.onde - Offset(_x.valor, -_y - 20);
+    _alvoDoOlhar = Offset(
+      (rel.dx / 90).clamp(-1.0, 1.0),
+      (rel.dy / 90).clamp(-1.0, 1.0),
+    );
+    _proximoInteresse = _t + 0.5;
+    if (_intencao != IntencaoDoBicho.festejar) {
+      _intencao = IntencaoDoBicho.observar;
+      _fimDaIntencao = _t + 1.5;
+    }
+    _ultimaInteracao = _t;
+    _agitacao = math.max(_agitacao, 0.5);
+
+    if (i.noAr) {
+      // No dedo: inclina na direção e dá pulinhos de vontade.
+      _virado = rel.dx < 0;
+      // Encostou na boca: come da mão (Pokémon-Amie, pesquisa 20, mec. 10).
+      if (i.tipo == TipoDeInteresse.comida &&
+          rel.distance < 48 &&
+          _t - _ultimoAlcance > 0.8) {
+        _ultimoAlcance = _t;
+        aoAlcancar?.call(i.tipo);
+        return;
+      }
+      // Perto da boca: o pescoço estica na direção da comida.
+      if (i.tipo == TipoDeInteresse.comida && rel.distance < 130) {
+        // Virado, o desenho é espelhado: positivo é sempre "para a frente".
+        _estica = (rel.dx.abs() / 130).clamp(0.0, 1.0) * 0.22;
+      }
+      if (i.tipo == TipoDeInteresse.comida &&
+          rel.distance < 120 &&
+          _noChao &&
+          _t >= _proximoPulo) {
+        pula(150);
+        _proximoPulo = _t + 0.7 + _sorte.nextDouble() * 0.4;
+      }
+      return;
+    }
+
+    final falta = i.onde.dx - _x.valor;
+    _virado = falta < 0;
+    final perto = falta.abs() < 14 && i.onde.dy > -40;
+    if (perto && _noChao) {
+      if (_t - _ultimoAlcance > 0.8) {
+        _ultimoAlcance = _t;
+        _espreitandoDesde = -1;
+        _achata.empurra(7);
+        aoAlcancar?.call(i.tipo);
+      }
+      return;
+    }
+    // O bote do gato: perto, para e rebola; depois salta em cima.
+    if (jeito.espreita > 0 &&
+        i.tipo == TipoDeInteresse.bola &&
+        falta.abs() < 70 &&
+        _noChao) {
+      if (_espreitandoDesde < 0) _espreitandoDesde = _t;
+      final esperou = _t - _espreitandoDesde;
+      if (esperou < jeito.espreita) {
+        _tremor.empurra(math.sin(_t * 40) * 3);
+        _achata.alvo = 0.25; // agachado
+        return;
+      }
+      _achata.alvo = 0;
+      _x.alvo = (_x.valor + falta).clamp(-areaDeAndar, areaDeAndar);
+      pula(260);
+      _espreitandoDesde = -1;
+      _proximoPulo = _t + 0.6;
+      return;
+    }
+    if (nadando) {
+      _x.alvo = (_x.valor + falta.sign * math.min(falta.abs(), 40))
+          .clamp(-areaDeAndar, areaDeAndar);
+    } else if (_noChao && _t >= _proximoPulo) {
+      final passo = math.min(falta.abs(), jeito.passo);
+      _x.alvo =
+          (_x.valor + falta.sign * passo).clamp(-areaDeAndar, areaDeAndar);
+      pula(jeito.impulso);
+      _proximoPulo = _t + jeito.cadencia + _sorte.nextDouble() * 0.08;
     }
   }
 

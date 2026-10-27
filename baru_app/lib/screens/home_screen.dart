@@ -110,6 +110,7 @@ class HomeScreen extends StatelessWidget {
         HabitatScene(
           height: (MediaQuery.sizeOf(context).height * 0.40)
               .clamp(240.0, HabitatScene.alturaPadrao),
+          brinquedos: true,
         ),
         const SizedBox(height: Espaco.sm),
         // O crescimento do bicho, logo abaixo dele: quanto falta e o que vem.

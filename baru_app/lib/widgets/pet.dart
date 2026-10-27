@@ -291,7 +291,17 @@ class PetView extends StatefulWidget {
     this.cutucadas,
     this.areaDeAndar = 0,
     this.sombra = false,
+    this.interesse,
+    this.aoAlcancar,
   });
+
+  /// A bolinha ou o petisco da cena, em unidades do desenho relativas ao
+  /// ponto de repouso do corpo. Ele olha, quer, persegue (com [areaDeAndar]).
+  final ValueListenable<InteresseDoBicho?>? interesse;
+
+  /// Chegou no [interesse]: a cena chuta a bola ou tira o petisco que ele
+  /// está comendo. [xDoBicho] é onde ele está, nas mesmas unidades.
+  final void Function(TipoDeInteresse tipo, double xDoBicho)? aoAlcancar;
 
   /// Quanto ele pode passear para cada lado, em unidades do desenho. Com
   /// mais que zero ele anda pelo habitat sozinho, em pulinhos, e pode ser
@@ -455,7 +465,22 @@ class _PetViewState extends State<PetView>
     // Cada bicho tem a sua: zonas de carinho e jeito próprios, estáveis.
     semente: widget.species.index * 7919 + widget.coat * 31 + 1,
     areaDeAndar: widget.areaDeAndar,
-  )..aoEvento = _eventoDaVida;
+  )
+    ..aoEvento = _eventoDaVida
+    ..aoAlcancar = _alcancou;
+
+  /// Comendo o petisco: de 0 a 1 ao longo da mastigação; -1 sem comer.
+  double _comendo = -1;
+  static const _tempoDeComer = 2.4;
+
+  void _alcancou(TipoDeInteresse tipo) {
+    if (!mounted) return;
+    if (tipo == TipoDeInteresse.comida) {
+      _comendo = 0;
+      HapticFeedback.lightImpact();
+    }
+    widget.aoAlcancar?.call(tipo, _vida.xAtual);
+  }
 
   /// O motor pede um gesto da coreografia (sacudir ao cair do colo, depois
   /// de um espirro; espreguiçar ao sair do descanso; coçar).
@@ -484,11 +509,22 @@ class _PetViewState extends State<PetView>
   void _tique(Duration agora) {
     final dt = (agora - _ultimoTique).inMicroseconds / 1e6;
     _ultimoTique = agora;
+    _acordaPeloBrinquedo(dt);
     final acao = _acao;
+    if (_comendo >= 0) {
+      _comendo += dt / _tempoDeComer;
+      if (_comendo >= 1) {
+        _comendo = -1;
+        _vida.comeu();
+      }
+    }
     _vida
       ..olharDeFora = _dedo == null ? widget.olharExterno : null
+      ..interesse = _comendo >= 0 ? null : widget.interesse?.value
       // Dormindo ou voando o corpo é da atividade; o resto deixa ele viver.
-      ..ocupado = acao == AcaoDoBicho.cochilo || acao == AcaoDoBicho.voo
+      ..ocupado = acao == AcaoDoBicho.cochilo ||
+          acao == AcaoDoBicho.voo ||
+          _comendo >= 0
       ..dormindo = acao == AcaoDoBicho.cochilo
       ..nadando = acao == AcaoDoBicho.nado
       ..posturaLivre = _acaoDesenhada == AcaoDoBicho.ocioso
@@ -625,8 +661,36 @@ class _PetViewState extends State<PetView>
     }
   }
 
-  AcaoDoBicho get _acao =>
-      acaoNoEstagio(widget.species, widget.activity, widget.estagio);
+  AcaoDoBicho get _acao {
+    final a = acaoNoEstagio(widget.species, widget.activity, widget.estagio);
+    // A bola ou a castanha acordam quem cochilava (o recém-nascido não).
+    return a == AcaoDoBicho.cochilo && _acordado ? AcaoDoBicho.ocioso : a;
+  }
+
+  /// Acordado por um brinquedo: volta a dormir 20 s depois do último.
+  bool _acordado = false;
+  double _relogioS = 0;
+  double _acordadoAte = -1;
+
+  void _acordaPeloBrinquedo(double dt) {
+    _relogioS += dt;
+    if (widget.estagio != EstagioDoBicho.inicio &&
+        widget.interesse?.value != null) {
+      _acordadoAte = _relogioS + 20;
+    }
+    final agora = _relogioS < _acordadoAte;
+    if (agora == _acordado) return;
+    final dormia = acaoNoEstagio(
+          widget.species,
+          widget.activity,
+          widget.estagio,
+        ) ==
+        AcaoDoBicho.cochilo;
+    _acordado = agora;
+    if (!dormia) return;
+    _ajustaRitmo();
+    if (agora) _eventoDaVida(EventoDaVida.espreguica);
+  }
 
   /// O que o desenho mostra: a atividade, salvo quando o motor de vida tirou
   /// o bicho dela — andando em pulinhos, festejando, no colo — porque ninguém
@@ -634,7 +698,9 @@ class _PetViewState extends State<PetView>
   AcaoDoBicho get _acaoDesenhada {
     final a = _acao;
     if (a == AcaoDoBicho.nado || a == AcaoDoBicho.cochilo) return a;
+    if (_comendo >= 0) return AcaoDoBicho.petisco;
     if (_vida.noColo ||
+        _vida.interessado ||
         _vida.intencao == IntencaoDoBicho.festejar ||
         (_vida.intencao == IntencaoDoBicho.passear && _vida.andando)) {
       return AcaoDoBicho.ocioso;
@@ -678,6 +744,17 @@ class _PetViewState extends State<PetView>
     _ultimoTique = Duration.zero;
     _vida
       ..hora = DateTime.now().hour
+      // O cão corre direto; o gato encara, rebola e dá o bote (Miyamoto,
+      // pesquisa 20, mec. 9); a tartaruga vai no tempo dela.
+      ..jeito = switch (widget.species) {
+        Species.cat || Species.fox => const JeitoDeCacar(espreita: 0.8),
+        Species.owl => const JeitoDeCacar(espreita: 0.4, impulso: 240),
+        Species.tortoise =>
+          const JeitoDeCacar(passo: 10, cadencia: 0.8, impulso: 120),
+        Species.frenchie || Species.otter =>
+          const JeitoDeCacar(passo: 30, cadencia: 0.28, impulso: 210),
+        _ => const JeitoDeCacar(),
+      }
       // Felinos e a coruja piscam menos; o buldogue, mais.
       ..medianaDoPiscar = switch (widget.species) {
         Species.cat || Species.fox || Species.owl => 4.6,
@@ -1079,7 +1156,11 @@ class _PetViewState extends State<PetView>
               // volta. Passá-lo por `easeInOut` como os contínuos criaria
               // um salto na emenda entre 1 e 0 — a braçada travava a cada
               // volta.
-              ciclo: _quadroDaVida.value.ciclo,
+              // Comendo, o laço é o da mastigação: a janela de mastigar
+              // do petisco (0,26–0,72) esticada nos 2,4 s.
+              ciclo: _comendo >= 0
+                  ? 0.27 + 0.44 * _comendo
+                  : _quadroDaVida.value.ciclo,
               respiro: _quadroDaVida.value.respiro,
               boia: _quadroDaVida.value.boia,
               cauda: _quadroDaVida.value.cauda,

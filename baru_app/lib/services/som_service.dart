@@ -86,7 +86,13 @@ enum SomDoBaru {
   raizMarco(arquivoBase: 'raiz_marco'),
 
   /// O bicho nasceu ou cresceu.
-  crescimento;
+  crescimento,
+
+  /// A bolinha do habitat batendo no chão. Baixo: ela quica muito.
+  quique(variacoes: 3),
+
+  /// O bicho comendo o petisco: três mordidas.
+  mastiga(variacoes: 2);
 
   const SomDoBaru({this.variacoes = 1, this.arquivoBase});
 

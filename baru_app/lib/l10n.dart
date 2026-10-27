@@ -544,6 +544,8 @@ class T {
   String get vinculoRotulo => s('vinculoRotulo');
   String get vinculoSub => s('vinculoSub');
   String get vinculoTeto => s('vinculoTeto');
+  String get brinqBola => s('brinqBola');
+  String get brinqPetisco => s('brinqPetisco');
   String get missoesT => s('missoesT');
   String get missoesSub => s('missoesSub');
   String get missoesDiarias => s('missoesDiarias');
@@ -772,6 +774,8 @@ const _pt = <String, Object>{
   'vinculoRotulo': 'Vínculo',
   'vinculoSub': '{n} afagos',
   'vinculoTeto': '{P} já recebeu carinho de sobra hoje',
+  'brinqBola': 'Bolinha. Arraste e solte para jogar',
+  'brinqPetisco': 'Castanha de baru. Arraste até a boca do bicho para dar',
   'nivelFalta': '{x} XP para o nível {n}',
   'nivelMax': 'Nível máximo',
   'marcoSessao1': 'Sua primeira sessão de foco',
@@ -1341,6 +1345,8 @@ const _en = <String, Object>{
   'vinculoRotulo': 'Bond',
   'vinculoSub': '{n} cuddles',
   'vinculoTeto': '{P} have had plenty of love today',
+  'brinqBola': 'Ball. Drag and let go to throw it',
+  'brinqPetisco': 'Baru nut. Drag it to your pet\'s mouth to feed it',
   'nivelFalta': '{x} XP to level {n}',
   'nivelMax': 'Max level',
   'marcoSessao1': 'Your first focus session',
@@ -1900,6 +1906,8 @@ const _es = <String, Object>{
   'vinculoRotulo': 'Vínculo',
   'vinculoSub': '{n} mimos',
   'vinculoTeto': '{P} ya recibió cariño de sobra hoy',
+  'brinqBola': 'Pelotita. Arrastra y suelta para lanzarla',
+  'brinqPetisco': 'Nuez de baru. Arrástrala hasta la boca de tu mascota',
   'nivelFalta': '{x} XP para el nivel {n}',
   'nivelMax': 'Nivel máximo',
   'marcoSessao1': 'Tu primera sesión de enfoque',
@@ -2461,6 +2469,8 @@ const _zh = <String, Object>{
   'vinculoRotulo': '羁绊',
   'vinculoSub': '{n} 次抚摸',
   'vinculoTeto': '今天{P}已经收获了满满的爱',
+  'brinqBola': '小球。拖动后松手即可扔出',
+  'brinqPetisco': '巴鲁坚果。拖到宠物嘴边喂它',
   'nivelFalta': '还差 {x} XP 到等级 {n}',
   'nivelMax': '已满级',
   'marcoSessao1': '你的第一次专注',

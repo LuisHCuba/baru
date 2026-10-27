@@ -312,6 +312,29 @@ def sons():
         (kalimba(N['F6'], 1.5, 0.5), 0.42, -6),
     ], 2.1), -13)
 
+    # Bolinha de borracha quicando: um "tum" com a altura caindo, afinado
+    # na pentatônica. Três tomadas: ela quica várias vezes seguidas.
+    for i, f in enumerate(['F3', 'A3', 'C4'], start=1):
+        x = t(0.16)
+        fr = N[f] * (0.62 + 0.38 * np.exp(-x / 0.03))
+        corpo = np.sin(2 * np.pi * np.cumsum(fr) / SR) * np.exp(-x / 0.05)
+        s[f'quique_{i}'] = (mix([(corpo, 0, 0), (madeira(1400, 0.03), 0, -14)],
+                                0.18), -30)
+
+    # Mastigar o petisco: três mordidas crocantes (180 ms entre elas,
+    # pesquisa 20, mecânica 10), ruído em banda média com grãos.
+    for i in (1, 2):
+        mordidas = []
+        for k in range(3):
+            x = t(0.09)
+            n = sosfilt(butter(2, [900, 3800], 'bandpass', fs=SR, output='sos'),
+                        rng.standard_normal(len(x)))
+            graos = (rng.random(len(x)) < 0.01).astype(float)
+            graos = np.convolve(graos, np.exp(-np.arange(120) / 20), mode='same')
+            mordidas.append((n * np.exp(-x / 0.018) * (0.6 + graos),
+                             k * 0.18 + rng.random() * 0.02, -k * 1.5))
+        s[f'mastiga_{i}'] = (mix(mordidas, 0.62), -29)
+
     return s
 
 
@@ -319,7 +342,11 @@ def main():
     raiz_app = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     pasta = os.path.join(raiz_app, 'assets', 'sons')
     os.makedirs(pasta, exist_ok=True)
+    # Nomes na linha de comando geram só esses (os outros ficam como estão).
+    so = set(sys.argv[1:])
     for nome, (sinal, alvo) in sons().items():
+        if so and nome not in so:
+            continue
         caminho = os.path.join(pasta, f'{nome}.wav')
         medido = calibra(caminho, fecha(sinal), alvo)
         dur = os.path.getsize(caminho) / (SR * 2)

@@ -3,12 +3,15 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../data/crescimento.dart';
 import '../l10n_humor.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import 'arte_dos_itens.dart';
+import 'brinquedos.dart';
 import 'pet.dart';
+import 'vida/motor_de_vida.dart';
 
 /// O desenho de um habitat da trilha: que terra é aquela.
 ///
@@ -306,7 +309,13 @@ class HabitatScene extends StatefulWidget {
     this.olharDoBicho,
     this.cutucadas,
     this.rotulo,
+    this.brinquedos = false,
   });
+
+  /// A bolinha e o potinho de castanhas na cena (ver `BrinquedosDoHabitat`).
+  /// Só na home: na sessão o bicho está no banho e a pessoa, longe do
+  /// telefone.
+  final bool brinquedos;
 
   /// O que o leitor de tela diz da cena. Sem ele, a fala do humor da home —
   /// que na sessão não descreve o que está acontecendo.
@@ -384,6 +393,10 @@ class _HabitatSceneState extends State<HabitatScene>
   final Map<String, AnimationController> _chegadas = {};
 
   bool _continuo = false;
+
+  /// O que a bolinha ou a castanha pedem do bicho, e o caminho de volta.
+  final _interesse = ValueNotifier<InteresseDoBicho?>(null);
+  final _brinquedos = GlobalKey<BrinquedosDoHabitatState>();
 
   @override
   void initState() {
@@ -471,6 +484,7 @@ class _HabitatSceneState extends State<HabitatScene>
     WidgetsBinding.instance.removeObserver(this);
     _premio.dispose();
     _deriva.dispose();
+    _interesse.dispose();
     for (final c in _chegadas.values) {
       c.dispose();
     }
@@ -537,6 +551,10 @@ class _HabitatSceneState extends State<HabitatScene>
               // encolhe em tela estreita, sem nunca encostar na borda.
               final escalaDoPet =
                   HabitatScene.presencaDoPet * math.min(sx, sy);
+              // O ovo e o recém-nascido no ninho não brincam.
+              final comBrinquedos = widget.brinquedos &&
+                  widget.animado &&
+                  app.estagioVisivel != EstagioDoBicho.inicio;
               return AnimatedBuilder(
                 animation: Listenable.merge([_deriva, ..._chegadas.values]),
                 builder: (context, _) {
@@ -628,9 +646,27 @@ class _HabitatSceneState extends State<HabitatScene>
                             aoCarinho: () => _premia(app),
                             roupas: app.roupasDoBicho,
                             roupaDeCabeca: app.roupaDeCabeca,
+                            interesse: comBrinquedos ? _interesse : null,
+                            aoAlcancar: (tipo, x) =>
+                                _brinquedos.currentState?.alcancou(tipo, x),
                           ),
                         ),
                       ),
+                      if (comBrinquedos)
+                        Positioned.fill(
+                          child: BrinquedosDoHabitat(
+                            key: _brinquedos,
+                            interesse: _interesse,
+                            rotuloDaBola: app.t.brinqBola,
+                            rotuloDoPetisco: app.t.brinqPetisco,
+                            geometria: GeometriaDosBrinquedos(
+                              largura: c.maxWidth,
+                              escala: escalaDoPet,
+                              baseDoBicho: alturaReal - _alturaDoPet(app) * sy,
+                              agua: _naAgua(app),
+                            ),
+                          ),
+                        ),
                       if (widget.moldura)
                         const IgnorePointer(
                           child: CustomPaint(painter: _Vinheta()),

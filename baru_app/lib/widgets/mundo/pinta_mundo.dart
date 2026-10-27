@@ -321,6 +321,34 @@ class FundoDoMundo extends CustomPainter {
         ).createShader(Rect.fromLTWH(0, g.horizonte, largura, h - g.horizonte)),
     );
 
+    // Manchas de grama, mais funda e mais clara, menores perto do horizonte
+    // (perspectiva). O campo era um verde chapado: de longe ele lia como
+    // fundo de cartão, não como chão.
+    final rm = math.Random(13);
+    final fundo = g.visivel - g.horizonte;
+    for (
+      var x = 30.0;
+      x < g.x(ZonasDoMundo.beira) - 40;
+      x += 70 + rm.nextDouble() * 90
+    ) {
+      final f = 0.12 + rm.nextDouble() * 0.82;
+      final y = g.horizonte + fundo * f;
+      final perto = 0.45 + f * 0.9;
+      final escura = rm.nextDouble() < 0.6;
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(x + rm.nextDouble() * 40, y),
+          width: (70 + rm.nextDouble() * 110) * perto,
+          height: (9 + rm.nextDouble() * 12) * perto,
+        ),
+        _p(
+          escura
+              ? gramaFunda.withValues(alpha: 0.16 + rm.nextDouble() * 0.08)
+              : Colors.white.withValues(alpha: 0.07 + rm.nextDouble() * 0.05),
+        ),
+      );
+    }
+
     // A trilha de terra batida, da toca à margem.
     final trilha = Path()
       ..moveTo(g.x(0.06), g.chao + 10)

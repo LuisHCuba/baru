@@ -168,6 +168,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
 
   GeometriaDoMundo? _g;
   bool _parado = false;
+  bool? _aguaAntes;
 
   // --- o passeio do tempo livre -----------------------------------------
   // Sem nada pedindo outra coisa, ele ficava a manhã inteira no mesmo
@@ -443,6 +444,11 @@ class MundoDoBaruState extends State<MundoDoBaru>
           }
           final atividade = _atividade(app);
           final naAgua = _naAgua;
+          // Só a troca de terra para água (e de volta) desliza. Quando o
+          // chão muda porque o painel foi medido, ele vai junto na hora:
+          // deslizando, ele nascia atrás do painel e subia (auditoria).
+          final trocouDeMeio = _aguaAntes != null && _aguaAntes != naAgua;
+          _aguaAntes = naAgua;
           final baseDaCaixa = naAgua
               ? g.linhaDagua + (150 - PetView.linhaDaguaEm(150)) * g.escala
               : g.chao + 5 * g.escala;
@@ -527,7 +533,9 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                 ),
                               ),
                             AnimatedPositioned(
-                              duration: const Duration(milliseconds: 450),
+                              duration: trocouDeMeio
+                                  ? const Duration(milliseconds: 450)
+                                  : Duration.zero,
                               curve: Curves.easeInOut,
                               left: 0,
                               width: g.largura,

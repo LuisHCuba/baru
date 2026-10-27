@@ -532,7 +532,14 @@ class _PetViewState extends State<PetView>
       }
     }
     _vida
-      ..olharDeFora = _dedo == null ? widget.olharExterno : null
+      // A cabeça do motor segue tudo que o olho segue: o dedo, o toque, o
+      // gesto de olhar em volta. Antes isso ia só para as pupilas, e a
+      // cabeça ficava para trás.
+      ..olharDeFora = _dedo != null || _toque.isAnimating
+          ? _olhar
+          : _gestoAtual == GestoOcioso.olhaEmVolta
+              ? Offset(math.sin(_gesto.value * math.pi * 2), -0.12)
+              : widget.olharExterno
       ..interesse = _comendo >= 0 ? null : widget.interesse?.value
       // Dormindo ou voando o corpo é da atividade; o resto deixa ele viver.
       ..ocupado = acao == AcaoDoBicho.cochilo ||
@@ -2240,6 +2247,49 @@ class _PetPainter extends CustomPainter {
         pose.olhar.dy * 2.2 * pose.amplitudeToque,
       );
 
+  /// Para onde a cabeça está virada (-1..1): o motor de vida, mais a
+  /// varredura de quem levanta a cabeça do pasto.
+  Offset get _virada => Offset(
+        (pose.vida.virada.dx + pose.olhadaDoPasto).clamp(-1.2, 1.2),
+        pose.vida.virada.dy.clamp(-1.0, 1.0),
+      );
+
+  /// O rosto deslizando dentro do contorno da cabeça: é assim que um
+  /// desenho 2D vira a cabeça (parallax de rosto, como nos rigs do Rive e
+  /// do Spine). Olhos, focinho e boca andam juntos; o contorno anda bem
+  /// menos ([_posicionaCabeca]); a sombra do queixo, para o outro lado.
+  Offset get _rosto =>
+      Offset(_virada.dx * 6.5, _virada.dy * 3.5) * pose.amplitudeToque;
+
+  void _rostoVira(Canvas c) => c.translate(_rosto.dx, _rosto.dy);
+  void _rostoVolta(Canvas c) => c.translate(-_rosto.dx, -_rosto.dy);
+
+  /// O contorno da cabeça acompanha um pouco a virada, e a inclinação gira
+  /// pelo pescoço — o queixo fica, o alto da cabeça vai. Girando pelo
+  /// centro, o queixo escorregava por cima do corpo.
+  void _posicionaCabeca(Canvas c, double giro, {double pescoco = 30}) {
+    c.translate(_virada.dx * 2.2 * pose.amplitudeToque, 0);
+    c.translate(0, pescoco);
+    c.rotate(giro);
+    c.translate(0, -pescoco);
+  }
+
+  /// A sombra que a cabeça faz no corpo, logo abaixo do queixo. É o que
+  /// separa as duas massas: sem ela, cabeça e corpo da mesma cor viravam
+  /// uma coisa só, e a cabeça parecia colada na frente.
+  void _sombraDoQueixo(Canvas c, double largura, double altura) {
+    c.drawOval(
+      Rect.fromCenter(
+        center: Offset(-_rosto.dx * 0.3, altura / 2 - 2),
+        width: largura * 0.6,
+        height: 15,
+      ),
+      Paint()
+        ..color = Cores.tintaA(0.17)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.5),
+    );
+  }
+
   /// A cabeça acompanha um pouco o olhar, e varre ao levantar do pasto.
   double get _cabecaGiro =>
       _inclinaDoHumor +
@@ -2247,8 +2297,11 @@ class _PetPainter extends CustomPainter {
       pose.cocada +
       // Encosta a cabeça na mão.
       (pose.dedo == null ? 0 : pose.gosto * 0.06 * pose.amplitudeToque) +
-      pose.olhar.dx * 0.09 * pose.amplitudeToque +
-      pose.olhadaDoPasto * 0.16;
+      // Um fio de inclinação junto da virada; o grosso da virada é o rosto
+      // deslizando ([_rosto]). Antes a cabeça **tombava** 0,09 rad para o
+      // lado do olhar e o pasto varria tombando 0,16: um adesivo girando
+      // por cima do corpo, não uma cabeça virando.
+      _virada.dx * 0.025;
 
   /// O quanto a cabeça desce, em pixels — pastando ou farejando.
   ///
@@ -2337,8 +2390,9 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -30 + pose.respiro * amp * 0.7 + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    canvas.rotate(_cabecaGiro * 0.9);
+    _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 38);
     canvas.scale(_cabecaDoEstagio);
+    _sombraDoQueixo(canvas, 94, 78);
 
     // Orelhas antes da cabeça: nascem atrás dela, então a base some sob o
     // contorno em vez de ficar boiando em cima.
@@ -2382,6 +2436,7 @@ class _PetPainter extends CustomPainter {
           ),
         ),
     );
+    _rostoVira(canvas);
     canvas.drawPath(
       _bolha(
         Rect.fromCenter(center: const Offset(0, 27), width: 74, height: 44),
@@ -2390,6 +2445,7 @@ class _PetPainter extends CustomPainter {
       _p(claro),
     );
     canvas.restore();
+    _rostoVira(canvas);
 
     // Focinheira: o bloco escuro em cima do focinho, entre as narinas.
     canvas.drawPath(
@@ -2413,6 +2469,7 @@ class _PetPainter extends CustomPainter {
     // orelhas, para o bicho olhar em volta com o corpo na água.
     _olho(canvas, const Offset(-26, -13), 7.5);
     _olho(canvas, const Offset(26, -13), 7.5);
+    _rostoVolta(canvas);
     _veste(canvas, 96, 78);
 
     canvas.restore();
@@ -2474,8 +2531,9 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -34 + pose.respiro * amp * 0.7 + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    canvas.rotate(_cabecaGiro * 0.9);
+    _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 31);
     canvas.scale(_cabecaDoEstagio);
+    _sombraDoQueixo(canvas, 78, 62);
 
     // Orelhas pequenas e altas: na lontra elas quase somem na cabeça.
     // Orelhas pequenas e baixas, quase no lado da cabeça chata.
@@ -2490,6 +2548,7 @@ class _PetPainter extends CustomPainter {
       ),
       _p(pelo),
     );
+    _rostoVira(canvas);
 
     // Máscara clara do focinho, larga e baixa.
     canvas.drawPath(
@@ -2528,6 +2587,7 @@ class _PetPainter extends CustomPainter {
 
     _olho(canvas, const Offset(-21, -12), 7.5);
     _olho(canvas, const Offset(21, -12), 7.5);
+    _rostoVolta(canvas);
     _veste(canvas, 84, 74);
 
     canvas.restore();
@@ -2618,7 +2678,7 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -36 - estica + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    canvas.rotate(_cabecaGiro * 0.8);
+    _posicionaCabeca(canvas, _cabecaGiro * 0.8, pescoco: 30);
     canvas.scale(_cabecaDoEstagio);
 
     // Pescoço: sai da cabeça e entra no casco. É ele que faz a cabeça
@@ -2661,6 +2721,8 @@ class _PetPainter extends CustomPainter {
       );
     }
 
+    // As listras ficam no contorno (são do lado da cabeça); o rosto vira.
+    _rostoVira(canvas);
     _narina(canvas, const Offset(-6, 6));
     _narina(canvas, const Offset(6, 6));
     _boca(canvas, const Offset(0, 16), 24);
@@ -2669,6 +2731,7 @@ class _PetPainter extends CustomPainter {
 
     _olho(canvas, const Offset(-14, -9), 7);
     _olho(canvas, const Offset(14, -9), 7);
+    _rostoVolta(canvas);
     _veste(canvas, 66, 60);
 
     canvas.restore();
@@ -2831,8 +2894,9 @@ class _PetPainter extends CustomPainter {
     // se espreguiçar (corpo 7% maior e 4 px acima) ela era cortada.
     canvas.translate(0, -28 + pose.respiro * amp * 0.6 + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    canvas.rotate(_cabecaGiro * 0.8);
+    _posicionaCabeca(canvas, _cabecaGiro * 0.8, pescoco: 32);
     canvas.scale(_cabecaDoEstagio);
+    _sombraDoQueixo(canvas, 84, 68);
 
     // Sem tufos: a coruja-buraqueira, a nossa coruja de chão, tem a cabeça
     // redonda e lisa (laudo 07, R4). O tufo era da coruja de galho.
@@ -2852,6 +2916,12 @@ class _PetPainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), 1.9, _p(claro));
     }
     canvas.restore();
+
+    // O rosto da coruja ocupa a cabeça inteira: ao virar, os discos
+    // passariam da borda. Ele vira dentro do contorno, recortado nele.
+    canvas.save();
+    canvas.clipPath(cabeca);
+    _rostoVira(canvas);
 
     // O disco facial, mais claro que o pelo.
     final disco = Color.lerp(pelo, Cores.superficie, 0.32)!;
@@ -2916,6 +2986,7 @@ class _PetPainter extends CustomPainter {
     _naBoca(canvas, const Offset(0, 16), 20);
 
     if (feliz) _bochecha(canvas, const Offset(-34, 17), const Offset(34, 17));
+    canvas.restore();
     _veste(canvas, 86, 70);
     canvas.restore();
   }
@@ -2977,8 +3048,9 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    canvas.rotate(_cabecaGiro * 0.9);
+    _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 36);
     canvas.scale(_cabecaDoEstagio);
+    _sombraDoQueixo(canvas, 86, 74);
 
     // Guelras antes da cabeça: três ramos de cada lado, cada um uma haste
     // com filamentos — as "penas" que fazem o axolote (laudo 07, R5). Eram
@@ -3031,12 +3103,14 @@ class _PetPainter extends CustomPainter {
       ),
       _p(pelo),
     );
+    _rostoVira(canvas);
 
     _boca(canvas, const Offset(0, 14), 22);
     if (feliz) _bochecha(canvas, const Offset(-30, 6), const Offset(30, 6));
 
     _olho(canvas, const Offset(-20, -6), 7.5);
     _olho(canvas, const Offset(20, -6), 7.5);
+    _rostoVolta(canvas);
     _veste(canvas, 86, 73);
 
     canvas.restore();
@@ -3151,8 +3225,9 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -34 + pose.respiro * amp * 0.6 + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    canvas.rotate(_cabecaGiro * 0.9);
+    _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 30);
     canvas.scale(_cabecaDoEstagio);
+    _sombraDoQueixo(canvas, 72, 60);
 
     canvas.drawPath(
       _bolha(Rect.fromCenter(center: Offset.zero, width: 72, height: 60)),
@@ -3166,6 +3241,7 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(
       _bolha(Rect.fromCenter(center: Offset.zero, width: 72, height: 60)),
     );
+    _rostoVira(canvas);
     final branco = _p(Color.lerp(claro, Cores.superficie, 0.70)!);
     for (final lado in [-1.0, 1.0]) {
       canvas.drawPath(
@@ -3192,6 +3268,7 @@ class _PetPainter extends CustomPainter {
       );
     }
     canvas.restore();
+    _rostoVira(canvas);
 
     _olho(canvas, const Offset(-15, -3), 7);
     _olho(canvas, const Offset(15, -3), 7);
@@ -3223,6 +3300,7 @@ class _PetPainter extends CustomPainter {
       );
     }
     _naBoca(canvas, const Offset(0, 12), 18);
+    _rostoVolta(canvas);
     _veste(canvas, 72, 60);
 
     canvas.restore();
@@ -3303,8 +3381,9 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    canvas.rotate(_cabecaGiro * 0.9);
+    _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 34);
     canvas.scale(_cabecaDoEstagio);
+    _sombraDoQueixo(canvas, 82, 69);
 
     // Orelhas triangulares de ponta fina, com a concha por dentro. Antes da
     // cabeça: a base some sob o contorno. O humor as gira para os lados —
@@ -3362,6 +3441,9 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(cabeca);
     final listra = _traco(sombra.withValues(alpha: 0.6), 2.8)
       ..strokeJoin = StrokeJoin.round;
+    // O "M" é do meio da testa: vira com o rosto. As listras das têmporas
+    // são dos lados: ficam com o contorno.
+    _rostoVira(canvas);
     canvas.drawPath(
       Path()
         ..moveTo(-12, -16)
@@ -3371,6 +3453,7 @@ class _PetPainter extends CustomPainter {
         ..lineTo(12, -16),
       listra,
     );
+    _rostoVolta(canvas);
     for (final lado in [-1.0, 1.0]) {
       for (final y in [-8.0, -1.0]) {
         canvas.drawLine(
@@ -3381,6 +3464,7 @@ class _PetPainter extends CustomPainter {
       }
     }
     canvas.restore();
+    _rostoVira(canvas);
 
     // Focinheira clara e larga.
     canvas.drawPath(
@@ -3410,6 +3494,7 @@ class _PetPainter extends CustomPainter {
 
     _olho(canvas, const Offset(-19, -6), 7.5);
     _olho(canvas, const Offset(19, -6), 7.5);
+    _rostoVolta(canvas);
     _veste(canvas, 82, 69);
 
     canvas.restore();
@@ -3495,8 +3580,9 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    canvas.rotate(_cabecaGiro * 0.9);
+    _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 34);
     canvas.scale(_cabecaDoEstagio);
+    _sombraDoQueixo(canvas, 80, 70);
 
     // Orelhas grandes, em três camadas: pelo, concha branca e ponta escura.
     // O humor as abre para os lados: "orelha de avião" na saudade, quase
@@ -3558,6 +3644,7 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(
       _bolha(Rect.fromCenter(center: const Offset(0, 3), width: 80, height: 66)),
     );
+    _rostoVira(canvas);
     canvas.drawPath(
       Path()
         ..moveTo(-42, 7)
@@ -3570,6 +3657,7 @@ class _PetPainter extends CustomPainter {
       _p(_brancoDaRaposa),
     );
     canvas.restore();
+    _rostoVira(canvas);
     // Focinho em V, que afina para a ponta.
     canvas.drawPath(
       Path()
@@ -3599,6 +3687,7 @@ class _PetPainter extends CustomPainter {
 
     _olho(canvas, const Offset(-19, -4), 7.5);
     _olho(canvas, const Offset(19, -4), 7.5);
+    _rostoVolta(canvas);
     _veste(canvas, 80, 66);
 
     canvas.restore();
@@ -3734,7 +3823,11 @@ class _PetPainter extends CustomPainter {
     _cabecaSemFolego(canvas);
     // A inclinação de cabeça do cão que não entende por que você sumiu. Meio
     // grau só; mais que isso e ele fica tonto em vez de sentido.
-    canvas.rotate(_cabecaGiro * 0.9 + (triste ? 0.05 : 0));
+    _posicionaCabeca(
+      canvas,
+      _cabecaGiro * 0.9 + (triste ? 0.05 : 0),
+      pescoco: 40,
+    );
     canvas.scale(_cabecaDoEstagio);
 
     _buldogueCabeca(canvas);
@@ -3919,12 +4012,17 @@ class _PetPainter extends CustomPainter {
       ..cubicTo(-44, -12, -25, -20, 0, -20)
       ..close();
 
+    _sombraDoQueixo(canvas, 92, 92);
     canvas.drawPath(cabeca, _p(pelo));
 
     canvas.save();
     canvas.clipPath(cabeca);
+    // Marca e rugas são da cara: viram com ela. As pregas da papada são do
+    // contorno: ficam.
+    _rostoVira(canvas);
     _marcaDaCabeca(canvas);
     _rugasDaCabeca(canvas);
+    _rostoVolta(canvas);
 
     // A prega que separa a papada da bochecha, uma de cada lado. Dentro do
     // recorte porque a papada agora é parte do contorno da cabeça: solta, ela
@@ -3939,6 +4037,7 @@ class _PetPainter extends CustomPainter {
       );
     }
     canvas.restore();
+    _rostoVira(canvas);
 
     _focinhoDoBuldogue(canvas);
 
@@ -3959,6 +4058,7 @@ class _PetPainter extends CustomPainter {
       _sobrancelhaDoBuldogue(canvas, lado);
     }
 
+    _rostoVolta(canvas);
     _veste(canvas, 96, 64);
   }
 

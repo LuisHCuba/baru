@@ -129,7 +129,12 @@ class SaidaDaVida {
     this.emburrado = false,
     this.derretido = 0,
     this.passada = 0,
+    this.virada = Offset.zero,
   });
+
+  /// -1..1 nos dois eixos: para onde a cabeça está virada. Segue o olhar
+  /// devagar e sem passar do ponto; as pupilas, rápidas, vão na frente.
+  final Offset virada;
 
   /// -1..1: as patas andando, uma para a frente e a outra para trás.
   final double passada;
@@ -194,6 +199,9 @@ class MotorDeVida {
         _rCauda = Ruido(semente + 53),
         _rCadencia = Ruido(semente + 67),
         _rMicro = Ruido(semente + 79) {
+    // A primeira piscada sorteada: fixa em 2 s, todos os bichos da tela
+    // piscavam juntos, como se alguém tivesse apertado um botão.
+    _proximaPiscada = 0.8 + _sorte.nextDouble() * 3;
     // Cada bicho nasce com uma zona favorita e uma de que não gosta.
     final r = math.Random(semente + 97);
     const zonas = [ZonaDoCorpo.cabeca, ZonaDoCorpo.costas, ZonaDoCorpo.barriga];
@@ -276,6 +284,11 @@ class MotorDeVida {
   // --- olhar ------------------------------------------------------------
   final _pupila = Mola2(f: 11, zeta: 0.88);
   final _cabeca = Mola2(f: 1.6, zeta: 1);
+
+  /// A cabeça virando para onde ele olha: lenta (os olhos chegam antes) e
+  /// sem balanço. Segue a fixação, não a pupila, para as olhadelas rápidas
+  /// não sacudirem o rosto.
+  final _virada = Mola2(f: 1.1, zeta: 1);
   Offset _alvoDoOlhar = Offset.zero;
   Offset _fixacao = Offset.zero;
   double _proximaSacada = 0.6;
@@ -743,12 +756,14 @@ class MotorDeVida {
     final excesso = _fixacao - _naCirculo(_fixacao, 0.35);
     _cabeca.alvo = excesso * 0.8 + _fixacao * 0.15;
     _cabeca.passo(dt);
+    _virada.alvo = _naCirculo(_fixacao, 1);
+    _virada.passo(dt);
 
     // --- inclinação ----------------------------------------------------
     final curioso = _intencao == IntencaoDoBicho.chamar ? 0.14 : 0.0;
     _inclina.alvo = !posturaLivre
         ? 0
-        : (noColo ? 0 : _cabeca.valor.dx * 0.12) +
+        : (noColo ? 0 : _cabeca.valor.dx * 0.025) +
             curioso * (_virado ? -1 : 1) +
             _rPeso.em(_t * 0.13) * 0.025 -
             anteEspirro * 0.12 +
@@ -824,6 +839,7 @@ class MotorDeVida {
       emburrado: emburrado,
       derretido: _derretido,
       passada: passada * a,
+      virada: _virada.valor * a,
     );
   }
 
@@ -847,18 +863,24 @@ class MotorDeVida {
 
   /// Pequenas sacadas em torno do alvo: o olho nunca fica cravado num ponto.
   void _sacadas() {
-    final alvo = _olharDeFora ?? _alvoDoOlhar;
+    // Seguindo algo de fora (o dedo, a cena): perseguição suave. O olho
+    // acompanha o alvo sem saltos — e sem os saltos não vêm as piscadas que
+    // os acompanham; antes ele piscava a cada meio segundo seguindo o dedo.
+    final fora = _olharDeFora;
+    if (fora != null) {
+      _fixacao = fora;
+      _proximaSacada = _t + 0.4;
+      return;
+    }
+    final alvo = _alvoDoOlhar;
     final grande = (alvo - _fixacao).distance > 0.35;
     if (grande || _t >= _proximaSacada) {
-      final disco = _olharDeFora != null ? 0.05 : 0.14;
+      const disco = 0.14;
       final ang = _sorte.nextDouble() * math.pi * 2;
       final r = math.sqrt(_sorte.nextDouble()) * disco;
       _fixacao = alvo + Offset(math.cos(ang), math.sin(ang)) * r;
-      // Fixações de 0,3–0,9 s quando atento; mediana ~1,1 s à toa.
-      _proximaSacada = _t +
-          (_olharDeFora != null
-              ? 0.3 + _sorte.nextDouble() * 0.6
-              : _logNormal(1.1, 0.5).clamp(0.4, 3.5));
+      // Fixações com mediana de ~1,1 s à toa.
+      _proximaSacada = _t + _logNormal(1.1, 0.5).clamp(0.4, 3.5);
       // Piscar junto de uma troca grande de olhar.
       if (grande && _sorte.nextDouble() < 0.4) _piscaAgora(lenta: false);
     }

@@ -9,6 +9,7 @@ import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/pet.dart';
 import '../widgets/folhas_voando.dart';
 import '../widgets/toca.dart';
 
@@ -801,6 +802,19 @@ Future<void> _abreAToca(
             const SizedBox(height: Espaco.sm),
             Toca(
               rotuloDoPremio: t.fill(t.missaoGanhou, {'n': folhas}),
+              // O bicho da pessoa cava junto.
+              bicho: PetView(
+                species: app.species,
+                mood: Mood.radiant,
+                activity: Activity.idle,
+                coat: app.color,
+                estagio: app.estagioVisivel,
+                roupas: app.roupasDoBicho,
+                roupaDeCabeca: app.roupaDeCabeca,
+                interativo: false,
+                width: 180,
+                height: 150,
+              ),
               aoAbrir: () {
                 aoAbrir();
                 // As folhas saem do prêmio e voam até o saldo, por cima da

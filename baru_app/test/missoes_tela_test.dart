@@ -167,7 +167,10 @@ void main() {
 
       expect(find.byKey(CartaoDoDescanso.chaveDoColher), findsOneWidget);
       await tester.tap(find.byKey(CartaoDoDescanso.chaveDoColher));
-      await tester.pumpAndSettle();
+      // A toca respira em loop: espera o tempo da folha subir, não o fim.
+      for (var k = 0; k < 8; k++) {
+        await tester.pump(const Duration(milliseconds: 250));
+      }
 
       expect(find.byKey(Toca.chave), findsOneWidget);
       expect(
@@ -182,9 +185,11 @@ void main() {
       }
       // Até a terra abrir e o prêmio subir; depois o respiro de 900 ms que
       // deixa a cena ser vista antes de a folha sair, e a saída dela.
-      await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 1));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      for (var k = 0; k < 8; k++) {
+        await tester.pump(const Duration(milliseconds: 250));
+      }
 
       expect(
         app.leaves,
@@ -236,16 +241,20 @@ void main() {
 
       final antes = app.leaves;
       await tester.tap(find.byKey(CartaoDeMissao.chaveDe('retomada')));
-      await tester.pumpAndSettle();
+      for (var k = 0; k < 8; k++) {
+        await tester.pump(const Duration(milliseconds: 250));
+      }
       expect(find.byKey(Toca.chave), findsOneWidget);
 
       for (var i = 0; i < Toca.precisaDe; i++) {
         await tester.tap(find.byKey(Toca.chave));
         await tester.pump(const Duration(milliseconds: 300));
       }
-      await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 1));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      for (var k = 0; k < 8; k++) {
+        await tester.pump(const Duration(milliseconds: 250));
+      }
 
       expect(app.leaves, antes + defDaRetomada.folhas);
       expect(app.missaoDeRetomada!.resgatada, isTrue);

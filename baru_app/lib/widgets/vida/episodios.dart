@@ -80,10 +80,26 @@ enum Episodio {
 
   /// Dormindo — cão, gata, raposa: sonha remando as patas.
   sonhoDePatinhas,
+
+  /// Coruja: decola, cruza o habitat baixo, paira mirando o chão e pousa
+  /// (voos curtos e baixos entre poleiros, e o pairar de caça: Cornell,
+  /// ADW).
+  voar,
+
+  /// Quem nada: da margem para a água e da água para a margem, por conta
+  /// própria (capivara, tartaruga, lontra, pinguim — ADW, SDZ).
+  entrarNaAgua,
+  sairDaAgua,
+
+  /// Quem come na água (lontra, pinguim, tartaruga, axolote): o bote
+  /// rápido — no axolote, a sucção — e a mastigação.
+  comerNaAgua,
 }
 
 /// Onde cada episódio do repertório pode acontecer.
 const _naTerra = {
+  Episodio.entrarNaAgua,
+  Episodio.voar,
   Episodio.piscadaLenta,
   Episodio.amassar,
   Episodio.escutar,
@@ -98,6 +114,8 @@ const _naTerra = {
   Episodio.tomarSol,
 };
 const _naAgua = {
+  Episodio.comerNaAgua,
+  Episodio.sairDaAgua,
   Episodio.rolar,
   Episodio.espiar,
   Episodio.respirar,
@@ -119,8 +137,14 @@ extension _Episodios on MotorDeVida {
       ModoDaAtividade.dormir => _noSono,
       _ => _naTerra,
     };
+    // Trocar de lugar: só quem pode, e depois de um tempo onde está.
+    final troca = trocaDeLugar && _t - _ultimaTroca > 40;
     final dia = hora >= 8 && hora < 17;
     return {
+      if (troca && valem.contains(Episodio.entrarNaAgua))
+        Episodio.entrarNaAgua: 0.8,
+      if (troca && valem.contains(Episodio.sairDaAgua))
+        Episodio.sairDaAgua: 0.8,
       for (final e in repertorio)
         if (valem.contains(e) && (e != Episodio.tomarSol || dia))
           // Momentos especiais pesam pouco: aparecem, mas não viram cacoete.
@@ -130,7 +154,9 @@ extension _Episodios on MotorDeVida {
             Episodio.tomarSol || Episodio.saltoNaAgua => 0.5,
             Episodio.amassar || Episodio.deitar || Episodio.microcochilo => 0.7,
             Episodio.escutar || Episodio.respirar => 1.4,
+            Episodio.comerNaAgua => 1.5,
             Episodio.balancarCabeca => 1.2,
+            Episodio.voar => 1.3,
             Episodio.sonhoDePatinhas => 1.6,
             _ => 0.9,
           },
@@ -374,6 +400,33 @@ extension _Episodios on MotorDeVida {
         _epFim = _t + 1.8;
       case Episodio.sonhoDePatinhas:
         _epFim = _t + _entre(2, 4.5);
+      case Episodio.comerNaAgua:
+        final dir = _virado ? -1.0 : 1.0;
+        _vx = dir * 50;
+        _alvoX = (_px + dir * 16).clamp(-areaDeAndar, areaDeAndar);
+        _faseMastiga = 0;
+        _epFim = _t + _entre(2, 3.4);
+      case Episodio.entrarNaAgua:
+      case Episodio.sairDaAgua:
+        _passosDoEp = 0;
+        _alvoX = _px;
+        _epFim = _t + 4;
+      case Episodio.voar:
+        if (!podeAndar || areaDeAndar < 20) {
+          _epFim = _t; // sem espaço para voar: escolhe outra coisa
+          break;
+        }
+        _voando = true;
+        _altitude.fixa(_y);
+        _altitude.alvo = _entre(40, 75);
+        _achata.empurra(-8); // o impulso da decolagem
+        final lado = _px > 0 ? -1.0 : 1.0;
+        _alvoX = (lado * areaDeAndar * _entre(0.5, 1)).clamp(
+          -areaDeAndar,
+          areaDeAndar,
+        );
+        _passosDoEp = 0;
+        _epFim = _t + 12; // termina quando pousa
     }
   }
 
@@ -416,6 +469,14 @@ extension _Episodios on MotorDeVida {
   /// desenho mostra o ócio, com gestos, e o cérebro livre decide.
   bool _passoDosEpisodios(double dt) {
     if (_modoAntes != modo || !_cabeNoModo(_ep)) {
+      if ((_modoAntes == ModoDaAtividade.nadar) !=
+          (modo == ModoDaAtividade.nadar)) {
+        _ultimaTroca = _t;
+        // Saiu da água: a sacudida do corpo molhado.
+        if (_modoAntes == ModoDaAtividade.nadar) {
+          _evento(EventoDaVida.sacode, espera: 0);
+        }
+      }
       _modoAntes = modo;
       _comecaEpisodio(switch (modo) {
         ModoDaAtividade.pastar || ModoDaAtividade.petiscar => Episodio.comer,
@@ -687,6 +748,55 @@ extension _Episodios on MotorDeVida {
         }
       case Episodio.saltoNaAgua:
         break;
+      case Episodio.comerNaAgua:
+        forca = u < 0.5 ? 1 : 0.2;
+        _faseAtividade += dt / (u < 0.5 ? 0.5 : 2.4);
+        _alvoDoOlhar = Offset(_virado ? -0.6 : 0.6, 0.4);
+        if (u > 0.3 && u < 0.55) {
+          // O bote: a boca abre de uma vez.
+          mastiga = math.sin((u - 0.3) / 0.25 * math.pi);
+        } else if (u >= 0.55) {
+          _faseMastiga += dt * 2.6;
+          mastiga = 0.5 - 0.5 * math.cos(_faseMastiga * 2 * math.pi);
+        }
+      case Episodio.entrarNaAgua:
+      case Episodio.sairDaAgua:
+        // Olha para onde vai, agacha, pula — e no alto do pulo a cena o
+        // leva para o outro lugar.
+        final entra = _ep == Episodio.entrarNaAgua;
+        _alvoDoOlhar = Offset(0, entra ? 0.9 : -0.5);
+        if (_passosDoEp == 0 && u > 0.8) {
+          _passosDoEp = 1;
+          _achata.alvo = 0.5;
+        } else if (_passosDoEp == 1 && u > 1.2) {
+          _passosDoEp = 2;
+          _achata.alvo = 0;
+          pula(entra ? 230 : 260);
+        } else if (_passosDoEp == 2 && _vy < 0) {
+          _passosDoEp = 3;
+          _evento(entra ? EventoDaVida.querAgua : EventoDaVida.querTerra);
+          _epFim = math.min(_epFim, _t + 1);
+        }
+      case Episodio.voar:
+        _faseAtividade += dt / (_passosDoEp == 1 ? 0.24 : 0.34);
+        _virado = _alvoX < _px;
+        switch (_passosDoEp) {
+          case 0: // cruzando
+            _alvoDoOlhar = Offset(_virado ? -0.7 : 0.7, 0.3);
+            if ((_alvoX - _px).abs() < 3) {
+              _passosDoEp = 1;
+              _proximoDoEp = _t + _entre(0.8, 1.6);
+            }
+          case 1: // pairando, mirando o chão
+            _alvoDoOlhar = Offset(_virado ? -0.3 : 0.3, 1);
+            if (_t >= _proximoDoEp) {
+              _passosDoEp = 2;
+              _altitude.alvo = 0;
+            }
+          default: // descendo para pousar
+            _alvoDoOlhar = Offset(_virado ? -0.3 : 0.3, 0.8);
+        }
+        if (!_voando) _epFim = math.min(_epFim, _t + 0.5);
       case Episodio.sonhoDePatinhas:
         _rebola = math.sin(_t * 13) * 0.7;
         if (_sorte.nextDouble() < dt * 1.5) _evento(EventoDaVida.orelha);

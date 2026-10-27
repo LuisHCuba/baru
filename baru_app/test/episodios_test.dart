@@ -90,4 +90,54 @@ void main() {
     final (tempo, _) = _assiste(m, 600);
     expect(tempo.containsKey(Episodio.tomarSol), isFalse);
   });
+
+  test('a coruja voa: decola, fica no ar e pousa', () {
+    final m = _motor(
+      ModoDaAtividade.petiscar,
+      repertorio: const {Episodio.voar},
+    );
+    var noAr = 0.0, maisAlto = 0.0, pousos = 0;
+    var antes = false;
+    const dt = 1 / 30;
+    for (var t = 0.0; t < 600; t += dt) {
+      final q = m.passo(dt);
+      if (q.voando) {
+        noAr += dt;
+        if (q.altura > maisAlto) maisAlto = q.altura;
+      }
+      if (antes && !q.voando) pousos++;
+      antes = q.voando;
+    }
+    expect(noAr, greaterThan(5), reason: 'segundos no ar em 10 min');
+    expect(maisAlto, greaterThan(30));
+    expect(pousos, greaterThan(0), reason: 'não fica no ar para sempre');
+    expect(noAr / 600, lessThan(0.3), reason: 'é coruja de chão');
+  });
+
+  test('quem nada vai para a água e volta sozinho', () {
+    final eventos = <EventoDaVida>[];
+    final m = _motor(ModoDaAtividade.pastar)
+      ..trocaDeLugar = true
+      ..aoEvento = eventos.add;
+    const dt = 1 / 30;
+    for (var t = 0.0; t < 600; t += dt) {
+      m.passo(dt);
+      // A cena atende: o modo troca quando ele pede.
+      if (eventos.isNotEmpty) {
+        final e = eventos.removeLast();
+        if (e == EventoDaVida.querAgua) {
+          m
+            ..modo = ModoDaAtividade.nadar
+            ..nadando = true;
+        } else if (e == EventoDaVida.querTerra) {
+          m
+            ..modo = ModoDaAtividade.pastar
+            ..nadando = false;
+        }
+        eventos.clear();
+        if (e == EventoDaVida.querTerra) return; // foi e voltou
+      }
+    }
+    fail('em 10 min não foi à água e voltou');
+  });
 }

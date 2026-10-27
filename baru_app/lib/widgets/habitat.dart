@@ -650,6 +650,16 @@ class _HabitatSceneState extends State<HabitatScene>
                             roupas: app.roupasDoBicho,
                             roupaDeCabeca: app.roupaDeCabeca,
                             interesse: comBrinquedos ? _interesse : null,
+                            aoMudarDeLugar: comBrinquedos &&
+                                    app.activity != Activity.nap &&
+                                    acaoNoEstagio(
+                                          app.species,
+                                          Activity.swim,
+                                          app.estagioVisivel,
+                                        ) ==
+                                        AcaoDoBicho.nado
+                                ? (agua) => _trocaDeLugar(app, agua)
+                                : null,
                             // Na home, a volta da pessoa: dias fora contam;
                             // sem eles, só o "oi" de quem abriu o app.
                             ausenciaAoAbrir: comBrinquedos
@@ -671,6 +681,7 @@ class _HabitatSceneState extends State<HabitatScene>
                             interesse: _interesse,
                             rotuloDaBola: app.t.brinqBola,
                             rotuloDoPetisco: app.t.brinqPetisco,
+                            especie: app.species,
                             podeConvidar: _atividade(app) != Activity.nap,
                             geometria: GeometriaDosBrinquedos(
                               largura: c.maxWidth,
@@ -712,7 +723,27 @@ class _HabitatSceneState extends State<HabitatScene>
 
   static const _mudaDeLugar = Duration(milliseconds: 450);
 
-  Activity _atividade(AppState app) => widget.atividade ?? app.activity;
+  /// Onde ele escolheu ficar: quem nada vai para a água e volta para a
+  /// margem por conta própria. Nulo: onde o humor manda.
+  Activity? _escolhaDoBicho;
+
+  Activity _atividade(AppState app) {
+    final pedida = widget.atividade;
+    if (pedida != null) return pedida;
+    final escolha = _escolhaDoBicho;
+    // Com sono ele dorme onde está o humor, não onde tinha ido brincar.
+    if (escolha != null && app.activity != Activity.nap) return escolha;
+    return app.activity;
+  }
+
+  void _trocaDeLugar(AppState app, bool agua) {
+    if (!mounted) return;
+    setState(() {
+      _escolhaDoBicho = agua
+          ? Activity.swim
+          : (app.activity == Activity.swim ? Activity.graze : null);
+    });
+  }
 
   /// Está de fato na água: a atividade é nadar **e** a espécie nada.
   bool _naAgua(AppState app) =>

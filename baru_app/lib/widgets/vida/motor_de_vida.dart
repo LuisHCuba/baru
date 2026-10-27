@@ -76,6 +76,10 @@ enum EventoDaVida {
 
   /// Fungadas de focinho no chão (chegou num tufo novo).
   fareja,
+
+  /// Quer entrar na água / sair dela: a cena muda o lugar dele.
+  querAgua,
+  querTerra,
 }
 
 /// Onde o dedo está no corpo, para o carinho.
@@ -149,7 +153,11 @@ class SaidaDaVida {
     this.cicloDaAtividade = 0,
     this.boca = 0,
     this.pescoco = 0,
+    this.voando = false,
   });
+
+  /// No ar, batendo asa (a coruja): o desenho é o do voo.
+  final bool voando;
 
   /// 0..1: a boca ou o bico abertos sem comida (zurro, alisar as penas).
   final double boca;
@@ -362,6 +370,15 @@ class MotorDeVida {
   bool _desenhaLivre = true;
   int _passosDoEp = 0;
   double _proximoDoEp = 0;
+
+  /// Pode ir e vir entre a margem e a água por conta própria (quem nada,
+  /// na home, acordado).
+  bool trocaDeLugar = false;
+  double _ultimaTroca = -100;
+
+  /// A coruja no ar (episódio voar).
+  bool _voando = false;
+  final _altitude = Mola(f: 0.9, zeta: 0.8);
   final _forcaDaAtividade = Mola(f: 1.4, zeta: 0.9);
 
   /// O episódio da vez (para teste e diagnóstico).
@@ -450,17 +467,19 @@ class MotorDeVida {
   void _andar(double dt) {
     final falta = _alvoX - _px;
     final base = jeito.velocidade;
-    final vmax = nadando
-        ? base * 0.8
-        : _correndo
-            ? base * 1.8
-            : base;
+    final vmax = _voando
+        ? base * 2.4
+        : nadando
+            ? base * 0.8
+            : _correndo
+                ? base * 1.8
+                : base;
     const freio = 140.0;
     final desejada = falta.abs() < 0.3
         ? 0.0
         : falta.sign * math.min(vmax, math.sqrt(2 * freio * falta.abs()));
     // No ar não se muda o embalo: o bote vai até onde o pulo levar.
-    final acel = _noChao || nadando ? 220.0 : 0.0;
+    final acel = _noChao || nadando || _voando ? 220.0 : 0.0;
     _vx += (desejada - _vx).clamp(-acel * dt, acel * dt);
     _px += _vx * dt;
     if (_px.abs() > areaDeAndar) {
@@ -639,6 +658,7 @@ class MotorDeVida {
   /// do corpo.
   void pegou(Offset onde) {
     _interagiu();
+    _voando = false;
     _emburradoAte = -1;
     _colado = onde;
     // O corpo começa onde está; o dedo é que vai levá-lo.
@@ -821,6 +841,8 @@ class MotorDeVida {
     _sobeNaAgua.alvo = 0;
     final perseguia = _perseguindo;
     _perseguindo = interessado && !ocupado && podeAndar;
+    // A bola chamou no meio do voo: desce primeiro.
+    if (_perseguindo && _voando) _altitude.alvo = 0;
     var livre = true;
     if (_perseguindo) {
       _persegue();
@@ -944,7 +966,21 @@ class MotorDeVida {
       _achata.alvo = -0.35;
       _y = math.max(0, -p.dy);
     } else {
-      if (!_noChao) {
+      if (_voando) {
+        // Voando: a altura segue a mola do voo, sem gravidade; batendo asa
+        // o corpo sobe e desce um fio a cada batida.
+        _y = math.max(0, _altitude.passo(dt));
+        _noChao = false;
+        balanco = (_altitude.velocidade / 300).clamp(-1.0, 1.0);
+        if (_altitude.alvo == 0 && _y < 0.8) {
+          // Pousou: as patas tocam, o corpo cede.
+          _voando = false;
+          _y = 0;
+          _vy = 0;
+          _noChao = true;
+          _achata.empurra(9);
+        }
+      } else if (!_noChao) {
         _vy -= _gravidade * dt;
         _y += _vy * dt;
         balanco = (_vy / 400).clamp(-1.0, 1.0);
@@ -1010,6 +1046,7 @@ class MotorDeVida {
       emburrado: emburrado,
       derretido: _derretido,
       passada: passada * a,
+      voando: _voando,
       virada: _virada.valor * a,
       cabecaAtraso: atraso * a,
       cabecaGiro: gesto.dx * a,

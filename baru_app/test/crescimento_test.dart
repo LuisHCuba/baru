@@ -228,7 +228,10 @@ void main() {
         var minX = w, maxX = -1, minY = h, maxY = -1;
         for (var y = 0; y < h; y++) {
           for (var x = 0; x < w; x++) {
-            if (px[(y * w + x) * 4 + 3] > 16) {
+            // Opaco de verdade: o axolote não sai da água, e os anéis
+            // translúcidos do rastro (do mesmo tamanho em todo estágio)
+            // mascaravam a altura do corpo.
+            if (px[(y * w + x) * 4 + 3] > 200) {
               if (x < minX) minX = x;
               if (x > maxX) maxX = x;
               if (y < minY) minY = y;

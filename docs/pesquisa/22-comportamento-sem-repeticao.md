@@ -98,3 +98,40 @@ baixo.
   cão para o mesmo lado; sonha remando as patas (cão pequeno, a cada ~10
   min); ronco (manter fofo).
   https://pmc.ncbi.nlm.nih.gov/articles/PMC9107419
+
+## Parte C — Dieta e locomoção (o que cada um come, por onde anda)
+
+- **Capivara**: ~92% capim (Poaceae) num estudo brasileiro; plantas aquáticas;
+  fruta de vez em quando (melão, abóbora). Nada muito bem; no estudo de
+  Londrina (Rickli 2007) passava **29% do tempo na água**; nas horas quentes
+  fica na água ou na lama. Ícone: capim. Petisco: melancia/melão.
+  https://animaldiversity.org/accounts/Hydrochoerus_hydrochaeris/ ·
+  https://repositorio.uel.br/bitstreams/21341008-4189-46f7-84f0-cc5d04361bb4/download
+- **Lontra (de rio)**: peixe, lagostim, sapo. Come pequeno na água e leva o
+  grande para a margem, segurando com as patas da frente. Comer de barriga
+  para cima é da lontra-**marinha** — não usar.
+  https://animaldiversity.org/accounts/Lontra_canadensis/
+- **Tartaruga-de-orelha-vermelha**: filhote carnívoro, adulta come planta
+  aquática; engole com a cabeça debaixo d'água; anda na margem, sobe para o
+  sol e escorrega para a água ao se assustar. Petisco: minhoca.
+  https://animaldiversity.org/accounts/Trachemys_scripta/ ·
+  https://vcahospitals.com/know-your-pet/turtles---aquatic---feeding
+- **Coruja-buraqueira**: ~90% dos itens são artrópodes (gafanhoto, grilo,
+  besouro); caça voando baixo, **pairando**, andando, saltando e correndo;
+  pousa no montinho da toca. https://www.allaboutbirds.org/guide/Burrowing_Owl/lifehistory
+- **Axolote**: minhoca, larvas, pequenos crustáceos; **sucção**; inteiramente
+  aquático (nunca sai da água). https://pmc.ncbi.nlm.nih.gov/articles/PMC12309904/
+- **Pinguim-de-magalhães**: anchova, sardinha, lula; engole debaixo d'água;
+  anda de passinhos curtos na terra. Petisco: lula.
+  https://animaldiversity.org/accounts/Spheniscus_magellanicus/
+- **Gato**: carnívoro (roedores, aves, peixe). **Raposa**: onívora (roedores,
+  insetos, fruta); caça "mousing". **Buldogue francês**: ração; nada mal
+  (focinho curto) — só brinca na beira.
+  https://animaldiversity.org/accounts/Felis_catus/ ·
+  https://animaldiversity.org/accounts/Vulpes_vulpes/
+
+Aplicado: comida por espécie (na boca e no potinho), coruja voando
+(decola, cruza baixo, paira mirando o chão, pousa), capivara, tartaruga,
+lontra e pinguim indo e voltando da água por conta própria (e sacudindo o
+corpo ao sair), axolote sempre na água, e comer na água para quem come
+nela.

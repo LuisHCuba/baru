@@ -40,6 +40,7 @@ import '../data/crescimento.dart';
 import '../models.dart';
 import '../services/som_service.dart';
 import '../theme.dart';
+import 'comida.dart';
 import 'vida/motor_de_vida.dart';
 
 /// Um gesto de ocioso: o que o bicho faz quando ninguém está pedindo nada.
@@ -111,6 +112,11 @@ enum AcaoDoBicho {
 ///   Mecanicamente é o mesmo laço; o que muda é onde a mastigação acontece —
 ///   no chão ou com a cabeça erguida.
 AcaoDoBicho acaoDoBicho(Species especie, Activity atividade) {
+  // O axolote é inteiramente aquático: nunca sai da água (ADW, SDZ;
+  // pesquisa 22). Come, espera e brinca nadando; só o sono é à parte.
+  if (especie == Species.axolotl && atividade != Activity.nap) {
+    return AcaoDoBicho.nado;
+  }
   switch (atividade) {
     case Activity.nap:
       return AcaoDoBicho.cochilo;
@@ -294,7 +300,12 @@ class PetView extends StatefulWidget {
     this.interesse,
     this.aoAlcancar,
     this.ausenciaAoAbrir,
+    this.aoMudarDeLugar,
   });
+
+  /// Ele quer ir para a água (true) ou para a margem (false), por conta
+  /// própria. Nulo: não troca de lugar (fora da home, ou quem não nada).
+  final void Function(bool agua)? aoMudarDeLugar;
 
   /// Quanto tempo a pessoa ficou fora, para a saudação da primeira vez que
   /// ele aparece no processo (ver `MotorDeVida.saudacao`). Nulo: não saúda.
@@ -499,6 +510,11 @@ class _PetViewState extends State<PetView>
   /// de um espirro; espreguiçar ao sair do descanso; coçar).
   void _eventoDaVida(EventoDaVida e) {
     if (!mounted || !_continuoLigado) return;
+    // Ir para a água ou sair dela: quem decide o lugar é a cena.
+    if (e == EventoDaVida.querAgua || e == EventoDaVida.querTerra) {
+      widget.aoMudarDeLugar?.call(e == EventoDaVida.querAgua);
+      return;
+    }
     // A orelha é independente do resto: mexe vigiando, mexe sonhando.
     if (e == EventoDaVida.orelha) {
       if (!_orelha.isAnimating) {
@@ -519,7 +535,10 @@ class _PetViewState extends State<PetView>
       EventoDaVida.espreguica => GestoOcioso.espreguica,
       EventoDaVida.coca => GestoOcioso.coca,
       EventoDaVida.fareja => GestoOcioso.fareja,
-      EventoDaVida.orelha => GestoOcioso.nenhum,
+      EventoDaVida.orelha ||
+      EventoDaVida.querAgua ||
+      EventoDaVida.querTerra =>
+        GestoOcioso.nenhum,
     };
     setState(() => _gestoAtual = gesto);
     PetView.observadorDeGesto?.value = gesto;
@@ -577,6 +596,7 @@ class _PetViewState extends State<PetView>
             : ModoDaAtividade.dormir,
         _ => ModoDaAtividade.livre,
       }
+      ..trocaDeLugar = widget.aoMudarDeLugar != null
       ..dormindo = acao == AcaoDoBicho.cochilo
       ..nadando = acao == AcaoDoBicho.nado
       ..posturaLivre = _acaoDesenhada == AcaoDoBicho.ocioso
@@ -802,6 +822,7 @@ class _PetViewState extends State<PetView>
     if (a == AcaoDoBicho.nado || a == AcaoDoBicho.cochilo) return a;
     if (_comendo >= 0) return AcaoDoBicho.petisco;
     final q = _quadroDaVida.value;
+    if (q.voando) return AcaoDoBicho.voo;
     // Brincar agora é do motor (botes, disparadas, reverências, pulos): o
     // desenho fica no corpo livre. E na pausa entre os episódios de comer,
     // também: é ali que cabem o espreguiçar, o coçar, o farejar.
@@ -876,22 +897,29 @@ class _PetViewState extends State<PetView>
             Episodio.espiar,
           },
         Species.otter => const {
+            Episodio.comerNaAgua,
             Episodio.alisar,
             Episodio.rolar,
             Episodio.espiar,
           },
         Species.tortoise => const {
+            Episodio.comerNaAgua,
             Episodio.recolher,
             Episodio.tomarSol,
             Episodio.espiar,
           },
         Species.owl => const {
+            Episodio.voar,
             Episodio.balancarCabeca,
             Episodio.girarCabeca,
             Episodio.alisar,
           },
-        Species.axolotl => const {Episodio.respirar},
+        Species.axolotl => const {
+            Episodio.respirar,
+            Episodio.comerNaAgua,
+          },
         Species.penguin => const {
+            Episodio.comerNaAgua,
             Episodio.alisar,
             Episodio.microcochilo,
             Episodio.zurro,
@@ -1323,7 +1351,8 @@ class _PetViewState extends State<PetView>
               ciclo: _comendo >= 0
                   ? 0.27 + 0.44 * _comendo
                   : _quadroDaVida.value.atividadeAtiva &&
-                          _acaoDesenhada == AcaoDoBicho.nado
+                          (_acaoDesenhada == AcaoDoBicho.nado ||
+                              _quadroDaVida.value.voando)
                       // A remada só anda remando: desliza parada, boia lenta.
                       ? _quadroDaVida.value.cicloDaAtividade
                       : _quadroDaVida.value.ciclo,
@@ -1753,7 +1782,7 @@ class _Pose {
 
   /// Mastigar: 0 a 1, a boca abrindo e fechando na janela de comer.
   double get mastiga {
-    if (pastando && vida.atividadeAtiva && !comendoDaMao) {
+    if ((pastando || nadando) && vida.atividadeAtiva && !comendoDaMao) {
       return vida.mastigando * amplitude;
     }
     final janela = switch (acao) {
@@ -1933,7 +1962,20 @@ class _PetPainter extends CustomPainter {
   /// **este** número que faltava: sem ele o bicho ficava em cima da água como
   /// um adesivo, e o que o dono viu foi um bicho parado com uns círculos
   /// embaixo.
-  double get afunda => !nadando ? 0 : (mergulha ? 20 : 13);
+  double get afunda {
+    if (!nadando) return 0;
+    final base = mergulha ? 20.0 : 13.0;
+    // O axolote não sai da água, então a atividade dele é a altura em que
+    // fica nela: comendo, mais fundo, junto ao fundo; à toa, mais à tona.
+    if (species == Species.axolotl) {
+      return switch (activity) {
+        Activity.graze => base + 5,
+        Activity.idle => base - 8,
+        _ => base,
+      };
+    }
+    return base;
+  }
 
   /// Olho fechado por sono, por piscada, por bocejo ou de contentamento.
   ///
@@ -2450,7 +2492,13 @@ class _PetPainter extends CustomPainter {
   /// porque a alternativa era repetir a mesma soma em oito lugares e
   /// esquecer de um.
   double get _cabecaDesce =>
-      pose.cabecaDesce + pose.farejada + _cabecaDoHumor;
+      pose.cabecaDesce +
+      pose.farejada +
+      _cabecaDoHumor +
+      // O axolote comendo: cabeça baixa, mirando o fundo.
+      (species == Species.axolotl && nadando && activity == Activity.graze
+          ? 5
+          : 0);
 
   // --- humor no corpo -------------------------------------------------------
   //
@@ -5477,18 +5525,15 @@ class _PetPainter extends CustomPainter {
   /// petiscam.
   void _naBoca(Canvas canvas, Offset o, double w) {
     if (pose.mastiga <= 0.05) return;
-    canvas.save();
-    canvas.translate(o.dx + w * 0.34, o.dy - 1);
-    canvas.rotate(-0.5 + pose.mastiga * 0.24);
-    canvas.drawPath(
-      Path()
-        ..moveTo(0, 0)
-        ..quadraticBezierTo(5, -4.5, 12, -3)
-        ..quadraticBezierTo(6, 1.5, 0, 0)
-        ..close(),
-      _p(Cores.primariaClara),
+    // O que ele come de verdade (ver `comida.dart`); da mão, o petisco.
+    final c = pose.comendoDaMao ? petiscoDe(species) : comidaDe(species);
+    pintaComida(
+      canvas,
+      c,
+      Offset(o.dx + w * 0.42, o.dy + 1),
+      w * 0.3,
+      angulo: -0.35 + pose.mastiga * 0.24,
     );
-    canvas.restore();
   }
 
   void _bochecha(Canvas canvas, Offset a, Offset b) {

@@ -19,7 +19,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../design/tokens.dart';
+import '../models.dart';
 import '../services/som_service.dart';
+import 'comida.dart';
 import 'pet.dart';
 import 'vida/motor_de_vida.dart';
 
@@ -73,8 +75,12 @@ class BrinquedosDoHabitat extends StatefulWidget {
     required this.interesse,
     required this.rotuloDaBola,
     required this.rotuloDoPetisco,
+    required this.especie,
     this.podeConvidar = true,
   });
+
+  /// De quem é o potinho: o petisco é o que esse bicho gosta.
+  final Species especie;
 
   /// Ele pode vir pedir para brincar (acordado, fora do foco).
   final bool podeConvidar;
@@ -493,6 +499,7 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
           child: IgnorePointer(
             child: CustomPaint(
               painter: _PintaBrinquedos(
+                petisco: petiscoDe(widget.especie),
                 bola: b,
                 giro: _giro,
                 raioDaBola: _raioDaBola,
@@ -525,7 +532,12 @@ class BrinquedosDoHabitatState extends State<BrinquedosDoHabitat>
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 300),
                 opacity: poteCheio ? 1 : 0.45,
-                child: CustomPaint(painter: _PintaPote(cheio: poteCheio)),
+                child: CustomPaint(
+                  painter: _PintaPote(
+                    cheio: poteCheio,
+                    petisco: petiscoDe(widget.especie),
+                  ),
+                ),
               ),
             ),
           ),
@@ -601,8 +613,10 @@ class _PintaBrinquedos extends CustomPainter {
     required this.chao,
     required this.agua,
     required this.farelos,
+    required this.petisco,
   });
 
+  final Comida petisco;
   final Offset bola;
   final double giro;
   final double raioDaBola;
@@ -618,7 +632,7 @@ class _PintaBrinquedos extends CustomPainter {
     final c = castanha;
     if (c != null) _sombra(canvas, c, raioDaCastanha);
     _bola(canvas);
-    if (c != null) _castanha(canvas, c, raioDaCastanha);
+    if (c != null) pintaComida(canvas, petisco, c, raioDaCastanha * 1.2);
     for (final f in farelos) {
       canvas.drawCircle(
         f.p,
@@ -694,53 +708,16 @@ class _PintaBrinquedos extends CustomPainter {
     );
   }
 
-  static void _castanha(Canvas canvas, Offset p, double r) {
-    canvas.save();
-    canvas.translate(p.dx, p.dy);
-    canvas.rotate(-0.35);
-    final forma = Rect.fromCenter(
-      center: Offset.zero,
-      width: r * 2.5,
-      height: r * 1.6,
-    );
-    canvas.drawOval(
-      forma,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFB98552), Color(0xFF7A4A26)],
-        ).createShader(forma),
-    );
-    // A costura do baru e o brilho da casca.
-    canvas.drawLine(
-      Offset(-r * 0.95, r * 0.05),
-      Offset(r * 0.95, -r * 0.05),
-      Paint()
-        ..color = const Color(0xFF5A3418).withValues(alpha: 0.6)
-        ..strokeWidth = 1.1
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(-r * 0.35, -r * 0.4),
-        width: r * 0.9,
-        height: r * 0.32,
-      ),
-      Paint()..color = Colors.white.withValues(alpha: 0.35),
-    );
-    canvas.restore();
-  }
-
   @override
   bool shouldRepaint(_PintaBrinquedos old) => true;
 }
 
 /// O potinho de madeira com castanhas.
 class _PintaPote extends CustomPainter {
-  const _PintaPote({required this.cheio});
+  const _PintaPote({required this.cheio, required this.petisco});
 
   final bool cheio;
+  final Comida petisco;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -757,8 +734,20 @@ class _PintaPote extends CustomPainter {
     );
     final r = w * 0.11;
     if (cheio) {
-      _PintaBrinquedos._castanha(canvas, Offset(w * 0.40, h * 0.47), r);
-      _PintaBrinquedos._castanha(canvas, Offset(w * 0.60, h * 0.44), r);
+      pintaComida(
+        canvas,
+        petisco,
+        Offset(w * 0.38, h * 0.44),
+        r * 1.4,
+        angulo: -0.3,
+      );
+      pintaComida(
+        canvas,
+        petisco,
+        Offset(w * 0.62, h * 0.42),
+        r * 1.4,
+        angulo: 0.4,
+      );
     }
     // A tigela por cima das castanhas.
     final tigela = Path()
@@ -777,5 +766,6 @@ class _PintaPote extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_PintaPote old) => old.cheio != cheio;
+  bool shouldRepaint(_PintaPote old) =>
+      old.cheio != cheio || old.petisco != petisco;
 }

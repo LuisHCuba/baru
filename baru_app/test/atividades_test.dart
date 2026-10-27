@@ -172,7 +172,8 @@ void main() {
         (Species.otter, Activity.graze): AcaoDoBicho.petisco,
         (Species.owl, Activity.graze): AcaoDoBicho.petisco,
         (Species.penguin, Activity.graze): AcaoDoBicho.petisco,
-        (Species.axolotl, Activity.graze): AcaoDoBicho.petisco,
+        // O axolote nunca sai da água (pesquisa 22): come nadando.
+        (Species.axolotl, Activity.graze): AcaoDoBicho.nado,
         (Species.cat, Activity.graze): AcaoDoBicho.petisco,
         (Species.fox, Activity.graze): AcaoDoBicho.petisco,
         (Species.frenchie, Activity.graze): AcaoDoBicho.petisco,
@@ -193,10 +194,14 @@ void main() {
       });
     });
 
-    test('dormir e ficar à toa não dependem da espécie', () {
+    test('dormir e ficar à toa não dependem da espécie (fora o axolote)', () {
       for (final sp in Species.values) {
         expect(acaoDoBicho(sp, Activity.nap), AcaoDoBicho.cochilo);
-        expect(acaoDoBicho(sp, Activity.idle), AcaoDoBicho.ocioso);
+        // À toa também é na água para o axolote, que não sai dela.
+        expect(
+          acaoDoBicho(sp, Activity.idle),
+          sp == Species.axolotl ? AcaoDoBicho.nado : AcaoDoBicho.ocioso,
+        );
       }
     });
 

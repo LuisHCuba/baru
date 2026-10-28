@@ -149,6 +149,9 @@ class SaidaDaVida {
     this.comendo = false,
     this.reverencia = 0,
     this.giro = 0,
+    this.corrida = 0,
+    this.galope = 0,
+    this.poeira = const [],
     this.pataEsquerda = 0,
     this.pataDireita = 0,
     this.virada = Offset.zero,
@@ -236,6 +239,18 @@ class SaidaDaVida {
   /// 0..1: a reverência de brincadeira — frente baixa, patas abertas.
   final double reverencia;
 
+  /// 0..1: está correndo (a disparada, a corrida atrás da bola). O corpo
+  /// pende mais e estica e encolhe a cada passada, como no galope.
+  final double corrida;
+
+  /// 0..1: a passada do galope. 1 no contato (corpo esticado e baixo),
+  /// 0 na suspensão (corpo encolhido e alto).
+  final double galope;
+
+  /// As nuvenzinhas de poeira que a corrida deixa no chão: `dx` é a posição
+  /// no mundo do bicho (a mesma de `desloca`), `dy` é a idade de 0 a 1.
+  final List<Offset> poeira;
+
   /// 0..1: o progresso de um giro do rodopio (o corpo vira como uma folha
   /// de papel no eixo vertical). 0: sem giro.
   final double giro;
@@ -296,14 +311,14 @@ class SaidaDaVida {
 
 class MotorDeVida {
   MotorDeVida({int semente = 0, this.areaDeAndar = 0})
-      : _sorte = math.Random(semente == 0 ? null : semente),
-        _rRespiro = Ruido(semente + 11),
-        _rFundura = Ruido(semente + 23),
-        _rBoia = Ruido(semente + 37),
-        _rPeso = Ruido(semente + 41),
-        _rCauda = Ruido(semente + 53),
-        _rCadencia = Ruido(semente + 67),
-        _rMicro = Ruido(semente + 79) {
+    : _sorte = math.Random(semente == 0 ? null : semente),
+      _rRespiro = Ruido(semente + 11),
+      _rFundura = Ruido(semente + 23),
+      _rBoia = Ruido(semente + 37),
+      _rPeso = Ruido(semente + 41),
+      _rCauda = Ruido(semente + 53),
+      _rCadencia = Ruido(semente + 67),
+      _rMicro = Ruido(semente + 79) {
     // A primeira piscada sorteada: fixa em 2 s, todos os bichos da tela
     // piscavam juntos, como se alguém tivesse apertado um botão.
     _proximaPiscada = 0.8 + _sorte.nextDouble() * 3;
@@ -552,6 +567,7 @@ class MotorDeVida {
   double _faseDoPasso = 0;
   double _intensidadeDoPasso = 0;
   double _ondaAntes = 0;
+  final _poeira = <(double, double)>[];
   double _rebola = 0;
 
   void _andar(double dt) {
@@ -560,10 +576,10 @@ class MotorDeVida {
     final vmax = _voando
         ? base * 2.4
         : nadando
-            ? base * 0.8
-            : _correndo
-                ? base * 1.8
-                : base;
+        ? base * 0.8
+        : _correndo
+        ? base * 1.8
+        : base;
     const freio = 140.0;
     final desejada = falta.abs() < 0.3
         ? 0.0
@@ -715,8 +731,7 @@ class MotorDeVida {
       _achata.empurra(-5);
       _inclina.empurra(-velocidade.dx.sign * 2.5);
       if (podeAndar && _meiaLargura > 12) {
-        _alvoX = (_px - velocidade.dx.sign * 18)
-            .clamp(_min, _max);
+        _alvoX = (_px - velocidade.dx.sign * 18).clamp(_min, _max);
       }
       return;
     }
@@ -891,16 +906,17 @@ class MotorDeVida {
     // --- respiração ------------------------------------------------------
     final descansando = _intencao == IntencaoDoBicho.descansar;
     final derretendo = _derretido > 0.4;
-    final periodo = periodoRespiro *
+    final periodo =
+        periodoRespiro *
         (descansando || derretendo ? 1.3 : 1) *
         (1 + 0.2 * _rRespiro.em(_t * 0.11));
     _faseRespiro += dt / periodo;
     final fundura = dormindo
         ? 1.5 + 0.12 * _rFundura.em(_t * 0.05)
         : 0.8 +
-            0.22 * _rFundura.em(_t * 0.07) +
-            (descansando ? 0.25 : 0) +
-            (_agitacao > 0.5 ? 0.3 : 0);
+              0.22 * _rFundura.em(_t * 0.07) +
+              (descansando ? 0.25 : 0) +
+              (_agitacao > 0.5 ? 0.3 : 0);
     // O suspiro do sono: um fôlego bem mais fundo, uma vez.
     final suspiro = modo == ModoDaAtividade.dormir && _ep == Episodio.suspiro
         ? math.sin((_suspiroT / 2.6).clamp(0.0, 1.0) * math.pi) * 1.3
@@ -912,8 +928,7 @@ class MotorDeVida {
     _faseCiclo += dt / (periodoCiclo * (1 + 0.15 * _rCadencia.em(_t * 0.05)));
     _faseCiclo %= 1;
 
-    final boia =
-        posturaLivre ? _rBoia.em(_t * 0.18, oitavas: 3) * 1.1 : 0.0;
+    final boia = posturaLivre ? _rBoia.em(_t * 0.18, oitavas: 3) * 1.1 : 0.0;
 
     // --- cérebro -----------------------------------------------------------
     if (_festaEm > 0 && _t >= _festaEm && !ocupado) {
@@ -991,13 +1006,15 @@ class MotorDeVida {
 
     // --- cauda -------------------------------------------------------------
     final vontade = _rCauda.em(_t * 0.09) * 0.5 + 0.5;
-    final feliz = _agitacao +
+    final feliz =
+        _agitacao +
         _derretido +
         (_intencao == IntencaoDoBicho.festejar ? 1 : 0) +
         (_t - _ultimaInteracao < 3 && !emburrado ? 0.6 : 0);
     final abano = (vontade > 0.62 ? (vontade - 0.62) * 2.6 : 0) + feliz;
     _faseAbano += dt * (1.2 + abano * 2.4) * (emburrado ? 0.2 : 1);
-    _cauda.alvo = math.sin(_faseAbano * 2 * math.pi) *
+    _cauda.alvo =
+        math.sin(_faseAbano * 2 * math.pi) *
             (0.25 + 0.75 * abano.clamp(0.0, 1.0)) -
         _vx * 0.004;
     _cauda.passo(dt);
@@ -1023,10 +1040,10 @@ class MotorDeVida {
     _inclina.alvo = !posturaLivre
         ? 0
         : (noColo ? 0 : _cabeca.valor.dx * 0.025) +
-            curioso * (_virado ? -1 : 1) +
-            _rPeso.em(_t * 0.13) * 0.025 -
-            anteEspirro * 0.12 +
-            _estica;
+              curioso * (_virado ? -1 : 1) +
+              _rPeso.em(_t * 0.13) * 0.025 -
+              anteEspirro * 0.12 +
+              _estica;
     _inclina.passo(dt);
 
     // --- salto, queda, colo ----------------------------------------------
@@ -1063,14 +1080,20 @@ class MotorDeVida {
     // Mais alto na passagem (uma pata no ar), mais baixo no contato.
     // Correndo, o quique é de galope: maior.
     final sobeNoPasso =
-        (1 - math.cos(2 * fase)) / 2 * (_correndo ? 9.0 : 5.0) * intensidade;
+        (1 - math.cos(2 * fase)) / 2 * (_correndo ? 13.0 : 5.0) * intensidade;
+    final corrida = _correndo ? intensidade : 0.0;
     if (intensidade > 0.25 && (onda >= 0) != (_ondaAntes >= 0)) {
       _achata.empurra(3.5 * intensidade);
+      // Cada pata que bate no chão correndo levanta um pouco de poeira,
+      // um tanto atrás, onde ela pisou.
+      if (corrida > 0.5) _poeira.add((_px - _vx.sign * 16, _t));
     }
+    _poeira.removeWhere((p) => _t - p.$2 > 0.55);
     _ondaAntes = onda;
     final gingado = onda * 0.11 * intensidade;
     // Pende para a frente (o lado para onde vai, já espelhado em `virado`).
-    final pende = 0.05 * intensidade;
+    // Correndo, pende bem mais: o peso vai à frente das patas.
+    final pende = 0.05 * intensidade + 0.13 * corrida;
     final pataEsquerda = math.max(0.0, onda) * intensidade;
     final pataDireita = math.max(0.0, -onda) * intensidade;
     var desloca = Offset(_px, 0);
@@ -1128,10 +1151,7 @@ class MotorDeVida {
       } else if (_achata.alvo < 0 && _espirroEm < 0) {
         _achata.alvo = 0;
       }
-      desloca = Offset(
-        desloca.dx,
-        -_y - sobeNoPasso - _sobeNaAgua.passo(dt),
-      );
+      desloca = Offset(desloca.dx, -_y - sobeNoPasso - _sobeNaAgua.passo(dt));
     }
     if (anteEspirro > 0) _achata.alvo = -anteEspirro * 0.4;
     _achata.passo(dt);
@@ -1148,10 +1168,7 @@ class MotorDeVida {
     );
     _cabecaSegue.alvo = apoio;
     final segue = _cabecaSegue.passo(dt) - apoio;
-    final atraso = Offset(
-      segue.dx.clamp(-6.0, 6.0),
-      segue.dy.clamp(-7.0, 7.0),
-    );
+    final atraso = Offset(segue.dx.clamp(-6.0, 6.0), segue.dy.clamp(-7.0, 7.0));
     final gesto = _gestosDeCabeca(dt);
 
     return SaidaDaVida(
@@ -1160,8 +1177,7 @@ class MotorDeVida {
       cauda: _cauda.valor.clamp(-1.4, 1.4) * (0.4 + 0.6 * a),
       ciclo: _faseCiclo,
       olhar: _pupila.valor,
-      inclina:
-          (_inclina.valor + inclinaNoColo * 0.5 + pende + _pitchDoVoo) * a,
+      inclina: (_inclina.valor + inclinaNoColo * 0.5 + pende + _pitchDoVoo) * a,
       achata: _achata.valor.clamp(-0.6, 0.6) * a,
       desloca: desloca,
       virado: _virado,
@@ -1184,6 +1200,9 @@ class MotorDeVida {
           (_ep == Episodio.comer && _cabecaNoChao.valor < 0.7),
       reverencia: _reverencia * a,
       giro: _giroT,
+      corrida: corrida * a,
+      galope: (1 + math.cos(2 * fase)) / 2,
+      poeira: [for (final p in _poeira) Offset(p.$1, (_t - p.$2) / 0.55)],
       planando: _planando,
       freando: _freando,
       virada: _virada.valor * a,
@@ -1381,11 +1400,23 @@ class MotorDeVida {
       if (anda)
         (
           IntencaoDoBicho.passear,
-          (tarde ? 3.6 : noite ? 1.2 : 2.8) * (0.6 + energia * 0.8),
+          (tarde
+                  ? 3.6
+                  : noite
+                  ? 1.2
+                  : 2.8) *
+              (0.6 + energia * 0.8),
         ),
       if (podeAndar && !reduzido && !nadando) (IntencaoDoBicho.farejar, 1.6),
       (IntencaoDoBicho.chamar, semInteracao > 25 ? 2.2 : 0.5),
-      (IntencaoDoBicho.descansar, noite ? 2.8 : manha ? 0.6 : 1.0),
+      (
+        IntencaoDoBicho.descansar,
+        noite
+            ? 2.8
+            : manha
+            ? 0.6
+            : 1.0,
+      ),
       if (podeAndar && !reduzido && !nadando)
         (
           IntencaoDoBicho.festejar,
@@ -1399,8 +1430,8 @@ class MotorDeVida {
       final fator = i == _intencao
           ? 0.25
           : ultima == null
-              ? 1.0
-              : (math.min(1.0, (_t - ultima) / 20)).clamp(0.2, 1.0);
+          ? 1.0
+          : (math.min(1.0, (_t - ultima) / 20)).clamp(0.2, 1.0);
       final peso = p * fator;
       pesos.add(peso);
       total += peso;
@@ -1427,8 +1458,9 @@ class MotorDeVida {
     _mudaPara(escolhida, dura);
     if (escolhida == IntencaoDoBicho.passear) {
       final lado = _px > _meio ? -1 : 1;
-      _destinoX = (_meio + lado * (_meiaLargura * (0.35 + _sorte.nextDouble() * 0.6)))
-          .clamp(_min, _max);
+      _destinoX =
+          (_meio + lado * (_meiaLargura * (0.35 + _sorte.nextDouble() * 0.6)))
+              .clamp(_min, _max);
     }
     if (escolhida == IntencaoDoBicho.festejar) _proximoPulo = _t;
     if (escolhida == IntencaoDoBicho.chamar) _piscaAgora(lenta: true);
@@ -1469,8 +1501,10 @@ class MotorDeVida {
           );
           _proximoInteresse = _t + 0.5 + _sorte.nextDouble() * 0.9;
           if (podeAndar && _meiaLargura > 12 && _sorte.nextDouble() < 0.35) {
-            _alvoX = (_px + (_sorte.nextDouble() * 2 - 1) * 10)
-                .clamp(_min, _max);
+            _alvoX = (_px + (_sorte.nextDouble() * 2 - 1) * 10).clamp(
+              _min,
+              _max,
+            );
           }
         }
       case IntencaoDoBicho.chamar:
@@ -1618,13 +1652,12 @@ class MotorDeVida {
     _alvoDoOlhar = r < 0.25
         ? Offset.zero
         : r < 0.4
-            ? const Offset(0, -0.2)
-            : Offset(
-                (_sorte.nextDouble() * 2 - 1) * alcance,
-                (_sorte.nextDouble() * 2 - 1) * alcance * 0.5,
-              );
-    _proximoInteresse = _t +
-        intervalo.$1 +
-        _sorte.nextDouble() * (intervalo.$2 - intervalo.$1);
+        ? const Offset(0, -0.2)
+        : Offset(
+            (_sorte.nextDouble() * 2 - 1) * alcance,
+            (_sorte.nextDouble() * 2 - 1) * alcance * 0.5,
+          );
+    _proximoInteresse =
+        _t + intervalo.$1 + _sorte.nextDouble() * (intervalo.$2 - intervalo.$1);
   }
 }

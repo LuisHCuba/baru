@@ -141,6 +141,10 @@ class SaidaDaVida {
     this.emburrado = false,
     this.derretido = 0,
     this.passada = 0,
+    this.gingado = 0,
+    this.andando = 0,
+    this.pataEsquerda = 0,
+    this.pataDireita = 0,
     this.virada = Offset.zero,
     this.cabecaAtraso = Offset.zero,
     this.cabecaGiro = 0,
@@ -198,6 +202,18 @@ class SaidaDaVida {
 
   /// -1..1: as patas andando, uma para a frente e a outra para trás.
   final double passada;
+
+  /// O gingado do passo, em radianos: o corpo rola por cima do pé que está
+  /// no chão (positivo: apoiado no pé direito, o esquerdo no ar). Gira pelo
+  /// pé de apoio, não pelo meio.
+  final double gingado;
+
+  /// 0..1: o quanto ele está andando (o passo entra e sai suave).
+  final double andando;
+
+  /// 0..1: quanto cada pata da frente está no ar, no passo.
+  final double pataEsquerda;
+  final double pataDireita;
 
   /// -1..1: o peito.
   final double respiro;
@@ -485,6 +501,7 @@ class MotorDeVida {
   double _alvoX = 0;
   bool _correndo = false;
   double _faseDoPasso = 0;
+  double _intensidadeDoPasso = 0;
   double _ondaAntes = 0;
   double _rebola = 0;
 
@@ -510,7 +527,9 @@ class MotorDeVida {
       _px = _px.clamp(_min, _max);
       _vx = 0;
     }
-    _faseDoPasso += _vx.abs() * dt / 15;
+    // Uma volta são dois passos de ~18 unidades. A /15 dava seis passos por
+    // segundo: um tremor de patas, não um andar (pesquisa 24).
+    _faseDoPasso += _vx.abs() * dt / 36;
   }
 
   // --- salto e queda ----------------------------------------------------
@@ -963,18 +982,32 @@ class MotorDeVida {
 
     // --- salto, queda, colo ----------------------------------------------
     _andar(dt);
-    // O passo: as patas alternam e o corpo sobe um fio a cada apoio.
-    final andandoNoChao = _noChao && !nadando && !noColo;
-    final intensidade = andandoNoChao ? math.min(1.0, _vx.abs() / 8) : 0.0;
-    final onda = math.sin(_faseDoPasso * 2 * math.pi);
+    // O passo de quem anda de frente para a câmera é um gingado (pesquisa
+    // 24, as poses de contato e passagem de Williams): o corpo rola por cima
+    // do pé de apoio, a pata livre sobe num arco, o corpo sobe na passagem e
+    // cede no contato, e todo ele pende um pouco para onde vai. Antes as
+    // patas deslizavam ±3 unidades de lado e ele parecia um adesivo
+    // arrastado.
+    final andandoNoChao = _noChao && !nadando && !noColo && !_voando;
+    final alvoDoPasso = andandoNoChao ? math.min(1.0, _vx.abs() / 14) : 0.0;
+    // Entra e sai do passo sem degrau.
+    _intensidadeDoPasso +=
+        (alvoDoPasso - _intensidadeDoPasso) * (1 - math.exp(-dt * 9));
+    final intensidade = _intensidadeDoPasso;
+    final fase = _faseDoPasso * 2 * math.pi;
+    final onda = math.sin(fase);
     final passada = onda * intensidade + _rebola;
-    // Passo com quique: o corpo sobe entre os apoios e achata um pouco em
-    // cada um.
-    final sobeNoPasso = onda.abs() * 3.2 * intensidade;
-    if (intensidade > 0.2 && (onda >= 0) != (_ondaAntes >= 0)) {
-      _achata.empurra(4 * intensidade);
+    // Mais alto na passagem (uma pata no ar), mais baixo no contato.
+    final sobeNoPasso = (1 - math.cos(2 * fase)) / 2 * 5.0 * intensidade;
+    if (intensidade > 0.25 && (onda >= 0) != (_ondaAntes >= 0)) {
+      _achata.empurra(3.5 * intensidade);
     }
     _ondaAntes = onda;
+    final gingado = onda * 0.11 * intensidade;
+    // Pende para a frente (o lado para onde vai, já espelhado em `virado`).
+    final pende = 0.05 * intensidade;
+    final pataEsquerda = math.max(0.0, onda) * intensidade;
+    final pataDireita = math.max(0.0, -onda) * intensidade;
     var desloca = Offset(_px, 0);
     var balanco = 0.0;
     var inclinaNoColo = 0.0;
@@ -1058,7 +1091,7 @@ class MotorDeVida {
       cauda: _cauda.valor.clamp(-1.4, 1.4) * (0.4 + 0.6 * a),
       ciclo: _faseCiclo,
       olhar: _pupila.valor,
-      inclina: (_inclina.valor + inclinaNoColo * 0.5) * a,
+      inclina: (_inclina.valor + inclinaNoColo * 0.5 + pende) * a,
       achata: _achata.valor.clamp(-0.6, 0.6) * a,
       desloca: desloca,
       virado: _virado,
@@ -1069,6 +1102,10 @@ class MotorDeVida {
       emburrado: emburrado,
       derretido: _derretido,
       passada: passada * a,
+      gingado: gingado * a,
+      andando: intensidade * a,
+      pataEsquerda: pataEsquerda * a,
+      pataDireita: pataDireita * a,
       voando: _voando,
       virada: _virada.valor * a,
       cabecaAtraso: atraso * a,

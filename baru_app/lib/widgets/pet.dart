@@ -1760,8 +1760,9 @@ class _Pose {
   double get pernas => switch (acao) {
         AcaoDoBicho.nado => math.sin(_volta) * 2.4 * _forcaDoNado,
         AcaoDoBicho.brincadeira => math.sin(_volta) * 1.6,
-        // Andando, as patas seguem o passo do motor de vida.
-        _ => boia + vida.passada * 3,
+        // Andando, as patas **levantam** (ver [_pata]); de lado elas só
+        // deslizavam, e o andar virava arrastar.
+        _ => boia,
       };
 
   /// Asas e nadadeiras. Voando, batem; nadando, varrem meio ciclo atrás da
@@ -2223,6 +2224,13 @@ class _PetPainter extends CustomPainter {
     // no colo).
     canvas.translate(vida.desloca.dx, vida.desloca.dy);
     if (vida.virado) canvas.scale(-1, 1);
+    // O gingado gira pelo pé que está no chão.
+    if (vida.gingado != 0) {
+      final apoio = Offset(vida.gingado > 0 ? 22 : -22, _pes);
+      canvas.translate(apoio.dx, apoio.dy);
+      canvas.rotate(vida.gingado);
+      canvas.translate(-apoio.dx, -apoio.dy);
+    }
     if (vida.inclina != 0) {
       final pivoDaInclinacao = vida.carregado ? -40.0 : _pes;
       canvas.translate(0, pivoDaInclinacao);
@@ -2456,7 +2464,7 @@ class _PetPainter extends CustomPainter {
   Offset get _olhoDesvio => Offset(
         // 3 px e não 1,8: seguindo o dedo pela cena, menos que isso não se
         // via que ele estava olhando.
-        pose.olhar.dx * 3.0 * pose.amplitudeToque +
+        _espelho * pose.olhar.dx * 3.0 * pose.amplitudeToque +
             pose.olhadaDoPasto * 2.2,
         pose.olhar.dy * 2.2 * pose.amplitudeToque,
       );
@@ -2464,19 +2472,42 @@ class _PetPainter extends CustomPainter {
   /// Para onde a cabeça está virada (-1..1): o motor de vida, mais a
   /// varredura de quem levanta a cabeça do pasto.
   Offset get _virada => Offset(
-        (pose.vida.virada.dx + pose.olhadaDoPasto).clamp(-1.2, 1.2),
+        // Andando, a cara vai para onde ele vai: no desenho (já espelhado
+        // por `virado`) isso é sempre +x.
+        (_espelho * pose.vida.virada.dx +
+                pose.olhadaDoPasto +
+                pose.vida.andando * 0.7)
+            .clamp(-1.2, 1.2),
         pose.vida.virada.dy.clamp(-1.0, 1.0),
       );
+
+  /// O olhar e a virada vêm do motor no sentido da cena; o desenho é
+  /// espelhado quando ele está virado para a esquerda. Sem desfazer o
+  /// espelho, ele andava para um lado olhando para o outro.
+  double get _espelho => pose.vida.virado ? -1.0 : 1.0;
 
   /// O rosto deslizando dentro do contorno da cabeça: é assim que um
   /// desenho 2D vira a cabeça (parallax de rosto, como nos rigs do Rive e
   /// do Spine). Olhos, focinho e boca andam juntos; o contorno anda bem
   /// menos ([_posicionaCabeca]); a sombra do queixo, para o outro lado.
   Offset get _rosto =>
-      Offset(_virada.dx * 6.5, _virada.dy * 3.5) * pose.amplitudeToque;
+      Offset(_virada.dx * 8.5, _virada.dy * 3.5) * pose.amplitudeToque;
 
-  void _rostoVira(Canvas c) => c.translate(_rosto.dx, _rosto.dy);
-  void _rostoVolta(Canvas c) => c.translate(-_rosto.dx, -_rosto.dy);
+  // Virando, o rosto também encurta na horizontal: os olhos se aproximam,
+  // como num três quartos. Só deslizando, o olho de trás escorregava até a
+  // borda da cabeça e parecia cair para fora (pesquisa 24).
+  double get _encurtaRosto =>
+      1 - 0.14 * _virada.dx.abs().clamp(0.0, 1.0) * pose.amplitudeToque;
+
+  void _rostoVira(Canvas c) {
+    c.translate(_rosto.dx, _rosto.dy);
+    c.scale(_encurtaRosto, 1);
+  }
+
+  void _rostoVolta(Canvas c) {
+    c.scale(1 / _encurtaRosto, 1);
+    c.translate(-_rosto.dx, -_rosto.dy);
+  }
 
   /// O contorno da cabeça acompanha um pouco a virada, e a inclinação gira
   /// pelo pescoço — o queixo fica, o alto da cabeça vai. Girando pelo
@@ -2488,7 +2519,7 @@ class _PetPainter extends CustomPainter {
     if (ay != 1) c.scale(1 / ax, 1 / ay);
     // Atrasada em relação ao corpo, e com o gesto de cabeça da vez.
     c.translate(
-      vida.cabecaAtraso.dx + _virada.dx * 2.2 * pose.amplitudeToque,
+      vida.cabecaAtraso.dx + _virada.dx * 3.2 * pose.amplitudeToque,
       vida.cabecaAtraso.dy + vida.cabecaDesce,
     );
     c.translate(0, pescoco);
@@ -5289,6 +5320,11 @@ class _PetPainter extends CustomPainter {
     double? rema,
   }) {
     var pos = Offset(o.dx + desloca, o.dy);
+    // No passo, a pata do lado levanta num arco e vai um pouco à frente.
+    final noAr = o.dx < 0 ? pose.vida.pataEsquerda : pose.vida.pataDireita;
+    // Pouco para cima: as patas ficam atrás da barriga, e subindo muito
+    // sumiam. O gingado já levanta o lado da pata livre.
+    if (noAr > 0) pos = pos + Offset(noAr * 4.5, -noAr * 4);
     if (rema != null && pose.nadando) {
       final a = (pose.ciclo + (rema < 0 ? 0.0 : 0.5)) * math.pi * 2;
       // O -9 recolhe a pata para debaixo do peito. Bicho nadando não deixa a

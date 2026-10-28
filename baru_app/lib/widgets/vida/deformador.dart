@@ -349,7 +349,14 @@ class OssosDoCorpo {
     this.ladoDireito = 0,
     this.pes = 60,
     this.altura = 140,
+    this.ondula = 0,
+    this.faseDaOnda = 0,
   });
+
+  /// 0..1: nadando, o corpo ondula de lado numa onda que sobe do quadril
+  /// para a cabeça (é como o axolote e a lontra nadam).
+  final double ondula;
+  final double faseDaOnda;
 
   /// -1..1: o tronco verga para +x (para onde ele vai), a base fica.
   final double verga;
@@ -378,7 +385,8 @@ class OssosDoCorpo {
       folego.abs() < 0.002 &&
       quadril.abs() < 0.002 &&
       ladoEsquerdo < 0.002 &&
-      ladoDireito < 0.002;
+      ladoDireito < 0.002 &&
+      ondula < 0.002;
 
   /// O campo de deformação destes ossos.
   Offset deforma(Offset p) {
@@ -389,8 +397,11 @@ class OssosDoCorpo {
 
     // Verga: o alto vai mais que a base, numa curva (h²): o tronco dobra,
     // não tomba inteiro.
-    x += verga * h * h * 16;
-    y += verga.abs() * h * h * 3;
+    // Acima do alto da cabeça (orelhas) não verga mais: com h passando de
+    // 1, a cabeça alta do buldogue tombava 27 unidades.
+    final hv = math.min(h, 1.0);
+    x += verga * hv * hv * 11;
+    y += verga.abs() * hv * hv * 2;
 
     // Achata/estica com volume: o alto desce (ou sobe) proporcional à
     // altura; a cintura (meio de baixo) incha (ou afina) para os lados.
@@ -407,6 +418,13 @@ class OssosDoCorpo {
     // Quadril: a base vai para o lado do passo, o alto fica (1-h)².
     final base = (1 - h).clamp(0.0, 1.0);
     x += quadril * base * base * 4;
+
+    // A onda do nado: cada altura atrasada em relação à de baixo, então a
+    // ondulação sobe pelo corpo; a cabeça vai menos que o tronco.
+    if (ondula > 0) {
+      final amplitude = 6 * ondula * (0.35 + 0.65 * (1 - (h - 0.5).abs()));
+      x += amplitude * math.sin(faseDaOnda - h * math.pi * 1.6);
+    }
 
     // O lado da pata no ar sobe um pouco: a barriga daquele lado acompanha.
     final lado = x < 0 ? ladoEsquerdo : ladoDireito;

@@ -1190,7 +1190,11 @@ class MotorDeVida {
                   : s > 0.9
                   ? (s - 0.9) / 0.1 * 0.9
                   : -math.sin(math.pi * (s - 0.14) / 0.76) * 0.55)
-        : 0.0;
+        // Gingando (pinguim, tartaruga): achata a cada pisada (o contato é
+        // quando a onda do passo cruza o zero) e estica de leve entre elas.
+        : intensidade *
+              (math.pow(math.cos(fase).abs(), 8) * 0.55 -
+                  (1 - math.pow(math.cos(fase).abs(), 8)) * 0.15);
     final pousou =
         saltita &&
         intensidade > 0.3 &&

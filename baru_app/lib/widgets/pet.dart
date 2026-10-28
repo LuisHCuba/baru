@@ -2461,8 +2461,14 @@ class _PetPainter extends CustomPainter {
       ladoEsquerdo: vida.pataEsquerda * amp,
       ladoDireito: vida.pataDireita * amp,
       pes: _pes,
+      // Nadando, o corpo ondula no ritmo da braçada; quem mergulha (o corpo
+      // é o remo) ondula mais.
+      ondula: nadando
+          ? (amp * pose._forcaDoNado * (mergulha ? 1.0 : 0.55)).clamp(0.0, 1.0)
+          : 0,
+      faseDaOnda: pose.ciclo * math.pi * 2,
     );
-    final corpo = ossos.parado || nadando || !CanvasDeformavel.ligado
+    final corpo = ossos.parado || !CanvasDeformavel.ligado
         ? canvas
         : CanvasDeformavel(canvas, ossos.deforma);
 

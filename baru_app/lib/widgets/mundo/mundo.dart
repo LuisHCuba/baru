@@ -146,6 +146,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
   double _camVel = 0;
   double _manualAte = -1;
   final _posicao = ValueNotifier<double>(0);
+  final _topoDoPet = ValueNotifier<Offset?>(null);
   final _tempo = ValueNotifier<double>(0);
   final _cabeca = ValueNotifier<Offset?>(null);
   final _interesse = ValueNotifier<InteresseDoBicho?>(null);
@@ -194,6 +195,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
     _relogio.dispose();
     _camera.dispose();
     _posicao.dispose();
+    _topoDoPet.dispose();
     _tempo.dispose();
     _cabeca.dispose();
     _interesse.dispose();
@@ -235,14 +237,35 @@ class MundoDoBaruState extends State<MundoDoBaru>
         alvo = petPx - g.tela.width + folga + g.tela.width * 0.12;
       }
       cam += (alvo.clamp(0.0, maxCam) - cam) * (1 - math.exp(-dt * 2.2));
+      // Correndo, a câmera mansa ficava para trás e ele saía pela borda.
+      // Mansa até onde der; o corpo inteiro, sempre no quadro.
+      final margem = 90 * g.escala;
+      if (g.tela.width > 2 * margem) {
+        cam = cam.clamp(petPx - g.tela.width + margem, petPx - margem);
+      }
     }
     _camera.value = cam.clamp(0.0, maxCam);
 
-    // A cabeça dele na tela, para o balão.
-    // O alto da cabeça fica ~140 unidades acima dos pés: o balão para em
-    // cima dela, sem cobrir o rosto.
-    final y = _naAgua ? g.linhaDagua - 95 * g.escala : g.chao - 142 * g.escala;
-    _cabeca.value = Offset(petPx - _camera.value, y);
+    // A cabeça dele na tela, para o balão: o alto da cabeça que o próprio
+    // bicho informa. A conta pela linha do chão errava de espécie para
+    // espécie e não acompanhava pulo nem voo, e o balão cobria o rosto.
+    // Parado (movimento reduzido), o bicho não informa nada: vale a conta
+    // pela linha do chão.
+    final topo = _topoDoPet.value;
+    final caixa = context.findRenderObject();
+    if (topo != null && caixa is RenderBox && caixa.attached) {
+      // Só a altura vem do bicho; o x é o desta câmera, que o desenho só
+      // aplica no quadro seguinte.
+      _cabeca.value = Offset(
+        petPx - _camera.value,
+        caixa.globalToLocal(topo).dy,
+      );
+    } else {
+      final y = _naAgua
+          ? g.linhaDagua - 95 * g.escala
+          : g.chao - 142 * g.escala;
+      _cabeca.value = Offset(petPx - _camera.value, y);
+    }
     widget.cabecaNaTela?.value = _cabeca.value;
 
     // A zona dele muda o que a cena pede (dormir só na toca etc.).
@@ -575,6 +598,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                     !naAgua && _querAgua(app) ||
                                     naAgua && !_querAgua(app),
                                 posicao: _posicao,
+                                topoNaTela: _topoDoPet,
                                 sombra: true,
                                 corDaAgua: Color.lerp(
                                   cenario.aguaCom(luz.agua),

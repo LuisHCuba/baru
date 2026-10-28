@@ -273,6 +273,10 @@ extension _Episodios on MotorDeVida {
   void _comecaEpisodio(Episodio e) {
     // O agachado de um episódio não vaza para o seguinte.
     _achata.alvo = 0;
+    // Outro episódio com ela no alto (a soneca começou, a atividade mudou):
+    // desce primeiro. Sem isso, o alvo de altura do voo ficava valendo e
+    // ela seguia no ar, sem pousar nunca (auditoria das animações, 1).
+    if (e != Episodio.voar && _voando) _pousaJa();
     _ep = e;
     _epInicio = _t;
     _historico.add(e);
@@ -434,6 +438,7 @@ extension _Episodios on MotorDeVida {
         // Agacha antes de subir (antecipação): o impulso vem depois.
         _decolaEm = _t + 0.26;
         _batidas = 0;
+        _faseAntes = _faseAtividade;
         _planaAte = -1;
         _altitude.fixa(_y);
         _altitude.alvo = 0;
@@ -633,11 +638,20 @@ extension _Episodios on MotorDeVida {
           final cabe = dir > 0 ? _max - _px : _px - _min;
           final salto = math.min(_entre(55, 95), cabe);
           _alvoX = (_px + dir * salto).clamp(_min, _max);
-          _vx = dir * math.min(230, salto * 3.2);
-          pula(_entre(250, 300));
+          // A velocidade que leva exatamente até o alvo no tempo do salto:
+          // mais que isso, ele pousava longe e escorregava preso.
+          final impulso = _entre(250, 300);
+          _vx = dir * salto / (2 * impulso / MotorDeVida._gravidade);
+          pula(impulso);
+          _boteNoAr = true;
         } else if (_noChao) {
           // Pegou! As patas da frente prendem no chão e ele olha para baixo,
-          // entre elas.
+          // entre elas — parado onde caiu.
+          if (_boteNoAr) {
+            _boteNoAr = false;
+            _vx = 0;
+            _alvoX = _px;
+          }
           _reverencia = 1;
           _alvoDoOlhar = Offset(_virado ? -0.3 : 0.3, 1);
         }
@@ -666,7 +680,9 @@ extension _Episodios on MotorDeVida {
         _alvoDoOlhar = const Offset(0, -0.2);
         if (u > (_epFim - _epInicio) * 0.8 && _noChao) pula(200);
       case Episodio.rodopio:
-        if (_t >= _proximoGiro && _giros > 0) {
+        // Só gira de novo quando a volta anterior acabou: recomeçar no meio
+        // pulava da pose de costas para a de frente num quadro.
+        if (_t >= _proximoGiro && _giros > 0 && _giroT == 0) {
           _giros -= 1;
           // Um giro de verdade: o corpo vira no eixo (ver `giro`), e não
           // só espelha num quadro.

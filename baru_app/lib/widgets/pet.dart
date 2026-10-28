@@ -311,6 +311,7 @@ class PetView extends StatefulWidget {
     this.chamadoPelaAgua = false,
     this.naAgua = false,
     this.posicao,
+    this.topoNaTela,
   });
 
   /// No mundo da home: onde ele pode andar agora (terra ou lagoa) e onde o
@@ -330,6 +331,11 @@ class PetView extends StatefulWidget {
   /// Escrito a cada quadro: onde ele está (unidades), para a câmera do
   /// mundo e a zona.
   final ValueNotifier<double>? posicao;
+
+  /// Escrito a cada quadro: o alto da cabeça dele, em coordenadas globais.
+  /// É onde o balão de fala da home para, sem cobrir o rosto, pule ou voe
+  /// ele, na terra ou na água, do tamanho que estiver.
+  final ValueNotifier<Offset?>? topoNaTela;
 
   /// Ele quer ir para a água (true) ou para a margem (false), por conta
   /// própria. Nulo: não troca de lugar (fora da home, ou quem não nada).
@@ -643,6 +649,7 @@ class _PetViewState extends State<PetView>
       ..chamadoPelaAgua = widget.chamadoPelaAgua
       ..naAgua = widget.naAgua
       ..dormindo = acao == AcaoDoBicho.cochilo
+      ..sonolento = widget.mood == Mood.sleepy
       // A coruja dorme empoleirada, de pé; o pinguim, meio deitado.
       ..deitaDormindo = switch (widget.species) {
         Species.owl => 0.0,
@@ -662,6 +669,28 @@ class _PetViewState extends State<PetView>
     _quadroDaVida.value = _vida.passo(dt);
     PetView.observadorDeEpisodio?.value = _vida.episodio.name;
     widget.posicao?.value = _vida.posicao;
+    final topo = widget.topoNaTela;
+    if (topo != null) {
+      final caixa = context.findRenderObject();
+      if (caixa is RenderBox && caixa.hasSize && caixa.attached) {
+        // Os pés ficam 60 unidades abaixo do centro do corpo, e o alto da
+        // cabeça, até ~140 acima deles no adulto (medido nas nove espécies:
+        // 124 a 141), no porte do estágio.
+        final porte = switch (widget.estagio) {
+          EstagioDoBicho.inicio => 0.52,
+          EstagioDoBicho.filhote => 0.63,
+          EstagioDoBicho.jovem => 0.80 * 1.14,
+          EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+        };
+        topo.value = caixa.localToGlobal(
+          _naTela(
+            _repouso +
+                _quadroDaVida.value.desloca +
+                Offset(0, 60 - 140 * porte),
+          ),
+        );
+      }
+    }
     final observador = PetView.observadorDoCentro;
     if (observador != null && widget.areaDeAndar > 0) {
       final caixa = context.findRenderObject();
@@ -2027,7 +2056,15 @@ class _PetPainter extends CustomPainter {
   /// O afago fecha aos poucos: os olhos apertam conforme ele vai gostando,
   /// e o arco de pálpebra virado para cima é a carinha de quem está gostando.
   double get fechamento {
-    if (dormindo) return 1.0;
+    // Com sono e ainda de pé, as pálpebras pesam, mas ele enxerga para onde
+    // vai; deitado, fecha. Fechado o tempo todo, andava e ficava sentado de
+    // olhos fechados, "dormindo" sentado.
+    if (acao == AcaoDoBicho.cochilo || (pose.vida.adormecido ?? dormindo)) {
+      return 1.0;
+    }
+    if (dormindo) {
+      return math.max(0.72, math.max(pose.pisca, pose.bocejo)).clamp(0.0, 1.0);
+    }
     final derrete = ((pose.gosto - 0.34) / 0.16).clamp(0.0, 1.0);
     return math.max(math.max(pose.pisca, pose.bocejo), derrete).clamp(0.0, 1.0);
   }
@@ -2407,7 +2444,7 @@ class _PetPainter extends CustomPainter {
       _lamina(canvas, size, linhaDagua);
     }
 
-    if (dormindo && !noNinho) {
+    if (dormindo && !noNinho && fechamento >= 1) {
       _zzz(canvas, size);
       _folhaDoSono(canvas, size);
     }
@@ -3128,15 +3165,7 @@ class _PetPainter extends CustomPainter {
     const alto = 0.95; // rad: asa no alto da batida
     const baixo = -0.62; // rad: no fim da descida
     double theta, abre, atraso;
-    if (vida.freando) {
-      theta = 1.15 + math.sin(pose.ciclo * math.pi * 2) * 0.08;
-      abre = 0.95;
-      atraso = 0.3;
-    } else if (vida.planando) {
-      theta = 0.16 + math.sin(pose.ciclo * math.pi * 4) * 0.02;
-      abre = 1;
-      atraso = 0.1;
-    } else if (phi < descida) {
+    if (phi < descida) {
       final u = phi / descida;
       final e = Curves.easeInOutSine.transform(u);
       theta = alto + (baixo - alto) * e;
@@ -3151,11 +3180,28 @@ class _PetPainter extends CustomPainter {
       abre = 1 - 0.42 * math.sin(math.pi * u);
       atraso = -0.5 * math.sin(math.pi * u);
     }
-    final penasAbertas = vida.planando || vida.freando
-        ? 0.6
-        : phi < descida
-        ? 1.0
-        : 0.25;
+    var penasAbertas = phi < descida ? 1.0 : 0.25;
+    // Planeio e freio são poses que a batida vai alcançando, e não trocas
+    // secas: cada uma entra pelo seu fator suave.
+    double mistura(double de, double para, double k) => de + (para - de) * k;
+    final pl = vida.planeio.clamp(0.0, 1.0);
+    theta = mistura(
+      theta,
+      0.16 + math.sin(pose.ciclo * math.pi * 4) * 0.02,
+      pl,
+    );
+    abre = mistura(abre, 1, pl);
+    atraso = mistura(atraso, 0.1, pl);
+    penasAbertas = mistura(penasAbertas, 0.6, pl);
+    final fr = vida.freio.clamp(0.0, 1.0);
+    theta = mistura(
+      theta,
+      1.15 + math.sin(pose.ciclo * math.pi * 2) * 0.08,
+      fr,
+    );
+    abre = mistura(abre, 0.95, fr);
+    atraso = mistura(atraso, 0.3, fr);
+    penasAbertas = mistura(penasAbertas, 0.6, fr);
     for (final lado in [-1.0, 1.0]) {
       final ombro = Offset(lado * 24, -24);
       Offset em(Offset de, double ang, double r) =>

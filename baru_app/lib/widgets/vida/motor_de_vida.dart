@@ -149,6 +149,9 @@ class SaidaDaVida {
     this.comendo = false,
     this.reverencia = 0,
     this.giro = 0,
+    this.adormecido,
+    this.planeio = 0,
+    this.freio = 0,
     this.corrida = 0,
     this.galope = 0,
     this.poeira = const [],
@@ -238,6 +241,17 @@ class SaidaDaVida {
 
   /// 0..1: a reverência de brincadeira — frente baixa, patas abertas.
   final double reverencia;
+
+  /// 0..1: o quanto as asas estão na pose de planeio e na de freio. Vão e
+  /// voltam suaves: a troca seca de pose dava um tranco de asa.
+  final double planeio;
+  final double freio;
+
+  /// Adormecido de verdade: cochilando, ou com sono e já no canto de
+  /// dormir. Fora do mundo (sem destino), o sono do humor conta como
+  /// adormecido, como sempre foi. Nulo: o motor não está rodando (quadro
+  /// fixo), e vale o humor.
+  final bool? adormecido;
 
   /// 0..1: está correndo (a disparada, a corrida atrás da bola). O corpo
   /// pende mais e estica e encolhe a cada passada, como no galope.
@@ -394,6 +408,9 @@ class MotorDeVida {
   /// Dormindo: fôlego mais fundo, olho fechado.
   bool dormindo = false;
 
+  /// Com sono (o humor), mas acordado: chegando ao canto de dormir, deita.
+  bool sonolento = false;
+
   /// Na água: passeia deslizando, sem pulinhos.
   bool nadando = false;
 
@@ -425,6 +442,7 @@ class MotorDeVida {
   double _ritmoRemada = 1.2;
   double _faseAtividade = 0;
   bool _boteSaltou = false;
+  bool _boteNoAr = false;
   int _voltasDaDisparada = 0;
   int _giros = 0;
   double _proximoGiro = 0;
@@ -471,6 +489,8 @@ class MotorDeVida {
   double _reverencia = 0;
   // -1..1: a traseira rebolando antes do bote, de um lado para o outro.
   double _quadril = 0;
+  double _reverenciaSuave = 0;
+  double _quadrilSuave = 0;
   double _giroT = 0;
   // Quanto dura uma volta: rápida no rodopio, preguiçosa na lontra rolando.
   double _duracaoDoGiro = 0.38;
@@ -482,6 +502,14 @@ class MotorDeVida {
   double _decolaEm = -1;
   int _batidas = 0;
   double _faseAntes = 0;
+  // 0..1: o quanto o corpo acompanha a batida da asa (suave na entrada e na
+  // saída do planeio e do freio).
+  double _bateAsa = 0;
+  double _planeioSuave = 0;
+  double _freioSuave = 0;
+  // Os episódios rodaram neste quadro (fora do colo, da atividade ocupada e
+  // do movimento reduzido).
+  bool _episodiosRodando = true;
   double _planaAte = -1;
   double _pitchDoVoo = 0;
   bool get _planando => _voando && _decolou && _t < _planaAte;
@@ -575,6 +603,8 @@ class MotorDeVida {
   double _rebola = 0;
 
   void _andar(double dt) {
+    // Com sono e já no canto de dormir, fica: deita e não sai passeando.
+    if (_ficaNaToca) _alvoX = _px;
     final falta = _alvoX - _px;
     final base = jeito.velocidade;
     final vmax = _voando
@@ -612,6 +642,29 @@ class MotorDeVida {
   IntencaoDoBicho _intencao = IntencaoDoBicho.estar;
   double _fimDaIntencao = 2;
   double _destinoX = 0;
+
+  /// Com sono e dentro do canto de dormir: não passeia nem pula de lá.
+  bool get _ficaNaToca {
+    final d = destino;
+    return sonolento &&
+        !_perseguindo &&
+        !noColo &&
+        d != null &&
+        _px >= d.$1 - 6 &&
+        _px <= d.$2 + 6;
+  }
+
+  /// Parado dentro do destino que a cena pediu (a toca, para quem tem sono).
+  bool get _paradoNoDestino {
+    final d = destino;
+    return d != null &&
+        !_perseguindo &&
+        _noChao &&
+        _px >= d.$1 - 6 &&
+        _px <= d.$2 + 6 &&
+        _vx.abs() < 4;
+  }
+
   double _proximoPulo = 0;
   bool _virado = false;
   double _desviraEm = -1;
@@ -859,8 +912,16 @@ class MotorDeVida {
   }
 
   /// Um pulo daqui (velocidade inicial, unidades/s).
+  /// Desce do voo agora: o alvo de altura vai a zero e o pouso (que exige
+  /// ter decolado) passa a valer, mesmo que ela ainda nem tenha subido.
+  void _pousaJa() {
+    _decolou = true;
+    _planaAte = -1;
+    _altitude.alvo = 0;
+  }
+
   void pula(double v) {
-    if (!_noChao || reduzido) return;
+    if (!_noChao || reduzido || _ficaNaToca) return;
     _achata.empurra(5); // agacha antes: antecipação
     _vy = v;
     _noChao = false;
@@ -954,16 +1015,20 @@ class MotorDeVida {
     final perseguia = _perseguindo;
     _perseguindo = interessado && !ocupado && podeAndar;
     // A bola chamou no meio do voo: desce primeiro.
-    if (_perseguindo && _voando) _altitude.alvo = 0;
+    if (_perseguindo && _voando) _pousaJa();
     var livre = true;
     if (_perseguindo) {
       _persegue();
     } else {
       // A atividade em episódios; na pausa, o corpo volta ao cérebro livre.
-      if (!reduzido && (!ocupado || modo == ModoDaAtividade.dormir)) {
+      _episodiosRodando =
+          !reduzido && (!ocupado || modo == ModoDaAtividade.dormir);
+      if (_episodiosRodando) {
         livre = _passoDosEpisodios(dt);
       } else {
         _desenhaLivre = true;
+        // Sem episódio rodando, nada a segura no ar.
+        if (_voando) _pousaJa();
       }
       _pescocoSuave.alvo = _pescoco;
       _pescocoSuave.passo(dt);
@@ -1059,7 +1124,10 @@ class MotorDeVida {
       Episodio.deitar => 0.85 * deitaDormindo,
       Episodio.tomarSol => 0.9 * deitaDormindo,
       Episodio.microcochilo => 0.4 * deitaDormindo,
-      _ => dormindo && !nadando ? deitaDormindo : 0.0,
+      _ =>
+        (dormindo || (sonolento && _paradoNoDestino)) && !nadando
+            ? deitaDormindo
+            : 0.0,
     };
     _deita.alvo = noColo ? 0 : deitaAgora;
     _deita.passo(dt);
@@ -1092,11 +1160,19 @@ class MotorDeVida {
       _achata.empurra(3.5 * intensidade);
       // Cada pata que bate no chão correndo levanta um pouco de poeira,
       // um tanto atrás, onde ela pisou.
-      if (corrida > 0.5) _poeira.add((_px - _vx.sign * 16, _t));
+      if (corrida > 0.5 && !reduzido) _poeira.add((_px - _vx.sign * 16, _t));
     }
     _poeira.removeWhere((p) => _t - p.$2 > 0.55);
     _ondaAntes = onda;
-    final gingado = onda * 0.11 * intensidade + _quadril * 0.06;
+    // Reverência e rebolado chegam e saem suaves: zerados a cada quadro
+    // pelos episódios, pulavam de 0,9 a 0 entre a espreita e o salto.
+    final suave = 1 - math.exp(-dt * 12);
+    final asa = 1 - math.exp(-dt * 7);
+    _planeioSuave += ((_planando ? 1.0 : 0.0) - _planeioSuave) * asa;
+    _freioSuave += ((_voando && _freando ? 1.0 : 0.0) - _freioSuave) * asa;
+    _reverenciaSuave += (_reverencia - _reverenciaSuave) * suave;
+    _quadrilSuave += (_quadril - _quadrilSuave) * (1 - math.exp(-dt * 30));
+    final gingado = onda * 0.11 * intensidade + _quadrilSuave * 0.06;
     // Pende para a frente (o lado para onde vai, já espelhado em `virado`).
     // Correndo, pende bem mais: o peso vai à frente das patas.
     final pende = 0.05 * intensidade + 0.13 * corrida;
@@ -1123,9 +1199,14 @@ class MotorDeVida {
         _noChao = false;
         balanco = (_altitude.velocidade / 300).clamp(-1.0, 1.0);
         // A cada batida o corpo sobe na descida da asa e cede na subida.
-        if (_decolou && !_planando && !_freando) {
-          _y += math.sin((_faseAtividade % 1) * 2 * math.pi) * 4.5;
-        }
+        // O fator entra e sai devagar: ligar e desligar o balanço de uma vez
+        // dava um tranco de 4,5 a cada planeio e freio.
+        final bate = _decolou && !_planando && !_freando ? 1.0 : 0.0;
+        _bateAsa += (bate - _bateAsa) * (1 - math.exp(-dt * 8));
+        _y = math.max(
+          0,
+          _y + math.sin((_faseAtividade % 1) * 2 * math.pi) * 4.5 * _bateAsa,
+        );
         if (_decolou && _altitude.alvo == 0 && _y < 0.8) {
           // Pousou: as patas tocam, o corpo cede.
           _voando = false;
@@ -1157,7 +1238,10 @@ class MotorDeVida {
       } else if (_achata.alvo < 0 && _espirroEm < 0) {
         _achata.alvo = 0;
       }
-      desloca = Offset(desloca.dx, -_y - sobeNoPasso - _sobeNaAgua.passo(dt));
+      desloca = Offset(
+        desloca.dx,
+        -_y - sobeNoPasso * a - _sobeNaAgua.passo(dt),
+      );
     }
     if (anteEspirro > 0) _achata.alvo = -anteEspirro * 0.4;
     _achata.passo(dt);
@@ -1199,13 +1283,22 @@ class MotorDeVida {
       pataEsquerda: pataEsquerda * a,
       pataDireita: pataDireita * a,
       voando: _voando && _decolou,
-      deita: _deita.valor.clamp(0.0, 1.0) * a,
+      // Postura vale inteira com movimento reduzido: deitado é deitado.
+      deita: _deita.valor.clamp(0.0, 1.0),
+      // Correndo atrás da bola ele largou a refeição: o episódio fica
+      // suspenso, mas a comida não vai junto na boca.
       comendo:
-          _ep == Episodio.mastigar ||
-          _ep == Episodio.comerNaAgua ||
-          (_ep == Episodio.comer && _cabecaNoChao.valor < 0.7),
-      reverencia: _reverencia * a,
+          !_perseguindo &&
+          _episodiosRodando &&
+          (_ep == Episodio.mastigar ||
+              _ep == Episodio.comerNaAgua ||
+              (_ep == Episodio.comer && _cabecaNoChao.valor < 0.7)),
+      reverencia: _reverenciaSuave * a,
       giro: _giroT,
+      adormecido:
+          dormindo || (sonolento && (destino == null || _paradoNoDestino)),
+      planeio: _planeioSuave,
+      freio: _freioSuave,
       corrida: corrida * a,
       galope: (1 + math.cos(2 * fase)) / 2,
       poeira: [for (final p in _poeira) Offset(p.$1, (_t - p.$2) / 0.55)],
@@ -1643,7 +1736,8 @@ class MotorDeVida {
       _deuOBote = true;
       _espreitandoDesde = -1;
       _alvoX = (_px + falta).clamp(_min, _max);
-      _vx = falta.sign * math.min(220, falta.abs() * 3.5);
+      // O embalo que leva até a bola no tempo do salto, e não além dela.
+      _vx = (falta / (2 * 260 / _gravidade)).clamp(-260.0, 260.0);
       pula(260);
       return;
     }

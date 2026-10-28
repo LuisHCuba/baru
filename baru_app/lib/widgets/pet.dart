@@ -40,6 +40,7 @@ import '../models.dart';
 import '../services/som_service.dart';
 import '../theme.dart';
 import 'comida.dart';
+import 'vida/deformador.dart';
 import 'vida/motor_de_vida.dart';
 
 /// Um gesto de ocioso: o que o bicho faz quando ninguém está pedindo nada.
@@ -2281,10 +2282,14 @@ class _PetPainter extends CustomPainter {
     if (!nadando) {
       for (final p in vida.poeira) {
         final idade = p.dy.clamp(0.0, 1.0);
-        canvas.drawCircle(
-          Offset(cx + p.dx, cy + _pes - 4 - idade * 8),
-          (5 + idade * 9) * _porte,
-          Paint()..color = _corDaPoeira.withValues(alpha: 0.55 * (1 - idade)),
+        // Pequena e rasteira: grande e redonda, lia como mancha na tela.
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(cx + p.dx, cy + _pes - 2 - idade * 4),
+            width: (6 + idade * 10) * _porte,
+            height: (3 + idade * 4) * _porte,
+          ),
+          Paint()..color = _corDaPoeira.withValues(alpha: 0.32 * (1 - idade)),
         );
       }
     }
@@ -2430,25 +2435,56 @@ class _PetPainter extends CustomPainter {
     canvas.scale(_folego.$1, _folego.$2);
     canvas.translate(0, -_pes);
 
+    // Os ossos do corpo neste quadro: o contorno inteiro se dobra por eles
+    // (ver [CanvasDeformavel]) — o tronco verga para onde vai, a cintura
+    // incha no pouso, o peito enche, o quadril balança no passo.
+    final ossos = OssosDoCorpo(
+      // Verga para onde vai e, parado, um pouco para onde olha: o corpo
+      // acompanha a cabeça, em vez de ela girar sobre um tronco duro.
+      verga:
+          ((vida.andando * 0.55 +
+                      vida.corrida * 0.45 +
+                      _virada.dx * 0.22 * (1 - vida.andando)) *
+                  amp)
+              .clamp(-1.0, 1.0),
+      achata: ((vida.achata * 1.6 + vida.elastico) * amp).clamp(-1.0, 1.0),
+      folego: (sopro * fundura).clamp(-1.0, 1.0),
+      // Andando, o quadril vai com o passo; parado, ele se acomoda devagar
+      // de um lado para o outro, o peso mudando de pata.
+      quadril:
+          ((vida.passada * vida.andando +
+                      math.sin(pose.ciclo * math.pi * 2) *
+                          0.3 *
+                          (1 - vida.andando)) *
+                  amp)
+              .clamp(-1.0, 1.0),
+      ladoEsquerdo: vida.pataEsquerda * amp,
+      ladoDireito: vida.pataDireita * amp,
+      pes: _pes,
+    );
+    final corpo = ossos.parado || nadando || !CanvasDeformavel.ligado
+        ? canvas
+        : CanvasDeformavel(canvas, ossos.deforma);
+
     switch (species) {
       case Species.capybara:
-        _capivara(canvas);
+        _capivara(corpo);
       case Species.otter:
-        _lontra(canvas);
+        _lontra(corpo);
       case Species.tortoise:
-        _tartaruga(canvas);
+        _tartaruga(corpo);
       case Species.owl:
-        _coruja(canvas);
+        _coruja(corpo);
       case Species.axolotl:
-        _axolote(canvas);
+        _axolote(corpo);
       case Species.penguin:
-        _pinguim(canvas);
+        _pinguim(corpo);
       case Species.cat:
-        _gata(canvas);
+        _gata(corpo);
       case Species.fox:
-        _raposa(canvas);
+        _raposa(corpo);
       case Species.frenchie:
-        _buldogue(canvas);
+        _buldogue(corpo);
     }
     if (deCostas) canvas.restore();
     canvas.restore();
@@ -2655,6 +2691,17 @@ class _PetPainter extends CustomPainter {
   }
 
   static const _corDaPoeira = Color(0xFFB8A27A);
+
+  /// Quem anda aos saltinhos (ver `JeitoDeCacar.saltita`).
+  bool get _saltita => switch (species) {
+    Species.capybara ||
+    Species.cat ||
+    Species.fox ||
+    Species.frenchie ||
+    Species.otter ||
+    Species.owl => true,
+    _ => false,
+  };
 
   /// Quanto o corpo desce deitado: o bastante para as patas da frente
   /// sumirem sob ele.
@@ -5730,7 +5777,14 @@ class _PetPainter extends CustomPainter {
     pos = pos + Offset((o.dx < 0 ? -1 : 1) * 7 * pose.vida.reverencia, 0);
     // Pouco para cima: as patas ficam atrás da barriga, e subindo muito
     // sumiam. O gingado já levanta o lado da pata livre.
-    if (noAr > 0) pos = pos + Offset(noAr * 4.5, -noAr * 4);
+    // A pata no ar mexe à vista. Quem saltita: no ar ela fica pendurada
+    // abaixo do corpo, esticada para o chão (subindo, sumia atrás da
+    // barriga e o pé parecia parado). Quem ginga: sobe e vai à frente.
+    if (noAr > 0) {
+      pos = _saltita
+          ? pos + Offset(noAr * 3, noAr * 6)
+          : pos + Offset(noAr * 3, -noAr * 8);
+    }
     if (rema != null && pose.nadando) {
       final a = (pose.ciclo + (rema < 0 ? 0.0 : 0.5)) * math.pi * 2;
       // O -9 recolhe a pata para debaixo do peito. Bicho nadando não deixa a

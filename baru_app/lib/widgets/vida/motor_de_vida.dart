@@ -159,6 +159,7 @@ class SaidaDaVida {
     this.reverencia = 0,
     this.giro = 0,
     this.adormecido,
+    this.elastico = 0,
     this.planeio = 0,
     this.freio = 0,
     this.corrida = 0,
@@ -254,6 +255,11 @@ class SaidaDaVida {
   /// voltam suaves: a troca seca de pose dava um tranco de asa.
   final double planeio;
   final double freio;
+
+  /// -1..1: o corpo como borracha no salto — positivo achata (no
+  /// impulso e no pouso), negativo estica (no ar). Vai para o contorno
+  /// (ver `OssosDoCorpo`), não para uma escala.
+  final double elastico;
 
   /// Adormecido de verdade: cochilando, ou com sono e já no canto de
   /// dormir. Fora do mundo (sem destino), o sono do humor conta como
@@ -606,6 +612,7 @@ class MotorDeVida {
   double _intensidadeDoPasso = 0;
   double _ondaAntes = 0;
   double _faseAntesDoSalto = 0;
+  double _elastico = 0;
   final _poeira = <(double, double)>[];
   double _rebola = 0;
 
@@ -1174,6 +1181,16 @@ class MotorDeVida {
     final sobeNoPasso = saltita
         ? arco * (_correndo ? 12.0 : 7.0) * intensidade
         : (1 - math.cos(2 * fase)) / 2 * (_correndo ? 8.0 : 3.0) * intensidade;
+    // Borracha no salto: achata no impulso e no pouso, estica no ar.
+    final s = (_faseDoPasso * 2) % 1;
+    _elastico = saltita
+        ? intensidade *
+              (s < 0.14
+                  ? (1 - s / 0.14) * 0.9
+                  : s > 0.9
+                  ? (s - 0.9) / 0.1 * 0.9
+                  : -math.sin(math.pi * (s - 0.14) / 0.76) * 0.55)
+        : 0.0;
     final pousou =
         saltita &&
         intensidade > 0.3 &&
@@ -1207,12 +1224,14 @@ class MotorDeVida {
     // Pende para a frente (o lado para onde vai, já espelhado em `virado`).
     // Correndo, pende bem mais: o peso vai à frente das patas.
     final pende = 0.03 * intensidade + 0.07 * corrida;
-    // Saltitando, as duas patas sobem juntas no ar; gingando, alternam.
+    // Saltitando, a cada salto uma pata vai na frente (sobe mais), em trote;
+    // gingando, alternam no passo.
+    final saltoPar = (_faseDoPasso * 2).floor().isEven;
     final pataEsquerda = saltita
-        ? arco * 0.8 * intensidade
+        ? arco * (saltoPar ? 1.0 : 0.35) * intensidade
         : math.max(0.0, onda) * intensidade;
     final pataDireita = saltita
-        ? arco * 0.8 * intensidade
+        ? arco * (saltoPar ? 0.35 : 1.0) * intensidade
         : math.max(0.0, -onda) * intensidade;
     var desloca = Offset(_px, 0);
     var balanco = 0.0;
@@ -1331,6 +1350,7 @@ class MotorDeVida {
               (_ep == Episodio.comer && _cabecaNoChao.valor < 0.7)),
       reverencia: _reverenciaSuave * a,
       giro: _giroT,
+      elastico: _elastico * a,
       adormecido:
           dormindo || (sonolento && (destino == null || _paradoNoDestino)),
       planeio: _planeioSuave,

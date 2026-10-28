@@ -112,3 +112,18 @@ Para personagem 2D interativo, o padrão é o mesmo nas ferramentas usadas pela 
    - a integração no Flutter com o runtime `rive`, um adaptador do motor de vida para as entradas, e o desenho atual como reserva enquanto o arquivo não existe;
    - o roteiro de teste: filmagem quadro a quadro e as medições de deformação e salto usadas nesta revisão, para aceitar ou recusar cada entrega.
 4. **Não usar** IA como peça final de animação nem animar o corpo por deformação no código. As duas coisas já se provaram ruins aqui e não são o que o mercado faz.
+
+## O que entrou no app (a técnica do Duolingo, nos nossos vetores)
+
+Não há como abrir o editor do Rive daqui: ele exige alguém logado no site. O princípio que dá a fluidez, porém, é técnico e vale para qualquer desenho vetorial: **cada vértice do contorno preso a ossos com peso, e o contorno inteiro se curvando quando os ossos se movem.** Os bichos do Baru já são vetoriais, então o app passou a fazer isso com eles (`lib/widgets/vida/deformador.dart`):
+
+- Cada contorno do corpo é amostrado em pontos.
+- Cada ponto passa pelo campo de deformação dos "ossos" do quadro:
+  - o tronco verga para onde ele vai, ou para onde olha;
+  - a cintura incha no pouso e afina no ar;
+  - o peito enche ao respirar;
+  - o quadril balança no passo;
+  - o lado da pata no ar sobe.
+- O contorno é refeito por curvas que passam pelos pontos movidos.
+- Detalhes pequenos (olho, narina) só acompanham o deslocamento, sem se dobrar: o olho segue redondo.
+- Custo medido: cerca de 0,3 ms por quadro.

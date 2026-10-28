@@ -619,7 +619,11 @@ extension _Episodios on MotorDeVida {
       case Episodio.bote:
         final espreita = jeito.espreita > 0 ? _epFim - 1.4 - _epInicio : 0.35;
         if (u < espreita) {
+          // A espreita: a frente baixa rente ao chão e, no gato, a traseira
+          // rebola de um lado para o outro antes do salto.
           _achata.alvo = 0.7;
+          _reverencia = 0.9;
+          if (jeito.espreita > 0) _quadril = math.sin(_t * 20);
           _rebola = jeito.espreita > 0 ? math.sin(_t * 20) * 0.5 : 0;
           _alvoDoOlhar = Offset(_virado ? -0.7 : 0.7, 0.4);
         } else if (!_boteSaltou) {
@@ -627,12 +631,14 @@ extension _Episodios on MotorDeVida {
           _achata.alvo = 0;
           final dir = _virado ? -1.0 : 1.0;
           final cabe = dir > 0 ? _max - _px : _px - _min;
-          final salto = math.min(_entre(25, 50), cabe);
+          final salto = math.min(_entre(55, 95), cabe);
           _alvoX = (_px + dir * salto).clamp(_min, _max);
-          _vx = dir * math.min(160, salto * 3);
-          pula(_entre(230, 290));
+          _vx = dir * math.min(230, salto * 3.2);
+          pula(_entre(250, 300));
         } else if (_noChao) {
-          // Pegou! Olha para baixo, entre as patas.
+          // Pegou! As patas da frente prendem no chão e ele olha para baixo,
+          // entre elas.
+          _reverencia = 1;
           _alvoDoOlhar = Offset(_virado ? -0.3 : 0.3, 1);
         }
       case Episodio.disparada:

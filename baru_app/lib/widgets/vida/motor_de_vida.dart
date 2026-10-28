@@ -469,6 +469,8 @@ class MotorDeVida {
   double deitaDormindo = 1;
   final _deita = Mola(f: 0.9, zeta: 0.95);
   double _reverencia = 0;
+  // -1..1: a traseira rebolando antes do bote, de um lado para o outro.
+  double _quadril = 0;
   double _giroT = 0;
   // Quanto dura uma volta: rápida no rodopio, preguiçosa na lontra rolando.
   double _duracaoDoGiro = 0.38;
@@ -947,6 +949,8 @@ class MotorDeVida {
     _boca = 0;
     _pescoco = 0;
     _sobeNaAgua.alvo = 0;
+    _reverencia = 0;
+    _quadril = 0;
     final perseguia = _perseguindo;
     _perseguindo = interessado && !ocupado && podeAndar;
     // A bola chamou no meio do voo: desce primeiro.
@@ -1092,7 +1096,7 @@ class MotorDeVida {
     }
     _poeira.removeWhere((p) => _t - p.$2 > 0.55);
     _ondaAntes = onda;
-    final gingado = onda * 0.11 * intensidade;
+    final gingado = onda * 0.11 * intensidade + _quadril * 0.06;
     // Pende para a frente (o lado para onde vai, já espelhado em `virado`).
     // Correndo, pende bem mais: o peso vai à frente das patas.
     final pende = 0.05 * intensidade + 0.13 * corrida;
@@ -1628,7 +1632,10 @@ class MotorDeVida {
       _alvoX = _px;
       final esperou = _t - _espreitandoDesde;
       if (esperou < jeito.espreita) {
-        _achata.alvo = 0.8; // agachado
+        // Agachado de verdade: a frente rente ao chão, a traseira rebolando.
+        _achata.alvo = 0.8;
+        _reverencia = 0.9;
+        _quadril = math.sin(_t * 20);
         _rebola = math.sin(_t * 20) * 0.5;
         return;
       }
@@ -1636,8 +1643,8 @@ class MotorDeVida {
       _deuOBote = true;
       _espreitandoDesde = -1;
       _alvoX = (_px + falta).clamp(_min, _max);
-      _vx = falta.sign * math.min(170, falta.abs() * 3);
-      pula(240);
+      _vx = falta.sign * math.min(220, falta.abs() * 3.5);
+      pula(260);
       return;
     }
     // Corre atrás: o destino é a coisa, a velocidade é a de corrida.

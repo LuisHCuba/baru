@@ -146,6 +146,7 @@ class SaidaDaVida {
     this.planando = false,
     this.freando = false,
     this.deita = 0,
+    this.comendo = false,
     this.reverencia = 0,
     this.giro = 0,
     this.pataEsquerda = 0,
@@ -222,6 +223,10 @@ class SaidaDaVida {
 
   /// Voando: freando para pousar — asas para cima, corpo para trás.
   final bool freando;
+
+  /// Está numa refeição (bocada, mastigação): a comida fica na boca o
+  /// tempo todo, e não só quando a boca abre — ela piscava a cada mastigada.
+  final bool comendo;
 
   /// 0..1: deitado. O corpo baixa e alarga, a cabeça desce até perto do
   /// chão. Dormindo, tomando sol, descansando (pesquisa 24: o episódio
@@ -1173,6 +1178,10 @@ class MotorDeVida {
       pataDireita: pataDireita * a,
       voando: _voando && _decolou,
       deita: _deita.valor.clamp(0.0, 1.0) * a,
+      comendo:
+          _ep == Episodio.mastigar ||
+          _ep == Episodio.comerNaAgua ||
+          (_ep == Episodio.comer && _cabecaNoChao.valor < 0.7),
       reverencia: _reverencia * a,
       giro: _giroT,
       planando: _planando,

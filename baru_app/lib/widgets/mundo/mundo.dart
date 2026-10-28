@@ -286,8 +286,13 @@ class MundoDoBaruState extends State<MundoDoBaru>
     }
     switch (app.activity) {
       case Activity.nap:
-        // Dorme na toca; até chegar lá, anda.
-        return _zona == ZonaDoMundo.toca ? Activity.nap : Activity.idle;
+        // Dorme na toca — no buraco, não na fronteira da zona: dormindo
+        // ele para de andar, e dormia na beira, meio em cima da entrada.
+        final g = _g;
+        if (g == null) return Activity.idle;
+        final f = g.faixa(ZonasDoMundo.toca, folga: 40);
+        final u = _posicao.value;
+        return u >= f.$1 - 4 && u <= f.$2 + 4 ? Activity.nap : Activity.idle;
       case Activity.swim:
         // Quem não nada brinca no canto dos brinquedos.
         if (!_nadador(app)) {
@@ -621,7 +626,10 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                     baseDoBicho: g.chao + 5 * g.escala,
                                     xMin: g.px(g.terra.$1),
                                     xMax: g.px(g.terra.$2),
-                                    xInicialDaBola: g.x(0.27),
+                                    // À vista quando a home abre: no canto
+                                    // dos brinquedos ela nascia fora da tela
+                                    // e ninguém sabia que havia bola.
+                                    xInicialDaBola: g.x(0.6),
                                   ),
                                 ),
                               ),

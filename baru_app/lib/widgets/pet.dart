@@ -2879,6 +2879,24 @@ class _PetPainter extends CustomPainter {
     if (feliz) {
       _bochecha(canvas, const Offset(-30, 11), const Offset(30, 11));
     }
+    // A lontra come segurando a comida com as duas patas da frente, junto
+    // da boca, e a leva à boca a cada mordida (pesquisa 24: lontras comem
+    // com as mãos, e na água rolam de costas para comer).
+    if (_comComida) {
+      final sobe = pose.mastiga * 4;
+      final c = pose.comendoDaMao ? petiscoDe(species) : comidaDe(species);
+      pintaComida(canvas, c, Offset(0, 30 - sobe), 13, angulo: 0.1);
+      for (final lado in [-1.0, 1.0]) {
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(lado * 9, 34 - sobe),
+            width: 13,
+            height: 10,
+          ),
+          _p(sombraForte),
+        );
+      }
+    }
 
     _olho(canvas, const Offset(-21, -12), 7.5);
     _olho(canvas, const Offset(21, -12), 7.5);
@@ -5710,8 +5728,18 @@ class _PetPainter extends CustomPainter {
   /// numa função própria porque as duas espécies de bico (coruja e pinguim)
   /// não passam por [_boca] — elas desenham o bico à mão — e mesmo assim
   /// petiscam.
+  /// Segurando comida na boca: na refeição inteira (o motor diz), na mão da
+  /// pessoa, ou no laço do quadro fixo quando a boca abre. Com carinho ele
+  /// para de comer — a comida cobria a cara enquanto ele gostava.
+  bool get _comComida =>
+      pose.carinho < 0.4 &&
+      (pose.comendoDaMao ||
+          (pose.vida.atividadeAtiva ? pose.vida.comendo : pose.mastiga > 0.05));
+
   void _naBoca(Canvas canvas, Offset o, double w) {
-    if (pose.mastiga <= 0.05) return;
+    if (!_comComida) return;
+    // A lontra come com as mãos: a comida vai nas patas (ver [_lontra]).
+    if (species == Species.otter) return;
     // O que ele come de verdade (ver `comida.dart`); da mão, o petisco.
     final c = pose.comendoDaMao ? petiscoDe(species) : comidaDe(species);
     // Do tamanho de uma bocada, saindo da boca: com 30% da boca ela era

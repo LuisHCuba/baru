@@ -430,9 +430,13 @@ extension _Episodios on MotorDeVida {
           break;
         }
         _voando = true;
+        _decolou = false;
+        // Agacha antes de subir (antecipação): o impulso vem depois.
+        _decolaEm = _t + 0.26;
+        _batidas = 0;
+        _planaAte = -1;
         _altitude.fixa(_y);
-        _altitude.alvo = _entre(40, 75);
-        _achata.empurra(-8); // o impulso da decolagem
+        _altitude.alvo = 0;
         final lado = _px > _meio ? -1.0 : 1.0;
         _alvoX = (_meio + lado * _meiaLargura * _entre(0.5, 1)).clamp(
           _min,
@@ -839,7 +843,43 @@ extension _Episodios on MotorDeVida {
           _epFim = math.min(_epFim, _t + 1);
         }
       case Episodio.voar:
-        _faseAtividade += dt / (_passosDoEp == 1 ? 0.24 : 0.34);
+        if (!_decolou) {
+          if (_t < _decolaEm) {
+            _achata.alvo = 0.45;
+          } else {
+            _decolou = true;
+            _achata.alvo = 0;
+            _achata.empurra(-10);
+            _altitude.alvo = _entre(80, 115);
+          }
+        }
+        // Batidas: as primeiras, de decolagem, são mais rápidas; depois
+        // de três ou quatro ela plana um pouco (batida e planeio).
+        if (!_planando) {
+          _faseAtividade +=
+              dt /
+              (_batidas < 2
+                  ? 0.26
+                  : _passosDoEp == 1
+                  ? 0.24
+                  : 0.36);
+        }
+        if (_faseAtividade.floor() != _faseAntes.floor()) {
+          _batidas++;
+          if (_passosDoEp == 0 && _batidas >= 3 && _sorte.nextDouble() < 0.5) {
+            _planaAte = _t + _entre(0.8, 1.4);
+          }
+        }
+        _faseAntes = _faseAtividade;
+        // Pende para a frente cruzando; para trás freando.
+        final pitch = !_decolou
+            ? 0.0
+            : _freando
+            ? -0.2
+            : _passosDoEp == 0
+            ? 0.13
+            : 0.0;
+        _pitchDoVoo += (pitch - _pitchDoVoo) * (1 - math.exp(-dt * 5));
         _virado = _alvoX < _px;
         switch (_passosDoEp) {
           case 0: // cruzando
@@ -849,13 +889,15 @@ extension _Episodios on MotorDeVida {
               _proximoDoEp = _t + _entre(0.8, 1.6);
             }
           case 1: // pairando, mirando o chão
-            _alvoDoOlhar = Offset(_virado ? -0.3 : 0.3, 1);
+            // Olhar muito para baixo baixa as pálpebras: de longe ela
+            // parecia voar de olhos fechados.
+            _alvoDoOlhar = Offset(_virado ? -0.3 : 0.3, 0.45);
             if (_t >= _proximoDoEp) {
               _passosDoEp = 2;
               _altitude.alvo = 0;
             }
           default: // descendo para pousar
-            _alvoDoOlhar = Offset(_virado ? -0.3 : 0.3, 0.8);
+            _alvoDoOlhar = Offset(_virado ? -0.3 : 0.3, 0.35);
         }
         if (!_voando) _epFim = math.min(_epFim, _t + 0.5);
       case Episodio.sonhoDePatinhas:

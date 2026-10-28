@@ -143,6 +143,8 @@ class SaidaDaVida {
     this.passada = 0,
     this.gingado = 0,
     this.andando = 0,
+    this.planando = false,
+    this.freando = false,
     this.pataEsquerda = 0,
     this.pataDireita = 0,
     this.virada = Offset.zero,
@@ -210,6 +212,13 @@ class SaidaDaVida {
 
   /// 0..1: o quanto ele está andando (o passo entra e sai suave).
   final double andando;
+
+  /// Voando: entre as batidas, asas abertas paradas (o voo da coruja é
+  /// batida e planeio).
+  final bool planando;
+
+  /// Voando: freando para pousar — asas para cima, corpo para trás.
+  final bool freando;
 
   /// 0..1: quanto cada pata da frente está no ar, no passo.
   final double pataEsquerda;
@@ -419,6 +428,19 @@ class MotorDeVida {
   /// A coruja no ar (episódio voar).
   bool _voando = false;
   final _altitude = Mola(f: 0.9, zeta: 0.8);
+
+  // --- o voo (pesquisa 24) ---------------------------------------------
+  // Agacha antes de subir; bate e plana; o corpo sobe a cada batida e
+  // pende para a frente; freia com o corpo para trás antes de pousar.
+  bool _decolou = false;
+  double _decolaEm = -1;
+  int _batidas = 0;
+  double _faseAntes = 0;
+  double _planaAte = -1;
+  double _pitchDoVoo = 0;
+  bool get _planando => _voando && _decolou && _t < _planaAte;
+  bool get _freando =>
+      _voando && _decolou && _passosDoEp >= 2 && _y < 34 && _y > 1;
   final _forcaDaAtividade = Mola(f: 1.4, zeta: 0.9);
 
   /// O episódio da vez (para teste e diagnóstico).
@@ -981,6 +1003,7 @@ class MotorDeVida {
     _inclina.passo(dt);
 
     // --- salto, queda, colo ----------------------------------------------
+    if (!_voando) _pitchDoVoo *= math.exp(-dt * 6);
     _andar(dt);
     // O passo de quem anda de frente para a câmera é um gingado (pesquisa
     // 24, as poses de contato e passagem de Williams): o corpo rola por cima
@@ -1028,7 +1051,11 @@ class MotorDeVida {
         _y = math.max(0, _altitude.passo(dt));
         _noChao = false;
         balanco = (_altitude.velocidade / 300).clamp(-1.0, 1.0);
-        if (_altitude.alvo == 0 && _y < 0.8) {
+        // A cada batida o corpo sobe na descida da asa e cede na subida.
+        if (_decolou && !_planando && !_freando) {
+          _y += math.sin((_faseAtividade % 1) * 2 * math.pi) * 4.5;
+        }
+        if (_decolou && _altitude.alvo == 0 && _y < 0.8) {
           // Pousou: as patas tocam, o corpo cede.
           _voando = false;
           _y = 0;
@@ -1091,7 +1118,8 @@ class MotorDeVida {
       cauda: _cauda.valor.clamp(-1.4, 1.4) * (0.4 + 0.6 * a),
       ciclo: _faseCiclo,
       olhar: _pupila.valor,
-      inclina: (_inclina.valor + inclinaNoColo * 0.5 + pende) * a,
+      inclina:
+          (_inclina.valor + inclinaNoColo * 0.5 + pende + _pitchDoVoo) * a,
       achata: _achata.valor.clamp(-0.6, 0.6) * a,
       desloca: desloca,
       virado: _virado,
@@ -1106,7 +1134,9 @@ class MotorDeVida {
       andando: intensidade * a,
       pataEsquerda: pataEsquerda * a,
       pataDireita: pataDireita * a,
-      voando: _voando,
+      voando: _voando && _decolou,
+      planando: _planando,
+      freando: _freando,
       virada: _virada.valor * a,
       cabecaAtraso: atraso * a,
       cabecaGiro: gesto.dx * a,

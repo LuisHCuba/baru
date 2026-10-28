@@ -446,6 +446,11 @@ class PetView extends StatefulWidget {
   @visibleForTesting
   static ValueNotifier<Offset?>? observadorDoCentro;
 
+  /// O episódio do motor de vida a cada quadro. Nulo em produção — existe
+  /// para a filmagem de revisão recortar cada comportamento (pesquisa 24).
+  @visibleForTesting
+  static ValueNotifier<String>? observadorDeEpisodio;
+
   @override
   State<PetView> createState() => _PetViewState();
 }
@@ -640,6 +645,7 @@ class _PetViewState extends State<PetView>
               acao == AcaoDoBicho.nado ||
               acao == AcaoDoBicho.brincadeira);
     _quadroDaVida.value = _vida.passo(dt);
+    PetView.observadorDeEpisodio?.value = _vida.episodio.name;
     widget.posicao?.value = _vida.posicao;
     final observador = PetView.observadorDoCentro;
     if (observador != null && widget.areaDeAndar > 0) {
@@ -3011,6 +3017,118 @@ class _PetPainter extends CustomPainter {
   // CORUJA — disco facial, tufos presos à cabeça, asas dobradas no corpo
   // ======================================================================
 
+  /// As asas da coruja em voo, vistas de frente (pesquisa 24).
+  ///
+  /// Antes eram dois remos de forma fixa que só giravam para cima e para
+  /// baixo, como asa de brinquedo. Agora seguem o ciclo de batida da
+  /// coruja: asas largas e arredondadas, a descida é o golpe de força (asa
+  /// aberta inteira, primárias abertas) e a subida é recolhida (a asa
+  /// dobra no punho e encolhe); a ponta vem atrasada em relação ao punho; e
+  /// a ponta desenha um "U" visto de frente. Planando, ficam abertas num
+  /// leve V; freando para pousar, sobem.
+  void _asasDeVoo(Canvas canvas, Color cor) {
+    final vida = pose.vida;
+    final phi = pose.ciclo % 1.0;
+    const descida = 0.58;
+    const alto = 0.95; // rad: asa no alto da batida
+    const baixo = -0.62; // rad: no fim da descida
+    double theta, abre, atraso;
+    if (vida.freando) {
+      theta = 1.15 + math.sin(pose.ciclo * math.pi * 2) * 0.08;
+      abre = 0.95;
+      atraso = 0.3;
+    } else if (vida.planando) {
+      theta = 0.16 + math.sin(pose.ciclo * math.pi * 4) * 0.02;
+      abre = 1;
+      atraso = 0.1;
+    } else if (phi < descida) {
+      final u = phi / descida;
+      final e = Curves.easeInOutSine.transform(u);
+      theta = alto + (baixo - alto) * e;
+      abre = 1;
+      // Descendo, a ponta fica para trás (para cima) e as penas abrem.
+      atraso = 0.26 * math.sin(math.pi * u);
+    } else {
+      final u = (phi - descida) / (1 - descida);
+      final e = Curves.easeInOut.transform(u);
+      theta = baixo + (alto - baixo) * e;
+      // Subindo, a asa dobra no punho e encolhe: subida sem resistência.
+      abre = 1 - 0.42 * math.sin(math.pi * u);
+      atraso = -0.5 * math.sin(math.pi * u);
+    }
+    final penasAbertas = vida.planando || vida.freando
+        ? 0.6
+        : phi < descida
+            ? 1.0
+            : 0.25;
+    for (final lado in [-1.0, 1.0]) {
+      final ombro = Offset(lado * 24, -24);
+      Offset em(Offset de, double ang, double r) =>
+          de + Offset(lado * math.cos(ang) * r, -math.sin(ang) * r);
+      // Asa larga e redonda, maior que o corpo de cada lado: é a asa da
+      // coruja, de muita área para pouco peso.
+      final punho = em(ombro, theta, 44 * abre);
+      final angPonta = theta + atraso;
+      final ponta = em(punho, angPonta, 56 * (0.55 + 0.45 * abre));
+      final costas = Offset(lado * 20, 12);
+      final asa = Path()
+        ..moveTo(ombro.dx, ombro.dy)
+        ..quadraticBezierTo(
+          (ombro.dx + punho.dx) / 2,
+          math.min(ombro.dy, punho.dy) - 9 * abre,
+          punho.dx,
+          punho.dy,
+        )
+        ..quadraticBezierTo(
+          (punho.dx + ponta.dx) / 2 + lado * 3,
+          (punho.dy + ponta.dy) / 2 - 6,
+          ponta.dx,
+          ponta.dy,
+        );
+      // Borda de fuga recortada: a ponta de cada pena, da ponta da asa de
+      // volta às costas, numa curva que desce abaixo da linha reta (a asa
+      // tem fundura). As primárias, perto da ponta, abrem no golpe.
+      final baixo = em(Offset.zero, angPonta - math.pi / 2, 1);
+      final fundura = 26 * abre;
+      const penas = 6;
+      var antes = ponta;
+      for (var i = 1; i <= penas; i++) {
+        final t = i / penas;
+        final barriga = math.sin(math.pi * t);
+        final p = Offset.lerp(ponta, costas, t)! + baixo * (fundura * barriga);
+        // A pena: o meio do arco sai um pouco mais (o recorte).
+        final meio = Offset.lerp(antes, p, 0.5)! +
+            baixo * (5 + 4 * penasAbertas * (1 - t));
+        asa.quadraticBezierTo(meio.dx, meio.dy, p.dx, p.dy);
+        antes = p;
+      }
+      asa.close();
+      canvas.drawPath(asa, _p(cor));
+      // Dentro da asa (recortado nela): as primárias como sulcos curtos e o
+      // claro das coberteiras.
+      canvas.save();
+      canvas.clipPath(asa);
+      final risco = _traco(Cores.tintaA(0.18), 1.6);
+      for (var i = 0; i < 4; i++) {
+        final de = Offset.lerp(punho, ponta, 0.2 + i * 0.12)!;
+        final ang = angPonta - math.pi / 2 - 0.25 * penasAbertas;
+        canvas.drawLine(de, em(de, ang, 16), risco);
+      }
+      canvas.drawPath(
+        Path()
+          ..moveTo(ombro.dx, ombro.dy + 4)
+          ..quadraticBezierTo(
+            (ombro.dx + punho.dx) / 2,
+            (ombro.dy + punho.dy) / 2 + 2,
+            punho.dx,
+            punho.dy + 6,
+          ),
+        _traco(Colors.white.withValues(alpha: 0.10), 7),
+      );
+      canvas.restore();
+    }
+  }
+
   void _coruja(Canvas canvas) {
     final amp = pose.amplitude;
     final asa = pose.asa * amp;
@@ -3050,6 +3168,9 @@ class _PetPainter extends CustomPainter {
       }
     }
 
+    // As asas abertas nascem nas costas: atrás do corpo, de frente.
+    if (pose.voando) _asasDeVoo(canvas, sombraForte);
+
     final corpo = _bolha(
       Rect.fromCenter(center: const Offset(0, -6), width: 90, height: 84),
       topo: 0.84,
@@ -3082,47 +3203,6 @@ class _PetPainter extends CustomPainter {
       }
     }
     canvas.restore();
-
-    // Asa aberta, batendo: a coruja está voando.
-    //
-    // É um caminho separado, e não o mesmo `Path` com um número maior. A asa
-    // dobrada nasce no ombro e desce colada ao corpo; abrir esse desenho só
-    // faria o contorno inchar de lado, que foi a primeira tentativa e ficou
-    // parecendo uma coruja gorda. Voar é outra silhueta.
-    if (pose.voando) {
-      final bate = asa / 3.6;
-      for (final lado in [-1.0, 1.0]) {
-        final pontaY = -16 - bate * 32;
-        final ala = Path()
-          ..moveTo(lado * 26, -26)
-          ..cubicTo(
-            lado * 52, -34 - bate * 16,
-            lado * 74, pontaY - 8,
-            lado * 86, pontaY,
-          )
-          ..cubicTo(
-            lado * 72, pontaY + 18,
-            lado * 50, 2 - bate * 12,
-            lado * 26, 18,
-          )
-          ..close();
-        canvas.drawPath(ala, _p(sombraForte));
-
-        // Primárias: os riscos que separam as penas da ponta. Sem eles a
-        // asa vira uma pá lisa e o voo parece um planador de papel.
-        canvas.save();
-        canvas.clipPath(ala);
-        final risco = _traco(Cores.tintaA(0.20), 1.9);
-        for (var i = 0; i < 4; i++) {
-          canvas.drawLine(
-            Offset(lado * 40, -14 - bate * 10 + i * 8),
-            Offset(lado * (84 - i * 4), pontaY + 4 + i * 7),
-            risco,
-          );
-        }
-        canvas.restore();
-      }
-    }
 
     // Asas dobradas, encostadas no corpo — abrem de leve ao respirar.
     // Mais escuras e mais largas que antes: encostadas no corpo com a mesma

@@ -2255,9 +2255,21 @@ class _PetPainter extends CustomPainter {
     canvas.translate(vida.desloca.dx, vida.desloca.dy);
     if (vida.virado) canvas.scale(-1, 1);
     // O rodopio: o corpo vira no eixo vertical como uma folha de papel.
+    // Na metade da volta em que ele está de costas, não há rosto nem
+    // barriga: só o dorso, no tom mais escuro do pelo. Com o rosto à mostra
+    // o tempo todo, o giro lia como um adesivo espelhado, e não como uma
+    // volta.
+    var deCostas = false;
     if (vida.giro > 0) {
       final c = math.cos(vida.giro * 2 * math.pi);
       canvas.scale(c.abs() < 0.12 ? (c < 0 ? -0.12 : 0.12) : c, 1);
+      if (c < 0) {
+        deCostas = true;
+        canvas.saveLayer(
+          folga,
+          Paint()..colorFilter = ColorFilter.mode(sombra, BlendMode.srcIn),
+        );
+      }
     }
     // O gingado gira pelo pé que está no chão.
     if (vida.gingado != 0) {
@@ -2367,6 +2379,7 @@ class _PetPainter extends CustomPainter {
       case Species.frenchie:
         _buldogue(canvas);
     }
+    if (deCostas) canvas.restore();
     canvas.restore();
     if (noNinho) _ninho(canvas, Offset(cx, cy + _pes - 2), frente: true);
 

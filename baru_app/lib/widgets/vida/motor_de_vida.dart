@@ -470,6 +470,8 @@ class MotorDeVida {
   final _deita = Mola(f: 0.9, zeta: 0.95);
   double _reverencia = 0;
   double _giroT = 0;
+  // Quanto dura uma volta: rápida no rodopio, preguiçosa na lontra rolando.
+  double _duracaoDoGiro = 0.38;
 
   // --- o voo (pesquisa 24) ---------------------------------------------
   // Agacha antes de subir; bate e plana; o corpo sobe a cada batida e
@@ -1058,7 +1060,7 @@ class MotorDeVida {
     _deita.alvo = noColo ? 0 : deitaAgora;
     _deita.passo(dt);
     if (_giroT > 0) {
-      _giroT += dt / 0.38;
+      _giroT += dt / _duracaoDoGiro;
       if (_giroT >= 1) _giroT = 0;
     }
     _andar(dt);

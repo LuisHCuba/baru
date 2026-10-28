@@ -391,7 +391,7 @@ extension _Episodios on MotorDeVida {
       case Episodio.rolar:
         _passosDoEp = 2 + _sorte.nextInt(2);
         _proximoDoEp = _t + 0.1;
-        _epFim = _t + 2.2;
+        _epFim = _t + 0.3 + _passosDoEp * 0.75;
       case Episodio.espiar:
         _epFim = _t + _dura(2.8, min: 1.6, max: 6);
       case Episodio.respirar:
@@ -664,6 +664,7 @@ extension _Episodios on MotorDeVida {
           _giros -= 1;
           // Um giro de verdade: o corpo vira no eixo (ver `giro`), e não
           // só espelha num quadro.
+          _duracaoDoGiro = 0.38;
           _giroT = 0.001;
           _achata.empurra(3);
           pula(130);
@@ -797,11 +798,15 @@ extension _Episodios on MotorDeVida {
         _alvoX = _px;
       case Episodio.rolar:
         _sobeNaAgua.alvo = 3;
-        if (_t >= _proximoDoEp && _passosDoEp > 0) {
+        // A lontra rola no comprimento do corpo, de costas e de volta, como
+        // faz para se limpar. De frente para a câmera, esse eixo é o
+        // vertical: o corpo vira como o rodopio, só que devagar.
+        if (_t >= _proximoDoEp && _passosDoEp > 0 && _giroT == 0) {
           _passosDoEp -= 1;
-          _virado = !_virado;
-          _inclina.empurra(_virado ? 1.8 : -1.8);
-          _proximoDoEp = _t + 0.45;
+          _duracaoDoGiro = 0.7;
+          _giroT = 0.001;
+          _inclina.empurra(_virado ? 0.6 : -0.6);
+          _proximoDoEp = _t + 0.75;
         }
       case Episodio.espiar:
         _sobeNaAgua.alvo = 11;

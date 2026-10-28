@@ -2468,7 +2468,9 @@ class _PetPainter extends CustomPainter {
           : 0,
       faseDaOnda: pose.ciclo * math.pi * 2,
     );
-    final corpo = ossos.parado || !CanvasDeformavel.ligado
+    // A tartaruga não: casco é rígido, e dobrá-lo é anatomia errada.
+    final corpo =
+        ossos.parado || species == Species.tortoise || !CanvasDeformavel.ligado
         ? canvas
         : CanvasDeformavel(canvas, ossos.deforma);
 

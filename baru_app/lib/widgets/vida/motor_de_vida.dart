@@ -160,6 +160,10 @@ class SaidaDaVida {
     this.giro = 0,
     this.adormecido,
     this.elastico = 0,
+    this.dente = Offset.zero,
+    this.denteForca = 0,
+    this.susto = 0,
+    this.festa = 0,
     this.planeio = 0,
     this.freio = 0,
     this.corrida = 0,
@@ -255,6 +259,18 @@ class SaidaDaVida {
   /// voltam suaves: a troca seca de pose dava um tranco de asa.
   final double planeio;
   final double freio;
+
+  /// Onde o dedo afunda o corpo (unidades do desenho, relativo ao centro
+  /// dele) e quanto: no toque afunda e volta como borracha; no carinho
+  /// fica afundado sob a mão enquanto ela passa.
+  final Offset dente;
+  final double denteForca;
+
+  /// 0..1 (com repique): o susto — o corpo estica de repente e volta.
+  final double susto;
+
+  /// 0..1: está festejando; o corpo rebola entre os saltos.
+  final double festa;
 
   /// -1..1: o corpo como borracha no salto — positivo achata (no
   /// impulso e no pouso), negativo estica (no ar). Vai para o contorno
@@ -612,6 +628,10 @@ class MotorDeVida {
   double _intensidadeDoPasso = 0;
   double _ondaAntes = 0;
   double _faseAntesDoSalto = 0;
+  // O dedo afundando o corpo e o susto: molas com um repique de borracha.
+  final _dente = Mola(f: 3.2, zeta: 0.55);
+  Offset _ondeDoDente = Offset.zero;
+  final _susto = Mola(f: 2.6, zeta: 0.5);
   double _elastico = 0;
   final _poeira = <(double, double)>[];
   double _rebola = 0;
@@ -754,6 +774,11 @@ class MotorDeVida {
       ..add(_t);
     final n = _toques.length;
 
+    // O dedo afunda o corpo onde encosta, e ele volta como borracha.
+    _ondeDoDente = onde;
+    _dente.fixa(n == 1 ? 1 : 0.6);
+    _dente.alvo = 0;
+
     if (zona == ZonaDoCorpo.nariz && n <= 2) {
       // O nariz: recua, e às vezes espirra (com antecipação de 0,4 s).
       _achata.empurra(-4);
@@ -768,7 +793,9 @@ class MotorDeVida {
       _inclina.empurra(-onde.dx * 1.6);
       _cauda.empurra(14);
     } else if (n == 2) {
-      // Susto: um pulinho.
+      // Susto: o corpo estica de uma vez (e volta), e um pulinho.
+      _susto.fixa(1);
+      _susto.alvo = 0;
       _achata.empurra(4);
       pula(240);
     } else if (n <= 4) {
@@ -823,6 +850,9 @@ class MotorDeVida {
       return;
     }
 
+    // A mão afunda o corpo por onde passa, e ele cede na direção dela.
+    _ondeDoDente = onde;
+    _dente.alvo = 0.45 + 0.25 * _derretido;
     // O corpo cede na direção da mão: leve, contínuo.
     _inclina.alvo = (velocidade.dx / 900).clamp(-0.1, 0.1);
     _achata.alvo = 0.15 + 0.2 * _derretido;
@@ -832,6 +862,7 @@ class MotorDeVida {
   }
 
   void soltouAfago() {
+    _dente.alvo = 0;
     _inclina.alvo = 0;
     _achata.alvo = 0;
     _naZonaFavorita = 0;
@@ -917,6 +948,18 @@ class MotorDeVida {
     if (horas < 1) return;
     _festaEm = _t + (horas >= 24 ? 0.6 : 0.15);
     _duracaoDaFesta = horas >= 24 ? 2.4 : 1.0;
+  }
+
+  /// Comemora (a sessão concluída): olha para a pessoa, abana a cauda e
+  /// festeja aos saltos, com o corpo de borracha e rebolando.
+  void comemora({double duracao = 2.0}) {
+    if (noColo || dormindo) return;
+    _interagiu();
+    _olhaPara(const Offset(0, -0.3), pisca: true);
+    _cauda.empurra(22);
+    _agitacao = 1;
+    _festaEm = _t + 0.1;
+    _duracaoDaFesta = duracao;
   }
 
   double _festaGuardada = 0;
@@ -1355,6 +1398,10 @@ class MotorDeVida {
       reverencia: _reverenciaSuave * a,
       giro: _giroT,
       elastico: _elastico * a,
+      dente: _ondeDoDente * 70,
+      denteForca: _dente.passo(dt) * a,
+      susto: _susto.passo(dt) * a,
+      festa: _intencao == IntencaoDoBicho.festejar ? a : 0,
       adormecido:
           dormindo || (sonolento && (destino == null || _paradoNoDestino)),
       planeio: _planeioSuave,

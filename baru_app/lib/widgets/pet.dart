@@ -306,6 +306,7 @@ class PetView extends StatefulWidget {
     this.interesse,
     this.aoAlcancar,
     this.ausenciaAoAbrir,
+    this.comemora = false,
     this.aoMudarDeLugar,
     this.limites,
     this.destino,
@@ -346,6 +347,10 @@ class PetView extends StatefulWidget {
   /// ele aparece no processo (ver `MotorDeVida.saudacao`). Nulo: não saúda.
   /// A volta do app em segundo plano ele mede sozinho.
   final Duration? ausenciaAoAbrir;
+
+  /// Está comemorando (a tela de resultado de uma sessão concluída): festeja
+  /// ao aparecer e de novo de tempos em tempos.
+  final bool comemora;
 
   /// Já saudou nesta abertura do app: a home remontada não festeja de novo.
   @visibleForTesting
@@ -868,11 +873,17 @@ class _PetViewState extends State<PetView>
     _vida.acordando();
   }
 
+  double _proximaComemoracao = 0.6;
+
   /// Só o bicho que mora no habitat (anda e responde) saúda.
   bool get _saudaveis => widget.areaDeAndar > 0 && widget.interativo;
 
   void _acordaPeloBrinquedo(double dt) {
     _relogioS += dt;
+    if (widget.comemora && _relogioS >= _proximaComemoracao) {
+      _vida.comemora();
+      _proximaComemoracao = _relogioS + 6.5;
+    }
     final ausencia = widget.ausenciaAoAbrir;
     if (ausencia != null &&
         !PetView.saudouNaAbertura &&
@@ -2447,7 +2458,9 @@ class _PetPainter extends CustomPainter {
                       _virada.dx * 0.22 * (1 - vida.andando)) *
                   amp)
               .clamp(-1.0, 1.0),
-      achata: ((vida.achata * 1.6 + vida.elastico) * amp).clamp(-1.0, 1.0),
+      // O susto estica o corpo de uma vez (achata negativo) e ele volta.
+      achata: ((vida.achata * 1.6 + vida.elastico - vida.susto * 0.9) * amp)
+          .clamp(-1.0, 1.0),
       folego: (sopro * fundura).clamp(-1.0, 1.0),
       // Andando, o quadril vai com o passo; parado, ele se acomoda devagar
       // de um lado para o outro, o peso mudando de pata.
@@ -2455,7 +2468,9 @@ class _PetPainter extends CustomPainter {
           ((vida.passada * vida.andando +
                       math.sin(pose.ciclo * math.pi * 2) *
                           0.3 *
-                          (1 - vida.andando)) *
+                          (1 - vida.andando) +
+                      // Festejando, rebola entre os saltos.
+                      math.sin(pose.ciclo * math.pi * 14) * 0.7 * vida.festa) *
                   amp)
               .clamp(-1.0, 1.0),
       ladoEsquerdo: vida.pataEsquerda * amp,
@@ -2467,6 +2482,12 @@ class _PetPainter extends CustomPainter {
           ? (amp * pose._forcaDoNado * (mergulha ? 1.0 : 0.55)).clamp(0.0, 1.0)
           : 0,
       faseDaOnda: pose.ciclo * math.pi * 2,
+      // O corpo é espelhado quando ele vira; o dedo, não.
+      dente: Offset(
+        vida.virado ? -vida.dente.dx : vida.dente.dx,
+        vida.dente.dy,
+      ),
+      denteForca: vida.denteForca,
     );
     // A tartaruga não: casco é rígido, e dobrá-lo é anatomia errada.
     final corpo =

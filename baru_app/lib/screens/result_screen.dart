@@ -92,11 +92,7 @@ class _Desistencia extends StatelessWidget {
                   Text(
                     t.resLostSub,
                     textAlign: TextAlign.center,
-                    style: nunito(
-                      size: 15,
-                      height: 1.5,
-                      color: Cores.tinta700,
-                    ),
+                    style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
                   ),
                   const Spacer(),
                   BotaoBaru(
@@ -281,7 +277,12 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
             key: _raiz,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.md, Espaco.xl, Espaco.xxl),
+                padding: const EdgeInsets.fromLTRB(
+                  Espaco.xl,
+                  Espaco.md,
+                  Espaco.xl,
+                  Espaco.xxl,
+                ),
                 child: Column(
                   children: [
                     Row(
@@ -321,71 +322,72 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
                           ],
                         ).createShader(r),
                         child: SingleChildScrollView(
-                        padding: const EdgeInsets.only(bottom: Espaco.xl),
-                        child: Column(
-                          children: [
-                            PetView(
-                              species: app.species,
-                              mood: Mood.radiant,
-                              activity: Activity.idle,
-                              coat: app.color,
-                              estagio: app.estagioVisivel,
-                              roupas: app.roupasDoBicho,
-                              roupaDeCabeca: app.roupaDeCabeca,
-                              scale: MediaQuery.sizeOf(context).height < 700
-                                  ? 0.8
-                                  : 1.05,
-                            ),
-                            const SizedBox(height: Espaco.sm),
-                            _Ganho(
-                              key: _ganho,
-                              valor: (r.folhasDaSessao * conta).round(),
-                            ),
-                            const SizedBox(height: Espaco.md),
-                            Text(
-                              t.fill(t.resWon, {'m': r.minutos}),
-                              textAlign: TextAlign.center,
-                              style: nunito(
-                                size: 24,
-                                weight: FontWeight.w800,
-                                height: 1.2,
-                                letterSpacing: -0.4,
+                          padding: const EdgeInsets.only(bottom: Espaco.xl),
+                          child: Column(
+                            children: [
+                              PetView(
+                                species: app.species,
+                                mood: Mood.radiant,
+                                activity: Activity.idle,
+                                comemora: true,
+                                coat: app.color,
+                                estagio: app.estagioVisivel,
+                                roupas: app.roupasDoBicho,
+                                roupaDeCabeca: app.roupaDeCabeca,
+                                scale: MediaQuery.sizeOf(context).height < 700
+                                    ? 0.8
+                                    : 1.05,
                               ),
-                            ),
-                            const SizedBox(height: Espaco.md),
-                            _BarraDeXp(
-                              resumo: r,
-                              sessao: xpSessao,
-                              raiz: xpRaiz,
-                            ),
-                            const SizedBox(height: Espaco.md),
-                            Opacity(
-                              // Logo abaixo do XP, à vista sem rolar: com quatro
-                              // missões na lista ele ficava atrás dos botões.
-                              opacity: _f(ms, 1800, 2100),
-                              child: Text(
-                                _fecho(app),
-                                key: const Key('resultado-fecho'),
+                              const SizedBox(height: Espaco.sm),
+                              _Ganho(
+                                key: _ganho,
+                                valor: (r.folhasDaSessao * conta).round(),
+                              ),
+                              const SizedBox(height: Espaco.md),
+                              Text(
+                                t.fill(t.resWon, {'m': r.minutos}),
                                 textAlign: TextAlign.center,
                                 style: nunito(
-                                  size: 15,
-                                  height: 1.5,
-                                  weight: FontWeight.w600,
-                                  color: AppColors.inkA(0.7),
+                                  size: 24,
+                                  weight: FontWeight.w800,
+                                  height: 1.2,
+                                  letterSpacing: -0.4,
                                 ),
                               ),
-                            ),
-                            if (r.missoes.isNotEmpty) ...[
                               const SizedBox(height: Espaco.md),
-                              _Missoes(
-                                app: app,
-                                missoes: r.missoes,
-                                t: _e3.value,
+                              _BarraDeXp(
+                                resumo: r,
+                                sessao: xpSessao,
+                                raiz: xpRaiz,
                               ),
+                              const SizedBox(height: Espaco.md),
+                              Opacity(
+                                // Logo abaixo do XP, à vista sem rolar: com quatro
+                                // missões na lista ele ficava atrás dos botões.
+                                opacity: _f(ms, 1800, 2100),
+                                child: Text(
+                                  _fecho(app),
+                                  key: const Key('resultado-fecho'),
+                                  textAlign: TextAlign.center,
+                                  style: nunito(
+                                    size: 15,
+                                    height: 1.5,
+                                    weight: FontWeight.w600,
+                                    color: AppColors.inkA(0.7),
+                                  ),
+                                ),
+                              ),
+                              if (r.missoes.isNotEmpty) ...[
+                                const SizedBox(height: Espaco.md),
+                                _Missoes(
+                                  app: app,
+                                  missoes: r.missoes,
+                                  t: _e3.value,
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
                       ),
                     ),
                     const SizedBox(height: Espaco.sm),
@@ -429,15 +431,14 @@ class _SequenciaState extends State<_Sequencia> with TickerProviderStateMixin {
     final t = app.t;
     final d = app.missaoDoDescanso;
     final principalOk = !d.disponivel || d.concluida || d.resgatada;
-    final abertas = app.missoesDiarias
-        .where((m) => m.disponivel && !m.concluida && !m.resgatada)
-        .toList()
-      ..sort((a, b) => b.fracao.compareTo(a.fracao));
+    final abertas =
+        app.missoesDiarias
+            .where((m) => m.disponivel && !m.concluida && !m.resgatada)
+            .toList()
+          ..sort((a, b) => b.fracao.compareTo(a.fracao));
     // "Dia feito" só é verdade com a raiz crescida, a principal cumprida e
     // nada pronto esperando colheita — prêmio parado não é dia fechado.
-    if (app.completedToday >= 1 &&
-        principalOk &&
-        app.missoesResgataveis == 0) {
+    if (app.completedToday >= 1 && principalOk && app.missoesResgataveis == 0) {
       return t.fill(t.resDiaFeito, {'a': app.displayName});
     }
     if (abertas.isEmpty) return t.fill(t.resWonSub, {'n': app.displayName});
@@ -462,7 +463,12 @@ class _Ganho extends StatelessWidget {
     final t = AppScope.of(context).t;
     return Container(
       key: _Sequencia.chaveDoGanho,
-      padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.sm, Espaco.lg, Espaco.sm),
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.md,
+        Espaco.sm,
+        Espaco.lg,
+        Espaco.sm,
+      ),
       decoration: BoxDecoration(
         color: Cores.folha600.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(99),
@@ -501,9 +507,8 @@ class _BarraDeXp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppScope.of(context).t;
-    final xp = resumo.xpAntes +
-        resumo.xpDaSessao * sessao +
-        resumo.xpDaRaiz * raiz;
+    final xp =
+        resumo.xpAntes + resumo.xpDaSessao * sessao + resumo.xpDaRaiz * raiz;
     final nivel = Balanco.nivelPara(xp.floor());
     final de = Balanco.xpAcumuladoPara(nivel);
     final ate = Balanco.xpAcumuladoPara(nivel + 1);
@@ -620,7 +625,12 @@ class _MissaoQueAndou extends StatelessWidget {
     final progresso =
         (m.antes.progresso + (d.progresso - m.antes.progresso) * t).round();
     return Container(
-      padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.sm, Espaco.sm, Espaco.sm),
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.md,
+        Espaco.sm,
+        Espaco.sm,
+        Espaco.sm,
+      ),
       decoration: BoxDecoration(
         color: pronta
             ? Cores.mel400.withValues(alpha: 0.24)
@@ -640,11 +650,7 @@ class _MissaoQueAndou extends StatelessWidget {
                   style: nunito(size: 13.5, weight: FontWeight.w700),
                 ),
                 const SizedBox(height: 6),
-                BarraAnimada(
-                  fracao: fracao,
-                  altura: 7,
-                  duracao: Duration.zero,
-                ),
+                BarraAnimada(fracao: fracao, altura: 7, duracao: Duration.zero),
                 const SizedBox(height: Espaco.xxs),
                 Text(
                   pronta ? tx.resPronta : '$progresso/${d.alvo}',

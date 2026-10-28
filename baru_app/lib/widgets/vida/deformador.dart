@@ -351,7 +351,13 @@ class OssosDoCorpo {
     this.altura = 140,
     this.ondula = 0,
     this.faseDaOnda = 0,
+    this.dente = Offset.zero,
+    this.denteForca = 0,
   });
+
+  /// Onde o dedo afunda o corpo (espaço do corpo) e quanto (0..1).
+  final Offset dente;
+  final double denteForca;
 
   /// 0..1: nadando, o corpo ondula de lado numa onda que sobe do quadril
   /// para a cabeça (é como o axolote e a lontra nadam).
@@ -386,7 +392,8 @@ class OssosDoCorpo {
       quadril.abs() < 0.002 &&
       ladoEsquerdo < 0.002 &&
       ladoDireito < 0.002 &&
-      ondula < 0.002;
+      ondula < 0.002 &&
+      denteForca.abs() < 0.002;
 
   /// O campo de deformação destes ossos.
   Offset deforma(Offset p) {
@@ -424,6 +431,21 @@ class OssosDoCorpo {
     if (ondula > 0) {
       final amplitude = 6 * ondula * (0.35 + 0.65 * (1 - (h - 0.5).abs()));
       x += amplitude * math.sin(faseDaOnda - h * math.pi * 1.6);
+    }
+
+    // O dedo: o contorno perto dele afunda para o centro do corpo, num
+    // círculo macio, como borracha apertada.
+    if (denteForca.abs() > 0.002) {
+      final dx = x - dente.dx, dy = y - dente.dy;
+      final perto = math.exp(-(dx * dx + dy * dy) / (28 * 28));
+      if (perto > 0.01) {
+        final cx = -x, cy = 8 - y;
+        final r = math.sqrt(cx * cx + cy * cy);
+        if (r > 0.5) {
+          x += cx / r * perto * denteForca * 8;
+          y += cy / r * perto * denteForca * 8;
+        }
+      }
     }
 
     // O lado da pata no ar sobe um pouco: a barriga daquele lado acompanha.

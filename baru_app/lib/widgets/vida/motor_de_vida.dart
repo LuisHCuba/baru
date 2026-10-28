@@ -1085,8 +1085,12 @@ class MotorDeVida {
       _persegue();
     } else {
       // A atividade em episódios; na pausa, o corpo volta ao cérebro livre.
+      // A festa (saudação, comemoração) interrompe o episódio: comendo ou
+      // pastando, ele larga o que fazia e pula.
       _episodiosRodando =
-          !reduzido && (!ocupado || modo == ModoDaAtividade.dormir);
+          !reduzido &&
+          (!ocupado || modo == ModoDaAtividade.dormir) &&
+          _intencao != IntencaoDoBicho.festejar;
       if (_episodiosRodando) {
         livre = _passoDosEpisodios(dt);
       } else {

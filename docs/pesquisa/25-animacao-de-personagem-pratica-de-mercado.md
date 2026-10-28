@@ -127,3 +127,13 @@ Não há como abrir o editor do Rive daqui: ele exige alguém logado no site. O 
 - O contorno é refeito por curvas que passam pelos pontos movidos.
 - Detalhes pequenos (olho, narina) só acompanham o deslocamento, sem se dobrar: o olho segue redondo.
 - Custo medido: cerca de 0,3 ms por quadro.
+
+### Reações do corpo
+
+O mesmo campo de deformação responde ao dedo e às emoções:
+
+- **Toque:** o contorno afunda onde o dedo encosta e volta como borracha (mola com leve passada do ponto).
+- **Dois toques seguidos:** susto — o corpo estica de uma vez e assenta, com um pulinho.
+- **Afago:** a marca da mão acompanha o dedo enquanto ele passa e solta quando ele sai.
+- **Comemoração:** pulos com estica no ar e achata no pouso, e o quadril balançando. Na tela de resultado ela abre a cena e se repete a cada 6,5 s. A festa interrompe o que o bicho estiver fazendo (comendo, pastando) e ele volta depois.
+- Testes: `baru_app/test/reacoes_test.dart`.

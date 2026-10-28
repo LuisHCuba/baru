@@ -1,4 +1,3 @@
-
 import 'package:baru_app/widgets/vida/motor_de_vida.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -82,5 +81,19 @@ void main() {
     expect(achata, greaterThan(0.05), reason: 'estica e achata nos pulos');
     final (_, fim) = _mede(m, 4, (q) => q.festa);
     expect(fim, 0, reason: 'a festa tem fim');
+  });
+
+  test('a festa interrompe o que ele estava fazendo', () {
+    final m = _motor()..modo = ModoDaAtividade.petiscar;
+    _mede(m, 1, (q) => 0);
+    m.comemora(duracao: 2);
+    var alto = 0.0;
+    for (var t = 0.0; t < 2.5; t += _dt) {
+      final q = m.passo(_dt);
+      if (-q.desloca.dy > alto) alto = -q.desloca.dy;
+    }
+    expect(alto, greaterThan(3), reason: 'larga o petisco e pula');
+    _mede(m, 4, (q) => 0);
+    expect(m.episodio, isNotNull, reason: 'e volta ao petisco depois');
   });
 }

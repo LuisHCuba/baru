@@ -150,6 +150,7 @@ class SaidaDaVida {
     this.reverencia = 0,
     this.giro = 0,
     this.adormecido,
+    this.emPe = 0,
     this.planeio = 0,
     this.freio = 0,
     this.corrida = 0,
@@ -245,6 +246,11 @@ class SaidaDaVida {
   /// voltam suaves: a troca seca de pose dava um tranco de asa.
   final double planeio;
   final double freio;
+
+  /// 0..1: em pé nas quatro patas (andando, correndo), em vez de sentado.
+  /// Quem tem a pose desenha o corpo em três quartos, com a traseira para
+  /// trás de onde vai; quem não tem, ignora.
+  final double emPe;
 
   /// Adormecido de verdade: cochilando, ou com sono e já no canto de
   /// dormir. Fora do mundo (sem destino), o sono do humor conta como
@@ -500,6 +506,9 @@ class MotorDeVida {
   // 0..1: o quanto o corpo acompanha a batida da asa (suave na entrada e na
   // saída do planeio e do freio).
   double _bateAsa = 0;
+  // Levanta para andar e senta quando para; sem quicar.
+  final _emPe = Mola(f: 2.4, zeta: 1);
+  double _emPeAte = -1;
   double _planeioSuave = 0;
   double _freioSuave = 0;
   // Os episódios rodaram neste quadro (fora do colo, da atividade ocupada e
@@ -1162,6 +1171,14 @@ class MotorDeVida {
     _ondaAntes = onda;
     // Reverência e rebolado chegam e saem suaves: zerados a cada quadro
     // pelos episódios, pulavam de 0,9 a 0 entre a espreita e o salto.
+    // Fica em pé enquanto anda ou corre, e um pouco depois de parar.
+    // No ar (salto, bote) não senta: fica como estava até pousar.
+    final querEmPe =
+        (andandoNoChao && (alvoDoPasso > 0.08 || _correndo)) ||
+        (!_noChao && !_voando && !nadando && _emPe.valor > 0.5);
+    if (querEmPe) _emPeAte = _t + 0.5;
+    _emPe.alvo = (_t < _emPeAte && !nadando && !noColo && !_voando) ? 1 : 0;
+    _emPe.passo(dt);
     final suave = 1 - math.exp(-dt * 12);
     final asa = 1 - math.exp(-dt * 7);
     _planeioSuave += ((_planando ? 1.0 : 0.0) - _planeioSuave) * asa;
@@ -1293,6 +1310,7 @@ class MotorDeVida {
       giro: _giroT,
       adormecido:
           dormindo || (sonolento && (destino == null || _paradoNoDestino)),
+      emPe: _emPe.valor.clamp(0.0, 1.0),
       planeio: _planeioSuave,
       freio: _freioSuave,
       corrida: corrida * a,
@@ -1723,6 +1741,7 @@ class MotorDeVida {
         // Agachado de verdade: a frente rente ao chão, a traseira rebolando.
         _achata.alvo = 0.8;
         _reverencia = 0.9;
+        _emPeAte = _t + 0.4;
         _quadril = math.sin(_t * 20);
         _rebola = math.sin(_t * 20) * 0.5;
         return;

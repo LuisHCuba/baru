@@ -461,6 +461,12 @@ class PetView extends StatefulWidget {
   @visibleForTesting
   static ValueNotifier<String>? observadorDeEpisodio;
 
+  /// Troca o quadro do motor de vida antes do desenho. Nulo em produção —
+  /// existe para fotografar cada pose parada (em pé, deitado) e conferir o
+  /// desenho sem depender do sorteio dos episódios.
+  @visibleForTesting
+  static SaidaDaVida Function(SaidaDaVida)? vidaForcada;
+
   @override
   State<PetView> createState() => _PetViewState();
 }
@@ -1426,7 +1432,9 @@ class _PetViewState extends State<PetView>
               respiro: _quadroDaVida.value.respiro,
               boia: _quadroDaVida.value.boia,
               cauda: _quadroDaVida.value.cauda,
-              vida: _quadroDaVida.value,
+              vida:
+                  PetView.vidaForcada?.call(_quadroDaVida.value) ??
+                  _quadroDaVida.value,
               sombra: widget.sombra,
               corDaAgua: widget.corDaAgua,
               comendoDaMao: _comendo >= 0,
@@ -2260,8 +2268,14 @@ class _PetPainter extends CustomPainter {
       final alto = (vida.altura / 120).clamp(0.0, 1.0);
       canvas.drawOval(
         Rect.fromCenter(
-          center: Offset(cx + vida.desloca.dx, cy + _pes - 1),
-          width: 88 * (1 - alto * 0.45) * _porte,
+          // Em pé, a traseira fica para trás: a sombra vai junto.
+          center: Offset(
+            cx +
+                vida.desloca.dx +
+                (vida.virado ? 1 : -1) * 13 * _emPeDesenhado * _porte,
+            cy + _pes - 1,
+          ),
+          width: (88 + 30 * _emPeDesenhado) * (1 - alto * 0.45) * _porte,
           height: 11 * (1 - alto * 0.45),
         ),
         Paint()..color = Cores.tintaA(0.15 * (1 - alto * 0.6)),
@@ -2332,7 +2346,7 @@ class _PetPainter extends CustomPainter {
     // some, como patas recolhidas sob a barriga. A proporção do desenho
     // fica a mesma (antes ele achatava 32%, e o bicho deformava).
     final d = vida.deita;
-    if (d > 0) {
+    if (d > 0 && !_temPoses) {
       // A base é redonda, como uma barriga apoiada no chão; um corte reto
       // parecia o bicho atrás de um muro.
       canvas.clipPath(
@@ -2651,6 +2665,55 @@ class _PetPainter extends CustomPainter {
   /// sumirem sob ele.
   static const _afundaDeitado = 20.0;
 
+  double _l(double a, double b, double t) => a + (b - a) * t;
+
+  /// Quem tem as poses desenhadas de em pé e deitado (por enquanto, a
+  /// capivara e a gata). Os outros seguem com o corpo sentado.
+  bool get _temPoses => species == Species.capybara || species == Species.cat;
+
+  /// 0..1 em pé, no desenho: na água e voando, nunca.
+  double get _emPeDesenhado => !_temPoses || nadando || acao == AcaoDoBicho.voo
+      ? 0
+      : pose.vida.emPe.clamp(0.0, 1.0);
+
+  double get _deitadaDesenhada =>
+      _temPoses ? pose.vida.deita.clamp(0.0, 1.0) * (1 - _emPeDesenhado) : 0;
+
+  /// O quanto a pata (esquerda ou direita, no desenho) está no ar no passo.
+  double _pataNoAr(bool esquerda) =>
+      esquerda ? pose.vida.pataEsquerda : pose.vida.pataDireita;
+
+  /// Uma perna em pé: coluna arredondada do [topo] à [base], com o pé
+  /// largo embaixo. No ar, ela sobe e dobra (fica mais curta).
+  void _perna(
+    Canvas canvas,
+    double x,
+    double topo,
+    double base,
+    double largura,
+    Color cor,
+    double noAr,
+  ) {
+    final sobe = noAr * 7;
+    final b = base - sobe;
+    final t = math.min(topo, b - 6);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(x - largura / 2, t, x + largura / 2, b),
+        Radius.circular(largura / 2),
+      ),
+      _p(cor),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(x + noAr * 2, b - 2),
+        width: largura + 4,
+        height: 8,
+      ),
+      _p(Color.lerp(cor, Cores.tinta, 0.12)!),
+    );
+  }
+
   /// A escala do corpo achatado (largura, altura), com volume preservado.
   (double, double) get _achataDoCorpo {
     final vida = pose.vida;
@@ -2762,32 +2825,114 @@ class _PetPainter extends CustomPainter {
     final amp = pose.amplitude;
     final passo = pose.pernas * amp;
 
-    // Patas da frente, apoiadas. Sobem e descem alternadas ao boiar — e
-    // remam de verdade quando ele está na água (ver [_pata]).
-    _pata(canvas, const Offset(-23, 51), 27, 17, sombra, passo * 1.6, rema: -1);
-    _pata(canvas, const Offset(23, 51), 27, 17, sombra, -passo * 1.6, rema: 1);
+    // Três poses desenhadas, e não uma esticada: sentada (a de sempre), em
+    // pé em três quartos (andando: a traseira fica para trás de onde ele
+    // vai, as quatro pernas aparecem) e deitada (o corpo é um monte baixo e
+    // largo, as patas da frente esticadas, a cabeça apoiada). Entre elas,
+    // as medidas de cada forma se interpolam; nada é escalado.
+    final e = _emPeDesenhado;
+    final d = _deitadaDesenhada;
+    final traseira = -26.0 * e;
+
+    if (e > 0.01) {
+      // Pernas de trás, atrás de tudo, e a traseira por cima delas.
+      _perna(canvas, traseira - 21, 30, 57, 15, sombraForte, _pataNoAr(true));
+      _perna(canvas, traseira + 21, 30, 57, 15, sombraForte, _pataNoAr(false));
+      canvas.drawPath(
+        _bolha(
+          Rect.fromCenter(
+            center: Offset(traseira, _l(20, 12, e)),
+            width: _l(60, 98, e),
+            height: _l(44, 58, e),
+          ),
+          topo: 0.9,
+        ),
+        _p(Color.lerp(pelo, sombra, 0.35)!),
+      );
+    }
+
+    // Patas da frente: sentado, apoiadas; em pé, pernas; deitado,
+    // esticadas à frente. Remam de verdade na água (ver [_pata]).
+    if (e > 0.01) {
+      _perna(
+        canvas,
+        -17,
+        _l(51, 36, e),
+        59,
+        _l(27, 17, e),
+        sombra,
+        _pataNoAr(false),
+      );
+      _perna(
+        canvas,
+        17,
+        _l(51, 36, e),
+        59,
+        _l(27, 17, e),
+        sombra,
+        _pataNoAr(true),
+      );
+    } else if (d < 0.5) {
+      _pata(
+        canvas,
+        Offset(-_l(23, 21, d), _l(51, 56, d)),
+        _l(27, 26, d),
+        _l(17, 12, d),
+        sombra,
+        passo * 1.6,
+        rema: -1,
+      );
+      _pata(
+        canvas,
+        Offset(_l(23, 21, d), _l(51, 56, d)),
+        _l(27, 26, d),
+        _l(17, 12, d),
+        sombra,
+        -passo * 1.6,
+        rema: 1,
+      );
+    }
 
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(0, 18), width: 92, height: 80),
-      topo: 0.86,
+      Rect.fromCenter(
+        center: Offset(0, _l(_l(18, 24, e), 34, d)),
+        width: _l(_l(92, 64, e), 116, d),
+        height: _l(_l(80, 50, e), 52, d),
+      ),
+      topo: _l(0.86, 0.95, d),
       base: 1.02,
     );
     canvas.drawPath(corpo, _p(pelo));
 
+    // A barriga clara só aparece sentado; em pé é o peito, deitado some.
     canvas.save();
     canvas.clipPath(corpo);
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 32), width: 64, height: 62),
+        Rect.fromCenter(
+          center: Offset(0, _l(32, 30, e)),
+          width: _l(64, 38, e),
+          height: _l(62, 34, e),
+        ),
         topo: 0.9,
       ),
-      _p(barriga),
+      _p(barriga.withValues(alpha: 1 - d)),
     );
     canvas.restore();
+    // Deitada, as patas da frente ficam esticadas na frente do corpo.
+    if (e <= 0.01 && d >= 0.5) {
+      for (final lado in [-1.0, 1.0]) {
+        _pata(canvas, Offset(lado * 20, 55), 26, 12, sombra, 0);
+      }
+    }
 
     // --- cabeça -----------------------------------------------------------
+    // Em pé ela vai mais baixa e à frente; deitada, apoia sobre as patas.
     canvas.save();
-    canvas.translate(0, -30 + pose.respiro * amp * 0.7 + _cabecaDesce);
+    canvas.translate(
+      0,
+      _l(_l(-30, -24, e), -8, d) + pose.respiro * amp * 0.7 + _cabecaDesce,
+    );
     _cabecaSemFolego(canvas);
     _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 38);
     canvas.scale(_cabecaDoEstagio);
@@ -3870,23 +4015,35 @@ class _PetPainter extends CustomPainter {
       Mood.sleepy => (40.0, 52.0, 0.0),
       Mood.missingYou => (46.0, 50.0, 0.0),
     };
-    final topoX = _porHumor((m) => formaDoRabo(m).$1);
-    final topoY = _porHumor((m) => formaDoRabo(m).$2);
-    final gancho = _porHumor((m) => formaDoRabo(m).$3);
+    // As poses (ver [_capivara]): em pé a traseira fica para trás, e o rabo
+    // passa por cima para o lado de trás (de pé, no meio do caminho, como
+    // gato que levanta o rabo para andar); deitada, ele se enrola na frente.
+    final e = _emPeDesenhado;
+    final d = _deitadaDesenhada;
+    final traseira = -24.0 * e;
+    final lado = math.cos(math.pi * e);
+    final origem = Offset(
+      _l(_l(26, traseira - 30, e), 40, d),
+      _l(_l(40, 8, e), 50, d),
+    );
+    final topoX = _l(_porHumor((m) => formaDoRabo(m).$1) - 26, -40, d);
+    final topoY = _l(
+      _l(_porHumor((m) => formaDoRabo(m).$2) - 40, -46, e),
+      10,
+      d,
+    );
+    final gancho = _l(_porHumor((m) => formaDoRabo(m).$3), 0.8, e) * (1 - d);
+    Offset r(double x, double y) => origem + Offset(lado * x, y);
+    final c1 = r(24 + balanca * 3, 4);
+    final c2 = r(topoX - 20 + balanca * 6, topoY / 2 + balanca * 4);
+    final fim = r(topoX + balanca * 8, topoY + balanca * 6);
     final rabo = Path()
-      ..moveTo(26, 40)
-      ..cubicTo(
-        50 + balanca * 3,
-        44,
-        topoX + 6 + balanca * 6,
-        (40 + topoY) / 2 + balanca * 4,
-        topoX + balanca * 8,
-        topoY + balanca * 6,
-      )
+      ..moveTo(origem.dx, origem.dy)
+      ..cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, fim.dx, fim.dy)
       ..relativeQuadraticBezierTo(
-        -6 * gancho,
+        -6 * gancho * lado,
         -10 * gancho,
-        -14 * gancho,
+        -14 * gancho * lado,
         -6 * gancho,
       );
     canvas.drawPath(rabo, _traco(pelo, 11)..strokeCap = StrokeCap.round);
@@ -3903,11 +4060,49 @@ class _PetPainter extends CustomPainter {
       }
     }
 
-    _pata(canvas, const Offset(-19, 49), 16, 12, sombra, pose.pernas * amp);
-    _pata(canvas, const Offset(19, 49), 16, 12, sombra, -pose.pernas * amp);
+    if (e > 0.01) {
+      _perna(canvas, traseira - 16, 30, 57, 11, sombra, _pataNoAr(true));
+      _perna(canvas, traseira + 16, 30, 57, 11, sombra, _pataNoAr(false));
+      canvas.drawPath(
+        _bolha(
+          Rect.fromCenter(
+            center: Offset(traseira, _l(22, 13, e)),
+            width: _l(50, 80, e),
+            height: _l(40, 52, e),
+          ),
+          topo: 0.9,
+        ),
+        _p(Color.lerp(pelo, sombra, 0.3)!),
+      );
+      _perna(
+        canvas,
+        -13,
+        _l(49, 38, e),
+        59,
+        _l(16, 11, e),
+        pelo,
+        _pataNoAr(false),
+      );
+      _perna(
+        canvas,
+        13,
+        _l(49, 38, e),
+        59,
+        _l(16, 11, e),
+        pelo,
+        _pataNoAr(true),
+      );
+    } else if (d < 0.5) {
+      _pata(canvas, const Offset(-19, 49), 16, 12, sombra, pose.pernas * amp);
+      _pata(canvas, const Offset(19, 49), 16, 12, sombra, -pose.pernas * amp);
+    }
 
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(0, 20), width: 80, height: 70),
+      Rect.fromCenter(
+        center: Offset(0, _l(_l(20, 26, e), 36, d)),
+        width: _l(_l(80, 52, e), 102, d),
+        height: _l(_l(70, 44, e), 48, d),
+      ),
       topo: 0.88,
     );
     canvas.drawPath(corpo, _p(pelo));
@@ -3916,16 +4111,29 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(corpo);
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 31), width: 54, height: 53),
+        Rect.fromCenter(
+          center: Offset(0, _l(31, 30, e)),
+          width: _l(54, 28, e),
+          height: _l(53, 28, e),
+        ),
         topo: 0.9,
       ),
-      _p(claro),
+      _p(claro.withValues(alpha: 1 - d)),
     );
     canvas.restore();
+    // Deitada, a gata recolhe as patas: só as pontas aparecem na frente.
+    if (e <= 0.01 && d >= 0.5) {
+      for (final l in [-1.0, 1.0]) {
+        _pata(canvas, Offset(l * 11, 57), 14, 9, sombra, 0, dedos: false);
+      }
+    }
 
     // --- cabeça -----------------------------------------------------------
     canvas.save();
-    canvas.translate(0, -28 + pose.respiro * amp * 0.7 + _cabecaDesce);
+    canvas.translate(
+      0,
+      _l(_l(-28, -22, e), -6, d) + pose.respiro * amp * 0.7 + _cabecaDesce,
+    );
     _cabecaSemFolego(canvas);
     _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 34);
     canvas.scale(_cabecaDoEstagio);

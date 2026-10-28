@@ -622,6 +622,8 @@ extension _Episodios on MotorDeVida {
 
       // --- brincar -------------------------------------------------------
       case Episodio.bote:
+        // Espreita, salto e patas presas: tudo em pé, nas quatro patas.
+        _emPeAte = _t + 0.4;
         final espreita = jeito.espreita > 0 ? _epFim - 1.4 - _epInicio : 0.35;
         if (u < espreita) {
           // A espreita: a frente baixa rente ao chão e, no gato, a traseira
@@ -673,6 +675,7 @@ extension _Episodios on MotorDeVida {
       case Episodio.reverencia:
         // Frente baixa, traseira alta, cauda a mil: "vamos brincar?".
         final e = math.sin(math.min(1.0, u / (_epFim - _epInicio)) * math.pi);
+        _emPeAte = _t + 0.4;
         _achata.alvo = 0.45 * e;
         _estica = 0.22 * e;
         _reverencia = e;

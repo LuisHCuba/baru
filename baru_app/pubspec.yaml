@@ -79,6 +79,8 @@ flutter:
     - .env
     # Sons curtos, gerados como WAV mono 44.1 kHz. Nenhum passa de 0,6 s.
     - assets/sons/
+    # Poses ilustradas dos bichos (vetorizadas, sem fundo).
+    - assets/bichos/capivara/
 
   # Nunito empacotada. Um app offline-first nao pode depender de rede para a
   # propria letra — e baixar fonte em runtime manda um request ao Google no

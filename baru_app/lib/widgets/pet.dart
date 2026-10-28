@@ -27,6 +27,7 @@ library;
 
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,7 @@ import '../models.dart';
 import '../services/som_service.dart';
 import '../theme.dart';
 import 'comida.dart';
+import 'ilustracao.dart';
 import 'vida/motor_de_vida.dart';
 
 /// Um gesto de ocioso: o que o bicho faz quando ninguém está pedindo nada.
@@ -592,6 +594,49 @@ class _PetViewState extends State<PetView>
     });
   }
 
+  // A pose ilustrada do momento, a de antes e há quanto tempo trocou: a
+  // troca entre poses diferentes é uma passagem curta, sem salto; entre os
+  // dois quadros do passo é troca seca (é o passo).
+  NomeDaPose _poseIlustrada = NomeDaPose.sentada;
+  NomeDaPose? _poseIlustradaAntes;
+  double _desdeATroca = 1;
+  static const _passagemDePose = 0.22;
+
+  NomeDaPose _poseDoMomento() {
+    final v = _quadroDaVida.value;
+    final acao = _acaoDesenhada;
+    if (acao == AcaoDoBicho.cochilo ||
+        (v.adormecido ?? widget.mood == Mood.sleepy)) {
+      return NomeDaPose.dormindo;
+    }
+    if (acao == AcaoDoBicho.nado) return NomeDaPose.sentada;
+    if (v.deita > 0.5) return NomeDaPose.deitada;
+    if (v.andando > 0.2) {
+      return v.passada >= 0 ? NomeDaPose.andar1 : NomeDaPose.andar2;
+    }
+    if (_comendo >= 0 || v.comendo) return NomeDaPose.comendo;
+    return NomeDaPose.sentada;
+  }
+
+  static bool _doPasso(NomeDaPose? p) =>
+      p == NomeDaPose.andar1 || p == NomeDaPose.andar2;
+
+  void _escolhePoseIlustrada(double dt) {
+    _desdeATroca += dt;
+    if (Ilustracoes.imagens(widget.species) == null) return;
+    final nova = _poseDoMomento();
+    if (nova == _poseIlustrada) return;
+    if (_doPasso(nova) && _doPasso(_poseIlustrada)) {
+      _poseIlustrada = nova;
+      return;
+    }
+    // Não interrompe uma passagem no meio: espera ela acabar.
+    if (_desdeATroca < _passagemDePose) return;
+    _poseIlustradaAntes = _poseIlustrada;
+    _poseIlustrada = nova;
+    _desdeATroca = 0;
+  }
+
   late final Ticker _relogio = createTicker(_tique);
   Duration _ultimoTique = Duration.zero;
   final _quadroDaVida = ValueNotifier<SaidaDaVida>(const SaidaDaVida());
@@ -667,6 +712,7 @@ class _PetViewState extends State<PetView>
               acao == AcaoDoBicho.nado ||
               acao == AcaoDoBicho.brincadeira);
     _quadroDaVida.value = _vida.passo(dt);
+    _escolhePoseIlustrada(dt);
     PetView.observadorDeEpisodio?.value = _vida.episodio.name;
     widget.posicao?.value = _vida.posicao;
     final topo = widget.topoNaTela;
@@ -1405,6 +1451,17 @@ class _PetViewState extends State<PetView>
         roupas: widget.roupas,
         roupaDeCabeca: widget.roupaDeCabeca,
         estagio: widget.estagio,
+        ilustracoes: Ilustracoes.imagens(widget.species),
+        poseIlustrada: _continuoLigado
+            ? _poseIlustrada
+            : (_acaoDesenhada == AcaoDoBicho.cochilo ||
+                      widget.mood == Mood.sleepy
+                  ? NomeDaPose.dormindo
+                  : NomeDaPose.sentada),
+        poseIlustradaAntes: _continuoLigado ? _poseIlustradaAntes : null,
+        passagemDaPose: _continuoLigado
+            ? (_desdeATroca / _passagemDePose).clamp(0.0, 1.0)
+            : 1,
         pose:
             widget.quadro?._pose(_acao) ??
             _Pose(
@@ -1901,9 +1958,21 @@ class _PetPainter extends CustomPainter {
     this.corpoDe,
     this.corpoPara,
     this.mistura = 1,
+    this.ilustracoes,
+    this.poseIlustrada = NomeDaPose.sentada,
+    this.poseIlustradaAntes,
+    this.passagemDaPose = 1,
   });
 
   final Species species;
+
+  /// As poses ilustradas, quando o bicho tem e elas já carregaram.
+  final Map<NomeDaPose, ui.Image>? ilustracoes;
+  final NomeDaPose poseIlustrada;
+  final NomeDaPose? poseIlustradaAntes;
+
+  /// 0..1: a passagem da pose de antes para a de agora.
+  final double passagemDaPose;
 
   /// O humor do **rosto**: olhos, boca, sobrancelha, lágrima.
   final Mood mood;
@@ -2261,7 +2330,7 @@ class _PetPainter extends CustomPainter {
       canvas.drawOval(
         Rect.fromCenter(
           center: Offset(cx + vida.desloca.dx, cy + _pes - 1),
-          width: 88 * (1 - alto * 0.45) * _porte,
+          width: _larguraDaSombra * (1 - alto * 0.45) * _porte,
           height: 11 * (1 - alto * 0.45),
         ),
         Paint()..color = Cores.tintaA(0.15 * (1 - alto * 0.6)),
@@ -2332,7 +2401,8 @@ class _PetPainter extends CustomPainter {
     // some, como patas recolhidas sob a barriga. A proporção do desenho
     // fica a mesma (antes ele achatava 32%, e o bicho deformava).
     final d = vida.deita;
-    if (d > 0) {
+    // A ilustração já tem a pose deitada desenhada: não afunda nem corta.
+    if (d > 0 && ilustracoes == null) {
       // A base é redonda, como uma barriga apoiada no chão; um corte reto
       // parecia o bicho atrás de um muro.
       canvas.clipPath(
@@ -2358,7 +2428,8 @@ class _PetPainter extends CustomPainter {
     }
 
     final giro = switch (acao) {
-      AcaoDoBicho.cochilo => -0.16,
+      // A ilustração dormindo já está deitada: girar a inclinava no chão.
+      AcaoDoBicho.cochilo => ilustracoes != null ? 0.0 : -0.16,
       // Rola de um lado para o outro na braçada — é a ondulação do nado.
       // Quem mergulha rola mais: o corpo dele é o remo.
       AcaoDoBicho.nado =>
@@ -2423,7 +2494,11 @@ class _PetPainter extends CustomPainter {
 
     switch (species) {
       case Species.capybara:
-        _capivara(canvas);
+        if (ilustracoes != null) {
+          _ilustrado(canvas);
+        } else {
+          _capivara(canvas);
+        }
       case Species.otter:
         _lontra(canvas);
       case Species.tortoise:
@@ -2651,6 +2726,17 @@ class _PetPainter extends CustomPainter {
   /// sumirem sob ele.
   static const _afundaDeitado = 20.0;
 
+  /// A sombra do tamanho do corpo: a ilustração de lado ou deitada é bem
+  /// mais larga que o desenho sentado.
+  double get _larguraDaSombra {
+    if (ilustracoes == null) return 88;
+    return switch (poseIlustrada) {
+      NomeDaPose.andar1 || NomeDaPose.andar2 => 128,
+      NomeDaPose.deitada || NomeDaPose.dormindo => 132,
+      _ => 92,
+    };
+  }
+
   /// A escala do corpo achatado (largura, altura), com volume preservado.
   (double, double) get _achataDoCorpo {
     final vida = pose.vida;
@@ -2757,6 +2843,106 @@ class _PetPainter extends CustomPainter {
   // resultado lia como batata. De frente a cara domina — que é o que faz um
   // personagem funcionar, e é por isso que a coruja já funcionava.
   // ======================================================================
+
+  /// O bicho ilustrado: a pose do momento (e a de antes, na passagem), com
+  /// os pés na linha dos pés do desenho antigo, piscando e vestido.
+  void _ilustrado(Canvas canvas) {
+    // Troca direta de pose, como nos jogos de sprite, com o corpo assentando
+    // um pouco no chão logo depois. Esmaecer uma na outra mostrava dois
+    // bichos sobrepostos no meio da passagem.
+    final m = passagemDaPose.clamp(0.0, 1.0);
+    final assenta = poseIlustradaAntes != null && m < 1
+        ? math.sin(m * math.pi) * 3.0
+        : 0.0;
+    canvas.save();
+    canvas.translate(0, assenta);
+    _desenhaPose(canvas, poseIlustrada, 1);
+    canvas.restore();
+  }
+
+  void _desenhaPose(Canvas canvas, NomeDaPose nome, double alfa) {
+    final p = Ilustracoes.poses(species)?[nome];
+    final img = ilustracoes?[nome];
+    if (p == null || img == null || alfa <= 0) return;
+    canvas.save();
+    canvas.translate(0, _pes + 2);
+    // O código anda olhando para +x; a pose que olha para a esquerda vira.
+    if (p.olhaParaEsquerda) canvas.scale(-1, 1);
+    canvas.scale(Ilustracoes.unidadesPorPixel);
+    canvas.translate(-p.tamanho.width / 2, -p.tamanho.height);
+
+    final tinta = Paint()
+      ..filterQuality = FilterQuality.medium
+      ..color = Color.fromRGBO(255, 255, 255, alfa);
+    // A pelagem escolhida: a arte é a da pelagem de origem; as outras saem
+    // por um filtro que leva o tom de uma à outra.
+    final base = AppColors.pelagemDe(species, 0);
+    if (coat != base) {
+      double r(double a, double b) => b <= 0.01 ? 1 : (a / b).clamp(0.3, 2.5);
+      tinta.colorFilter = ColorFilter.matrix([
+        r(coat.r, base.r), 0, 0, 0, 0, //
+        0, r(coat.g, base.g), 0, 0, 0, //
+        0, 0, r(coat.b, base.b), 0, 0, //
+        0, 0, 0, 1, 0,
+      ]);
+    }
+    canvas.drawImage(img, Offset.zero, tinta);
+
+    // Piscar: a pálpebra desce do alto do olho, no tom do pelo.
+    final f = fechamento;
+    if (f > 0.02 && p.olhos.isNotEmpty) {
+      final palpebra = _p(
+        Color.lerp(
+          const Color(0xFFCD874A),
+          coat,
+          coat != base ? 0.5 : 0,
+        )!.withValues(alpha: alfa),
+      );
+      final cilio = _traco(const Color(0xFF5A3420).withValues(alpha: alfa), 5)
+        ..strokeCap = StrokeCap.round;
+      for (final o in p.olhos) {
+        final caixa = Rect.fromCenter(
+          center: o,
+          // O olho tem o branco em volta da íris: a pálpebra cobre os dois.
+          width: p.olho.width + 18,
+          height: p.olho.height + 12,
+        );
+        canvas.save();
+        canvas.clipPath(Path()..addOval(caixa));
+        canvas.drawRect(
+          Rect.fromLTWH(caixa.left, caixa.top, caixa.width, caixa.height * f),
+          palpebra,
+        );
+        canvas.restore();
+        if (f > 0.55) {
+          final y = caixa.top + caixa.height * f;
+          canvas.drawArc(
+            Rect.fromCenter(
+              center: Offset(o.dx, y - 6),
+              width: p.olho.width,
+              height: 14,
+            ),
+            0.15,
+            math.pi - 0.3,
+            false,
+            cilio,
+          );
+        }
+      }
+    }
+
+    // Os acessórios da loja, no espaço da cabeça do desenho antigo (96 de
+    // largura), levados para a cabeça da ilustração.
+    final cabeca = p.cabeca;
+    if (cabeca != null && alfa > 0.5) {
+      canvas.save();
+      canvas.translate(cabeca.dx, cabeca.dy);
+      canvas.scale(p.larguraDaCabeca / 96);
+      _veste(canvas, 96, 78);
+      canvas.restore();
+    }
+    canvas.restore();
+  }
 
   void _capivara(Canvas canvas) {
     final amp = pose.amplitude;
@@ -6365,6 +6551,10 @@ class _PetPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PetPainter old) {
     return old.species != species ||
+        old.ilustracoes != ilustracoes ||
+        old.poseIlustrada != poseIlustrada ||
+        old.poseIlustradaAntes != poseIlustradaAntes ||
+        old.passagemDaPose != passagemDaPose ||
         old.pose.corDaAgua != pose.corDaAgua ||
         old.mood != mood ||
         old.corpoDe != corpoDe ||

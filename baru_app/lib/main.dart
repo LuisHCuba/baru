@@ -7,9 +7,7 @@ import 'auth_gate.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
 import 'data/supabase_gateway.dart';
-import 'models.dart';
 import 'theme.dart';
-import 'widgets/ilustracao.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,15 +29,9 @@ Future<void> main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  // As poses ilustradas carregam junto com o resto: sem isso o primeiro
-  // quadro mostrava o desenho antigo e logo trocava pela ilustração.
-  final ilustracoes = Future.wait([
-    for (final s in Species.values) Ilustracoes.carrega(s),
-  ]);
   await BaruEnv.load();
   final repos = BaruRepositories.local();
   await repos.init();
-  await ilustracoes;
   await BaruSupabase.instance.attach();
   runApp(AuthGate(repos: repos));
 }

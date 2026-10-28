@@ -636,6 +636,13 @@ class _PetViewState extends State<PetView>
       ..chamadoPelaAgua = widget.chamadoPelaAgua
       ..naAgua = widget.naAgua
       ..dormindo = acao == AcaoDoBicho.cochilo
+      // A coruja dorme empoleirada, de pé; o pinguim, meio deitado.
+      ..deitaDormindo = switch (widget.species) {
+        Species.owl => 0.0,
+        Species.penguin => 0.55,
+        Species.axolotl => 0.3,
+        _ => 1.0,
+      }
       ..nadando = acao == AcaoDoBicho.nado
       ..posturaLivre = _acaoDesenhada == AcaoDoBicho.ocioso
       ..podeAndar = widget.interativo &&
@@ -2230,6 +2237,11 @@ class _PetPainter extends CustomPainter {
     // no colo).
     canvas.translate(vida.desloca.dx, vida.desloca.dy);
     if (vida.virado) canvas.scale(-1, 1);
+    // O rodopio: o corpo vira no eixo vertical como uma folha de papel.
+    if (vida.giro > 0) {
+      final c = math.cos(vida.giro * 2 * math.pi);
+      canvas.scale(c.abs() < 0.12 ? (c < 0 ? -0.12 : 0.12) : c, 1);
+    }
     // O gingado gira pelo pé que está no chão.
     if (vida.gingado != 0) {
       final apoio = Offset(vida.gingado > 0 ? 22 : -22, _pes);
@@ -2535,10 +2547,17 @@ class _PetPainter extends CustomPainter {
 
   /// A escala do corpo achatado (largura, altura), com volume preservado.
   (double, double) get _achataDoCorpo {
-    final a = pose.vida.achata;
-    if (a == 0) return (1, 1);
+    final vida = pose.vida;
+    final a = vida.achata;
+    final d = vida.deita;
+    final r = vida.reverencia;
+    if (a == 0 && d == 0 && r == 0) return (1, 1);
     final sy = (1 - a * 0.18).clamp(0.6, 1.6);
-    return (1 / math.sqrt(sy), sy);
+    // Deitado: o corpo baixa e alarga. Na reverência, a frente baixa.
+    return (
+      1 / math.sqrt(sy) * (1 + 0.16 * d) * (1 + 0.07 * r),
+      sy * (1 - 0.32 * d) * (1 - 0.14 * r),
+    );
   }
 
   /// A sombra que a cabeça faz no corpo, logo abaixo do queixo. É o que
@@ -2577,6 +2596,9 @@ class _PetPainter extends CustomPainter {
   /// esquecer de um.
   double get _cabecaDesce =>
       pose.cabecaDesce +
+      // A cabeça acompanha cada mastigada, e desce na reverência.
+      pose.mastiga * 2.4 +
+      pose.vida.reverencia * 16 +
       pose.farejada +
       _cabecaDoHumor +
       // O axolote comendo: cabeça baixa, mirando o fundo.
@@ -5402,6 +5424,8 @@ class _PetPainter extends CustomPainter {
     var pos = Offset(o.dx + desloca, o.dy);
     // No passo, a pata do lado levanta num arco e vai um pouco à frente.
     final noAr = o.dx < 0 ? pose.vida.pataEsquerda : pose.vida.pataDireita;
+    // Na reverência as patas da frente abrem para os lados.
+    pos = pos + Offset((o.dx < 0 ? -1 : 1) * 7 * pose.vida.reverencia, 0);
     // Pouco para cima: as patas ficam atrás da barriga, e subindo muito
     // sumiam. O gingado já levanta o lado da pata livre.
     if (noAr > 0) pos = pos + Offset(noAr * 4.5, -noAr * 4);
@@ -5690,11 +5714,13 @@ class _PetPainter extends CustomPainter {
     if (pose.mastiga <= 0.05) return;
     // O que ele come de verdade (ver `comida.dart`); da mão, o petisco.
     final c = pose.comendoDaMao ? petiscoDe(species) : comidaDe(species);
+    // Do tamanho de uma bocada, saindo da boca: com 30% da boca ela era
+    // um risco verde que ninguém via.
     pintaComida(
       canvas,
       c,
-      Offset(o.dx + w * 0.42, o.dy + 1),
-      w * 0.3,
+      Offset(o.dx + w * 0.3, o.dy + 2),
+      w * 0.46,
       angulo: -0.35 + pose.mastiga * 0.24,
     );
   }
@@ -5749,8 +5775,10 @@ class _PetPainter extends CustomPainter {
     return _sombra = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [agua.withValues(alpha: 0.62), agua.withValues(alpha: 0.95)],
-    ).createShader(Rect.fromLTRB(0, y, largura, y + 40));
+      // Água turva: o corpo some a poucos palmos da superfície. Só a cabeça
+      // e o dorso ficam à vista, como num bicho que nada deitado.
+      colors: [agua.withValues(alpha: 0.7), agua],
+    ).createShader(Rect.fromLTRB(0, y, largura, y + 22));
   }
 
   /// O rastro: o que a água faz **por causa** do bicho.

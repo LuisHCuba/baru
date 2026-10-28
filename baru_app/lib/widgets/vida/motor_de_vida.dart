@@ -145,6 +145,9 @@ class SaidaDaVida {
     this.andando = 0,
     this.planando = false,
     this.freando = false,
+    this.deita = 0,
+    this.reverencia = 0,
+    this.giro = 0,
     this.pataEsquerda = 0,
     this.pataDireita = 0,
     this.virada = Offset.zero,
@@ -219,6 +222,18 @@ class SaidaDaVida {
 
   /// Voando: freando para pousar — asas para cima, corpo para trás.
   final bool freando;
+
+  /// 0..1: deitado. O corpo baixa e alarga, a cabeça desce até perto do
+  /// chão. Dormindo, tomando sol, descansando (pesquisa 24: o episódio
+  /// tinha nome, mas o desenho continuava sentado).
+  final double deita;
+
+  /// 0..1: a reverência de brincadeira — frente baixa, patas abertas.
+  final double reverencia;
+
+  /// 0..1: o progresso de um giro do rodopio (o corpo vira como uma folha
+  /// de papel no eixo vertical). 0: sem giro.
+  final double giro;
 
   /// 0..1: quanto cada pata da frente está no ar, no passo.
   final double pataEsquerda;
@@ -428,6 +443,13 @@ class MotorDeVida {
   /// A coruja no ar (episódio voar).
   bool _voando = false;
   final _altitude = Mola(f: 0.9, zeta: 0.8);
+
+  /// O quanto ele se deita dormindo (a coruja dorme empoleirada, de pé; o
+  /// pinguim meio deitado). Dado pela espécie.
+  double deitaDormindo = 1;
+  final _deita = Mola(f: 0.9, zeta: 0.95);
+  double _reverencia = 0;
+  double _giroT = 0;
 
   // --- o voo (pesquisa 24) ---------------------------------------------
   // Agacha antes de subir; bate e plana; o corpo sobe a cada batida e
@@ -1004,6 +1026,19 @@ class MotorDeVida {
 
     // --- salto, queda, colo ----------------------------------------------
     if (!_voando) _pitchDoVoo *= math.exp(-dt * 6);
+    // Deitar: dormindo, descansando, tomando sol.
+    final deitaAgora = switch (_ep) {
+      Episodio.deitar => 0.85 * deitaDormindo,
+      Episodio.tomarSol => 0.9 * deitaDormindo,
+      Episodio.microcochilo => 0.4 * deitaDormindo,
+      _ => dormindo && !nadando ? deitaDormindo : 0.0,
+    };
+    _deita.alvo = noColo ? 0 : deitaAgora;
+    _deita.passo(dt);
+    if (_giroT > 0) {
+      _giroT += dt / 0.38;
+      if (_giroT >= 1) _giroT = 0;
+    }
     _andar(dt);
     // O passo de quem anda de frente para a câmera é um gingado (pesquisa
     // 24, as poses de contato e passagem de Williams): o corpo rola por cima
@@ -1021,7 +1056,9 @@ class MotorDeVida {
     final onda = math.sin(fase);
     final passada = onda * intensidade + _rebola;
     // Mais alto na passagem (uma pata no ar), mais baixo no contato.
-    final sobeNoPasso = (1 - math.cos(2 * fase)) / 2 * 5.0 * intensidade;
+    // Correndo, o quique é de galope: maior.
+    final sobeNoPasso =
+        (1 - math.cos(2 * fase)) / 2 * (_correndo ? 9.0 : 5.0) * intensidade;
     if (intensidade > 0.25 && (onda >= 0) != (_ondaAntes >= 0)) {
       _achata.empurra(3.5 * intensidade);
     }
@@ -1135,6 +1172,9 @@ class MotorDeVida {
       pataEsquerda: pataEsquerda * a,
       pataDireita: pataDireita * a,
       voando: _voando && _decolou,
+      deita: _deita.valor.clamp(0.0, 1.0) * a,
+      reverencia: _reverencia * a,
+      giro: _giroT,
       planando: _planando,
       freando: _freando,
       virada: _virada.valor * a,

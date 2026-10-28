@@ -534,6 +534,7 @@ extension _Episodios on MotorDeVida {
     }
 
     final u = _t - _epInicio;
+    _reverencia = 0;
     var cabeca = 0.0;
     var forca = 0.0;
     var mastiga = 0.0;
@@ -636,6 +637,9 @@ extension _Episodios on MotorDeVida {
         }
       case Episodio.disparada:
         _correndo = true;
+        // Correndo, a frente abaixa e as patas abrem: corpo esticado para
+        // a corrida. Sentado e pulando, a disparada lia como pulinho.
+        _reverencia = 0.55;
         _virado = _alvoX < _px;
         if ((_alvoX - _px).abs() < 3) {
           _voltasDaDisparada -= 1;
@@ -651,13 +655,16 @@ extension _Episodios on MotorDeVida {
         final e = math.sin(math.min(1.0, u / (_epFim - _epInicio)) * math.pi);
         _achata.alvo = 0.45 * e;
         _estica = 0.22 * e;
+        _reverencia = e;
         _cauda.empurra(1.2);
         _alvoDoOlhar = const Offset(0, -0.2);
         if (u > (_epFim - _epInicio) * 0.8 && _noChao) pula(200);
       case Episodio.rodopio:
         if (_t >= _proximoGiro && _giros > 0) {
           _giros -= 1;
-          _virado = !_virado;
+          // Um giro de verdade: o corpo vira no eixo (ver `giro`), e não
+          // só espelha num quadro.
+          _giroT = 0.001;
           _achata.empurra(3);
           pula(130);
           _proximoGiro = _t + _entre(0.28, 0.42);

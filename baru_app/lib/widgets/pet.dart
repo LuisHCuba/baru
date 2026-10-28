@@ -960,13 +960,22 @@ class _PetViewState extends State<PetView>
       // O cão corre direto; o gato encara, rebola e dá o bote (Miyamoto,
       // pesquisa 20, mec. 9); a tartaruga vai no tempo dela.
       ..jeito = switch (widget.species) {
-        Species.cat ||
-        Species.fox => const JeitoDeCacar(espreita: 0.8, velocidade: 50),
-        Species.owl => const JeitoDeCacar(espreita: 0.4, velocidade: 46),
+        Species.cat || Species.fox => const JeitoDeCacar(
+          espreita: 0.8,
+          velocidade: 50,
+          saltita: true,
+        ),
+        Species.owl => const JeitoDeCacar(
+          espreita: 0.4,
+          velocidade: 46,
+          saltita: true,
+        ),
         Species.tortoise => const JeitoDeCacar(velocidade: 12),
         Species.penguin => const JeitoDeCacar(velocidade: 30),
-        Species.frenchie || Species.otter => const JeitoDeCacar(velocidade: 58),
-        _ => const JeitoDeCacar(),
+        Species.frenchie ||
+        Species.otter => const JeitoDeCacar(velocidade: 58, saltita: true),
+        Species.capybara => const JeitoDeCacar(saltita: true),
+        Species.axolotl => const JeitoDeCacar(),
       }
       // O que só esta espécie faz (etograma, pesquisa 22).
       ..repertorio = switch (widget.species) {

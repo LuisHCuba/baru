@@ -91,7 +91,16 @@ enum TipoDeInteresse { bola, comida }
 /// O jeito de perseguir de cada espécie (pesquisa 20, mecânica 9: o cão
 /// corre direto; o gato encara, rebola e dá o bote).
 class JeitoDeCacar {
-  const JeitoDeCacar({this.espreita = 0, this.velocidade = 44});
+  const JeitoDeCacar({
+    this.espreita = 0,
+    this.velocidade = 44,
+    this.saltita = false,
+  });
+
+  /// Anda aos saltinhos, como mascote de frente anda (Finch, Animal
+  /// Crossing): o corpo inteiro sai do chão a cada passo e pousa, em vez de
+  /// deslizar sentado. Quem não saltita (tartaruga, pinguim) gingando anda.
+  final bool saltita;
 
   /// Segundos parado rebolando antes do bote (0 = vai direto).
   final double espreita;
@@ -596,6 +605,7 @@ class MotorDeVida {
   double _faseDoPasso = 0;
   double _intensidadeDoPasso = 0;
   double _ondaAntes = 0;
+  double _faseAntesDoSalto = 0;
   final _poeira = <(double, double)>[];
   double _rebola = 0;
 
@@ -618,7 +628,14 @@ class MotorDeVida {
     // No ar não se muda o embalo: o bote vai até onde o pulo levar.
     final acel = _noChao || nadando || _voando ? 220.0 : 0.0;
     _vx += (desejada - _vx).clamp(-acel * dt, acel * dt);
-    _px += _vx * dt;
+    // Saltitando, ele avança no ar e quase para no chão: o pé não desliza.
+    // A média do fator é 1, então a velocidade de cruzeiro é a mesma.
+    var avanco = 1.0;
+    if (jeito.saltita && _noChao && !nadando && !_voando && !noColo) {
+      final s = math.sin(math.pi * ((_faseDoPasso * 2) % 1));
+      avanco = 0.25 + 1.5 * s * s;
+    }
+    _px += _vx * dt * avanco;
     if (_px < _min || _px > _max) {
       _px = _px.clamp(_min, _max);
       _vx = 0;
@@ -1150,8 +1167,25 @@ class MotorDeVida {
     final passada = onda * intensidade + _rebola;
     // Mais alto na passagem (uma pata no ar), mais baixo no contato.
     // Correndo, o quique é de galope: maior.
-    final sobeNoPasso =
-        (1 - math.cos(2 * fase)) / 2 * (_correndo ? 8.0 : 3.0) * intensidade;
+    final saltita = jeito.saltita;
+    // Saltitando, cada passo é um arco: sai do chão e pousa (a cúspide do
+    // |seno| é o pouso). Andando de frente, um gingado com quique curto.
+    final arco = math.sin(math.pi * ((_faseDoPasso * 2) % 1));
+    final sobeNoPasso = saltita
+        ? arco * (_correndo ? 12.0 : 7.0) * intensidade
+        : (1 - math.cos(2 * fase)) / 2 * (_correndo ? 8.0 : 3.0) * intensidade;
+    final pousou =
+        saltita &&
+        intensidade > 0.3 &&
+        ((_faseDoPasso * 2) % 1) < ((_faseAntesDoSalto * 2) % 1);
+    _faseAntesDoSalto = _faseDoPasso;
+    if (pousou) {
+      // O pouso: um amassado curto (até 4%) e o rabo e as orelhas seguindo
+      // atrasados o corpo que parou — o movimento secundário.
+      _achata.empurra(2.5 * intensidade);
+      _cauda.empurra((_sorte.nextBool() ? 1 : -1) * 5 * intensidade);
+      if (_sorte.nextDouble() < 0.25) _evento(EventoDaVida.orelha);
+    }
     final corrida = _correndo ? intensidade : 0.0;
     if (intensidade > 0.25 && (onda >= 0) != (_ondaAntes >= 0)) {
       // Cada pata que bate no chão correndo levanta um pouco de poeira,
@@ -1168,12 +1202,18 @@ class MotorDeVida {
     _freioSuave += ((_voando && _freando ? 1.0 : 0.0) - _freioSuave) * asa;
     _reverenciaSuave += (_reverencia - _reverenciaSuave) * suave;
     _quadrilSuave += (_quadril - _quadrilSuave) * (1 - math.exp(-dt * 30));
-    final gingado = onda * 0.045 * intensidade + _quadrilSuave * 0.04;
+    final gingado =
+        (saltita ? 0.0 : onda * 0.045 * intensidade) + _quadrilSuave * 0.04;
     // Pende para a frente (o lado para onde vai, já espelhado em `virado`).
     // Correndo, pende bem mais: o peso vai à frente das patas.
     final pende = 0.03 * intensidade + 0.07 * corrida;
-    final pataEsquerda = math.max(0.0, onda) * intensidade;
-    final pataDireita = math.max(0.0, -onda) * intensidade;
+    // Saltitando, as duas patas sobem juntas no ar; gingando, alternam.
+    final pataEsquerda = saltita
+        ? arco * 0.8 * intensidade
+        : math.max(0.0, onda) * intensidade;
+    final pataDireita = saltita
+        ? arco * 0.8 * intensidade
+        : math.max(0.0, -onda) * intensidade;
     var desloca = Offset(_px, 0);
     var balanco = 0.0;
     var inclinaNoColo = 0.0;

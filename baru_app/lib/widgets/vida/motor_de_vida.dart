@@ -153,7 +153,6 @@ class SaidaDaVida {
     this.planeio = 0,
     this.freio = 0,
     this.corrida = 0,
-    this.galope = 0,
     this.poeira = const [],
     this.pataEsquerda = 0,
     this.pataDireita = 0,
@@ -253,13 +252,9 @@ class SaidaDaVida {
   /// fixo), e vale o humor.
   final bool? adormecido;
 
-  /// 0..1: está correndo (a disparada, a corrida atrás da bola). O corpo
-  /// pende mais e estica e encolhe a cada passada, como no galope.
+  /// 0..1: está correndo (a disparada, a corrida atrás da bola): o corpo
+  /// pende mais e a poeira sobe.
   final double corrida;
-
-  /// 0..1: a passada do galope. 1 no contato (corpo esticado e baixo),
-  /// 0 na suspensão (corpo encolhido e alto).
-  final double galope;
 
   /// As nuvenzinhas de poeira que a corrida deixa no chão: `dx` é a posição
   /// no mundo do bicho (a mesma de `desloca`), `dy` é a idade de 0 a 1.
@@ -449,7 +444,7 @@ class MotorDeVida {
   int _pulosFaltando = 0;
   double _suspiroT = 0;
   double _proximoTremelique = 0;
-  final _cabecaNoChao = Mola(f: 2, zeta: 0.7);
+  final _cabecaNoChao = Mola(f: 2, zeta: 0.9);
 
   /// Os episódios que esta espécie tem além dos comuns (etograma, pesquisa
   /// 22): a piscada lenta da gata, o salto de caça da raposa, o balançar de
@@ -568,8 +563,10 @@ class MotorDeVida {
   // O achatar é só do corpo: a cabeça vai por cima, com atraso próprio
   // ([_cabecaSegue]) — cabeça e corpo independentes, como o Duolingo monta
   // os personagens no Rive.
-  final _inclina = Mola(f: 1.6, zeta: 0.55);
-  final _achata = Mola(f: 4, zeta: 0.45);
+  // Amortecidas quase no crítico: com 0,45 o corpo seguia tremendo depois
+  // de cada passo, como gelatina.
+  final _inclina = Mola(f: 1.6, zeta: 0.9);
+  final _achata = Mola(f: 4, zeta: 0.95);
   final _cauda = Mola(f: 3, zeta: 0.35);
   final _colo = Mola2(f: 2.8, zeta: 0.6);
   final _balancoNoColo = Mola(f: 1.6, zeta: 0.3);
@@ -1154,10 +1151,9 @@ class MotorDeVida {
     // Mais alto na passagem (uma pata no ar), mais baixo no contato.
     // Correndo, o quique é de galope: maior.
     final sobeNoPasso =
-        (1 - math.cos(2 * fase)) / 2 * (_correndo ? 13.0 : 5.0) * intensidade;
+        (1 - math.cos(2 * fase)) / 2 * (_correndo ? 8.0 : 3.0) * intensidade;
     final corrida = _correndo ? intensidade : 0.0;
     if (intensidade > 0.25 && (onda >= 0) != (_ondaAntes >= 0)) {
-      _achata.empurra(3.5 * intensidade);
       // Cada pata que bate no chão correndo levanta um pouco de poeira,
       // um tanto atrás, onde ela pisou.
       if (corrida > 0.5 && !reduzido) _poeira.add((_px - _vx.sign * 16, _t));
@@ -1172,10 +1168,10 @@ class MotorDeVida {
     _freioSuave += ((_voando && _freando ? 1.0 : 0.0) - _freioSuave) * asa;
     _reverenciaSuave += (_reverencia - _reverenciaSuave) * suave;
     _quadrilSuave += (_quadril - _quadrilSuave) * (1 - math.exp(-dt * 30));
-    final gingado = onda * 0.11 * intensidade + _quadrilSuave * 0.06;
+    final gingado = onda * 0.045 * intensidade + _quadrilSuave * 0.04;
     // Pende para a frente (o lado para onde vai, já espelhado em `virado`).
     // Correndo, pende bem mais: o peso vai à frente das patas.
-    final pende = 0.05 * intensidade + 0.13 * corrida;
+    final pende = 0.03 * intensidade + 0.07 * corrida;
     final pataEsquerda = math.max(0.0, onda) * intensidade;
     final pataDireita = math.max(0.0, -onda) * intensidade;
     var desloca = Offset(_px, 0);
@@ -1300,7 +1296,6 @@ class MotorDeVida {
       planeio: _planeioSuave,
       freio: _freioSuave,
       corrida: corrida * a,
-      galope: (1 + math.cos(2 * fase)) / 2,
       poeira: [for (final p in _poeira) Offset(p.$1, (_t - p.$2) / 0.55)],
       planando: _planando,
       freando: _freando,

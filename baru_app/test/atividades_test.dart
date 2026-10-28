@@ -272,7 +272,8 @@ void main() {
       expect(
         contagens.toSet().length,
         greaterThanOrEqualTo(3),
-        reason: 'o anel tem de crescer e sumir ao longo da braçada; '
+        reason:
+            'o anel tem de crescer e sumir ao longo da braçada; '
             'contagens iguais são um anel congelado. Vistas: $contagens',
       );
       expect(
@@ -298,7 +299,8 @@ void main() {
       expect(
         await agua(Species.capybara, Activity.swim),
         greaterThan(0),
-        reason: 'sem rastro nenhum, "nadando" é o bicho de sempre um pouco '
+        reason:
+            'sem rastro nenhum, "nadando" é o bicho de sempre um pouco '
             'mais baixo',
       );
       // A coruja no lugar do nado **voa**: a cena dela não molha.
@@ -349,13 +351,15 @@ void main() {
       expect(
         naguaAbaixo - naguaAcima,
         greaterThan(25),
-        reason: 'submerso, o corpo tem de puxar para o verde da água. '
+        reason:
+            'submerso, o corpo tem de puxar para o verde da água. '
             'Acima: $naguaAcima, abaixo: $naguaAbaixo',
       );
       expect(
         (secoAbaixo - secoAcima).abs(),
         lessThan(25),
-        reason: 'fora da água as duas metades do bicho têm o mesmo pelo, '
+        reason:
+            'fora da água as duas metades do bicho têm o mesmo pelo, '
             'senão o teste acima estaria medindo anatomia e não água. '
             'Acima: $secoAcima, abaixo: $secoAbaixo',
       );
@@ -379,7 +383,8 @@ void main() {
       expect(
         naAgua,
         greaterThan(parado + 5),
-        reason: 'na água o bicho tem de estar mais fundo no quadro; parado '
+        reason:
+            'na água o bicho tem de estar mais fundo no quadro; parado '
             'começa em $parado e nadando em $naAgua',
       );
     });
@@ -402,7 +407,8 @@ void main() {
       expect(
         await topo(Species.otter),
         greaterThan(await topo(Species.capybara)),
-        reason: 'a lontra é um torpedo e a capivara é um flutuador; nadando '
+        reason:
+            'a lontra é um torpedo e a capivara é um flutuador; nadando '
             'igual, as duas são a mesma capivara de outra cor',
       );
     });
@@ -419,27 +425,36 @@ void main() {
     // volta de y=50. Nada mais desenha acima de y=38 nessa largura.
     const x0 = 40, x1 = 160, y0 = 16, y1 = 38;
 
-    testWidgets('a cabeça desce ao chão e volta — é ciclo, não pose', (
+    testWidgets('a cabeça desce até o capim e volta, sem afundar no corpo', (
       tester,
     ) async {
+      // Sentado e de frente, pastar é um aceno de cabeça até o capim. A
+      // cabeça inteira enfiada no peito (descia 26 unidades) engolia o
+      // corpo, e o bicho virava uma cabeça com patas. O que se mede é o
+      // percurso do alto da cabeça num ciclo: visível, e com teto.
       await tester.pumpWidget(_cena(activity: Activity.graze));
       await tester.pump();
 
-      final contagens = <int>[];
+      final topos = <int>[];
       for (final q in await _voltaCompleta(tester, _umaPastagem, 14)) {
-        contagens.add(_pintadosEm(q, x0, y0, x1, y1));
+        topos.add(_topoDe(q, 40, 70));
       }
-
+      final percurso =
+          topos.reduce((a, b) => a > b ? a : b) -
+          topos.reduce((a, b) => a < b ? a : b);
       expect(
-        contagens.where((c) => c == 0),
-        isNotEmpty,
-        reason: 'em algum momento do ciclo a cabeça tem de estar no chão. '
-            'Vistas: $contagens',
+        percurso,
+        greaterThanOrEqualTo(5),
+        reason:
+            'a cabeça tem de descer e voltar: é ciclo, não pose. '
+            'Topos: $topos',
       );
       expect(
-        contagens.where((c) => c > 0),
-        isNotEmpty,
-        reason: 'e em outro ela tem de estar erguida, olhando em volta',
+        percurso,
+        lessThanOrEqualTo(18),
+        reason:
+            'descendo mais que isso a cabeça afunda no corpo. '
+            'Topos: $topos',
       );
     });
 
@@ -478,7 +493,8 @@ void main() {
       expect(
         capivara,
         greaterThan(lontra + 5),
-        reason: 'lontra de focinho na grama é lontra pastando, e lontra não '
+        reason:
+            'lontra de focinho na grama é lontra pastando, e lontra não '
             'pasta. Capivara desceu $capivara px, lontra $lontra px',
       );
     });
@@ -496,9 +512,7 @@ void main() {
     const x0 = 60, x1 = 138, y0 = 0, y1 = 16;
 
     testWidgets('uma folha desce e pousa nele', (tester) async {
-      await tester.pumpWidget(
-        _cena(activity: Activity.nap, mood: Mood.sleepy),
-      );
+      await tester.pumpWidget(_cena(activity: Activity.nap, mood: Mood.sleepy));
       await tester.pump();
 
       final contagens = <int>[];
@@ -509,7 +523,8 @@ void main() {
       expect(
         contagens.where((c) => c > 0),
         isNotEmpty,
-        reason: 'a folha tem de atravessar o caminho da queda. '
+        reason:
+            'a folha tem de atravessar o caminho da queda. '
             'Vistas: $contagens',
       );
       expect(
@@ -534,9 +549,7 @@ void main() {
       // O sinal medido é o alto da cabeça, na coluna esquerda do bicho: o
       // Zzz (x ≥ 140) e a folha (x ≥ 72) ficam fora, então o que sobe e
       // desce ali é o peito.
-      await tester.pumpWidget(
-        _cena(activity: Activity.nap, mood: Mood.sleepy),
-      );
+      await tester.pumpWidget(_cena(activity: Activity.nap, mood: Mood.sleepy));
       await tester.pump();
 
       final sinal = <int>[];
@@ -561,7 +574,8 @@ void main() {
       expect(
         viradas,
         lessThanOrEqualTo(2),
-        reason: 'em 13 s o peito de quem dorme sobe e desce uma vez só. Com '
+        reason:
+            'em 13 s o peito de quem dorme sobe e desce uma vez só. Com '
             'o fôlego normal (3,4 s) cabem dois ciclos, e as viradas passam '
             'de três. Sinal: $sinal',
       );
@@ -576,12 +590,14 @@ void main() {
       for (final q in await _voltaCompleta(tester, _umaVoltaLonga, 40)) {
         larguras.add(_larguraDoTronco(q, 100, 140));
       }
-      final expansao = larguras.reduce((a, b) => a > b ? a : b) -
+      final expansao =
+          larguras.reduce((a, b) => a > b ? a : b) -
           larguras.reduce((a, b) => a < b ? a : b);
       expect(
         expansao,
         greaterThanOrEqualTo(5),
-        reason: 'o peito de quem dorme enche mais que o de quem está '
+        reason:
+            'o peito de quem dorme enche mais que o de quem está '
             'acordado. Medido: $expansao px de expansão. Larguras: $larguras',
       );
     });
@@ -592,8 +608,9 @@ void main() {
   // ======================================================================
 
   group('quem não nada', () {
-    testWidgets('a buraqueira não paira: na sessão a asa fica dobrada',
-        (tester) async {
+    testWidgets('a buraqueira não paira: na sessão a asa fica dobrada', (
+      tester,
+    ) async {
       // A faixa é onde a **ponta da asa aberta** chegaria, muito além do
       // corpo. A coruja de antes voava sobre a lagoa; a buraqueira é de
       // chão e brinca na beira (laudo 07, R4), e a asa nunca abre ali.
@@ -631,7 +648,8 @@ void main() {
       expect(
         maisBaixo - maisAlto,
         greaterThanOrEqualTo(8),
-        reason: 'o salto tem de tirar o bicho do chão de verdade. '
+        reason:
+            'o salto tem de tirar o bicho do chão de verdade. '
             'Vistas: $alturas',
       );
     });
@@ -651,7 +669,8 @@ void main() {
     expect(
       SchedulerBinding.instance.transientCallbackCount,
       0,
-      reason: 'o laço novo é mais um ticker: escondido, ele também tem de '
+      reason:
+          'o laço novo é mais um ticker: escondido, ele também tem de '
           'parar de pedir quadro',
     );
 
@@ -705,7 +724,8 @@ void main() {
     expect(
       maiorSalto,
       greaterThanOrEqualTo(8),
-      reason: 'em 1150 ms o anel tem de abrir e **recomeçar**. Sem o salto '
+      reason:
+          'em 1150 ms o anel tem de abrir e **recomeçar**. Sem o salto '
           'de volta, o laço ficou no compasso da atividade anterior. '
           'Bordas vistas: $bordas',
     );
@@ -755,8 +775,9 @@ void main() {
       expect(find.text('BANHO DE 25 MIN'), findsOneWidget);
     });
 
-    testWidgets('a coruja brinca na beira, e a tela não fala em voo',
-        (tester) async {
+    testWidgets('a coruja brinca na beira, e a tela não fala em voo', (
+      tester,
+    ) async {
       await abre(tester, Species.owl);
       expect(find.textContaining('brincando'), findsOneWidget);
       expect(find.textContaining('voando'), findsNothing);
@@ -813,7 +834,8 @@ void main() {
           expect(
             frase,
             isNot(contains('petFazendo_')),
-            reason: '$lang não tem frase para ${acao.name} — a tela mostraria '
+            reason:
+                '$lang não tem frase para ${acao.name} — a tela mostraria '
                 'a chave crua',
           );
           expect(frase, contains('{n}'), reason: '$lang.${acao.name}');

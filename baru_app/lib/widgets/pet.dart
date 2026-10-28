@@ -1842,14 +1842,17 @@ class _Pose {
   double get cabecaDesce => switch (acao) {
     // Em episódios, o motor diz onde está a cabeça (bocada, mastigar de
     // cabeça erguida, vigiar); o laço fica para o quadro fixo.
+    // Sentado e de frente, comer é um aceno de cabeça até o capim, e não
+    // a cabeça inteira afundada no peito: descendo 32, ela engolia o corpo
+    // e o bicho virava uma cabeça com patas.
     AcaoDoBicho.pasto when vida.atividadeAtiva && !comendoDaMao =>
-      6 + vida.cabecaNoChao * 26 * amplitude,
+      3 + vida.cabecaNoChao * 10 * amplitude,
     AcaoDoBicho.petisco when vida.atividadeAtiva && !comendoDaMao =>
-      4 + vida.cabecaNoChao * 17 * amplitude,
+      2 + vida.cabecaNoChao * 8 * amplitude,
     AcaoDoBicho.pasto =>
-      6 + _fase(ciclo, 0.04, 0.12, 0.14, 0.66) * 26 * amplitude,
+      3 + _fase(ciclo, 0.04, 0.12, 0.14, 0.66) * 10 * amplitude,
     AcaoDoBicho.petisco =>
-      4 + _fase(ciclo, 0.04, 0.10, 0.10, 0.30) * 17 * amplitude,
+      2 + _fase(ciclo, 0.04, 0.10, 0.10, 0.30) * 8 * amplitude,
     _ => 0.0,
   };
 
@@ -2291,22 +2294,26 @@ class _PetPainter extends CustomPainter {
     // no colo).
     canvas.translate(vida.desloca.dx, vida.desloca.dy);
     if (vida.virado) canvas.scale(-1, 1);
-    // O rodopio: o corpo vira no eixo vertical como uma folha de papel.
-    // Na metade da volta em que ele está de costas, não há rosto nem
-    // barriga: só o dorso, no tom mais escuro do pelo. Com o rosto à mostra
-    // o tempo todo, o giro lia como um adesivo espelhado, e não como uma
-    // volta.
-    var deCostas = false;
-    if (vida.giro > 0) {
-      final c = math.cos(vida.giro * 2 * math.pi);
-      canvas.scale(c.abs() < 0.12 ? (c < 0 ? -0.12 : 0.12) : c, 1);
-      if (c < 0) {
-        deCostas = true;
-        canvas.saveLayer(
-          folga,
-          Paint()..colorFilter = ColorFilter.mode(sombra, BlendMode.srcIn),
-        );
-      }
+    // O giro (rodopio, lontra rolando): o contorno não muda. O rosto
+    // desliza para um lado e sai ([_virada]); de costas, o tom do dorso
+    // cobre rosto e barriga aos poucos; e o rosto volta pelo outro lado.
+    // Antes o corpo encolhia para uma fatia de 12% da largura, como uma
+    // folha de papel: deformava o bicho inteiro.
+    final dorso = vida.giro > 0
+        ? Curves.easeInOut.transform(
+            ((0.35 - math.cos(vida.giro * 2 * math.pi)) / 0.7).clamp(0.0, 1.0),
+          )
+        : 0.0;
+    final deCostas = dorso > 0;
+    if (deCostas) {
+      canvas.saveLayer(
+        folga,
+        Paint()
+          ..colorFilter = ColorFilter.mode(
+            sombra.withValues(alpha: dorso),
+            BlendMode.srcATop,
+          ),
+      );
     }
     // O gingado gira pelo pé que está no chão.
     if (vida.gingado != 0) {
@@ -2321,10 +2328,28 @@ class _PetPainter extends CustomPainter {
       canvas.rotate(vida.inclina);
       canvas.translate(0, -pivoDaInclinacao);
     }
-    // Achatar e esticar com volume preservado, pelos pés. Vale para o
-    // corpo: a cabeça desfaz a escala no ponto em que se apoia
-    // ([_posicionaCabeca]) e vai por cima, com atraso próprio. Achatando o
-    // desenho inteiro, a cabeça amassava junto e o bicho virava gelatina.
+    // Deitado, o corpo não achata: desce inteiro e o que passa do chão
+    // some, como patas recolhidas sob a barriga. A proporção do desenho
+    // fica a mesma (antes ele achatava 32%, e o bicho deformava).
+    final d = vida.deita;
+    if (d > 0) {
+      // A base é redonda, como uma barriga apoiada no chão; um corte reto
+      // parecia o bicho atrás de um muro.
+      canvas.clipPath(
+        Path()
+          ..addRect(Rect.fromLTRB(-400, -400, 400, _pes - 12))
+          ..addOval(
+            Rect.fromCenter(
+              center: const Offset(0, _pes - 12),
+              width: 106,
+              height: 26,
+            ),
+          ),
+      );
+      canvas.translate(0, _afundaDeitado * d);
+    }
+    // Um amassado pequeno no pouso, pelos pés. A cabeça desfaz a escala no
+    // ponto em que se apoia ([_posicionaCabeca]).
     final (ax, ay) = _achataDoCorpo;
     if (ay != 1) {
       canvas.translate(0, _pes);
@@ -2346,7 +2371,7 @@ class _PetPainter extends CustomPainter {
       // A inclinação acompanha a cabeça: quanto mais baixa, mais o corpo
       // vai junto. Cabeça descendo com o corpo reto lê como pescoço quebrado.
       AcaoDoBicho.pasto ||
-      AcaoDoBicho.petisco => 0.05 + pose.cabecaDesce * 0.004,
+      AcaoDoBicho.petisco => 0.01 + pose.cabecaDesce * 0.003,
       // O -0.05 é a mesma postura do agachamento: o peito baixa na frente.
       AcaoDoBicho.brincadeira =>
         -0.05 + math.sin(pose.ciclo * math.pi * 2) * 0.09 * amp,
@@ -2386,7 +2411,7 @@ class _PetPainter extends CustomPainter {
       canvas.translate(0, -_pes);
     }
     // O quique do toque e o espreguiçar: o bicho inteiro.
-    canvas.scale(1 + q * 0.07 + e * 0.07, 1 - q * 0.07 + e * 0.03);
+    canvas.scale(1 + q * 0.04 + e * 0.04, 1 - q * 0.04 + e * 0.02);
     // O fôlego quase dobrou: a 1,8% ele não se via (laudo 05, R4); a 3,4% o
     // peito sobe e desce sem virar pulo. Pelos pés, que não saem do chão, e
     // só no tronco: a cabeça desfaz a escala em [_cabecaSemFolego] e é
@@ -2564,8 +2589,13 @@ class _PetPainter extends CustomPainter {
     // por `virado`) isso é sempre +x.
     (_espelho * pose.vida.virada.dx +
             pose.olhadaDoPasto +
-            pose.vida.andando * 0.7)
-        .clamp(-1.2, 1.2),
+            pose.vida.andando * 0.7 +
+            // No giro o rosto dá a volta: vai até a beira de um lado e volta
+            // pelo outro; no meio da volta o dorso cobre.
+            math.sin(pose.vida.giro * 2 * math.pi))
+        // Passando de 1, o rosto saía do contorno da cabeça (a máscara da
+        // raposa ficava para fora).
+        .clamp(-1.0, 1.0),
     pose.vida.virada.dy.clamp(-1.0, 1.0),
   );
 
@@ -2617,27 +2647,18 @@ class _PetPainter extends CustomPainter {
 
   static const _corDaPoeira = Color(0xFFB8A27A);
 
+  /// Quanto o corpo desce deitado: o bastante para as patas da frente
+  /// sumirem sob ele.
+  static const _afundaDeitado = 20.0;
+
   /// A escala do corpo achatado (largura, altura), com volume preservado.
   (double, double) get _achataDoCorpo {
     final vida = pose.vida;
     final a = vida.achata;
-    final d = vida.deita;
-    final r = vida.reverencia;
-    final c = vida.corrida;
-    if (a == 0 && d == 0 && r == 0 && c == 0) return (1, 1);
-    final sy = (1 - a * 0.18).clamp(0.6, 1.6);
-    // Correndo, o galope: esticado e baixo no contato, encolhido e alto na
-    // suspensão. De frente, é o que separa a corrida de um andar apressado.
-    final g = vida.galope;
-    // Deitado: o corpo baixa e alarga. Na reverência, a frente baixa.
-    return (
-      1 /
-          math.sqrt(sy) *
-          (1 + 0.16 * d) *
-          (1 + 0.07 * r) *
-          (1 + c * (0.24 * g - 0.06)),
-      sy * (1 - 0.32 * d) * (1 - 0.14 * r) * (1 + c * (0.10 - 0.24 * g)),
-    );
+    if (a == 0) return (1, 1);
+    // No máximo 4%: o bicho tem anatomia, não é uma bola de borracha.
+    final sy = (1 - a * 0.12).clamp(0.96, 1.04);
+    return (1 / math.sqrt(sy), sy);
   }
 
   /// A sombra que a cabeça faz no corpo, logo abaixo do queixo. É o que
@@ -2678,7 +2699,7 @@ class _PetPainter extends CustomPainter {
       pose.cabecaDesce +
       // A cabeça acompanha cada mastigada, e desce na reverência.
       pose.mastiga * 2.4 +
-      pose.vida.reverencia * 16 +
+      pose.vida.reverencia * 10 +
       pose.farejada +
       _cabecaDoHumor +
       // O axolote comendo: cabeça baixa, mirando o fundo.

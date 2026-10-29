@@ -495,7 +495,8 @@ class VigiaDaSessao : Service() {
         val corpo = c.corpo.ifEmpty { corpoDeReserva }
 
         val b = NotificationCompat.Builder(this, c.canal)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_baru)
+            .setColor(0xFF4B7343.toInt())
             .setContentTitle(titulo)
             .setContentText(corpo)
             .setContentIntent(abrirComAcao(PEDIDO_ABRIR, null))

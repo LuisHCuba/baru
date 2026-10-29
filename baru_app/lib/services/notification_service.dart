@@ -283,7 +283,11 @@ class BaruNotifications {
       tz.setLocalLocation(tz.UTC);
     }
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // O ícone pequeno da barra é **só a transparência** do desenho (regra
+    // do Android desde o 5.0). O `ic_launcher` é opaco de ponta a ponta e
+    // virava um quadrado branco; este é a silhueta da capivara, branca com
+    // olhos e focinho vazados.
+    const android = AndroidInitializationSettings('@drawable/ic_stat_baru');
     const ios = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -1026,6 +1030,9 @@ class BaruNotifications {
     }
   }
 
+  /// O verde da raiz, no cabeçalho de cada notificação.
+  static const corDaMarca = Color(0xFF4B7343);
+
   /// O rosto do bicho, para o ícone grande dos recados.
   ///
   /// A personalidade do Duo nasceu do rosto da coruja aparecendo em toda
@@ -1047,6 +1054,8 @@ class BaruNotifications {
         importance: importanciaDo(canal),
         priority: alta ? Priority.high : Priority.defaultPriority,
         largeIcon: rosto == null ? null : FilePathAndroidBitmap(rosto),
+        // A cor do ícone pequeno e do nome do app no cabeçalho.
+        color: corDaMarca,
         // Recado de hábito, não segredo: legível na tela de bloqueio.
         visibility: NotificationVisibility.public,
         category: AndroidNotificationCategory.reminder,

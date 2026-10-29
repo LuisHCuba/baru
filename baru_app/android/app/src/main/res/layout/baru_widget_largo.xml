@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- O widget 4x2 do Baru: a mesma ideia do 2x2, com a cena larga (bicho a
+     direita) e, a esquerda, o numero, o chamado e a semana com um circulo
+     por dia - como o "880 days" com F S S M T do Duolingo. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/baru_raiz_widget"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/baru_widget_fundo"
+    android:clipToOutline="true"
+    tools:targetApi="s">
+
+    <ImageView
+        android:id="@+id/baru_pet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="12dp">
+
+        <LinearLayout
+            android:id="@+id/baru_raiz_linha"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/ic_broto"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/baru_raiz"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="4dp"
+                android:fontFamily="sans-serif-black"
+                android:textSize="34sp"
+                android:textColor="#FFFFFFFF"
+                android:includeFontPadding="false"
+                android:shadowColor="#55000000"
+                android:shadowDy="1.5"
+                android:shadowRadius="3" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/baru_frase"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:textColor="#F2FFFFFF"
+            android:shadowColor="#55000000"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/baru_semana"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="26dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="3dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/baru_l0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#D9FFFFFF" />
+
+                <TextView
+                    android:id="@+id/baru_d0"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/baru_dia_vazio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="26dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="3dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/baru_l1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#D9FFFFFF" />
+
+                <TextView
+                    android:id="@+id/baru_d1"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/baru_dia_vazio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="26dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="3dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/baru_l2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#D9FFFFFF" />
+
+                <TextView
+                    android:id="@+id/baru_d2"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/baru_dia_vazio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="26dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="3dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/baru_l3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#D9FFFFFF" />
+
+                <TextView
+                    android:id="@+id/baru_d3"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/baru_dia_vazio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="26dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="3dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/baru_l4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#D9FFFFFF" />
+
+                <TextView
+                    android:id="@+id/baru_d4"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/baru_dia_vazio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="26dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="3dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/baru_l5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#D9FFFFFF" />
+
+                <TextView
+                    android:id="@+id/baru_d5"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/baru_dia_vazio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="26dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="3dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/baru_l6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#D9FFFFFF" />
+
+                <TextView
+                    android:id="@+id/baru_d6"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/baru_dia_vazio" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -3161,6 +3161,16 @@ class AppState extends ChangeNotifier {
           : streak > 0
               ? hoje.subtract(const Duration(days: 1))
               : null,
+      semana: [
+        for (final (_, k) in ultimos7Dias)
+          switch (k) {
+            WeekDayKind.present => 'p',
+            WeekDayKind.frozen => 'f',
+            WeekDayKind.today => 't',
+            WeekDayKind.empty => 'e',
+          },
+      ].join(),
+      letras: t.days,
       frases: {
         MomentoDoWidget.feito: t.widgetFeito,
         MomentoDoWidget.manha: t.widgetManha,

@@ -14,6 +14,7 @@ library;
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' show Random;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -34,17 +35,80 @@ import '../widgets/pet.dart';
 /// A escolha acontece no Kotlin, com o app fechado; [momentoDoWidget] é a
 /// mesma regra em Dart, para o teste e para quem lê. As duas têm de bater.
 enum MomentoDoWidget {
-  /// A raiz já cresceu hoje.
-  feito(Mood.radiant, Activity.idle),
-  manha(Mood.content, Activity.idle),
-  tarde(Mood.neutral, Activity.idle),
-  noite(Mood.sleepy, Activity.idle),
-  madrugada(Mood.sleepy, Activity.nap);
+  /// A raiz já cresceu hoje: dourado de festa.
+  feito(Mood.radiant, Activity.idle, Color(0xFFFFB627), Color(0xFFF07C1B)),
 
-  const MomentoDoWidget(this.humor, this.atividade);
+  /// Céu de manhã.
+  manha(Mood.content, Activity.idle, Color(0xFF4FB6E3), Color(0xFF2A7FBF)),
+
+  /// Folha de tarde.
+  tarde(Mood.neutral, Activity.idle, Color(0xFF63B05E), Color(0xFF2F6F3E)),
+
+  /// Anoitecer: roxo.
+  noite(Mood.sleepy, Activity.idle, Color(0xFF8A5BE0), Color(0xFF4A2C96)),
+
+  /// Noite funda, com lua e estrelas.
+  madrugada(Mood.sleepy, Activity.nap, Color(0xFF2C3A75), Color(0xFF111735));
+
+  const MomentoDoWidget(this.humor, this.atividade, this.cimo, this.fundo);
 
   final Mood humor;
   final Activity atividade;
+
+  /// O degradê da cena, de cima para baixo. Cores fortes de propósito: no
+  /// widget do Duolingo a cor é o estado — reconhece-se de longe.
+  final Color cimo;
+  final Color fundo;
+}
+
+/// Os dois formatos do widget.
+///
+/// Uma imagem por formato, e não uma só esticada: a cena do 2×2 é quadrada
+/// e a do 4×2 deixa a esquerda livre para o número e a semana. Os dois
+/// tamanhos ficam abaixo de 200 mil pixels — o teto do Binder (ver
+/// [WidgetService.tamanhoDoPng]).
+enum FormatoDoWidget {
+  quadrado(Size(336, 336), 'q'),
+  largo(Size(600, 280), 'l');
+
+  const FormatoDoWidget(this.tamanho, this.sufixo);
+
+  final Size tamanho;
+  final String sufixo;
+}
+
+/// A semana do widget no dia [hoje], a partir da gravada em [escritaEm].
+///
+/// O app grava os 7 dias (do mais antigo até o dia da gravação) como letras:
+/// `p` presente, `f` congelado, `t` o dia em curso, `e` vazio. Com o app
+/// fechado os dias andam: a semana desliza, o dia em curso que passou sem
+/// presença vira vazio, e hoje é `p` se a raiz já cresceu. Espelho exato de
+/// `BaruWidget.semanaNoDia` (Kotlin).
+String semanaNoDia(
+  String codigos,
+  DateTime escritaEm,
+  DateTime? presenteEm,
+  DateTime hoje,
+) {
+  DateTime dia(DateTime d) => DateTime(d.year, d.month, d.day);
+  final h = dia(hoje);
+  final desloca = h.difference(dia(escritaEm)).inDays.clamp(0, 7);
+  final out = StringBuffer();
+  for (var i = 0; i < 7; i++) {
+    final data = h.subtract(Duration(days: 6 - i));
+    if (presenteEm != null && dia(presenteEm) == data) {
+      out.write('p');
+      continue;
+    }
+    if (i == 6) {
+      out.write('t');
+      continue;
+    }
+    final j = i + desloca;
+    final c = j < codigos.length ? codigos[j] : 'e';
+    out.write(c == 't' ? 'e' : c);
+  }
+  return out.toString();
 }
 
 /// Que momento o widget mostra agora.
@@ -82,6 +146,8 @@ class EstadoDoWidget {
     required this.meta,
     this.presenteEm,
     this.frases = const {},
+    this.semana = 'eeeeeet',
+    this.letras = const ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
     this.estagio = EstagioDoBicho.adulto,
   });
 
@@ -98,6 +164,12 @@ class EstadoDoWidget {
 
   /// Uma frase por momento, já traduzida.
   final Map<MomentoDoWidget, String> frases;
+
+  /// Os 7 dias até hoje, do mais antigo, nas letras de [semanaNoDia].
+  final String semana;
+
+  /// As iniciais dos dias, de segunda a domingo, no idioma da pessoa.
+  final List<String> letras;
   final EstagioDoBicho estagio;
 
   /// Só o que exige redesenhar o bicho (os cinco momentos de uma vez).
@@ -114,6 +186,8 @@ class EstadoDoWidget {
       other.meta == meta &&
       other.estagio == estagio &&
       other.presenteEm == presenteEm &&
+      other.semana == semana &&
+      listEquals(other.letras, letras) &&
       mapEquals(other.frases, frases);
 
   @override
@@ -226,13 +300,16 @@ class WidgetService {
         // Os cinco momentos de uma vez: o widget troca de momento com o app
         // fechado, e `renderFlutterWidget` só roda com o app de pé.
         for (final m in MomentoDoWidget.values) {
-          desenhos++;
-          final caminho = await (rasteriza ?? _rasterizaDeVerdade)(
-            _CenaDoWidget(estado: e, momento: m),
-            'baru_pet_${m.name}',
-            tamanhoDoPng,
-          );
-          await grava('baru_png_${m.name}', caminho);
+          for (final f in FormatoDoWidget.values) {
+            desenhos++;
+            final chave = 'baru_png_${m.name}_${f.sufixo}';
+            final caminho = await (rasteriza ?? _rasterizaDeVerdade)(
+              _CenaDoWidget(estado: e, momento: m, formato: f),
+              chave,
+              f.tamanho,
+            );
+            await grava(chave, caminho);
+          }
         }
         // O rosto para o ícone grande das notificações: quadrado, o bicho
         // de perto — num círculo de 40 dp, a cena inteira vira um borrão.
@@ -255,6 +332,9 @@ class WidgetService {
       for (final m in MomentoDoWidget.values) {
         await grava('baru_frase_${m.name}', e.frases[m] ?? '');
       }
+      await grava('baru_semana', e.semana);
+      await grava('baru_semana_em', diaIso(DateTime.now()));
+      await grava('baru_letras', e.letras.join());
       await (avisaOProvider ?? _avisaDeVerdade)();
     } catch (_) {
       // Sem widget na tela, sem plataforma, aparelho exótico: nada disso
@@ -277,6 +357,9 @@ class WidgetService {
   /// 360×312 dá 112 mil pixels, ~450 KB: folga confortável, e ainda maior
   /// que qualquer widget 4×2 numa tela comum.
   static const tamanhoDoPng = Size(360, 312);
+
+  /// A cor de fundo do widget, igual à de `baru_widget_fundo.xml`.
+  static const fundoDoWidget = Color(0xFFF6EFE2);
 
   /// O rosto das notificações. 192 px é o tamanho de ícone grande que o
   /// Android usa em telas xxxhdpi (48 dp × 4).
@@ -314,34 +397,202 @@ class WidgetService {
       HomeWidget.updateWidget(androidName: provider);
 }
 
-/// O que vira PNG.
+/// O que vira PNG: a cena inteira do widget, de ponta a ponta.
 ///
-/// Fundo opaco: `RemoteViews` desenha o `ImageView` sobre o papel de parede
-/// da pessoa, e um bicho com transparência some num fundo claro.
+/// Como o widget do Duolingo (e o do Fito): o fundo é a cor do momento, o
+/// bicho é grande e sai pela borda de baixo, e o canto de cima à esquerda
+/// fica livre — é onde o Kotlin escreve o número da raiz e a frase, em
+/// texto de verdade (nítido, e lido pelo leitor de tela).
 class _CenaDoWidget extends StatelessWidget {
-  const _CenaDoWidget({required this.estado, required this.momento});
+  const _CenaDoWidget({
+    required this.estado,
+    required this.momento,
+    required this.formato,
+  });
 
   final EstadoDoWidget estado;
   final MomentoDoWidget momento;
+  final FormatoDoWidget formato;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Cores.habitat,
-      alignment: Alignment.center,
-      child: PetView(
-        species: estado.especie,
-        mood: momento.humor,
-        activity: momento.atividade,
-        coat: estado.pelagem,
-        estagio: estado.estagio,
-        interativo: false,
-        width: 300,
-        height: 260,
-        scale: 1.25,
+    final t = formato.tamanho;
+    final largo = formato == FormatoDoWidget.largo;
+    // O bicho grande, saindo pela borda de baixo, como nas referências.
+    final lado = t.height * (largo ? 1.35 : 1.18);
+    return SizedBox(
+      width: t.width,
+      height: t.height,
+      child: Stack(
+        clipBehavior: Clip.hardEdge,
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [momento.cimo, momento.fundo],
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: CustomPaint(painter: _CeuDoMomento(momento, largo)),
+          ),
+          Positioned(
+            // No 2×2 o alto à esquerda é do número e da frase: o bicho
+            // desce e vai para a direita, com a cabeça abaixo do texto.
+            right: largo ? -t.width * 0.02 : -t.width * 0.24,
+            bottom: largo ? -lado * 0.22 : -lado * 0.34,
+            width: lado,
+            height: lado,
+            child: PetView(
+              species: estado.especie,
+              mood: momento.humor,
+              activity: momento.atividade,
+              coat: estado.pelagem,
+              estagio: estado.estagio,
+              interativo: false,
+              width: lado,
+              height: lado,
+              scale: lado / 190,
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+/// O céu de cada momento: o brilho do sol, a lua, as estrelas, os
+/// confetes do dia feito, e um morro embaixo para o bicho pisar.
+class _CeuDoMomento extends CustomPainter {
+  _CeuDoMomento(this.momento, this.largo);
+
+  final MomentoDoWidget momento;
+  final bool largo;
+
+  @override
+  void paint(Canvas canvas, Size s) {
+    final sorte = Random(momento.index * 13 + (largo ? 7 : 3));
+    final branco = Paint()..color = Colors.white;
+    switch (momento) {
+      case MomentoDoWidget.manha:
+        canvas.drawCircle(
+          Offset(s.width * 0.86, s.height * 0.12),
+          s.height * 0.42,
+          Paint()
+            ..shader =
+                RadialGradient(
+                  colors: [
+                    const Color(0xFFFFF1B8).withValues(alpha: 0.75),
+                    const Color(0xFFFFF1B8).withValues(alpha: 0),
+                  ],
+                ).createShader(
+                  Rect.fromCircle(
+                    center: Offset(s.width * 0.86, s.height * 0.12),
+                    radius: s.height * 0.42,
+                  ),
+                ),
+        );
+      case MomentoDoWidget.tarde:
+        for (var i = 0; i < 3; i++) {
+          final c = Offset(
+            s.width * (0.45 + 0.22 * i),
+            s.height * (0.12 + 0.06 * (i % 2)),
+          );
+          final p = Paint()..color = Colors.white.withValues(alpha: 0.18);
+          canvas.drawOval(
+            Rect.fromCenter(
+              center: c,
+              width: s.height * 0.34,
+              height: s.height * 0.1,
+            ),
+            p,
+          );
+        }
+      case MomentoDoWidget.noite:
+      case MomentoDoWidget.madrugada:
+        final n = momento == MomentoDoWidget.madrugada ? 26 : 14;
+        for (var i = 0; i < n; i++) {
+          final o = Offset(
+            sorte.nextDouble() * s.width,
+            sorte.nextDouble() * s.height * 0.6,
+          );
+          canvas.drawCircle(
+            o,
+            0.8 + sorte.nextDouble() * 1.8,
+            branco
+              ..color = Colors.white.withValues(
+                alpha: 0.35 + sorte.nextDouble() * 0.5,
+              ),
+          );
+        }
+        if (momento == MomentoDoWidget.madrugada) {
+          // No 2×2 a frase atravessa o alto: a lua vai para o canto.
+          final c = largo
+              ? Offset(s.width * 0.8, s.height * 0.2)
+              : Offset(s.width * 0.88, s.height * 0.11);
+          final r = s.height * (largo ? 0.09 : 0.065);
+          canvas.drawCircle(
+            c,
+            r * 2.4,
+            Paint()..color = Colors.white.withValues(alpha: 0.06),
+          );
+          canvas.drawCircle(c, r, Paint()..color = const Color(0xFFFFF3C4));
+          canvas.drawCircle(
+            c + Offset(r * 0.45, -r * 0.25),
+            r * 0.9,
+            Paint()..color = momento.cimo,
+          );
+        }
+      case MomentoDoWidget.feito:
+        const cores = [
+          Color(0xFFFFFFFF),
+          Color(0xFFFFE08A),
+          Color(0xFFB8F0A0),
+          Color(0xFFFF9EC4),
+        ];
+        for (var i = 0; i < 22; i++) {
+          final o = Offset(
+            sorte.nextDouble() * s.width,
+            sorte.nextDouble() * s.height * 0.75,
+          );
+          canvas.save();
+          canvas.translate(o.dx, o.dy);
+          canvas.rotate(sorte.nextDouble() * 3.14);
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(
+              const Rect.fromLTWH(-4, -1.6, 8, 3.2),
+              const Radius.circular(1.6),
+            ),
+            Paint()..color = cores[i % cores.length].withValues(alpha: 0.85),
+          );
+          canvas.restore();
+        }
+    }
+    // O morro: o chão do bicho, uma faixa mais escura e curva embaixo.
+    final morro = Path()
+      ..moveTo(0, s.height * 0.86)
+      ..quadraticBezierTo(
+        s.width * 0.5,
+        s.height * 0.74,
+        s.width,
+        s.height * 0.84,
+      )
+      ..lineTo(s.width, s.height)
+      ..lineTo(0, s.height)
+      ..close();
+    canvas.drawPath(
+      morro,
+      Paint()..color = Colors.black.withValues(alpha: 0.16),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CeuDoMomento old) =>
+      old.momento != momento || old.largo != largo;
 }
 
 /// O rosto do bicho para a notificação: de perto, contente, fundo opaco.

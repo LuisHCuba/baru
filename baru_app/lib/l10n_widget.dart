@@ -4,40 +4,42 @@
 /// Kotlin escolhe qual frase mostrar pela hora, mas **não escreve** nenhuma
 /// — todas saem daqui já traduzidas, como na barra de notificações.
 ///
-/// Sem número de dias fora do "feito": a frase de amanhã de manhã é gravada
-/// hoje, e um número gravado hoje pode estar errado amanhã.
+/// Curtas, como as do Duolingo ("Let's practice!"): o número da raiz fica
+/// grande em cima, e a frase é o chamado. Sem número dentro dela — a frase
+/// de amanhã de manhã é gravada hoje, e um número gravado hoje pode estar
+/// errado amanhã.
 library;
 
 import 'l10n.dart';
 
 const textosDoWidget = <String, Map<String, String>>{
   'pt': {
-    'widgetFeito': 'A raiz cresceu hoje ✓',
-    'widgetManha': 'Bom dia! 10 min fazem a raiz crescer.',
-    'widgetTarde': '{p} guardou um lugar para você.',
-    'widgetNoite': 'Ainda dá tempo: 10 min hoje.',
-    'widgetMadrugada': '{p} está dormindo.',
+    'widgetFeito': 'Raiz cresceu hoje!',
+    'widgetManha': 'Bom dia! Uma pausa?',
+    'widgetTarde': '{p} guardou um lugar',
+    'widgetNoite': 'Ainda dá tempo hoje',
+    'widgetMadrugada': '{p} está dormindo',
   },
   'en': {
-    'widgetFeito': 'Your roots grew today ✓',
-    'widgetManha': 'Good morning! 10 min grow your roots.',
-    'widgetTarde': '{p} saved you a spot.',
-    'widgetNoite': 'Still time: 10 min today.',
-    'widgetMadrugada': '{p} is asleep.',
+    'widgetFeito': 'Roots grew today!',
+    'widgetManha': 'Morning! A short break?',
+    'widgetTarde': '{p} saved you a spot',
+    'widgetNoite': 'Still time today',
+    'widgetMadrugada': '{p} is asleep',
   },
   'es': {
-    'widgetFeito': 'La raíz creció hoy ✓',
-    'widgetManha': '¡Buen día! 10 min hacen crecer la raíz.',
-    'widgetTarde': '{p} te guardó un lugar.',
-    'widgetNoite': 'Aún hay tiempo: 10 min hoy.',
-    'widgetMadrugada': '{p} está durmiendo.',
+    'widgetFeito': '¡La raíz creció hoy!',
+    'widgetManha': '¡Buen día! ¿Una pausa?',
+    'widgetTarde': '{p} te guardó un lugar',
+    'widgetNoite': 'Aún hay tiempo hoy',
+    'widgetMadrugada': '{p} está durmiendo',
   },
   'zh': {
-    'widgetFeito': '今天根长大了 ✓',
-    'widgetManha': '早上好！专注 10 分钟，根就会长大。',
-    'widgetTarde': '{p} 给你留了个位置。',
-    'widgetNoite': '还来得及：今天 10 分钟。',
-    'widgetMadrugada': '{p} 睡着了。',
+    'widgetFeito': '今天根长大了！',
+    'widgetManha': '早上好！休息一下？',
+    'widgetTarde': '{p} 给你留了位置',
+    'widgetNoite': '今天还来得及',
+    'widgetMadrugada': '{p} 睡着了',
   },
 };
 

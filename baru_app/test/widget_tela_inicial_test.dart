@@ -65,9 +65,10 @@ void _liberaEspecie(AppState a, Species e) {
   a.marcosResgatados = {...a.marcosResgatados, marco.id};
 }
 
-/// Quantas imagens um bicho custa: os cinco momentos do dia e o rosto das
-/// notificações.
-final _porBicho = MomentoDoWidget.values.length + 1;
+/// Quantas imagens um bicho custa: os cinco momentos do dia nos dois
+/// formatos (2×2 e 4×2) e o rosto das notificações.
+final _porBicho =
+    MomentoDoWidget.values.length * FormatoDoWidget.values.length + 1;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -91,9 +92,13 @@ void main() {
       expect(espiao.gravados['baru_uso'], 40);
       expect(espiao.gravados['baru_meta'], 90);
       for (final m in MomentoDoWidget.values) {
-        expect(espiao.gravados['baru_png_${m.name}'], isNotNull);
+        for (final f in FormatoDoWidget.values) {
+          expect(espiao.gravados['baru_png_${m.name}_${f.sufixo}'], isNotNull);
+        }
         expect(espiao.gravados['baru_frase_${m.name}'], isNotNull);
       }
+      expect(espiao.gravados['baru_semana'], hasLength(7));
+      expect(espiao.gravados['baru_letras'], hasLength(7));
       expect(espiao.avisos, 1);
     });
 
@@ -158,6 +163,12 @@ void main() {
   });
 
   group('o tamanho do PNG', () {
+    test('as cenas dos dois formatos também cabem no Binder', () {
+      for (final f in FormatoDoWidget.values) {
+        expect(f.tamanho.width * f.tamanho.height, lessThanOrEqualTo(200000));
+      }
+    });
+
     test('cabe na transação do Binder', () {
       // `setImageViewBitmap` serializa o bitmap **descomprimido** para o
       // processo do launcher, e a transação tem limite prático de ~1 MB. A
@@ -189,7 +200,9 @@ void main() {
       await _manda(_estado());
 
       for (final m in MomentoDoWidget.values) {
-        expect(pedidos['baru_pet_${m.name}'], WidgetService.tamanhoDoPng);
+        for (final f in FormatoDoWidget.values) {
+          expect(pedidos['baru_png_${m.name}_${f.sufixo}'], f.tamanho);
+        }
       }
       expect(pedidos['baru_rosto'], WidgetService.tamanhoDoRosto);
     });
@@ -212,6 +225,31 @@ void main() {
       expect(momentoDoWidget(ontem, as(14)), MomentoDoWidget.tarde);
       expect(momentoDoWidget(ontem, as(20)), MomentoDoWidget.noite);
       expect(momentoDoWidget(null, as(23)), MomentoDoWidget.madrugada);
+    });
+
+    test('a semana desliza com o app fechado e o hoje é de verdade', () {
+      final escrita = DateTime(2026, 10, 27);
+      // Gravada na terça (27/10/2026): sete letras do dia 21 ao 27, com
+      // um congelado no meio e o dia 27 em curso.
+      const gravada = 'eepfppt';
+      // No mesmo dia, igual.
+      expect(semanaNoDia(gravada, escrita, null, escrita), gravada);
+      // Dois dias depois, sem abrir o app: desliza 2, o "t" do dia 27
+      // passou sem presença e vira vazio, o 28 vazio, o 29 em curso.
+      expect(
+        semanaNoDia(gravada, escrita, null, DateTime(2026, 10, 29)),
+        'pfppeet',
+      );
+      // E com a raiz crescida hoje, hoje é presente.
+      expect(
+        semanaNoDia(
+          gravada,
+          escrita,
+          DateTime(2026, 10, 29),
+          DateTime(2026, 10, 29),
+        ),
+        'pfppeep',
+      );
     });
 
     test('nenhum momento usa o bicho triste (laudo 01, sem desespero)', () {

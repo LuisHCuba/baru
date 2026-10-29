@@ -74,6 +74,36 @@ class BaruWidget : AppWidgetProvider() {
             return dia.plusDays(1).atStartOfDay()
         }
 
+        /**
+         * A semana no dia [hoje] a partir da gravada em [escritaEm]. Espelho
+         * exato de `semanaNoDia` (widget_service.dart): `p` presente, `f`
+         * congelado, `t` hoje sem presenca ainda, `e` vazio.
+         */
+        fun semanaNoDia(
+            codigos: String,
+            escritaEm: LocalDate,
+            presenteEm: LocalDate?,
+            hoje: LocalDate,
+        ): String {
+            val desloca = java.time.temporal.ChronoUnit.DAYS
+                .between(escritaEm, hoje).toInt().coerceIn(0, 7)
+            val out = StringBuilder()
+            for (i in 0 until 7) {
+                val data = hoje.minusDays((6 - i).toLong())
+                if (presenteEm != null && presenteEm == data) {
+                    out.append('p')
+                    continue
+                }
+                if (i == 6) {
+                    out.append('t')
+                    continue
+                }
+                val c = codigos.getOrNull(i + desloca) ?: 'e'
+                out.append(if (c == 't') 'e' else c)
+            }
+            return out.toString()
+        }
+
         fun leDia(texto: String?): LocalDate? =
             try {
                 if (texto.isNullOrEmpty()) null else LocalDate.parse(texto)
@@ -190,6 +220,16 @@ class BaruWidget : AppWidgetProvider() {
         }
     }
 
+    /** A pessoa redimensionou: 2x2 e 4x2 sao layouts diferentes. */
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        manager: AppWidgetManager,
+        id: Int,
+        novas: android.os.Bundle,
+    ) {
+        onUpdate(context, manager, intArrayOf(id))
+    }
+
     override fun onUpdate(
         context: Context,
         manager: AppWidgetManager,
@@ -197,6 +237,7 @@ class BaruWidget : AppWidgetProvider() {
     ) {
         val dados = HomeWidgetPlugin.getData(context)
         val agora = LocalDateTime.now()
+        val hoje = agora.toLocalDate()
         val presenteEm = leDia(dados.getString("baru_presente_em", null))
         val qual = momento(presenteEm, agora)
         // A raiz gravada vale ate a meia-noite do dia seguinte a ultima
@@ -204,28 +245,45 @@ class BaruWidget : AppWidgetProvider() {
         // congelamento ou crescido noutro aparelho: o numero sai em vez de
         // mentir, e volta certo quando o app abrir.
         val raizValida = presenteEm != null &&
-            !presenteEm.isBefore(agora.toLocalDate().minusDays(1))
+            !presenteEm.isBefore(hoje.minusDays(1))
+        val raiz = dados.getInt("baru_raiz", 0)
+        val frase = dados.getString("baru_frase_$qual", "") ?: ""
+        val semana = semanaNoDia(
+            dados.getString("baru_semana", "") ?: "",
+            leDia(dados.getString("baru_semana_em", null)) ?: hoje,
+            presenteEm,
+            hoje,
+        )
+        val letras = dados.getString("baru_letras", "") ?: ""
 
         for (id in ids) {
-            val v = RemoteViews(context.packageName, R.layout.baru_widget)
+            // O formato pelo tamanho em que a pessoa deixou o widget: a
+            // partir de ~4 colunas, o largo, com a semana.
+            val largura = manager.getAppWidgetOptions(id)
+                .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+            val largo = largura >= 230
+            val v = RemoteViews(
+                context.packageName,
+                if (largo) R.layout.baru_widget_largo else R.layout.baru_widget,
+            )
 
-            // O bicho. `decodeFile` e nao `setImageViewUri`: o launcher e
+            // A cena. `decodeFile` e nao `setImageViewUri`: o launcher e
             // outro processo e nao teria permissao de ler o nosso arquivo
             // por Uri sem um provider so para isso.
-            val caminho = dados.getString("baru_png_$qual", null)
-                ?: dados.getString("baru_pet_png", null)
-            val bicho = if (caminho != null) leCabendoNoBinder(caminho) else null
-            if (bicho != null) {
+            val caminho = dados.getString(
+                "baru_png_${qual}_${if (largo) "l" else "q"}",
+                null,
+            )
+            val cena = if (caminho != null) leCabendoNoBinder(caminho) else null
+            if (cena != null) {
                 v.setViewVisibility(R.id.baru_pet, View.VISIBLE)
-                v.setImageViewBitmap(R.id.baru_pet, bicho)
+                v.setImageViewBitmap(R.id.baru_pet, cena)
             } else {
-                // Sem imagem, o `ImageView` fica um retangulo vazio e o
-                // widget parece quebrado. Escondendo, o nome e a raiz
-                // ocupam o espaco e o widget continua dizendo alguma coisa.
+                // Sem cena ainda (app nunca foi ao segundo plano): fica o
+                // fundo liso, e o numero e a frase continuam dizendo algo.
                 v.setViewVisibility(R.id.baru_pet, View.GONE)
             }
 
-            val frase = dados.getString("baru_frase_$qual", "") ?: ""
             v.setTextViewText(R.id.baru_frase, frase)
             v.setViewVisibility(
                 R.id.baru_frase,
@@ -233,26 +291,18 @@ class BaruWidget : AppWidgetProvider() {
             )
             v.setContentDescription(R.id.baru_pet, frase)
 
-            val nome = dados.getString("baru_nome", "") ?: ""
-            v.setTextViewText(R.id.baru_nome, nome)
+            v.setTextViewText(R.id.baru_raiz, raiz.toString())
+            v.setViewVisibility(
+                R.id.baru_raiz_linha,
+                if (raizValida) View.VISIBLE else View.GONE,
+            )
 
-            val raiz = dados.getInt("baru_raiz", 0)
-            v.setTextViewText(R.id.baru_raiz, if (raizValida) raiz.toString() else "")
+            if (largo) pintaSemana(v, semana, letras, hoje)
 
-            // A barra da meta. `coerceIn` porque estourar a meta e comum, e
-            // uma barra de 140% desenha lixo.
-            val uso = dados.getInt("baru_uso", 0)
-            val meta = dados.getInt("baru_meta", 0)
-            val pct = if (meta > 0) (uso * 100 / meta).coerceIn(0, 100) else 0
-            v.setProgressBar(R.id.baru_meta, 100, pct, false)
-
-            // Cada pedaco leva ao seu lugar. Um widget que so abre a home
-            // e um atalho com desenho bonito; o valor esta em cortar
-            // caminho para onde a pessoa ja queria ir.
-            //
-            // `data` diferente por destino de proposito: `PendingIntent`
-            // com o mesmo request code e o mesmo Intent e **reaproveitado**
-            // pelo Android, e os tres cliques abririam a mesma tela.
+            // Cada pedaco leva ao seu lugar. `data` diferente por destino:
+            // `PendingIntent` com o mesmo request code e o mesmo Intent e
+            // **reaproveitado** pelo Android, e os cliques abririam a mesma
+            // tela.
             fun abre(destino: String, vista: Int, codigo: Int) {
                 v.setOnClickPendingIntent(
                     vista,
@@ -271,11 +321,45 @@ class BaruWidget : AppWidgetProvider() {
             }
 
             abre("home", R.id.baru_raiz_widget, 0)
-            abre("sequencia", R.id.baru_raiz, 1)
-            abre("tempo", R.id.baru_meta, 2)
+            abre("sequencia", R.id.baru_raiz_linha, 1)
+            if (largo) abre("sequencia", R.id.baru_semana, 2)
 
             manager.updateAppWidget(id, v)
         }
         agendaProximaVirada(context, agora)
+    }
+
+    /** Os 7 circulos da semana, com a inicial do dia em cima. */
+    private fun pintaSemana(
+        v: RemoteViews,
+        semana: String,
+        letras: String,
+        hoje: LocalDate,
+    ) {
+        val letraIds = intArrayOf(
+            R.id.baru_l0, R.id.baru_l1, R.id.baru_l2, R.id.baru_l3,
+            R.id.baru_l4, R.id.baru_l5, R.id.baru_l6,
+        )
+        val diaIds = intArrayOf(
+            R.id.baru_d0, R.id.baru_d1, R.id.baru_d2, R.id.baru_d3,
+            R.id.baru_d4, R.id.baru_d5, R.id.baru_d6,
+        )
+        for (i in 0 until 7) {
+            val data = hoje.minusDays((6 - i).toLong())
+            val k = data.dayOfWeek.value - 1
+            v.setTextViewText(
+                letraIds[i],
+                if (k < letras.length) letras[k].toString() else "",
+            )
+            val (fundo, marca, cor) = when (semana.getOrNull(i)) {
+                'p' -> Triple(R.drawable.baru_dia_feito, "\u2713", 0xFF2F6F3E.toInt())
+                'f' -> Triple(R.drawable.baru_dia_congelado, "\u2744", 0xFF2A7FBF.toInt())
+                't' -> Triple(R.drawable.baru_dia_hoje, "", 0xFFFFFFFF.toInt())
+                else -> Triple(R.drawable.baru_dia_vazio, "", 0xFFFFFFFF.toInt())
+            }
+            v.setInt(diaIds[i], "setBackgroundResource", fundo)
+            v.setTextViewText(diaIds[i], marca)
+            v.setTextColor(diaIds[i], cor)
+        }
     }
 }

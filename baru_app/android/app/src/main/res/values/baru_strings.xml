@@ -3,4 +3,9 @@
     <!-- Aparece na galeria de widgets do sistema, antes de o app abrir:
          e o unico texto do produto que nao pode vir do Dart. -->
     <string name="baru_widget_desc">Seu companheiro na tela inicial</string>
+    <!-- Os dois widgets na lista do Android: nome e descricao de cada um. -->
+    <string name="baru_widget_quadrado">Baru · quadrado</string>
+    <string name="baru_widget_largo">Baru · com a semana</string>
+    <string name="baru_widget_quadrado_desc">O bicho e a sua raiz, mudando ao longo do dia.</string>
+    <string name="baru_widget_largo_desc">O bicho, a raiz e a semana, mudando ao longo do dia.</string>
 </resources>

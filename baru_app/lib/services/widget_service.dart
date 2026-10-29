@@ -212,6 +212,10 @@ class WidgetService {
   /// Tem de bater com o nome da classe Kotlin do provider.
   static const provider = 'BaruWidget';
 
+  /// Os dois widgets da lista do Android: o quadrado e o retangular. Cada
+  /// um é uma classe Kotlin (mesma lógica) e precisa do seu aviso.
+  static const provedores = [provider, 'BaruWidgetLargo'];
+
   /// Mesmo padrão do som e do vigia: `MethodChannel` exige binding, e o
   /// domínio é testado sem nenhum.
   bool _armado = false;
@@ -393,8 +397,11 @@ class WidgetService {
   Future<void> _gravaDeVerdade(String chave, Object valor) =>
       HomeWidget.saveWidgetData<Object>(chave, valor);
 
-  Future<void> _avisaDeVerdade() =>
-      HomeWidget.updateWidget(androidName: provider);
+  Future<void> _avisaDeVerdade() async {
+    for (final nome in provedores) {
+      await HomeWidget.updateWidget(androidName: nome);
+    }
+  }
 }
 
 /// O que vira PNG: a cena inteira do widget, de ponta a ponta.

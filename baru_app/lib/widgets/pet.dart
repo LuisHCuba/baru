@@ -462,6 +462,12 @@ class PetView extends StatefulWidget {
   @visibleForTesting
   static ValueNotifier<Offset?>? observadorDoCentro;
 
+  /// Onde o rastro do afago está sendo desenhado, levado de volta para a
+  /// caixa do gesto. Nulo em produção — o teste confere que ele cai
+  /// embaixo do dedo, em qualquer escala.
+  @visibleForTesting
+  static ValueNotifier<Offset?>? observadorDoDedo;
+
   /// O episódio do motor de vida a cada quadro. Nulo em produção — existe
   /// para a filmagem de revisão recortar cada comportamento (pesquisa 24).
   @visibleForTesting
@@ -1160,14 +1166,7 @@ class _PetViewState extends State<PetView>
     _vida.tocado(_relativoAoCorpo(detalhe.localPosition));
 
     // Olha para o dedo.
-    final tamanho = Size(widget.width, widget.height);
-    final local = detalhe.localPosition;
-    setState(() {
-      _olhar = Offset(
-        ((local.dx / tamanho.width) * 2 - 1).clamp(-1.0, 1.0),
-        ((local.dy / tamanho.height) * 2 - 1).clamp(-1.0, 1.0),
-      );
-    });
+    setState(() => _olhar = _olharPara(detalhe.localPosition));
     _voltaAOlharPraFrente?.cancel();
     _voltaAOlharPraFrente = Timer(const Duration(milliseconds: 1600), () {
       if (mounted) setState(() => _olhar = Offset.zero);
@@ -1227,6 +1226,12 @@ class _PetViewState extends State<PetView>
     return Offset(d.dx.clamp(-1.5, 1.5), d.dy.clamp(-1.5, 1.5));
   }
 
+  /// Para onde olhar, -1..1, a partir de um ponto da tela.
+  Offset _olharPara(Offset tela) {
+    final r = _relativoAoCorpo(tela);
+    return Offset(r.dx.clamp(-1.0, 1.0), r.dy.clamp(-1.0, 1.0));
+  }
+
   /// O toque só é dele se cair perto do corpo: com a caixa larga do
   /// passeio, o resto do habitat continua rolando a página.
   bool _tocaNoCorpo(Offset tela) {
@@ -1275,7 +1280,8 @@ class _PetViewState extends State<PetView>
     _percorrido = 0;
     _desdeORonrom = 0;
     _afagoCreditado = false;
-    setState(() => _dedo = d.localPosition);
+    setState(() => _dedo = _noDesenho(d.localPosition));
+    PetView.observadorDoDedo?.value = _naTela(_dedo!);
   }
 
   void _afaga(DragUpdateDetails d) {
@@ -1300,21 +1306,25 @@ class _PetViewState extends State<PetView>
       widget.aoCarinho?.call();
     }
 
-    final tamanho = Size(widget.width, widget.height);
     setState(() {
-      _dedo = d.localPosition;
-      // Ele acompanha a mão com o olhar enquanto está sendo afagado.
-      _olhar = Offset(
-        ((d.localPosition.dx / tamanho.width) * 2 - 1).clamp(-1.0, 1.0),
-        ((d.localPosition.dy / tamanho.height) * 2 - 1).clamp(-1.0, 1.0),
-      );
+      // **No desenho, não na tela.** O gesto chega nas coordenadas da caixa
+      // sem escala, e o pintor desenha dentro do `Transform.scale`: usar a
+      // posição crua punha o rastro do afago longe do dedo — tanto mais
+      // longe quanto maior a escala e mais afastado do pivô, e por isso
+      // "pulando" de lugar de uma tela para outra.
+      _dedo = _noDesenho(d.localPosition);
+      // Ele acompanha a mão com o olhar — relativo ao corpo dele, não à
+      // caixa, que no mundo é a largura inteira do passeio.
+      _olhar = _olharPara(d.localPosition);
     });
+    PetView.observadorDoDedo?.value = _naTela(_dedo!);
   }
 
   void _terminaAfago() {
     if (!widget.interativo) return;
     _vida.soltouAfago();
     setState(() => _dedo = null);
+    PetView.observadorDoDedo?.value = null;
     // Desce sozinho: a satisfação não some no instante em que a mão sai.
     if (_gosto.value > 0) _gosto.reverse();
     _voltaAOlharPraFrente?.cancel();

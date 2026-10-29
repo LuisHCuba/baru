@@ -41,7 +41,7 @@ import java.time.ZoneId
  * widget, e ele se atualiza quando o aparelho acorda. Nada de
  * `updatePeriodMillis`, que redesenharia a cada 30 min o que nao mudou.
  */
-class BaruWidget : AppWidgetProvider() {
+open class BaruWidget : AppWidgetProvider() {
 
     private companion object {
         /** ~4 bytes por pixel; 250 mil ja encostam no teto do Binder. */
@@ -111,19 +111,36 @@ class BaruWidget : AppWidgetProvider() {
                 null
             }
 
+        /**
+         * Os dois widgets da lista do Android: o quadrado (2x2) e o
+         * retangular (4x2, com a semana). Mesma logica, formatos de partida
+         * diferentes.
+         */
+        val PROVEDORES = listOf(BaruWidget::class.java, BaruWidgetLargo::class.java)
+
+        /** O alarme da troca de momento: um so, para os dois widgets. */
+        const val ACAO_VIRADA = "com.lhcx.baru_app.WIDGET_VIRADA"
+
+        fun temAlgum(context: Context): Boolean {
+            val manager = AppWidgetManager.getInstance(context)
+            return PROVEDORES.any {
+                manager.getAppWidgetIds(ComponentName(context, it)).isNotEmpty()
+            }
+        }
+
         /** Pede ao launcher para redesenhar todos os widgets do Baru. */
         fun atualizaTodos(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
-            val ids = manager.getAppWidgetIds(
-                ComponentName(context, BaruWidget::class.java),
-            )
-            if (ids.isEmpty()) return
-            context.sendBroadcast(
-                Intent(context, BaruWidget::class.java).apply {
-                    action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-                },
-            )
+            for (classe in PROVEDORES) {
+                val ids = manager.getAppWidgetIds(ComponentName(context, classe))
+                if (ids.isEmpty()) continue
+                context.sendBroadcast(
+                    Intent(context, classe).apply {
+                        action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                    },
+                )
+            }
         }
     }
 
@@ -137,33 +154,29 @@ class BaruWidget : AppWidgetProvider() {
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
-            Intent.ACTION_MY_PACKAGE_REPLACED -> atualizaTodos(context)
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            ACAO_VIRADA -> atualizaTodos(context)
             else -> super.onReceive(context, intent)
         }
     }
 
     override fun onDisabled(context: Context) {
-        // O ultimo widget saiu da tela: o alarme nao tem mais o que trocar.
-        (context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager)
-            ?.cancel(alarme(context))
+        // O ultimo widget **deste formato** saiu da tela. O alarme so cai
+        // se nao sobrou nenhum do outro.
+        if (!temAlgum(context)) {
+            (context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager)
+                ?.cancel(alarme(context))
+        }
         super.onDisabled(context)
     }
 
-    private fun alarme(context: Context): PendingIntent {
-        val manager = AppWidgetManager.getInstance(context)
-        val ids = manager.getAppWidgetIds(
-            ComponentName(context, BaruWidget::class.java),
-        )
-        return PendingIntent.getBroadcast(
+    private fun alarme(context: Context): PendingIntent =
+        PendingIntent.getBroadcast(
             context,
             7301,
-            Intent(context, BaruWidget::class.java).apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-            },
+            Intent(context, BaruWidget::class.java).setAction(ACAO_VIRADA),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-    }
 
     /** Agenda a proxima troca de momento. Inexato e sem acordar o aparelho. */
     private fun agendaProximaVirada(context: Context, agora: LocalDateTime) {
@@ -363,3 +376,10 @@ class BaruWidget : AppWidgetProvider() {
         }
     }
 }
+
+/**
+ * O widget retangular (4x2) na lista do Android. A logica e a mesma do
+ * quadrado — o layout sai do tamanho (ver `onUpdate`) —; o que muda e o
+ * `appwidget-provider`: tamanho de partida, prévia e descricao.
+ */
+class BaruWidgetLargo : BaruWidget()

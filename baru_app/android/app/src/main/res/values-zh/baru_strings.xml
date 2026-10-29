@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Os dois widgets na lista do Android: nome e descricao de cada um. -->
+    <string name="baru_widget_quadrado">Baru · 方形</string>
+    <string name="baru_widget_largo">Baru · 带一周</string>
+    <string name="baru_widget_quadrado_desc">你的小伙伴和你的根，随一天变化。</string>
+    <string name="baru_widget_largo_desc">你的小伙伴、你的根和这一周，随一天变化。</string>
+    <string name="baru_widget_desc">你的小伙伴和你的根，随一天变化。</string>
+</resources>

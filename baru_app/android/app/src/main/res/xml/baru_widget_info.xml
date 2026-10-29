@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 2x2 no minimo (110x110dp), redimensionavel ate 4x2; a partir de ~4
+<!-- O widget quadrado: comeca 2x2. Redimensionavel; a partir de ~4
      colunas o Kotlin troca para o layout largo, com a semana.
      `updatePeriodMillis="0"`: quem manda atualizar e o app, quando o humor
      muda. O periodico do Android tem minimo de 30 min e gastaria bateria
@@ -17,5 +17,5 @@
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/baru_widget"
     android:previewImage="@drawable/baru_widget_preview"
-    android:description="@string/baru_widget_desc"
+    android:description="@string/baru_widget_quadrado_desc"
     android:widgetCategory="home_screen" />

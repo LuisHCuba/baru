@@ -75,7 +75,13 @@ void main() {
     await tester.pump();
 
     final antes = app.screen;
-    await tester.tap(find.byKey(CartaoDeMissao.chaveDe(missao.id)));
+    // A missão vem do sorteio do dia e pode cair abaixo da dobra: rola até
+    // ela, como a pessoa faria. Sem isto o toque caía fora da tela em
+    // alguns dias e o teste falhava pela data.
+    final cartao = find.byKey(CartaoDeMissao.chaveDe(missao.id));
+    await tester.ensureVisible(cartao);
+    await tester.pumpAndSettle();
+    await tester.tap(cartao);
     await tester.pump();
 
     expect(app.screen, destinoDaMissao(missao));

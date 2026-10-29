@@ -43,11 +43,20 @@ void main() {
   final tocados = <SomDoBaru>[];
   setUp(() {
     tocados.clear();
-    SomService.instance.tocador = (s) async => tocados.add(s);
+    // O limitador de som mede o intervalo no relógio que lhe derem. Com o
+    // de parede, o "mastiga" passava ou era calado conforme a carga da
+    // máquina (suíte inteira em paralelo); com o relógio falso do teste,
+    // o intervalo é o que a cena viveu.
+    SomService.instance
+      ..esqueceOsUltimos()
+      ..agora = (() => TestWidgetsFlutterBinding.instance.clock.now())
+      ..tocador = (s) async => tocados.add(s);
     PetView.observadorDoCentro = ValueNotifier(null);
   });
   tearDown(() {
-    SomService.instance.tocador = null;
+    SomService.instance
+      ..tocador = null
+      ..agora = DateTime.now;
     PetView.observadorDoCentro = null;
   });
 

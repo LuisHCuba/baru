@@ -9,6 +9,7 @@ library;
 import 'data/descanso_do_dia.dart';
 import 'data/descanso_retencao.dart';
 import 'data/missoes.dart';
+import 'data/recados.dart';
 import 'l10n.dart';
 import 'services/notification_service.dart';
 
@@ -48,6 +49,13 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizRisco3Corpo': 'Falta só o seu foco de hoje para a raiz de {n} dias.',
     'raizAmanhaTitulo': '{p} guardou um lugar para você',
     'raizAmanhaCorpo': 'Uma sessão de foco hoje faz a raiz crescer.',
+    'descansoLembrete4Titulo': '{n} guardou um cantinho tranquilo',
+    'descansoLembrete4Corpo': '{m} minutos longe da tela e o dia fica mais leve.',
+    'descansoLembrete5Titulo': 'Hora de esticar as pernas?',
+    'descansoLembrete5Corpo': 'Uma pausa de {m} minutos, e {n} descansa junto.',
+    'despedidaTitulo': 'Vou ficar quietinho',
+    'despedidaCorpo':
+        'Não mando mais lembretes. Quando quiser voltar, {n} vai estar aqui.',
     'canalNomeFim': 'Sessão concluída',
     'canalNomeRaiz': 'Raiz',
     'canalNomeConvite': 'Convite do dia',
@@ -94,6 +102,15 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizRisco3Corpo': 'All your {n}-day roots need now is your focus today.',
     'raizAmanhaTitulo': '{p} saved you a spot',
     'raizAmanhaCorpo': 'One focus session today makes your roots grow.',
+    'descansoLembrete4Titulo': '{n} saved a quiet corner',
+    'descansoLembrete4Corpo':
+        '{m} minutes away from the screen and the day feels lighter.',
+    'descansoLembrete5Titulo': 'Time to stretch your legs?',
+    'descansoLembrete5Corpo': 'A {m}-minute break, and {n} rests with you.',
+    'despedidaTitulo': "I'll keep quiet now",
+    'despedidaCorpo':
+        'No more reminders from me. Whenever you want to come back, {n} will '
+            'be here.',
     'canalNomeFim': 'Session finished',
     'canalNomeRaiz': 'Roots',
     'canalNomeConvite': 'Daily invite',
@@ -141,6 +158,14 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizRisco3Corpo': 'Solo falta tu foco de hoy para la raíz de {n} días.',
     'raizAmanhaTitulo': '{p} te guardó un lugar',
     'raizAmanhaCorpo': 'Una sesión de foco hoy hace crecer tu raíz.',
+    'descansoLembrete4Titulo': '{n} guardó un rincón tranquilo',
+    'descansoLembrete4Corpo':
+        '{m} minutos lejos de la pantalla y el día se vuelve más ligero.',
+    'descansoLembrete5Titulo': '¿Hora de estirar las piernas?',
+    'descansoLembrete5Corpo': 'Una pausa de {m} minutos, y {n} descansa contigo.',
+    'despedidaTitulo': 'Me quedo calladito',
+    'despedidaCorpo':
+        'No mando más recordatorios. Cuando quieras volver, {n} estará aquí.',
     'canalNomeFim': 'Sesión terminada',
     'canalNomeRaiz': 'Raíz',
     'canalNomeConvite': 'Invitación del día',
@@ -181,6 +206,12 @@ const textosDoDescanso = <String, Map<String, String>>{
     'raizRisco3Corpo': '{n} 天的根只差你今天的一次专注。',
     'raizAmanhaTitulo': '{p} 给你留了个位置',
     'raizAmanhaCorpo': '今天专注一次，根就会长。',
+    'descansoLembrete4Titulo': '{n} 留了一个安静的角落',
+    'descansoLembrete4Corpo': '离开屏幕 {m} 分钟，一天都会轻松些。',
+    'descansoLembrete5Titulo': '起来活动一下？',
+    'descansoLembrete5Corpo': '休息 {m} 分钟，{n} 陪你一起。',
+    'despedidaTitulo': '我先安静一会儿',
+    'despedidaCorpo': '我不再发提醒了。想回来的时候，{n} 一直在这里。',
     'canalNomeFim': '专注完成',
     'canalNomeRaiz': '根',
     'canalNomeConvite': '每日邀请',
@@ -229,6 +260,12 @@ extension TextosDoDescanso on T {
   String get raizRisco3Corpo => s('raizRisco3Corpo');
   String get raizAmanhaTitulo => s('raizAmanhaTitulo');
   String get raizAmanhaCorpo => s('raizAmanhaCorpo');
+  String get descansoLembrete4Titulo => s('descansoLembrete4Titulo');
+  String get descansoLembrete4Corpo => s('descansoLembrete4Corpo');
+  String get descansoLembrete5Titulo => s('descansoLembrete5Titulo');
+  String get descansoLembrete5Corpo => s('descansoLembrete5Corpo');
+  String get despedidaTitulo => s('despedidaTitulo');
+  String get despedidaCorpo => s('despedidaCorpo');
   String get canalNomeFim => s('canalNomeFim');
   String get canalNomeRaiz => s('canalNomeRaiz');
   String get canalNomeConvite => s('canalNomeConvite');
@@ -301,51 +338,133 @@ Map<TipoDeLembrete, TextoDeLembrete> textosDosLembretes(
   required int minutosDeDescanso,
   RaizEmRisco? risco,
   DateTime? dia,
+  HistoricoDeRecados? historico,
 }) {
   garanteTextosDoDescanso();
   // Um texto por dia, girando: o mesmo recado todo dia é o que ensina a
   // ignorar recado (laudo 01, §9.5 — a penalidade de recência do Duolingo,
   // na versão que cabe no aparelho e não manda nada para servidor).
   final giro = _giroDoDia(dia ?? DateTime.now());
-  final descansos = [
-    (t.descansoLembreteTitulo, t.descansoLembreteCorpo),
-    (t.descansoLembrete2Titulo, t.descansoLembrete2Corpo),
-    (t.descansoLembrete3Titulo, t.descansoLembrete3Corpo),
-  ];
-  final (tituloDoDescanso, corpoDoDescanso) =
-      descansos[giro % descansos.length];
-  final valores = {'n': nomeDoPet, 'm': minutosDeDescanso};
   final mapa = <TipoDeLembrete, TextoDeLembrete>{
-    TipoDeLembrete.descanso: TextoDeLembrete(
-      titulo: t.fill(tituloDoDescanso, valores),
-      corpo: t.fill(corpoDoDescanso, valores),
+    TipoDeLembrete.descanso: _escolheUm(
+      modelosDoConvite(
+        t,
+        nomeDoPet: nomeDoPet,
+        minutosDeDescanso: minutosDeDescanso,
+      ),
+      historico,
+      dia ?? DateTime.now(),
+      giro,
     ),
   };
 
   if (risco != null) {
-    final marco = risco.proximoMarco;
-    final falta = risco.faltaParaOMarco;
-    final raiz = {'n': risco.dias, 'p': nomeDoPet};
-    final riscos = [
-      (t.raizRiscoTitulo, t.raizRiscoCorpo),
-      (t.raizRisco2Titulo, t.raizRisco2Corpo),
-      (t.raizRisco3Titulo, t.raizRisco3Corpo),
-    ];
-    final (tituloDoRisco, corpoDoRisco) = riscos[giro % riscos.length];
-    mapa[TipoDeLembrete.raizEmRisco] = risco.vaiQuebrar
-        ? TextoDeLembrete(
-            titulo: t.fill(tituloDoRisco, raiz),
-            corpo: risco.vesperaDeMarco && marco != null && falta != null
-                ? t.fill(t.raizRiscoMarco, {'d': falta, 'm': marco})
-                : t.fill(corpoDoRisco, raiz),
-          )
-        : TextoDeLembrete(
-            titulo: t.raizCongelaTitulo,
-            corpo: t.fill(t.raizCongelaCorpo, {'n': risco.dias}),
-          );
+    if (risco.vaiQuebrar) {
+      mapa[TipoDeLembrete.raizEmRisco] = _escolheUm(
+        modelosDaRaiz(t, nomeDoPet: nomeDoPet, risco: risco),
+        historico,
+        dia ?? DateTime.now(),
+        giro,
+      );
+    } else {
+      mapa[TipoDeLembrete.raizEmRisco] = TextoDeLembrete(
+        titulo: t.raizCongelaTitulo,
+        corpo: t.fill(t.raizCongelaCorpo, {'n': risco.dias}),
+        modelo: 'raizCongela',
+      );
+    }
   }
 
   return mapa;
+}
+
+/// Um texto dentre os candidatos: pelo caderno de recados, se houver; senão
+/// pelo giro do dia (teste, primeira abertura).
+TextoDeLembrete _escolheUm(
+  List<ModeloDeRecado> modelos,
+  HistoricoDeRecados? historico,
+  DateTime quando,
+  int giro,
+) {
+  if (historico == null) return modelos[giro % modelos.length].texto;
+  return historico.escolhe(modelos, [quando]).single.texto;
+}
+
+/// Os modelos do aviso da raiz que vai quebrar.
+///
+/// Na véspera de um marco o corpo diz qual é: são modelos à parte
+/// (`raizMarco…`), elegíveis só nesses dias — o braço "dormente" do paper,
+/// que não é penalizado nem premiado pelos dias em que não podia sair.
+List<ModeloDeRecado> modelosDaRaiz(
+  T t, {
+  required String nomeDoPet,
+  required RaizEmRisco risco,
+}) {
+  garanteTextosDoDescanso();
+  final marco = risco.proximoMarco;
+  final falta = risco.faltaParaOMarco;
+  final noMarco = risco.vesperaDeMarco && marco != null && falta != null;
+  final raiz = {'n': risco.dias, 'p': nomeDoPet};
+  final variantes = [
+    (t.raizRiscoTitulo, t.raizRiscoCorpo),
+    (t.raizRisco2Titulo, t.raizRisco2Corpo),
+    (t.raizRisco3Titulo, t.raizRisco3Corpo),
+  ];
+  return [
+    for (var i = 0; i < variantes.length; i++)
+      ModeloDeRecado(
+        noMarco ? 'raizMarco${i + 1}' : 'raiz${i + 1}',
+        TextoDeLembrete(
+          titulo: t.fill(variantes[i].$1, raiz),
+          corpo: noMarco
+              ? t.fill(t.raizRiscoMarco, {'d': falta, 'm': marco})
+              : t.fill(variantes[i].$2, raiz),
+          modelo: noMarco ? 'raizMarco${i + 1}' : 'raiz${i + 1}',
+        ),
+      ),
+  ];
+}
+
+/// Os modelos do convite do dia (o chamado do descanso).
+List<ModeloDeRecado> modelosDoConvite(
+  T t, {
+  required String nomeDoPet,
+  required int minutosDeDescanso,
+}) {
+  garanteTextosDoDescanso();
+  final valores = {'n': nomeDoPet, 'm': minutosDeDescanso};
+  final variantes = [
+    (t.descansoLembreteTitulo, t.descansoLembreteCorpo),
+    (t.descansoLembrete2Titulo, t.descansoLembrete2Corpo),
+    (t.descansoLembrete3Titulo, t.descansoLembrete3Corpo),
+    (t.descansoLembrete4Titulo, t.descansoLembrete4Corpo),
+    (t.descansoLembrete5Titulo, t.descansoLembrete5Corpo),
+  ];
+  return [
+    for (var i = 0; i < variantes.length; i++)
+      ModeloDeRecado(
+        'convite${i + 1}',
+        TextoDeLembrete(
+          titulo: t.fill(variantes[i].$1, valores),
+          corpo: t.fill(variantes[i].$2, valores),
+          modelo: 'convite${i + 1}',
+        ),
+      ),
+  ];
+}
+
+/// O último recado da escada: avisa que os lembretes param (pesquisa 26).
+///
+/// O do Duolingo ("estes lembretes não parecem estar funcionando") trouxe
+/// muita gente de volta porque soava como desistência — culpa. Este diz o
+/// mesmo fato sem culpa: para, e deixa a porta aberta.
+TextoDeLembrete despedidaDosLembretes(T t, {required String nomeDoPet}) {
+  garanteTextosDoDescanso();
+  return TextoDeLembrete(
+    titulo: t.despedidaTitulo,
+    corpo: t.fill(t.despedidaCorpo, {'n': nomeDoPet}),
+    modelo: 'despedida',
+  );
 }
 
 /// O índice do dia no ano, para girar os textos.
@@ -361,6 +480,7 @@ TextoDeLembrete textoDeAmanhaSemNumero(T t, {required String nomeDoPet}) {
   return TextoDeLembrete(
     titulo: t.fill(t.raizAmanhaTitulo, {'p': nomeDoPet}),
     corpo: t.raizAmanhaCorpo,
+    modelo: 'raizAmanha',
   );
 }
 

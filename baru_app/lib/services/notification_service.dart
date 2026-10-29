@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../data/descanso_do_dia.dart';
 import '../data/descanso_retencao.dart';
+import '../data/recados.dart';
 
 /// Notificações locais: relatório da noite (21h) e "senti sua falta".
 class BaruNotifications {
@@ -51,14 +53,26 @@ class BaruNotifications {
   static const raizHojeId = 1007;
   static const raizAmanhaId = 1008;
 
+  /// A escada de convites (pesquisa 26): um por dia de ausência, de hoje
+  /// até o 6º dia — ids 1110 a 1116 —, e a despedida no 7º.
+  static const escadaId = 1110;
+  static const escadaTamanho = 7;
+  static const despedidaId = 1120;
+
   /// Canal separado: a sessão é persistente e silenciosa; os lembretes tocam.
   static const canalSessao = 'baru_sessao';
 
   /// Um canal por tipo de recado (laudo 01, §9.6; orientação do Android:
   /// "crie um canal para cada tipo"). Com um só, quem quisesse calar o
   /// lembrete da raiz calava junto o relatório que pediu.
-  static const canalRaiz = 'baru_raiz';
-  static const canalConvite = 'baru_convite';
+  ///
+  /// Raiz e convite saem com importância **alta**: descem do topo da tela
+  /// (heads-up) em vez de só aparecerem na barra. Importância não muda
+  /// depois que o canal existe, por isso ids novos; os antigos saem em
+  /// [canaisAntigos]. O resto continua no padrão — relatório, volta e conta
+  /// não pedem interromper ninguém.
+  static const canalRaiz = 'baru_raiz_alta';
+  static const canalConvite = 'baru_convite_alto';
   static const canalRelatorio = 'baru_relatorio';
   static const canalVolta = 'baru_volta';
   static const canalConta = 'baru_conta';
@@ -68,6 +82,15 @@ class BaruNotifications {
 
   /// O canal antigo, único. Sai na primeira abertura desta versão.
   static const canalAntigo = 'baru_reminders';
+
+  /// Canais que deixaram de existir.
+  static const canaisAntigos = [canalAntigo, 'baru_raiz', 'baru_convite'];
+
+  /// A importância de cada canal de recado.
+  static Importance importanciaDo(String canal) =>
+      canal == canalRaiz || canal == canalConvite
+          ? Importance.high
+          : Importance.defaultImportance;
 
   /// Os canais de recado, na ordem em que aparecem nos ajustes do sistema.
   static const canaisDeRecado = [
@@ -101,7 +124,10 @@ class BaruNotifications {
 
   /// Um toque no corpo de uma notificação (não num botão dela).
   @visibleForTesting
-  void recebeRota(String? rota) {
+  void recebeRota(String? payload) {
+    // `rota|modelo`: o modelo viaja junto para quem quiser saber de onde o
+    // toque veio; quem abre a tela só precisa da rota.
+    final rota = payload?.split('|').first;
     if (rota == null || rota.isEmpty) return;
     final f = _aoAbrirRota;
     if (f == null) {
@@ -314,16 +340,14 @@ class BaruNotifications {
           AndroidFlutterLocalNotificationsPlugin>();
       // O canal único de antes sai uma vez. A preferência que a pessoa
       // tinha nele se perde — aceitável uma vez, e dito na nota da versão.
-      await android?.deleteNotificationChannel(channelId: canalAntigo);
+      for (final antigo in canaisAntigos) {
+        await android?.deleteNotificationChannel(channelId: antigo);
+      }
       // Nomes provisórios: os traduzidos chegam por [nomeiaCanais] assim
       // que o idioma da pessoa é conhecido.
       for (final id in canaisDeRecado) {
         await android?.createNotificationChannel(
-          AndroidNotificationChannel(
-            id,
-            id,
-            importance: Importance.defaultImportance,
-          ),
+          AndroidNotificationChannel(id, id, importance: importanciaDo(id)),
         );
       }
       // A sessão fica fixa na barra e não pode tocar nem vibrar: o usuário
@@ -352,10 +376,11 @@ class BaruNotifications {
         AndroidFlutterLocalNotificationsPlugin>();
     for (final e in nomes.entries) {
       await android?.createNotificationChannel(
+        // A importância de novo: recriar com uma menor rebaixaria o canal.
         AndroidNotificationChannel(
           e.key,
           e.value,
-          importance: Importance.defaultImportance,
+          importance: importanciaDo(e.key),
         ),
       );
     }
@@ -759,21 +784,24 @@ class BaruNotifications {
   /// exatamente quem não vai abrir o app amanhã. Um aviso que só existe
   /// enquanto o app é aberto avisa quem não precisa. Os dois agendamentos
   /// são desfeitos assim que a pessoa aparece.
-  Future<void> sincronizaRetencao({
+  Future<List<RecadoAgendado>> sincronizaRetencao({
     required List<LembreteDoDia> plano,
     required Map<TipoDeLembrete, TextoDeLembrete> textos,
     TextoDeLembrete? textoDeAmanha,
     int? horaDeAmanha,
     DateTime? agora,
+    List<({DateTime quando, TextoDeLembrete texto})>? escada,
+    ({DateTime quando, TextoDeLembrete texto})? despedida,
   }) async {
-    if (kIsWeb || !_ready) return;
+    if (kIsWeb || !_ready) return const [];
 
     if (!await hasPermission()) {
       await _cancelaRetencao();
-      return;
+      return const [];
     }
 
     final quandoAgora = agora ?? DateTime.now();
+    final marcados = <RecadoAgendado>[];
 
     LembreteDoDia? doTipo(TipoDeLembrete tipo) {
       for (final l in plano) {
@@ -782,20 +810,77 @@ class BaruNotifications {
       return null;
     }
 
-    await _agendaDescanso(doTipo(TipoDeLembrete.descanso), textos, quandoAgora);
+    final convite = doTipo(TipoDeLembrete.descanso);
+    if (escada != null) {
+      // A escada substitui o convite que se repetia todo dia para sempre.
+      await _plugin.cancel(id: descansoId);
+      await _agendaEscada(
+        convite == null ? const [] : escada,
+        convite == null ? null : despedida,
+        quandoAgora,
+        marcados,
+      );
+    } else {
+      await _agendaDescanso(convite, textos, quandoAgora);
+    }
     await _agendaRaiz(
       doTipo(TipoDeLembrete.raizEmRisco),
       textos,
       quandoAgora,
+      marcados,
       textoDeAmanha: textoDeAmanha,
       horaDeAmanha: horaDeAmanha,
     );
+    return marcados;
   }
 
   Future<void> _cancelaRetencao() async {
     await _plugin.cancel(id: descansoId);
     await _plugin.cancel(id: raizHojeId);
     await _plugin.cancel(id: raizAmanhaId);
+    for (var i = 0; i < escadaTamanho; i++) {
+      await _plugin.cancel(id: escadaId + i);
+    }
+    await _plugin.cancel(id: despedidaId);
+  }
+
+  /// Um convite por dia de ausência e, no fim, a despedida.
+  ///
+  /// Tudo é cancelado e refeito a cada abertura do app: a escada só chega
+  /// inteira a quem sumiu. Quem aparece todo dia só recebe o primeiro
+  /// degrau — e nem esse, se já cumpriu o dia.
+  Future<void> _agendaEscada(
+    List<({DateTime quando, TextoDeLembrete texto})> escada,
+    ({DateTime quando, TextoDeLembrete texto})? despedida,
+    DateTime agora,
+    List<RecadoAgendado> marcados,
+  ) async {
+    for (var i = 0; i < escadaTamanho; i++) {
+      final degrau = i < escada.length ? escada[i] : null;
+      if (degrau == null || !degrau.quando.isAfter(agora)) {
+        await _plugin.cancel(id: escadaId + i);
+        continue;
+      }
+      await _agendaEm(
+        escadaId + i,
+        degrau.quando,
+        degrau.texto,
+        _detalhesDeLembrete(canalConvite),
+        rota: rotaMissoes,
+      );
+      marcados.add(RecadoAgendado(degrau.texto.modelo, degrau.quando));
+    }
+    if (despedida == null || !despedida.quando.isAfter(agora)) {
+      await _plugin.cancel(id: despedidaId);
+      return;
+    }
+    await _agendaEm(
+      despedidaId,
+      despedida.quando,
+      despedida.texto,
+      _detalhesDeLembrete(canalVolta),
+    );
+    marcados.add(RecadoAgendado(despedida.texto.modelo, despedida.quando));
   }
 
   Future<void> _agendaDescanso(
@@ -833,7 +918,8 @@ class BaruNotifications {
   Future<void> _agendaRaiz(
     LembreteDoDia? lembrete,
     Map<TipoDeLembrete, TextoDeLembrete> textos,
-    DateTime agora, {
+    DateTime agora,
+    List<RecadoAgendado> marcados, {
     TextoDeLembrete? textoDeAmanha,
     int? horaDeAmanha,
   }) async {
@@ -851,6 +937,7 @@ class BaruNotifications {
       );
       if (hoje.isAfter(agora)) {
         await _agendaEm(raizHojeId, hoje, texto, detalhes);
+        marcados.add(RecadoAgendado(texto.modelo, hoje));
       } else {
         // A hora do aviso já passou. Mandar agora seria chegar depois do
         // ponto em que ainda dava para fazer alguma coisa.
@@ -870,14 +957,16 @@ class BaruNotifications {
     }
     final amanha = DateTime(agora.year, agora.month, agora.day + 1, hora);
     await _agendaEm(raizAmanhaId, amanha, textoDeAmanha, detalhes);
+    marcados.add(RecadoAgendado(textoDeAmanha.modelo, amanha));
   }
 
   Future<void> _agendaEm(
     int id,
     DateTime quando,
     TextoDeLembrete texto,
-    NotificationDetails detalhes,
-  ) async {
+    NotificationDetails detalhes, {
+    String rota = rotaHome,
+  }) async {
     await _plugin.zonedSchedule(
       id: id,
       title: texto.titulo,
@@ -892,17 +981,79 @@ class BaruNotifications {
       ),
       notificationDetails: detalhes,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      payload: rotaHome,
+      payload: texto.modelo.isEmpty ? rota : '$rota|${texto.modelo}',
     );
   }
+
+  /// Onde o caderno de recados mora. Só neste aparelho (pesquisa 26).
+  static const chaveDoCaderno = 'baru_recados_v1';
+
+  /// Abre o caderno e fecha a conta do que já tocou até [agora].
+  ///
+  /// Nulo sem plataforma (teste, web) ou sem permissão: sem notificação não
+  /// há o que aprender, e um caderno aberto à toa contaria envio que não
+  /// houve.
+  Future<HistoricoDeRecados?> abreCaderno(DateTime agora) async {
+    if (kIsWeb || !_ready) return null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final caderno = HistoricoDeRecados.fromJsonString(
+        prefs.getString(chaveDoCaderno),
+      );
+      if (!await hasPermission()) {
+        caderno.pendentes = [];
+        return null;
+      }
+      caderno.fecha(agora);
+      return caderno;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Guarda o caderno com o que acabou de ser agendado.
+  Future<void> guardaCaderno(
+    HistoricoDeRecados caderno,
+    List<RecadoAgendado> marcados,
+  ) async {
+    if (kIsWeb || !_ready) return;
+    caderno.pendentes = marcados;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(chaveDoCaderno, caderno.toJsonString());
+    } catch (_) {
+      // Sem disco, sem aprendizado: o recado sai do mesmo jeito.
+    }
+  }
+
+  /// O rosto do bicho, para o ícone grande dos recados.
+  ///
+  /// A personalidade do Duo nasceu do rosto da coruja aparecendo em toda
+  /// notificação (Luis von Ahn, Acquired). O ícone pequeno da barra é
+  /// monocromático por regra do Android; o grande é onde o bicho aparece.
+  /// Caminho de um PNG gravado pelo `WidgetService`; nulo até existir.
+  String? caminhoDoRosto;
 
   /// Os detalhes de um recado, no canal do tipo dele. O nome que aparece
   /// nos ajustes do sistema vem de [nomeiaCanais]; aqui vai o id, que o
   /// Android só usa se o canal ainda não existir.
-  NotificationDetails _detalhesDeLembrete(String canal) => NotificationDetails(
-        android: AndroidNotificationDetails(canal, canal),
-        iOS: const DarwinNotificationDetails(),
-      );
+  NotificationDetails _detalhesDeLembrete(String canal) {
+    final rosto = caminhoDoRosto;
+    final alta = importanciaDo(canal) == Importance.high;
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        canal,
+        canal,
+        importance: importanciaDo(canal),
+        priority: alta ? Priority.high : Priority.defaultPriority,
+        largeIcon: rosto == null ? null : FilePathAndroidBitmap(rosto),
+        // Recado de hábito, não segredo: legível na tela de bloqueio.
+        visibility: NotificationVisibility.public,
+        category: AndroidNotificationCategory.reminder,
+      ),
+      iOS: const DarwinNotificationDetails(),
+    );
+  }
 
   Future<void> syncSchedules({
     required bool evening,

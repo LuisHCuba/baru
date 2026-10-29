@@ -19,11 +19,13 @@ import 'data/resumo_da_sessao.dart';
 import 'data/quiz.dart';
 import 'data/supabase_gateway.dart';
 import 'data/tempo_de_tela.dart';
+import 'data/recados.dart';
 import 'l10n.dart';
 import 'l10n_descanso.dart';
 import 'l10n_humor.dart';
 import 'l10n_missoes.dart';
 import 'l10n_sobreposicao.dart';
+import 'l10n_widget.dart';
 import 'theme.dart';
 import 'models.dart';
 import 'navegacao.dart';
@@ -1811,6 +1813,15 @@ class AppState extends ChangeNotifier {
       congelamentos: freezesLeft,
       proximoMarco: RaizViva.proximoMarco(streak),
     );
+    // 23,5 h depois da primeira prática (pesquisa 26): o começo do
+    // primeiro foco do último dia com foco, menos meia hora.
+    final horaDoChamado = horaDoConvite(
+      primeiraPratica: primeiraPraticaDoUltimoDia(
+        sessions.map((s) => (at: s.at, dur: s.dur, completed: s.completed)),
+      ),
+      agora: agora,
+      habito: habito,
+    );
     final plano = planoDeLembretes(
       habito: habito,
       descansoFeitoHoje: missaoDoDescanso.concluida,
@@ -1818,6 +1829,7 @@ class AppState extends ChangeNotifier {
       risco: risco,
       relatorioLigado: evening,
       horaDoRelatorio: eveningHour,
+      convite: horaDoChamado,
     );
 
     // O aviso de amanhã, com o estado de amanhã (laudo 01, A6). Quem esteve
@@ -1867,7 +1879,50 @@ class AppState extends ChangeNotifier {
     }
 
     await BaruNotifications.instance.nomeiaCanais(nomesDosCanais(t));
-    await BaruNotifications.instance.sincronizaRetencao(
+    final notif = BaruNotifications.instance;
+    notif.caminhoDoRosto = await WidgetService.instance.caminhoDoRosto();
+    final caderno = await notif.abreCaderno(agora);
+
+    // A escada de convites: um por dia de ausência, depois a despedida e
+    // silêncio (pesquisa 26). O dia do recado de volta fica sem convite —
+    // dois "volte" no mesmo dia é insistência.
+    final degraus = <({DateTime quando, TextoDeLembrete texto})>[];
+    ({DateTime quando, TextoDeLembrete texto})? despedida;
+    LembreteDoDia? chamado;
+    for (final l in plano) {
+      if (l.tipo == TipoDeLembrete.descanso) chamado = l;
+    }
+    if (chamado != null) {
+      final escada = escadaDeConvites(
+        agora: agora,
+        hora: chamado.hora,
+        minuto: chamado.minuto,
+        pulaHoje: chamado.pulaHoje,
+      );
+      final diaDaVolta = DateTime(agora.year, agora.month, agora.day + 2);
+      final quandos = [
+        for (final q in escada.convites)
+          if (!(missed &&
+              DateTime(q.year, q.month, q.day) == diaDaVolta))
+            q,
+      ];
+      final modelos = modelosDoConvite(
+        t,
+        nomeDoPet: displayName,
+        minutosDeDescanso: missaoDoDescanso.alvo,
+      );
+      final escolhidos = caderno?.escolhe(modelos, quandos) ??
+          [for (var i = 0; i < quandos.length; i++) modelos[i % modelos.length]];
+      for (var i = 0; i < quandos.length; i++) {
+        degraus.add((quando: quandos[i], texto: escolhidos[i].texto));
+      }
+      despedida = (
+        quando: escada.despedida,
+        texto: despedidaDosLembretes(t, nomeDoPet: displayName),
+      );
+    }
+
+    final marcados = await notif.sincronizaRetencao(
       plano: plano,
       textos: textosDosLembretes(
         t,
@@ -1875,10 +1930,14 @@ class AppState extends ChangeNotifier {
         minutosDeDescanso: missaoDoDescanso.alvo,
         risco: risco,
         dia: agora,
+        historico: caderno,
       ),
       textoDeAmanha: textoDeAmanha,
       horaDeAmanha: horaDeAmanha,
+      escada: degraus,
+      despedida: despedida,
     );
+    if (caderno != null) await notif.guardaCaderno(caderno, marcados);
   }
 
   /// Onboarding passo 6 — abre fluxo nativo; só avança se o SO conceder.
@@ -3081,16 +3140,36 @@ class AppState extends ChangeNotifier {
   ///
   /// Além do defeito, era a hora errada: o widget existe para quando o app
   /// **não** está na frente. Quem manda é o ciclo de vida.
-  EstadoDoWidget get estadoDoWidget => EstadoDoWidget(
-        especie: species,
-        humor: mood,
-        pelagem: color,
-        nome: displayName,
-        raiz: streak,
-        usoDoDia: usage,
-        meta: goal,
-        estagio: estagio,
-      );
+  EstadoDoWidget get estadoDoWidget {
+    garanteTextosDoWidget();
+    final agora = DateTime.now();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    final nome = {'p': displayName};
+    return EstadoDoWidget(
+      especie: species,
+      pelagem: color,
+      nome: displayName,
+      raiz: streak,
+      usoDoDia: usage,
+      meta: goal,
+      estagio: estagio,
+      // Hoje, se a raiz já cresceu. Senão, uma raiz viva quer dizer que
+      // ontem contou (foco ou congelamento): o número vale até a meia-noite
+      // de hoje, e o widget o esconde depois disso em vez de chutar.
+      presenteEm: completedToday > 0
+          ? hoje
+          : streak > 0
+              ? hoje.subtract(const Duration(days: 1))
+              : null,
+      frases: {
+        MomentoDoWidget.feito: t.widgetFeito,
+        MomentoDoWidget.manha: t.widgetManha,
+        MomentoDoWidget.tarde: t.fill(t.widgetTarde, nome),
+        MomentoDoWidget.noite: t.widgetNoite,
+        MomentoDoWidget.madrugada: t.fill(t.widgetMadrugada, nome),
+      },
+    );
+  }
 
   /// O bicho da sobreposição: o mesmo da home, vestido igual.
   AparenciaDoBicho get aparenciaDoBicho => AparenciaDoBicho(

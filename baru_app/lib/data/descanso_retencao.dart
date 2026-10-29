@@ -262,10 +262,18 @@ enum TipoDeLembrete {
 /// Chega pronto, como a fala do vigia: quem agenda não escreve frase, e o
 /// catálogo não sabe a que horas nada acontece.
 class TextoDeLembrete {
-  const TextoDeLembrete({required this.titulo, required this.corpo});
+  const TextoDeLembrete({
+    required this.titulo,
+    required this.corpo,
+    this.modelo = '',
+  });
 
   final String titulo;
   final String corpo;
+
+  /// O id estável do modelo de onde o texto saiu (`recados.dart`): é por
+  /// ele que o aparelho aprende qual recado funciona com esta pessoa.
+  final String modelo;
 }
 
 /// Um lembrete já decidido: tipo, hora e como ele se repete.
@@ -323,6 +331,9 @@ List<LembreteDoDia> planoDeLembretes({
   int horaSemHabito = 17,
   int intervaloMinimoEmHoras = 3,
   int maximoPorDia = 2,
+  // O horário dos 23,5 h (`horaDoConvite`, pesquisa 26). Sem ele, a hora
+  // do hábito.
+  ({int hora, int minuto})? convite,
 }) {
   final plano = <LembreteDoDia>[];
   final ocupadas = <int>[if (relatorioLigado) horaDoRelatorio];
@@ -361,13 +372,13 @@ List<LembreteDoDia> planoDeLembretes({
     // Dentro da janela de 8h a 21h: quem foca às 6h não quer o telefone
     // tocando às 6h, e o alarme inexato ainda pode chegar uma hora depois
     // (laudo 01, §9.3).
-    final hora = (habito?.hora ?? horaSemHabito).clamp(8, 21);
+    final hora = convite?.hora ?? (habito?.hora ?? horaSemHabito).clamp(8, 21);
     if (cabe(hora)) {
       plano.add(
         LembreteDoDia(
           tipo: TipoDeLembrete.descanso,
           hora: hora,
-          minuto: 0,
+          minuto: convite?.minuto ?? 0,
           repeteTodoDia: true,
           // Dia cumprido é silêncio (laudo 01, §9.3): quem já fez a raiz
           // crescer hoje não é chamado de novo hoje.

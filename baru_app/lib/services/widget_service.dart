@@ -8,11 +8,12 @@
 ///
 /// É o mesmo caminho do gerador de ícone, com uma diferença que muda tudo:
 /// ali roda uma vez, em tempo de teste; aqui roda no aparelho, toda vez que
-/// o humor muda. Por isso [atualiza] compara antes de gravar — rasterizar e
+/// o bicho muda. Por isso [atualiza] compara antes de gravar — rasterizar e
 /// escrever em disco a cada `notifyListeners` seria custo por nada.
 library;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -23,48 +24,110 @@ import '../models.dart';
 import '../theme.dart';
 import '../widgets/pet.dart';
 
+/// Os momentos do widget ao longo do dia (pesquisa 26).
+///
+/// O widget do Duolingo é "uma série de ilustrações que mostra o humor do
+/// Duo em diferentes partes do dia", e troca sozinho, sem o app abrir. O do
+/// Baru faz o mesmo com o tom invertido do laudo 01 (U9): o bicho acorda,
+/// espera e se aconchega — nunca fica triste nem desesperado.
+///
+/// A escolha acontece no Kotlin, com o app fechado; [momentoDoWidget] é a
+/// mesma regra em Dart, para o teste e para quem lê. As duas têm de bater.
+enum MomentoDoWidget {
+  /// A raiz já cresceu hoje.
+  feito(Mood.radiant, Activity.idle),
+  manha(Mood.content, Activity.idle),
+  tarde(Mood.neutral, Activity.idle),
+  noite(Mood.sleepy, Activity.idle),
+  madrugada(Mood.sleepy, Activity.nap);
+
+  const MomentoDoWidget(this.humor, this.atividade);
+
+  final Mood humor;
+  final Activity atividade;
+}
+
+/// Que momento o widget mostra agora.
+///
+/// Dia feito vale até a meia-noite; depois dela é outro dia, e o bicho
+/// dorme até as 5h. Manhã até 12h, tarde até 18h, noite até 23h.
+MomentoDoWidget momentoDoWidget(DateTime? presenteEm, DateTime agora) {
+  final hoje = DateTime(agora.year, agora.month, agora.day);
+  if (presenteEm != null &&
+      DateTime(presenteEm.year, presenteEm.month, presenteEm.day) == hoje) {
+    return MomentoDoWidget.feito;
+  }
+  final h = agora.hour;
+  if (h < 5 || h >= 23) return MomentoDoWidget.madrugada;
+  if (h < 12) return MomentoDoWidget.manha;
+  if (h < 18) return MomentoDoWidget.tarde;
+  return MomentoDoWidget.noite;
+}
+
+/// `2026-10-29`: o formato que o Kotlin compara com `LocalDate.now()`.
+String diaIso(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
+
 /// O que o widget mostra. Tudo o que muda a imagem ou o texto entra aqui.
 @immutable
 class EstadoDoWidget {
   const EstadoDoWidget({
     required this.especie,
-    required this.humor,
     required this.pelagem,
     required this.nome,
     required this.raiz,
     required this.usoDoDia,
     required this.meta,
+    this.presenteEm,
+    this.frases = const {},
     this.estagio = EstagioDoBicho.adulto,
   });
 
   final Species especie;
-  final Mood humor;
   final int pelagem;
   final String nome;
   final int raiz;
   final int usoDoDia;
   final int meta;
+
+  /// O último dia em que a raiz cresceu. É o que decide, no aparelho e sem
+  /// o app, entre o bicho feliz e o bicho esperando.
+  final DateTime? presenteEm;
+
+  /// Uma frase por momento, já traduzida.
+  final Map<MomentoDoWidget, String> frases;
   final EstagioDoBicho estagio;
 
-  /// Só o que exige redesenhar o bicho.
-  String get chaveDaImagem =>
-      '${especie.name}-${humor.name}-$pelagem-${estagio.name}';
+  /// Só o que exige redesenhar o bicho (os cinco momentos de uma vez).
+  String get chaveDaImagem => '${especie.name}-$pelagem-${estagio.name}';
 
   @override
   bool operator ==(Object other) =>
       other is EstadoDoWidget &&
       other.especie == especie &&
-      other.humor == humor &&
       other.pelagem == pelagem &&
       other.nome == nome &&
       other.raiz == raiz &&
       other.usoDoDia == usoDoDia &&
       other.meta == meta &&
-      other.estagio == estagio;
+      other.estagio == estagio &&
+      other.presenteEm == presenteEm &&
+      mapEquals(other.frases, frases);
 
   @override
-  int get hashCode =>
-      Object.hash(especie, humor, pelagem, nome, raiz, usoDoDia, meta, estagio);
+  int get hashCode => Object.hash(
+    especie,
+    pelagem,
+    nome,
+    raiz,
+    usoDoDia,
+    meta,
+    estagio,
+    presenteEm,
+    Object.hashAll(frases.values),
+  );
 }
 
 class WidgetService {
@@ -158,20 +221,40 @@ class WidgetService {
     _ultimo = e;
 
     try {
-      if (precisaDesenhar) {
-        desenhos++;
-        final caminho = await (rasteriza ?? _rasterizaDeVerdade)(
-          _CenaDoWidget(estado: e),
-          'baru_pet',
-          tamanhoDoPng,
-        );
-        await (gravaDado ?? _gravaDeVerdade)('baru_pet_png', caminho);
-      }
       final grava = gravaDado ?? _gravaDeVerdade;
+      if (precisaDesenhar) {
+        // Os cinco momentos de uma vez: o widget troca de momento com o app
+        // fechado, e `renderFlutterWidget` só roda com o app de pé.
+        for (final m in MomentoDoWidget.values) {
+          desenhos++;
+          final caminho = await (rasteriza ?? _rasterizaDeVerdade)(
+            _CenaDoWidget(estado: e, momento: m),
+            'baru_pet_${m.name}',
+            tamanhoDoPng,
+          );
+          await grava('baru_png_${m.name}', caminho);
+        }
+        // O rosto para o ícone grande das notificações: quadrado, o bicho
+        // de perto — num círculo de 40 dp, a cena inteira vira um borrão.
+        desenhos++;
+        final rosto = await (rasteriza ?? _rasterizaDeVerdade)(
+          _RostoDoBicho(estado: e),
+          'baru_rosto',
+          tamanhoDoRosto,
+        );
+        await grava('baru_rosto_png', rosto);
+      }
       await grava('baru_nome', e.nome);
       await grava('baru_raiz', e.raiz);
       await grava('baru_uso', e.usoDoDia);
       await grava('baru_meta', e.meta);
+      await grava(
+        'baru_presente_em',
+        e.presenteEm == null ? '' : diaIso(e.presenteEm!),
+      );
+      for (final m in MomentoDoWidget.values) {
+        await grava('baru_frase_${m.name}', e.frases[m] ?? '');
+      }
       await (avisaOProvider ?? _avisaDeVerdade)();
     } catch (_) {
       // Sem widget na tela, sem plataforma, aparelho exótico: nada disso
@@ -195,6 +278,25 @@ class WidgetService {
   /// que qualquer widget 4×2 numa tela comum.
   static const tamanhoDoPng = Size(360, 312);
 
+  /// O rosto das notificações. 192 px é o tamanho de ícone grande que o
+  /// Android usa em telas xxxhdpi (48 dp × 4).
+  static const tamanhoDoRosto = Size(192, 192);
+
+  /// Onde está o rosto do bicho, se já foi desenhado.
+  ///
+  /// Só existe depois da primeira ida do app ao segundo plano (é quando o
+  /// widget rasteriza). Até lá a notificação sai sem ele.
+  Future<String?> caminhoDoRosto() async {
+    if (!_armado || kIsWeb) return null;
+    try {
+      final c = await HomeWidget.getWidgetData<String>('baru_rosto_png');
+      if (c == null || c.isEmpty || !File(c).existsSync()) return null;
+      return c;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// `pixelRatio: 1` porque [tamanhoDoPng] já está em pixels finais. Deixar
   /// o padrão multiplicaria pela densidade da tela e devolveria o problema.
   Future<String> _rasterizaDeVerdade(Widget w, String chave, Size t) =>
@@ -217,9 +319,10 @@ class WidgetService {
 /// Fundo opaco: `RemoteViews` desenha o `ImageView` sobre o papel de parede
 /// da pessoa, e um bicho com transparência some num fundo claro.
 class _CenaDoWidget extends StatelessWidget {
-  const _CenaDoWidget({required this.estado});
+  const _CenaDoWidget({required this.estado, required this.momento});
 
   final EstadoDoWidget estado;
+  final MomentoDoWidget momento;
 
   @override
   Widget build(BuildContext context) {
@@ -228,14 +331,45 @@ class _CenaDoWidget extends StatelessWidget {
       alignment: Alignment.center,
       child: PetView(
         species: estado.especie,
-        mood: estado.humor,
-        activity: Activity.idle,
+        mood: momento.humor,
+        activity: momento.atividade,
         coat: estado.pelagem,
         estagio: estado.estagio,
         interativo: false,
         width: 300,
         height: 260,
         scale: 1.25,
+      ),
+    );
+  }
+}
+
+/// O rosto do bicho para a notificação: de perto, contente, fundo opaco.
+class _RostoDoBicho extends StatelessWidget {
+  const _RostoDoBicho({required this.estado});
+
+  final EstadoDoWidget estado;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Cores.habitat,
+      child: OverflowBox(
+        // O bicho é maior que o quadro: o rosto fica, o corpo sai por baixo.
+        alignment: const Alignment(0, -0.2),
+        maxWidth: 260,
+        maxHeight: 260,
+        child: PetView(
+          species: estado.especie,
+          mood: Mood.content,
+          activity: Activity.idle,
+          coat: estado.pelagem,
+          estagio: estado.estagio,
+          interativo: false,
+          width: 220,
+          height: 220,
+          scale: 1.5,
+        ),
       ),
     );
   }

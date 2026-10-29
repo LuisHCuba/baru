@@ -58,7 +58,8 @@ const textosDaSobreposicao = <String, Map<String, String>>{
             'consegue aparecer — o app parece quebrado, e não está.',
     'sobPermNotifT': 'Notificações',
     'sobPermNotifQue':
-        'A sessão de foco na barra, o aviso de fim e o lembrete do dia.',
+        'Um lembrete por dia, no seu horário, para a pausa virar hábito. '
+            'E a sessão na barra com o aviso de fim.',
     'sobPermNotifSem':
         'A sessão corre sem contador na barra e você não é avisado quando '
             'ela termina.',
@@ -132,8 +133,8 @@ const textosDaSobreposicao = <String, Map<String, String>>{
             'cannot show up — the app looks broken, and it is not.',
     'sobPermNotifT': 'Notifications',
     'sobPermNotifQue':
-        'The focus session in the status bar, the finish alert and the '
-            'daily reminder.',
+        'One reminder a day, at your time, so the break becomes a habit. '
+            'Plus the session in the status bar and the finish alert.',
     'sobPermNotifSem':
         'The session runs with no countdown in the bar, and nothing tells '
             'you when it ends.',
@@ -205,8 +206,8 @@ const textosDaSobreposicao = <String, Map<String, String>>{
             'aparecer — la app parece rota, y no lo está.',
     'sobPermNotifT': 'Notificaciones',
     'sobPermNotifQue':
-        'La sesión de foco en la barra, el aviso de fin y el recordatorio '
-            'del día.',
+        'Un recordatorio al día, a tu hora, para que la pausa se vuelva '
+            'hábito. Y la sesión en la barra con el aviso de fin.',
     'sobPermNotifSem':
         'La sesión corre sin cuenta atrás en la barra y nadie te avisa '
             'cuando termina.',
@@ -263,7 +264,7 @@ const textosDaSobreposicao = <String, Map<String, String>>{
     'sobPermJanelaQue': '让 {n} 在你用别的应用时，从屏幕角落跟你打个招呼。它不锁任何东西，也不关掉任何东西。',
     'sobPermJanelaSem': '缺的往往就是这一项。没有它，{n} 看着你离开却出不来 —— 应用看起来像坏了，其实没有。',
     'sobPermNotifT': '通知',
-    'sobPermNotifQue': '状态栏里的专注时段、结束提醒和每天的提醒。',
+    'sobPermNotifQue': '每天在你的时间提醒一次，让休息成为习惯。还有状态栏里的专注时段和结束提醒。',
     'sobPermNotifSem': '专注时段在状态栏里没有倒计时，结束时也没有人提醒你。',
     'sobPermAlarmeT': '精确闹钟',
     'sobPermAlarmeQue': '在约定的那一分钟提醒，而不是手机省电时晚几分钟才响。',

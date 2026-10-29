@@ -18,6 +18,19 @@
         android:scaleType="fitCenter"
         android:contentDescription="@null" />
 
+    <!-- A frase do momento do dia (pesquisa 26). Vem do Dart, traduzida. -->
+    <TextView
+        android:id="@+id/baru_frase"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="4dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:gravity="center_horizontal"
+        android:textSize="12sp"
+        android:textColor="#FF2E2A26"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -41,23 +41,19 @@ Future<void> _manda(EstadoDoWidget e) async {
 
 EstadoDoWidget _estado({
   Species especie = Species.capybara,
-  Mood humor = Mood.content,
   int pelagem = 0,
   String nome = 'Baru',
   int raiz = 3,
   int uso = 40,
   int meta = 90,
-}) =>
-    EstadoDoWidget(
-      especie: especie,
-      humor: humor,
-      pelagem: pelagem,
-      nome: nome,
-      raiz: raiz,
-      usoDoDia: uso,
-      meta: meta,
-    );
-
+}) => EstadoDoWidget(
+  especie: especie,
+  pelagem: pelagem,
+  nome: nome,
+  raiz: raiz,
+  usoDoDia: uso,
+  meta: meta,
+);
 
 /// Uma conta que já conquistou o marco da espécie pedida.
 ///
@@ -68,6 +64,10 @@ void _liberaEspecie(AppState a, Species e) {
   final marco = trilha.firstWhere((m) => m.recompensa.especie == e);
   a.marcosResgatados = {...a.marcosResgatados, marco.id};
 }
+
+/// Quantas imagens um bicho custa: os cinco momentos do dia e o rosto das
+/// notificações.
+final _porBicho = MomentoDoWidget.values.length + 1;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -81,12 +81,19 @@ void main() {
     test('a primeira atualização desenha e grava tudo', () async {
       await _manda(_estado(nome: 'Coruja'));
 
-      expect(espiao.rasterizacoes, 1);
+      expect(
+        espiao.rasterizacoes,
+        _porBicho,
+        reason: 'um bicho por momento do dia, para trocar com o app fechado',
+      );
       expect(espiao.gravados['baru_nome'], 'Coruja');
       expect(espiao.gravados['baru_raiz'], 3);
       expect(espiao.gravados['baru_uso'], 40);
       expect(espiao.gravados['baru_meta'], 90);
-      expect(espiao.gravados['baru_pet_png'], isNotNull);
+      for (final m in MomentoDoWidget.values) {
+        expect(espiao.gravados['baru_png_${m.name}'], isNotNull);
+        expect(espiao.gravados['baru_frase_${m.name}'], isNotNull);
+      }
       expect(espiao.avisos, 1);
     });
 
@@ -94,7 +101,7 @@ void main() {
       await _manda(_estado());
       await _manda(_estado());
 
-      expect(espiao.rasterizacoes, 1);
+      expect(espiao.rasterizacoes, _porBicho);
       expect(
         espiao.avisos,
         1,
@@ -108,28 +115,43 @@ void main() {
       await _manda(_estado(raiz: 3));
       await _manda(_estado(raiz: 4));
 
-      expect(espiao.rasterizacoes, 1);
+      expect(espiao.rasterizacoes, _porBicho);
       expect(espiao.gravados['baru_raiz'], 4);
       expect(espiao.avisos, 2, reason: 'o texto mudou; o launcher precisa ver');
     });
 
-    test('mudar o humor redesenha', () async {
-      await _manda(_estado(humor: Mood.content));
-      await _manda(_estado(humor: Mood.sleepy));
+    test('mudar a pelagem redesenha os cinco momentos', () async {
+      await _manda(_estado(pelagem: 0));
+      await _manda(_estado(pelagem: 1));
 
-      expect(espiao.rasterizacoes, 2);
+      expect(espiao.rasterizacoes, 2 * _porBicho);
     });
 
     test('mudar a espécie redesenha', () async {
       await _manda(_estado());
       await _manda(_estado(especie: Species.owl));
 
-      expect(espiao.rasterizacoes, 2);
+      expect(espiao.rasterizacoes, 2 * _porBicho);
+    });
+
+    test('a presença de hoje viaja como dia, para o Kotlin comparar', () async {
+      await _manda(
+        EstadoDoWidget(
+          especie: Species.capybara,
+          pelagem: 0,
+          nome: 'Baru',
+          raiz: 3,
+          usoDoDia: 0,
+          meta: 90,
+          presenteEm: DateTime(2026, 10, 29, 15, 40),
+        ),
+      );
+      expect(espiao.gravados['baru_presente_em'], '2026-10-29');
     });
 
     test('falha na plataforma não derruba o app', () async {
-      WidgetService.instance.rasteriza =
-          (w, k, t) async => throw StateError('sem widget na tela');
+      WidgetService.instance.rasteriza = (w, k, t) async =>
+          throw StateError('sem widget na tela');
 
       await expectLater(_manda(_estado(nome: 'x')), completes);
     });
@@ -159,14 +181,43 @@ void main() {
     });
 
     test('a rasterização pede exatamente esse tamanho', () async {
-      Size? pedido;
+      final pedidos = <String, Size>{};
       WidgetService.instance.rasteriza = (w, k, t) async {
-        pedido = t;
+        pedidos[k] = t;
         return '/tmp/x.png';
       };
       await _manda(_estado());
 
-      expect(pedido, WidgetService.tamanhoDoPng);
+      for (final m in MomentoDoWidget.values) {
+        expect(pedidos['baru_pet_${m.name}'], WidgetService.tamanhoDoPng);
+      }
+      expect(pedidos['baru_rosto'], WidgetService.tamanhoDoRosto);
+    });
+  });
+
+  group('o momento do dia (o widget muda sozinho, como o do Duolingo)', () {
+    final hoje = DateTime(2026, 10, 29);
+    DateTime as(int h) => DateTime(2026, 10, 29, h, 10);
+
+    test('raiz crescida hoje: feliz o dia todo, até a meia-noite', () {
+      for (final h in [6, 13, 19, 23]) {
+        expect(momentoDoWidget(hoje, as(h)), MomentoDoWidget.feito);
+      }
+    });
+
+    test('sem foco hoje: acorda, espera, se aconchega e dorme', () {
+      final ontem = hoje.subtract(const Duration(days: 1));
+      expect(momentoDoWidget(ontem, as(3)), MomentoDoWidget.madrugada);
+      expect(momentoDoWidget(ontem, as(8)), MomentoDoWidget.manha);
+      expect(momentoDoWidget(ontem, as(14)), MomentoDoWidget.tarde);
+      expect(momentoDoWidget(ontem, as(20)), MomentoDoWidget.noite);
+      expect(momentoDoWidget(null, as(23)), MomentoDoWidget.madrugada);
+    });
+
+    test('nenhum momento usa o bicho triste (laudo 01, sem desespero)', () {
+      for (final m in MomentoDoWidget.values) {
+        expect(m.humor, isNot(Mood.missingYou));
+      }
     });
   });
 
@@ -189,6 +240,8 @@ void main() {
       expect(e.nome, app.displayName);
       expect(e.raiz, app.streak);
       expect(e.meta, app.goal);
+      expect(e.frases.keys, containsAll(MomentoDoWidget.values));
+      expect(e.frases.values, everyElement(isNotEmpty));
     });
   });
 }

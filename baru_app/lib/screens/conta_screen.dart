@@ -4,6 +4,7 @@ import '../cobranca.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../widgets/acesso.dart';
 import '../widgets/common.dart';
 
 /// Sua conta.
@@ -166,6 +167,10 @@ class _ContaScreenState extends State<ContaScreen> {
                 const SizedBox(height: Espaco.sm),
                 _Aviso(texto: _aviso!, erro: _avisoEhErro),
               ],
+              // O estado do acesso é do servidor e aparece sempre: é aqui que
+              // a pessoa descobre quantos dias de teste faltam.
+              const SizedBox(height: Espaco.md),
+              CartaoDoAcesso(t: t),
               if (cobrancaNaLoja) ...[
                 const SizedBox(height: Espaco.md),
                 CartaoBaru(

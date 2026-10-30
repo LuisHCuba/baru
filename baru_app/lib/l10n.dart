@@ -322,6 +322,16 @@ class T {
   String get authSignOut => s('authSignOut');
   String get authConfirmEmail => s('authConfirmEmail');
   String get authAttachFail => s('authAttachFail');
+  String get acessoTesteT => s('acessoTesteT');
+  String get acessoTesteHojeT => s('acessoTesteHojeT');
+  String get acessoTesteB => s('acessoTesteB');
+  String get acessoPagoT => s('acessoPagoT');
+  String get acessoPagoB => s('acessoPagoB');
+  String get acessoSemT => s('acessoSemT');
+  String get acessoSemB => s('acessoSemB');
+  String get acessoSite => s('acessoSite');
+  String get acessoFaixa => s('acessoFaixa');
+  String get acessoFaixaHoje => s('acessoFaixaHoje');
   String get testeFimT => s('testeFimT');
   String get testeFimB => s('testeFimB');
   String get testeFimSite => s('testeFimSite');
@@ -663,6 +673,16 @@ const _pt = <String, Object>{
   'authConfirmEmail': 'Conta criada. Confirme o e-mail no link enviado e depois entre.',
   'authAttachFail': 'Não foi possível conectar ao servidor. Verifique a internet ou tente mais tarde.',
   'authGoogle': 'Continuar com Google',
+  'acessoTesteT': 'Teste grátis · faltam {n} dias',
+  'acessoTesteHojeT': 'Teste grátis · último dia',
+  'acessoTesteB': 'Termina em {d}. Depois disso o Baru pede uma assinatura.',
+  'acessoPagoT': 'Assinatura ativa',
+  'acessoPagoB': 'Vale até {d}.',
+  'acessoSemT': 'Sem assinatura',
+  'acessoSemB': 'Seu progresso e o seu bicho continuam guardados.',
+  'acessoSite': 'Ver planos no site',
+  'acessoFaixa': 'Seu teste termina em {n} dias',
+  'acessoFaixaHoje': 'Hoje é o último dia do seu teste',
   'testeFimT': 'Seu teste terminou',
   'testeFimB': 'Seu progresso e o seu bicho continuam guardados na sua conta.',
   'testeFimSite': 'Abrir o site do Baru',
@@ -1245,6 +1265,16 @@ const _en = <String, Object>{
   'authConfirmEmail': 'Account created. Confirm your email with the link we sent, then sign in.',
   'authAttachFail': 'Could not reach the server. Check your connection or try again later.',
   'authGoogle': 'Continue with Google',
+  'acessoTesteT': 'Free trial · {n} days left',
+  'acessoTesteHojeT': 'Free trial · last day',
+  'acessoTesteB': 'Ends on {d}. After that Baru asks for a subscription.',
+  'acessoPagoT': 'Subscription active',
+  'acessoPagoB': 'Valid through {d}.',
+  'acessoSemT': 'No subscription',
+  'acessoSemB': 'Your progress and your pet stay saved.',
+  'acessoSite': 'See plans on the website',
+  'acessoFaixa': 'Your trial ends in {n} days',
+  'acessoFaixaHoje': 'Today is the last day of your trial',
   'testeFimT': 'Your trial has ended',
   'testeFimB': 'Your progress and your pet are still saved in your account.',
   'testeFimSite': 'Open the Baru website',
@@ -1817,6 +1847,16 @@ const _es = <String, Object>{
   'authConfirmEmail': 'Cuenta creada. Confirma tu correo con el enlace que enviamos y luego entra.',
   'authAttachFail': 'No se pudo conectar al servidor. Revisa tu conexión o inténtalo más tarde.',
   'authGoogle': 'Continuar con Google',
+  'acessoTesteT': 'Prueba gratis · quedan {n} días',
+  'acessoTesteHojeT': 'Prueba gratis · último día',
+  'acessoTesteB': 'Termina el {d}. Después Baru pide una suscripción.',
+  'acessoPagoT': 'Suscripción activa',
+  'acessoPagoB': 'Válida hasta el {d}.',
+  'acessoSemT': 'Sin suscripción',
+  'acessoSemB': 'Tu progreso y tu compañero siguen guardados.',
+  'acessoSite': 'Ver planes en el sitio',
+  'acessoFaixa': 'Tu prueba termina en {n} días',
+  'acessoFaixaHoje': 'Hoy es el último día de tu prueba',
   'testeFimT': 'Tu prueba terminó',
   'testeFimB': 'Tu progreso y tu mascota siguen guardados en tu cuenta.',
   'testeFimSite': 'Abrir el sitio de Baru',
@@ -2391,6 +2431,16 @@ const _zh = <String, Object>{
   'authConfirmEmail': '账号已创建。请点击我们发送的链接确认邮箱，然后登录。',
   'authAttachFail': '无法连接服务器。请检查网络或稍后重试。',
   'authGoogle': '使用 Google 继续',
+  'acessoTesteT': '免费试用 · 还剩 {n} 天',
+  'acessoTesteHojeT': '免费试用 · 最后一天',
+  'acessoTesteB': '{d} 结束。之后 Baru 需要订阅。',
+  'acessoPagoT': '订阅进行中',
+  'acessoPagoB': '有效期至 {d}。',
+  'acessoSemT': '未订阅',
+  'acessoSemB': '你的进度和伙伴依然保存着。',
+  'acessoSite': '在网站查看方案',
+  'acessoFaixa': '你的试用将在 {n} 天后结束',
+  'acessoFaixaHoje': '今天是试用的最后一天',
   'testeFimT': '试用已结束',
   'testeFimB': '你的进度和宠物仍保存在你的账户中。',
   'testeFimSite': '打开 Baru 网站',

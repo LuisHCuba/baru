@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../cobranca.dart';
 import '../models.dart';
 import 'app_snapshot.dart';
 import 'baru_env.dart';
@@ -372,21 +373,29 @@ class BaruSupabase {
     return falharam;
   }
 
-  /// O servidor libera o app para esta conta?
+  /// O que o servidor diz sobre o acesso desta conta — inteiro, não só o
+  /// booleano. O prazo do teste vem daqui porque é lá que ele é decidido.
   ///
-  /// Na dúvida (sem rede, função ainda não criada) devolve `true`: não trancar
-  /// quem está usando por uma falha que não é dela.
-  Future<bool> acessoLiberado() async {
+  /// Na dúvida (sem rede, função ainda não criada) devolve liberado sem prazo:
+  /// não trancar quem está usando por uma falha que não é dela.
+  Future<MeuAcesso> meuAcesso() async {
     final client = _client;
-    if (client == null) return true;
+    if (client == null) return MeuAcesso.naDuvida;
     try {
       final dados = await client.rpc('baru_meu_acesso');
-      return !(dados is Map && dados['liberado'] == false);
+      final acesso = dados is Map
+          ? MeuAcesso.doMapa(dados)
+          : MeuAcesso.naDuvida;
+      acessoAtual.value = acesso;
+      return acesso;
     } catch (e) {
       debugPrint('Baru: nao leu o acesso — $e');
-      return true;
+      return MeuAcesso.naDuvida;
     }
   }
+
+  /// O servidor libera o app para esta conta?
+  Future<bool> acessoLiberado() async => (await meuAcesso()).liberado;
 
   /// Apaga o login do usuário (migration `baru_excluir_minha_conta`). As
   /// tabelas do app caem junto pelo `on delete cascade`. Depois disso a

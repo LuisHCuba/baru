@@ -11,6 +11,7 @@ import '../models.dart';
 import '../state.dart';
 import 'trilha_screen.dart';
 import '../theme.dart';
+import '../widgets/acesso.dart';
 import '../widgets/common.dart';
 import '../widgets/crescimento.dart';
 import '../widgets/mundo/mundo.dart';
@@ -116,6 +117,15 @@ class _HomeScreenState extends State<HomeScreen> {
           top: pad.top + Espaco.sm,
           right: Espaco.md,
           child: _Indicador(app: app),
+        ),
+
+        // --- a reta final do teste, por cima do habitat --------------------
+        // Abaixo do indicador: ele declara `minHeight: 44`, e é esse o vão.
+        Positioned(
+          top: pad.top + Espaco.sm + 44 + Espaco.sm,
+          left: Espaco.md,
+          right: Espaco.md,
+          child: FaixaDoTeste(t: t),
         ),
 
         // --- a fala dele, num balão junto da cabeça ------------------------

@@ -209,8 +209,7 @@ class QuadrosDoBicho {
 
   /// FNV-1a de 32 bits, em hexadecimal: um nome curto e estável para os
   /// arquivos de cada aparência. `String.hashCode` não promete ser o mesmo
-  /// entre execuções.
-  @visibleForTesting
+  /// entre execuções. Também dá nome às cenas dos recados animados.
   static String impressao(String s) {
     var h = 0x811c9dc5;
     for (final c in s.codeUnits) {

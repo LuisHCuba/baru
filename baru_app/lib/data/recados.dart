@@ -87,11 +87,22 @@ class HistoricoDeRecados {
   HistoricoDeRecados({
     Map<String, ContaDoModelo>? contas,
     List<RecadoAgendado>? pendentes,
+    Map<int, ContaDoModelo>? horasDaPausa,
   }) : contas = contas ?? {},
-       pendentes = pendentes ?? [];
+       pendentes = pendentes ?? [],
+       horasDaPausa = horasDaPausa ?? {};
 
   final Map<String, ContaDoModelo> contas;
   List<RecadoAgendado> pendentes;
+
+  /// A conta das pausas ao longo do dia (`momentos_de_pausa.dart`), por hora
+  /// do relógio. O texto aprende por modelo, como os outros recados; o
+  /// horário aprende aqui: a pausa das 13h que a pessoa sempre ignora não
+  /// pode continuar tocando às 13h só porque o almoço tem muita tela.
+  final Map<int, ContaDoModelo> horasDaPausa;
+
+  /// Os modelos das pausas começam assim (`pausa1`, `pausa2`…).
+  static const prefixoDaPausa = 'pausa';
 
   /// Até quanto depois do horário marcado abrir o app conta como acerto.
   /// 2 h do paper + 1 h que o alarme inexato pode atrasar.
@@ -122,8 +133,37 @@ class HistoricoDeRecados {
       if (c.ultimoUso == null || p.quando.isAfter(c.ultimoUso!)) {
         c.ultimoUso = p.quando;
       }
+      if (p.modelo.startsWith(prefixoDaPausa)) {
+        final h = horasDaPausa.putIfAbsent(p.quando.hour, ContaDoModelo.new);
+        h.envios++;
+        if (agora.difference(p.quando) <= janelaDeAcerto) h.acertos++;
+        h.ultimoUso = p.quando;
+      }
     }
     pendentes = [];
+  }
+
+  /// Quanto a pausa nesta hora costuma funcionar, como multiplicador.
+  ///
+  /// 1 para hora nunca chamada (prior de 1 em 2, como em [nota]); cai para
+  /// 1/3 depois de quatro chamadas ignoradas e passa de 1 quando funciona.
+  double receptividadeDaHora(int hora) {
+    final c = horasDaPausa[hora];
+    return 2 * ((c?.acertos ?? 0) + 1) / ((c?.envios ?? 0) + 2);
+  }
+
+  /// A pessoa ignorou todas as pausas até aqui, e já foram várias.
+  ///
+  /// Aí a resposta é chamar menos, não mais: quem desliga o canal não liga
+  /// de volta ("protect the channel", pesquisa 26).
+  bool get pausasIgnoradas {
+    var envios = 0;
+    var acertos = 0;
+    for (final c in horasDaPausa.values) {
+      envios += c.envios;
+      acertos += c.acertos;
+    }
+    return envios >= 6 && acertos == 0;
   }
 
   /// A nota de um modelo para um envio em [quando].
@@ -170,6 +210,7 @@ class HistoricoDeRecados {
   String toJsonString() => jsonEncode({
     'c': {for (final e in contas.entries) e.key: e.value.toJson()},
     'p': [for (final p in pendentes) p.toJson()],
+    'h': {for (final e in horasDaPausa.entries) '${e.key}': e.value.toJson()},
   });
 
   static HistoricoDeRecados fromJsonString(String? raw) {
@@ -184,7 +225,12 @@ class HistoricoDeRecados {
         for (final x in (j['p'] as List? ?? const []))
           RecadoAgendado.fromJson(x as Map<String, dynamic>),
       ];
-      return HistoricoDeRecados(contas: c, pendentes: p);
+      final h = <int, ContaDoModelo>{
+        for (final e in (j['h'] as Map<String, dynamic>? ?? {}).entries)
+          if (int.tryParse(e.key) case final hora?)
+            hora: ContaDoModelo.fromJson(e.value as Map<String, dynamic>),
+      };
+      return HistoricoDeRecados(contas: c, pendentes: p, horasDaPausa: h);
     } catch (_) {
       // Caderno corrompido: começa de novo. Perder o aprendizado é melhor
       // que não mandar recado nenhum.

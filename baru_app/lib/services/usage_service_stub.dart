@@ -22,6 +22,12 @@ class UsageService {
   }) async =>
       null;
 
+  Future<List<IntervaloDeUso>> intervalosDosUltimosDias({
+    int dias = 7,
+    DateTime? agora,
+  }) async =>
+      const [];
+
   Future<int?> todayScreenTimeMinutes({
     Map<String, CategoriaDeApp> ajustes = const {},
   }) async =>

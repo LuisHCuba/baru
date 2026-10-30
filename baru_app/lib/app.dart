@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'data/app_snapshot.dart';
 import 'data/repositories.dart';
 import 'services/notification_service.dart';
+import 'services/cenas_dos_recados.dart';
 import 'services/quadros_do_bicho.dart';
 import 'services/som_service.dart';
 import 'services/vigia_service.dart';
@@ -161,6 +162,8 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
       // a cortina de notificações aberta por cima do app ainda animando.
       if (s == AppLifecycleState.hidden) {
         unawaited(QuadrosDoBicho.instance.atualiza(state.aparenciaDoBicho));
+        // E as cenas das notificações animadas: tocam com o app fechado.
+        unawaited(CenasDosRecados.instance.atualiza(state.aparenciaDoBicho));
       }
       // Fecha a conta do tempo dentro do Baru. Sem isto, olhar o bicho
       // contaria como descanso — e a missão é justamente ficar longe.

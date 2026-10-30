@@ -10,6 +10,7 @@ import 'package:timezone/timezone.dart' as tz;
 import '../data/descanso_do_dia.dart';
 import '../data/descanso_retencao.dart';
 import '../data/recados.dart';
+import 'cenas_dos_recados.dart';
 
 /// Notificações locais: relatório da noite (21h) e "senti sua falta".
 class BaruNotifications {
@@ -59,6 +60,12 @@ class BaruNotifications {
   static const escadaTamanho = 7;
   static const despedidaId = 1120;
 
+  /// As pausas ao longo do dia (`momentos_de_pausa.dart`): até três hoje e
+  /// três amanhã — ids 1130 a 1135. Só hoje e amanhã: quem não abre o app
+  /// há dois dias sai das pausas e fica só com a escada, que tem fim.
+  static const pausaId = 1130;
+  static const pausaTamanho = 6;
+
   /// Canal separado: a sessão é persistente e silenciosa; os lembretes tocam.
   static const canalSessao = 'baru_sessao';
 
@@ -77,6 +84,10 @@ class BaruNotifications {
   static const canalVolta = 'baru_volta';
   static const canalConta = 'baru_conta';
 
+  /// As pausas descem do topo: chegam no meio do feed, e uma notificação que
+  /// só aparece na gaveta é vista depois que a maratona acabou.
+  static const canalPausa = 'baru_pausa_alta';
+
   /// A sessão que acabou com o app fechado.
   static const canalFim = 'baru_fim';
 
@@ -88,7 +99,7 @@ class BaruNotifications {
 
   /// A importância de cada canal de recado.
   static Importance importanciaDo(String canal) =>
-      canal == canalRaiz || canal == canalConvite
+      canal == canalRaiz || canal == canalConvite || canal == canalPausa
           ? Importance.high
           : Importance.defaultImportance;
 
@@ -97,6 +108,7 @@ class BaruNotifications {
     canalFim,
     canalRaiz,
     canalConvite,
+    canalPausa,
     canalRelatorio,
     canalVolta,
     canalConta,
@@ -107,6 +119,11 @@ class BaruNotifications {
   static const rotaHome = 'home';
   static const rotaMissoes = 'missoes';
   static const rotaRelatorio = 'report';
+
+  /// O toque numa pausa abre as missões **e começa o descanso**: o recado
+  /// promete "toque e eu conto", e um toque que só abrisse a tela deixaria
+  /// a pessoa de novo diante de um botão, com o telefone na mão.
+  static const rotaPausa = 'pausa';
 
   /// Quem abre a rota de um toque. O `AppState` liga no arranque; antes
   /// disso, a rota espera em [_rotaPendente].
@@ -256,6 +273,17 @@ class BaruNotifications {
     }
   }
 
+  /// A rota do toque numa notificação animada que abriu o app a frio.
+  Future<void> _puxaRotaGuardada() async {
+    try {
+      recebeRota(await canalDaBarra.invokeMethod<String>('rotaPendente'));
+    } on MissingPluginException {
+      // Fora do Android: não há notificação animada.
+    } on PlatformException {
+      // Idem.
+    }
+  }
+
   /// Roteia uma ação vinda da barra, de onde quer que ela tenha vindo.
   ///
   /// Três caminhos chegam aqui e é o mesmo destino nos três: o plugin com o
@@ -311,10 +339,16 @@ class BaruNotifications {
       if (chamada.method == 'acaoDaBarra') {
         recebeAcaoDaBarra(chamada.arguments as String?);
       }
+      // O toque numa notificação animada: ela é postada pelo Kotlin, não
+      // pelo plugin, e a rota volta por aqui.
+      if (chamada.method == 'rotaDaBarra') {
+        recebeRota(chamada.arguments as String?);
+      }
       return null;
     });
 
     await puxaAcaoGuardada();
+    await _puxaRotaGuardada();
 
     // **O caso que estava furado: o app aberto pela própria notificação.**
     //
@@ -838,14 +872,45 @@ class BaruNotifications {
     return marcados;
   }
 
+  /// Agenda as pausas do dia e de amanhã, e cancela o resto.
+  ///
+  /// Como a escada, é tudo refeito a cada abertura: a lista que chega já é
+  /// a decisão inteira (`momentosDePausa`), e o que não está nela sai.
+  Future<List<RecadoAgendado>> sincronizaPausas(
+    List<({DateTime quando, TextoDeLembrete texto})> pausas, {
+    DateTime? agora,
+  }) async {
+    if (kIsWeb || !_ready) return const [];
+    final quandoAgora = agora ?? DateTime.now();
+    final permitido = await hasPermission();
+    final marcados = <RecadoAgendado>[];
+    for (var i = 0; i < pausaTamanho; i++) {
+      final pausa = permitido && i < pausas.length ? pausas[i] : null;
+      if (pausa == null || !pausa.quando.isAfter(quandoAgora)) {
+        await _cancelaRecado(pausaId + i);
+        continue;
+      }
+      await _agendaEm(
+        pausaId + i,
+        pausa.quando,
+        pausa.texto,
+        _detalhesDeLembrete(canalPausa),
+        rota: rotaPausa,
+        tema: TemaDoRecado.pausa,
+      );
+      marcados.add(RecadoAgendado(pausa.texto.modelo, pausa.quando));
+    }
+    return marcados;
+  }
+
   Future<void> _cancelaRetencao() async {
     await _plugin.cancel(id: descansoId);
-    await _plugin.cancel(id: raizHojeId);
-    await _plugin.cancel(id: raizAmanhaId);
+    await _cancelaRecado(raizHojeId);
+    await _cancelaRecado(raizAmanhaId);
     for (var i = 0; i < escadaTamanho; i++) {
-      await _plugin.cancel(id: escadaId + i);
+      await _cancelaRecado(escadaId + i);
     }
-    await _plugin.cancel(id: despedidaId);
+    await _cancelaRecado(despedidaId);
   }
 
   /// Um convite por dia de ausência e, no fim, a despedida.
@@ -862,7 +927,7 @@ class BaruNotifications {
     for (var i = 0; i < escadaTamanho; i++) {
       final degrau = i < escada.length ? escada[i] : null;
       if (degrau == null || !degrau.quando.isAfter(agora)) {
-        await _plugin.cancel(id: escadaId + i);
+        await _cancelaRecado(escadaId + i);
         continue;
       }
       await _agendaEm(
@@ -871,11 +936,12 @@ class BaruNotifications {
         degrau.texto,
         _detalhesDeLembrete(canalConvite),
         rota: rotaMissoes,
+        tema: TemaDoRecado.convite,
       );
       marcados.add(RecadoAgendado(degrau.texto.modelo, degrau.quando));
     }
     if (despedida == null || !despedida.quando.isAfter(agora)) {
-      await _plugin.cancel(id: despedidaId);
+      await _cancelaRecado(despedidaId);
       return;
     }
     await _agendaEm(
@@ -883,6 +949,7 @@ class BaruNotifications {
       despedida.quando,
       despedida.texto,
       _detalhesDeLembrete(canalVolta),
+      tema: TemaDoRecado.despedida,
     );
     marcados.add(RecadoAgendado(despedida.texto.modelo, despedida.quando));
   }
@@ -940,15 +1007,15 @@ class BaruNotifications {
         lembrete.minuto,
       );
       if (hoje.isAfter(agora)) {
-        await _agendaEm(raizHojeId, hoje, texto, detalhes);
+        await _agendaEm(raizHojeId, hoje, texto, detalhes, tema: TemaDoRecado.raiz);
         marcados.add(RecadoAgendado(texto.modelo, hoje));
       } else {
         // A hora do aviso já passou. Mandar agora seria chegar depois do
         // ponto em que ainda dava para fazer alguma coisa.
-        await _plugin.cancel(id: raizHojeId);
+        await _cancelaRecado(raizHojeId);
       }
     } else {
-      await _plugin.cancel(id: raizHojeId);
+      await _cancelaRecado(raizHojeId);
     }
 
     // Amanhã: com o texto **de amanhã** (auditoria do laudo 01, A6). Antes
@@ -956,11 +1023,11 @@ class BaruNotifications {
     // aparecido hoje, que é justamente quem pode esquecer amanhã.
     final hora = horaDeAmanha ?? lembrete?.hora;
     if (textoDeAmanha == null || hora == null) {
-      await _plugin.cancel(id: raizAmanhaId);
+      await _cancelaRecado(raizAmanhaId);
       return;
     }
     final amanha = DateTime(agora.year, agora.month, agora.day + 1, hora);
-    await _agendaEm(raizAmanhaId, amanha, textoDeAmanha, detalhes);
+    await _agendaEm(raizAmanhaId, amanha, textoDeAmanha, detalhes, tema: TemaDoRecado.raiz);
     marcados.add(RecadoAgendado(textoDeAmanha.modelo, amanha));
   }
 
@@ -970,7 +1037,13 @@ class BaruNotifications {
     TextoDeLembrete texto,
     NotificationDetails detalhes, {
     String rota = rotaHome,
+    TemaDoRecado? tema,
   }) async {
+    final payload = texto.modelo.isEmpty ? rota : '$rota|${texto.modelo}';
+    if (tema != null &&
+        await _agendaAnimado(id, quando, texto, tema, payload, detalhes)) {
+      return;
+    }
     await _plugin.zonedSchedule(
       id: id,
       title: texto.titulo,
@@ -985,8 +1058,68 @@ class BaruNotifications {
       ),
       notificationDetails: detalhes,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      payload: texto.modelo.isEmpty ? rota : '$rota|${texto.modelo}',
+      payload: payload,
     );
+  }
+
+  /// Entrega o recado ao Kotlin, que o posta animado na hora (ver
+  /// `RecadoAnimado.kt`).
+  ///
+  /// **Por que não pelo plugin.** O `flutter_local_notifications` só monta
+  /// notificação de modelo pronto; o bicho que respira precisa de
+  /// `RemoteViews` com `ViewFlipper`, e isso só o lado nativo faz. O
+  /// agendamento é o mesmo — alarme inexato que pode tocar em repouso — e o
+  /// texto continua nascendo aqui, traduzido.
+  ///
+  /// Devolve `false` fora do Android ou se o canal não responder: aí o
+  /// plugin agenda a notificação comum, e o recado sai do mesmo jeito.
+  Future<bool> _agendaAnimado(
+    int id,
+    DateTime quando,
+    TextoDeLembrete texto,
+    TemaDoRecado tema,
+    String payload,
+    NotificationDetails detalhes,
+  ) async {
+    if (defaultTargetPlatform != TargetPlatform.android) return false;
+    final canal = detalhes.android?.channelId;
+    if (canal == null) return false;
+    try {
+      final ok = await canalDaBarra.invokeMethod<bool>('agendaRecado', {
+        'id': id,
+        'quando': quando.millisecondsSinceEpoch,
+        'canal': canal,
+        'titulo': texto.titulo,
+        'corpo': texto.corpo,
+        'tema': tema.name,
+        'rota': payload,
+        'rosto': caminhoDoRosto ?? '',
+        'alta': importanciaDo(canal) == Importance.high,
+      });
+      if (ok ?? false) {
+        // Um agendamento antigo do plugin no mesmo id tocaria em dobro.
+        await _plugin.cancel(id: id);
+        return true;
+      }
+    } on MissingPluginException {
+      // Teste, versão sem o lado nativo novo.
+    } on PlatformException {
+      // Idem.
+    }
+    return false;
+  }
+
+  /// Cancela um recado de onde quer que ele tenha sido agendado.
+  Future<void> _cancelaRecado(int id) async {
+    await _plugin.cancel(id: id);
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      await canalDaBarra.invokeMethod<void>('cancelaRecado', {'id': id});
+    } on MissingPluginException {
+      // Sem lado nativo, nada foi agendado lá.
+    } on PlatformException {
+      // Idem.
+    }
   }
 
   /// Onde o caderno de recados mora. Só neste aparelho (pesquisa 26).

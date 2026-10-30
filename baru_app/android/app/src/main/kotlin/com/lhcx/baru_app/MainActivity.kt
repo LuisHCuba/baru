@@ -45,6 +45,13 @@ class MainActivity : FlutterFragmentActivity() {
          */
         const val EXTRA_ACAO_DA_BARRA = "baru_acao_da_barra"
 
+        /**
+         * A rota do toque num recado animado (`RecadoAnimado`). Mesmo
+         * caminho da acao: guardada ate o Dart perguntar, ou empurrada se
+         * ele ja estiver de pe.
+         */
+        const val EXTRA_ROTA_DA_BARRA = "baru_rota_da_barra"
+
         /** Tem de bater com os `activity-alias` do manifesto. */
         private val ESPECIES = listOf(
             "capybara", "otter", "tortoise", "owl",
@@ -63,6 +70,9 @@ class MainActivity : FlutterFragmentActivity() {
      * exatamente o defeito.
      */
     private var acaoPendente: String? = null
+
+    /** A rota de um recado animado que chegou antes do Dart. */
+    private var rotaPendente: String? = null
 
     /**
      * Liga o alias da especie e desliga os outros.
@@ -159,6 +169,36 @@ class MainActivity : FlutterFragmentActivity() {
                     result.success(acao)
                 }
 
+                "rotaPendente" -> {
+                    val rota = rotaPendente
+                    rotaPendente = null
+                    result.success(rota)
+                }
+
+                // Os recados animados. O Dart manda o texto pronto e o tema;
+                // aqui so se guarda e se arma o alarme.
+                "agendaRecado" -> {
+                    val recado = RecadoAnimado.Recado(
+                        id = call.argument<Int>("id") ?: 0,
+                        quando = (call.argument<Number>("quando") ?: 0).toLong(),
+                        canal = call.argument<String>("canal").orEmpty(),
+                        titulo = call.argument<String>("titulo").orEmpty(),
+                        corpo = call.argument<String>("corpo").orEmpty(),
+                        tema = call.argument<String>("tema").orEmpty(),
+                        rota = call.argument<String>("rota").orEmpty(),
+                        rosto = call.argument<String>("rosto").orEmpty(),
+                        alta = call.argument<Boolean>("alta") ?: false,
+                    )
+                    result.success(
+                        recado.canal.isNotEmpty() && RecadoAnimado.agenda(this, recado),
+                    )
+                }
+
+                "cancelaRecado" -> {
+                    RecadoAnimado.cancela(this, call.argument<Int>("id") ?: 0)
+                    result.success(null)
+                }
+
                 else -> result.notImplemented()
             }
         }
@@ -172,8 +212,12 @@ class MainActivity : FlutterFragmentActivity() {
      * atendido pelo `acaoPendente` acima, nao por aqui.
      */
     private fun entregaAcaoPendente() {
-        val acao = acaoPendente ?: return
         val canal = canalDaBarra ?: return
+        rotaPendente?.let {
+            rotaPendente = null
+            canal.invokeMethod("rotaDaBarra", it)
+        }
+        val acao = acaoPendente ?: return
         acaoPendente = null
         canal.invokeMethod("acaoDaBarra", acao)
     }
@@ -188,6 +232,10 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private fun guardaAcaoDe(intent: Intent?) {
+        intent?.getStringExtra(EXTRA_ROTA_DA_BARRA)?.let {
+            rotaPendente = it
+            intent.removeExtra(EXTRA_ROTA_DA_BARRA)
+        }
         val acao = intent?.getStringExtra(EXTRA_ACAO_DA_BARRA) ?: return
         acaoPendente = acao
         // Consome: uma activity retomada do historico traz o mesmo intent de
@@ -274,6 +322,19 @@ class MainActivity : FlutterFragmentActivity() {
 
                 "quadrosChave" ->
                     result.success(QuadrosDoBicho.chaveAtual(this))
+
+                // As cenas dos recados animados: um bicho por tema e um
+                // fundo por tema e luz, rasterizados pelo Dart.
+                "cenas" -> result.success(
+                    CenasDosRecados.grava(
+                        this,
+                        chave = call.argument<String>("chave").orEmpty(),
+                        temas = call.argument<Map<*, *>>("temas").orEmpty(),
+                    ),
+                )
+
+                "cenasChave" ->
+                    result.success(CenasDosRecados.chaveAtual(this))
 
                 "esconde" -> {
                     startService(

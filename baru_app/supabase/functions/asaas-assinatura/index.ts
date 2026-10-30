@@ -9,6 +9,7 @@ import { asaas, asaasConfigurado, cpfValido, ErroAsaas, hojeEmSaoPaulo, IdPlano,
  *                          → cria (ou troca) a assinatura e devolve a cobrança a pagar
  *   { acao: 'cobranca' }   → a cobrança em aberto (para a página sobreviver a recarregar)
  *   { acao: 'cancelar' }   → cancela no Asaas; o acesso vale até pago_ate
+ *   { acao: 'faturas' }    → as cobranças do Baru desta pessoa, da mais nova para a mais antiga
  *
  * Quem libera é o webhook (`asaas-webhook`), quando o pagamento é confirmado.
  * Esta função só cria a cobrança. O CPF vai direto para o cadastro do cliente
@@ -82,6 +83,7 @@ Deno.serve(comCors(async req => {
   try {
     if (corpo.acao === 'cobranca') return jsonResponse({ pagamento: await cobrancaEmAberto(atual) })
     if (corpo.acao === 'cancelar') return await cancelar(atual, usuarioId)
+    if (corpo.acao === 'faturas') return jsonResponse({ faturas: await faturas(atual, usuarioId) })
     if (corpo.acao === 'assinar') return await assinar(atual, usuarioId, corpo)
     return jsonResponse({ error: 'parametros_invalidos' }, 400)
   } catch (falha) {
@@ -293,4 +295,39 @@ async function cancelar(atual: Assinatura | null, usuarioId: string): Promise<Re
   }).eq('user_id', usuarioId)
   if (error) throw new Error(`cancelar: ${error.message}`)
   return jsonResponse({ cancelada: true, valeAte: atual.pago_ate })
+}
+
+interface CobrancaDaLista extends CobrancaAsaas {
+  description?: string
+  externalReference?: string
+  paymentDate?: string | null
+  clientPaymentDate?: string | null
+}
+
+/**
+ * O histórico de cobranças, para o painel do site.
+ *
+ * A conta do Asaas é a mesma do Ecoin e da Academy, e o cliente é achado
+ * pelo CPF: a mesma pessoa pode ter cobranças dos outros apps. Só entram as
+ * do Baru — as que carregam o id desta conta (`externalReference`, herdado
+ * da assinatura) ou a descrição do Baru.
+ */
+async function faturas(atual: Assinatura | null, usuarioId: string) {
+  if (!atual?.asaas_cliente_id) return []
+  const lista = await asaas<{ data: CobrancaDaLista[] }>(
+    'GET', `/payments?customer=${encodeURIComponent(atual.asaas_cliente_id)}&limit=50`,
+  )
+  return (lista.data ?? [])
+    .filter(c => c.externalReference === usuarioId || (c.description ?? '').startsWith('Baru'))
+    .sort((a, b) => (b.dueDate ?? '').localeCompare(a.dueDate ?? ''))
+    .map(c => ({
+      id: c.id,
+      status: c.status ?? null,
+      valorCentavos: typeof c.value === 'number' ? Math.round(c.value * 100) : null,
+      vencimento: c.dueDate ?? null,
+      pagoEm: c.clientPaymentDate ?? c.paymentDate ?? null,
+      forma: c.billingType ?? null,
+      descricao: c.description ?? null,
+      link: c.invoiceUrl ?? null,
+    }))
 }

@@ -13,8 +13,8 @@
 export type IdPlano = 'monthly' | 'annual'
 
 export const PLANOS: Record<IdPlano, { nome: string; centavos: number; ciclo: 'MONTHLY' | 'YEARLY' }> = {
-  monthly: { nome: 'Mensal', centavos: 3490, ciclo: 'MONTHLY' },
-  annual: { nome: 'Anual', centavos: 17990, ciclo: 'YEARLY' },
+  monthly: { nome: 'Mensal', centavos: 1290, ciclo: 'MONTHLY' },
+  annual: { nome: 'Anual', centavos: 9990, ciclo: 'YEARLY' },
 }
 
 export class ErroAsaas extends Error {

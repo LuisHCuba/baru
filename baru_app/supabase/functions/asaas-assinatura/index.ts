@@ -4,12 +4,6 @@ import { asaas, asaasConfigurado, cpfValido, ErroAsaas, hojeEmSaoPaulo, IdPlano,
 /**
  * Assinatura do Baru no Asaas, sempre da própria pessoa (id vem do JWT).
  *
- * **Comprar não exige conta.** Sem login, só `assinar` é aceito, com o e-mail
- * no corpo: a assinatura vai para a conta desse e-mail, que é criada se ainda
- * não existir. A pessoa entra no app depois, com Google ou com o mesmo e-mail
- * ("esqueci a senha" cria a senha). Sem login nunca se mexe numa assinatura
- * viva: trocar plano, forma ou cancelar continua exigindo entrar.
- *
  *   { acao: 'estado' }     → acesso, assinatura e se já há cadastro no Asaas
  *   { acao: 'assinar', plano, forma, aceite, termosVersao, documento?, nome? }
  *                          → cria (ou troca) a assinatura e devolve a cobrança a pagar
@@ -63,29 +57,13 @@ interface Pagamento {
 
 Deno.serve(comCors(async req => {
   if (req.method !== 'POST') return jsonResponse({ error: 'method_not_allowed' }, 405)
+  const usuarioId = await usuarioDe(req)
+  if (!usuarioId) return jsonResponse({ error: 'unauthorized' }, 401)
   let corpo: Record<string, unknown>
   try {
     corpo = await req.json()
   } catch {
     return jsonResponse({ error: 'invalid_json' }, 400)
-  }
-  const logado = await usuarioDe(req)
-  const semLogin = !logado
-  let usuarioId = logado
-  let contaNova = false
-  if (!usuarioId) {
-    if (corpo.acao !== 'assinar') return jsonResponse({ error: 'unauthorized' }, 401)
-    if (!asaasConfigurado()) {
-      return jsonResponse({ error: 'pagamento_indisponivel', message: 'O pagamento ainda não está disponível. Tente mais tarde.' }, 503)
-    }
-    // Tudo conferido antes de tocar em conta: um CPF digitado errado não
-    // pode deixar para trás uma conta criada à toa.
-    const invalido = validaCompraSemLogin(corpo)
-    if (invalido) return invalido
-    const conta = await contaDoEmail(corpo.email)
-    if ('erro' in conta) return conta.erro
-    usuarioId = conta.id
-    contaNova = conta.nova
   }
 
   const { data: linha, error } = await servico().from('baru_assinaturas').select(COLUNAS).eq('user_id', usuarioId).maybeSingle()
@@ -94,12 +72,6 @@ Deno.serve(comCors(async req => {
     return jsonResponse({ error: 'assinatura_indisponivel' }, 503)
   }
   const atual = linha as Assinatura | null
-  if (semLogin && viva(atual)) {
-    return jsonResponse({
-      error: 'ja_assina',
-      message: 'Este e-mail já tem uma assinatura. Entre na sua conta para trocar o plano ou a forma de pagamento.',
-    }, 409)
-  }
 
   if (corpo.acao === 'estado') return jsonResponse(estado(atual))
 
@@ -110,7 +82,7 @@ Deno.serve(comCors(async req => {
   try {
     if (corpo.acao === 'cobranca') return jsonResponse({ pagamento: await cobrancaEmAberto(atual) })
     if (corpo.acao === 'cancelar') return await cancelar(atual, usuarioId)
-    if (corpo.acao === 'assinar') return await assinar(atual, usuarioId, corpo, semLogin ? { contaNova } : undefined)
+    if (corpo.acao === 'assinar') return await assinar(atual, usuarioId, corpo)
     return jsonResponse({ error: 'parametros_invalidos' }, 400)
   } catch (falha) {
     const mensagem = falha instanceof Error ? falha.message : String(falha)
@@ -156,49 +128,7 @@ async function fimDoTeste(usuarioId: string): Promise<string | null> {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date(inicio + 7 * 86400000))
 }
 
-function validaCompraSemLogin(corpo: Record<string, unknown>): Response | null {
-  if (corpo.plano !== 'monthly' && corpo.plano !== 'annual') return jsonResponse({ error: 'parametros_invalidos' }, 400)
-  if (!FORMAS.has(corpo.forma as Forma)) return jsonResponse({ error: 'forma_invalida', message: 'Escolha Pix, cartão ou boleto.' }, 400)
-  if (corpo.aceite !== true) {
-    return jsonResponse({ error: 'aceite_obrigatorio', message: 'É preciso aceitar os termos para assinar.' }, 400)
-  }
-  const documento = typeof corpo.documento === 'string' ? corpo.documento : ''
-  if (!cpfValido(documento)) return jsonResponse({ error: 'documento_invalido', message: 'CPF inválido.' }, 400)
-  const nome = typeof corpo.nome === 'string' ? corpo.nome.trim() : ''
-  if (nome.length < 3) return jsonResponse({ error: 'nome_invalido', message: 'Informe o nome completo.' }, 400)
-  return null
-}
-
-/**
- * A conta de quem compra sem login: a do e-mail, criada se não existir.
- *
- * Criada já confirmada e sem senha: quem digitou um e-mail que não é seu não
- * ganha nada com isso (não há senha para entrar, e nada é liberado sem
- * pagamento), e o dono do e-mail entra depois com Google — que se liga a esta
- * conta pelo e-mail — ou com "esqueci a senha". Nenhum e-mail é disparado
- * daqui: a função não pode virar um canhão de spam.
- */
-async function contaDoEmail(valor: unknown): Promise<{ id: string; nova: boolean } | { erro: Response }> {
-  const email = typeof valor === 'string' ? valor.trim().toLowerCase() : ''
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 200) {
-    return { erro: jsonResponse({ error: 'email_invalido', message: 'Informe um e-mail válido.' }, 400) }
-  }
-  const supa = servico()
-  const criado = await supa.auth.admin.createUser({ email, email_confirm: true })
-  if (criado.data?.user) return { id: criado.data.user.id, nova: true }
-  // Já existe: o link mágico gerado (e não enviado) devolve o usuário.
-  const link = await supa.auth.admin.generateLink({ type: 'magiclink', email })
-  if (link.data?.user) return { id: link.data.user.id, nova: false }
-  console.error('conta do e-mail:', criado.error?.message, link.error?.message)
-  return { erro: jsonResponse({ error: 'conta_indisponivel', message: 'Não deu para registrar este e-mail agora. Tente de novo em instantes.' }, 503) }
-}
-
-async function assinar(
-  atual: Assinatura | null,
-  usuarioId: string,
-  corpo: Record<string, unknown>,
-  semLogin?: { contaNova: boolean },
-): Promise<Response> {
+async function assinar(atual: Assinatura | null, usuarioId: string, corpo: Record<string, unknown>): Promise<Response> {
   const idPlano = corpo.plano
   if (idPlano !== 'monthly' && idPlano !== 'annual') return jsonResponse({ error: 'parametros_invalidos' }, 400)
   const forma = corpo.forma as Forma
@@ -273,10 +203,7 @@ async function assinar(
     atualizado_em: agora,
   })
   if (error) throw new Error(`gravar assinatura: ${error.message}`)
-  return jsonResponse({
-    pagamento: cobranca ? await detalharPagamento(cobranca, forma) : null,
-    ...(semLogin ? { semLogin: true, contaNova: semLogin.contaNova } : {}),
-  })
+  return jsonResponse({ pagamento: cobranca ? await detalharPagamento(cobranca, forma) : null })
 }
 
 async function acharOuCriarCliente(p: { usuarioId: string; documento: string; nome: string; email?: string }): Promise<string> {

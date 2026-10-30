@@ -322,6 +322,10 @@ class T {
   String get authSignOut => s('authSignOut');
   String get authConfirmEmail => s('authConfirmEmail');
   String get authAttachFail => s('authAttachFail');
+  String get testeFimT => s('testeFimT');
+  String get testeFimB => s('testeFimB');
+  String get testeFimSite => s('testeFimSite');
+  String get testeFimVerificar => s('testeFimVerificar');
   String get authGoogle => s('authGoogle');
   String get authOuEmail => s('authOuEmail');
   String get authGoogleFalhou => s('authGoogleFalhou');
@@ -659,6 +663,10 @@ const _pt = <String, Object>{
   'authConfirmEmail': 'Conta criada. Confirme o e-mail no link enviado e depois entre.',
   'authAttachFail': 'Não foi possível conectar ao servidor. Verifique a internet ou tente mais tarde.',
   'authGoogle': 'Continuar com Google',
+  'testeFimT': 'Seu teste terminou',
+  'testeFimB': 'Seu progresso e o seu bicho continuam guardados na sua conta.',
+  'testeFimSite': 'Abrir o site do Baru',
+  'testeFimVerificar': 'Já resolvi, verificar de novo',
   'authOuEmail': 'ou com e-mail',
   'authGoogleFalhou': 'Não foi possível abrir o Google agora.',
   'authBootstrapLoading': 'Carregando seu habitat…',
@@ -1237,6 +1245,10 @@ const _en = <String, Object>{
   'authConfirmEmail': 'Account created. Confirm your email with the link we sent, then sign in.',
   'authAttachFail': 'Could not reach the server. Check your connection or try again later.',
   'authGoogle': 'Continue with Google',
+  'testeFimT': 'Your trial has ended',
+  'testeFimB': 'Your progress and your pet are still saved in your account.',
+  'testeFimSite': 'Open the Baru website',
+  'testeFimVerificar': 'Already sorted, check again',
   'authOuEmail': 'or with email',
   'authGoogleFalhou': 'Could not open Google right now.',
   'authBootstrapLoading': 'Loading your habitat…',
@@ -1805,6 +1817,10 @@ const _es = <String, Object>{
   'authConfirmEmail': 'Cuenta creada. Confirma tu correo con el enlace que enviamos y luego entra.',
   'authAttachFail': 'No se pudo conectar al servidor. Revisa tu conexión o inténtalo más tarde.',
   'authGoogle': 'Continuar con Google',
+  'testeFimT': 'Tu prueba terminó',
+  'testeFimB': 'Tu progreso y tu mascota siguen guardados en tu cuenta.',
+  'testeFimSite': 'Abrir el sitio de Baru',
+  'testeFimVerificar': 'Ya lo resolví, verificar de nuevo',
   'authOuEmail': 'o con correo',
   'authGoogleFalhou': 'No se pudo abrir Google ahora.',
   'authBootstrapLoading': 'Cargando tu hábitat…',
@@ -2375,6 +2391,10 @@ const _zh = <String, Object>{
   'authConfirmEmail': '账号已创建。请点击我们发送的链接确认邮箱，然后登录。',
   'authAttachFail': '无法连接服务器。请检查网络或稍后重试。',
   'authGoogle': '使用 Google 继续',
+  'testeFimT': '试用已结束',
+  'testeFimB': '你的进度和宠物仍保存在你的账户中。',
+  'testeFimSite': '打开 Baru 网站',
+  'testeFimVerificar': '已处理，重新检查',
   'authOuEmail': '或使用邮箱',
   'authGoogleFalhou': '暂时无法打开 Google。',
   'authBootstrapLoading': '正在加载你的栖息地…',

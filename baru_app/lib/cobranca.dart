@@ -1,7 +1,9 @@
-/// Compra dentro do app (BL-07).
+/// Compra dentro do app.
 ///
-/// Enquanto a cobrança pela Google Play não existir, o app não mostra o
-/// paywall, o plano nem "Restaurar compras": anunciar preço e teste grátis
-/// sem cobrar pela loja fere a política de pagamentos da Play e promete algo
-/// que o app não faz. Quando o Play Billing entrar, basta virar para `true`.
+/// As assinaturas ficam no Asaas e a compra acontece no site. Por isso o app
+/// não mostra o paywall, o preço nem "Restaurar compras": quem decide o acesso
+/// é o servidor (`baru_meu_acesso`), e o app só leva a pessoa ao site.
 const cobrancaNaLoja = false;
+
+/// Página inicial do site do Baru: é de lá que a pessoa chega à assinatura.
+const siteDoBaru = 'https://baru.lhcx.tech/';

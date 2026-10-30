@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'app.dart';
+import 'cobranca.dart';
 import 'data/app_snapshot.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
@@ -11,6 +13,7 @@ import 'data/supabase_gateway.dart';
 import 'l10n.dart';
 import 'models.dart';
 import 'screens/auth_screen.dart';
+import 'screens/teste_encerrado_screen.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 
@@ -25,9 +28,12 @@ class AuthGate extends StatefulWidget {
   State<AuthGate> createState() => AuthGateState();
 }
 
-class AuthGateState extends State<AuthGate> {
+class AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
   bool _checking = true;
   bool _authenticated = false;
+
+  /// O teste acabou e não há assinatura paga.
+  bool _semAcesso = false;
   AppSnapshot? _snapshot;
   String? _bootstrapNotice;
   String? _attachError;
@@ -44,6 +50,7 @@ class AuthGateState extends State<AuthGate> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _lang = langFromLocale(
       WidgetsBinding.instance.platformDispatcher.locale,
     );
@@ -88,6 +95,7 @@ class AuthGateState extends State<AuthGate> {
       if (event.event == AuthChangeEvent.signedOut) {
         setState(() {
           _authenticated = false;
+          _semAcesso = false;
           _snapshot = null;
           _bootstrapNotice = null;
           _checking = false;
@@ -162,14 +170,30 @@ class AuthGateState extends State<AuthGate> {
       }
     }
     snap ??= clearLocal ? null : await widget.repos.loadSnapshot();
+    final liberado = await BaruSupabase.instance.acessoLiberado();
 
     if (mounted) {
       setState(() {
+        _semAcesso = !liberado;
         _snapshot = snap;
         _bootstrapNotice = notice;
         _authenticated = true;
         _checking = false;
       });
+    }
+  }
+
+  /// Volta do site: quem acabou de assinar não precisa reabrir o app.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (estado == AppLifecycleState.resumed && _authenticated) _confereAcesso();
+  }
+
+  Future<void> _confereAcesso() async {
+    if (!BaruSupabase.instance.attached) return;
+    final liberado = await BaruSupabase.instance.acessoLiberado();
+    if (mounted && _semAcesso == liberado) {
+      setState(() => _semAcesso = !liberado);
     }
   }
 
@@ -180,6 +204,7 @@ class AuthGateState extends State<AuthGate> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _authSub?.cancel();
     super.dispose();
   }
@@ -273,6 +298,25 @@ class AuthGateState extends State<AuthGate> {
           child: AuthScreen(
             lang: _lang,
             onAuthenticated: _onAuthenticated,
+          ),
+        ),
+      );
+    }
+
+    if (_semAcesso) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.data,
+        locale: localeFor(_lang),
+        home: AppFrame(
+          child: TesteEncerradoScreen(
+            lang: _lang,
+            aoAbrirSite: () => launchUrl(
+              Uri.parse(siteDoBaru),
+              mode: LaunchMode.externalApplication,
+            ),
+            aoVerificar: _confereAcesso,
+            aoSair: BaruSupabase.instance.signOut,
           ),
         ),
       );

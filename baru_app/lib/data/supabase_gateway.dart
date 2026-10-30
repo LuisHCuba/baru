@@ -372,6 +372,22 @@ class BaruSupabase {
     return falharam;
   }
 
+  /// O servidor libera o app para esta conta?
+  ///
+  /// Na dúvida (sem rede, função ainda não criada) devolve `true`: não trancar
+  /// quem está usando por uma falha que não é dela.
+  Future<bool> acessoLiberado() async {
+    final client = _client;
+    if (client == null) return true;
+    try {
+      final dados = await client.rpc('baru_meu_acesso');
+      return !(dados is Map && dados['liberado'] == false);
+    } catch (e) {
+      debugPrint('Baru: nao leu o acesso — $e');
+      return true;
+    }
+  }
+
   /// Apaga o login do usuário (migration `baru_excluir_minha_conta`). As
   /// tabelas do app caem junto pelo `on delete cascade`. Depois disso a
   /// sessão não vale mais, então sai também.
@@ -380,6 +396,22 @@ class BaruSupabase {
   Future<bool> excluiConta() async {
     final client = _client;
     if (!_ready || _uid == null || client == null) return false;
+    // Sem isto o Asaas seguiria cobrando uma conta que já não existe.
+    try {
+      await client.functions.invoke(
+        'asaas-assinatura',
+        body: const {'acao': 'cancelar'},
+      );
+    } on FunctionException catch (e) {
+      // 409: não há assinatura. 404: função ainda não publicada.
+      if (e.status != 409 && e.status != 404 && e.status != 503) {
+        debugPrint('Baru: nao cancelou a assinatura — $e');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Baru: nao cancelou a assinatura — $e');
+      return false;
+    }
     try {
       await client.rpc('baru_excluir_minha_conta');
     } catch (e) {

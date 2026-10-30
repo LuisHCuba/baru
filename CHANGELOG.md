@@ -3,6 +3,18 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-10-30 — assinaturas no Asaas
+
+### Adicionado
+
+- **7 dias grátis e depois assinatura**, mensal ou anual, comprada no site. O
+  app só pergunta ao servidor (`baru_meu_acesso`) e mostra uma tela neutra,
+  sem preço, quando o teste acaba. A chave `baru_cobranca.ligada_em` mantém
+  tudo liberado até a cobrança ser ligada, e o teste de quem já tinha conta
+  conta a partir dela.
+- Edge Functions `asaas-assinatura` e `asaas-webhook`, no modelo do Ecoin.
+- Excluir a conta cancela antes a assinatura no Asaas.
+
 ## 2026-10-30 — entrar com Google (1.0.3, código 4)
 
 ### Adicionado

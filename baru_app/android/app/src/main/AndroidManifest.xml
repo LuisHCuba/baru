@@ -237,6 +237,14 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="baru" />
             </intent-filter>
+            <!-- Volta do login com Google: o navegador devolve o `code` aqui
+                 e o supabase_flutter troca pela sessao. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tech.lhcx.baru" android:host="login-callback" />
+            </intent-filter>
 </activity>
         <meta-data
             android:name="flutterEmbedding"

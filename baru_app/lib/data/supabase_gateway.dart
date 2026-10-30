@@ -202,6 +202,18 @@ class BaruSupabase {
     await _client!.auth.resend(type: OtpType.signup, email: email.trim());
   }
 
+  /// Abre o Google no navegador. Não devolve a sessão: ela chega pelo deep
+  /// link de volta, e o `AuthGate` entra ao ouvir `signedIn`.
+  Future<void> entraComGoogle() async {
+    _ensureAttached();
+    await _client!.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: kIsWeb ? null : 'tech.lhcx.baru://login-callback',
+      authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+      queryParams: const {'prompt': 'select_account'},
+    );
+  }
+
   Future<AuthResponse> signUp({
     required String email,
     required String password,

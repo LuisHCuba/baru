@@ -3,6 +3,14 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-10-30 — entrar com Google (1.0.3, código 4)
+
+### Adicionado
+
+- **Continuar com Google** na tela de entrar e na de criar conta, nos 4
+  idiomas. Abre o navegador e volta por `tech.lhcx.baru://login-callback`; a
+  sessão chega pelo deep link e o `AuthGate` entra ao ouvir `signedIn`.
+
 ## 2026-10-30 — pausas ao longo do dia, nos picos de tela, e notificações animadas
 
 ### Adicionado

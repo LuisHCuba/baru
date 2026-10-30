@@ -322,6 +322,9 @@ class T {
   String get authSignOut => s('authSignOut');
   String get authConfirmEmail => s('authConfirmEmail');
   String get authAttachFail => s('authAttachFail');
+  String get authGoogle => s('authGoogle');
+  String get authOuEmail => s('authOuEmail');
+  String get authGoogleFalhou => s('authGoogleFalhou');
   String get authBootstrapLoading => s('authBootstrapLoading');
   String get syncFail => s('syncFail');
   String get syncSchemaFail => s('syncSchemaFail');
@@ -655,6 +658,9 @@ const _pt = <String, Object>{
   'authSignOut': 'Sair da conta',
   'authConfirmEmail': 'Conta criada. Confirme o e-mail no link enviado e depois entre.',
   'authAttachFail': 'Não foi possível conectar ao servidor. Verifique a internet ou tente mais tarde.',
+  'authGoogle': 'Continuar com Google',
+  'authOuEmail': 'ou com e-mail',
+  'authGoogleFalhou': 'Não foi possível abrir o Google agora.',
   'authBootstrapLoading': 'Carregando seu habitat…',
   'syncFail': 'Não foi possível sincronizar ({q}). Seus dados ficam salvos neste aparelho.',
   'syncSchemaFail': 'O banco na nuvem está desatualizado: falta a tabela {t}. Seus dados ficam salvos neste aparelho.',
@@ -1230,6 +1236,9 @@ const _en = <String, Object>{
   'authSignOut': 'Sign out',
   'authConfirmEmail': 'Account created. Confirm your email with the link we sent, then sign in.',
   'authAttachFail': 'Could not reach the server. Check your connection or try again later.',
+  'authGoogle': 'Continue with Google',
+  'authOuEmail': 'or with email',
+  'authGoogleFalhou': 'Could not open Google right now.',
   'authBootstrapLoading': 'Loading your habitat…',
   'syncFail': 'Could not sync ({q}). Your data stays saved on this device.',
   'syncSchemaFail': 'The cloud database is out of date: table {t} is missing. Your data stays saved on this device.',
@@ -1795,6 +1804,9 @@ const _es = <String, Object>{
   'authSignOut': 'Cerrar sesión',
   'authConfirmEmail': 'Cuenta creada. Confirma tu correo con el enlace que enviamos y luego entra.',
   'authAttachFail': 'No se pudo conectar al servidor. Revisa tu conexión o inténtalo más tarde.',
+  'authGoogle': 'Continuar con Google',
+  'authOuEmail': 'o con correo',
+  'authGoogleFalhou': 'No se pudo abrir Google ahora.',
   'authBootstrapLoading': 'Cargando tu hábitat…',
   'syncFail': 'No se pudo sincronizar ({q}). Tus datos quedan guardados en este dispositivo.',
   'syncSchemaFail': 'La base en la nube está desactualizada: falta la tabla {t}. Tus datos quedan guardados en este dispositivo.',
@@ -2362,6 +2374,9 @@ const _zh = <String, Object>{
   'authSignOut': '退出登录',
   'authConfirmEmail': '账号已创建。请点击我们发送的链接确认邮箱，然后登录。',
   'authAttachFail': '无法连接服务器。请检查网络或稍后重试。',
+  'authGoogle': '使用 Google 继续',
+  'authOuEmail': '或使用邮箱',
+  'authGoogleFalhou': '暂时无法打开 Google。',
   'authBootstrapLoading': '正在加载你的栖息地…',
   'syncFail': '同步失败（{q}）。你的数据已保存在本机。',
   'syncSchemaFail': '云端数据库版本过旧：缺少数据表 {t}。你的数据已保存在本机。',

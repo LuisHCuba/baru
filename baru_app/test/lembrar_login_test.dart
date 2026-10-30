@@ -44,6 +44,16 @@ Future<void> _abre(
 void main() {
   final t = T('pt');
 
+  testWidgets('o Google aparece ao entrar e ao criar conta', (tester) async {
+    await _abre(tester, cofre: CofreDeMentira(), bio: BiometriaDeMentira());
+    expect(find.byKey(AuthScreen.chaveGoogle), findsOneWidget);
+    expect(find.text(t.authGoogle), findsOneWidget);
+    await tester.ensureVisible(find.text(t.authCreateAccount));
+    await tester.tap(find.text(t.authCreateAccount));
+    await tester.pump();
+    expect(find.byKey(AuthScreen.chaveGoogle), findsOneWidget);
+  });
+
   group('o que o cofre guarda', () {
     test('credencial sem e-mail ou sem senha não é credencial', () {
       expect(

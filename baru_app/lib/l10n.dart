@@ -322,6 +322,13 @@ class T {
   String get authSignOut => s('authSignOut');
   String get authConfirmEmail => s('authConfirmEmail');
   String get authAttachFail => s('authAttachFail');
+  String get testeFimT => s('testeFimT');
+  String get testeFimB => s('testeFimB');
+  String get testeFimSite => s('testeFimSite');
+  String get testeFimVerificar => s('testeFimVerificar');
+  String get authGoogle => s('authGoogle');
+  String get authOuEmail => s('authOuEmail');
+  String get authGoogleFalhou => s('authGoogleFalhou');
   String get authBootstrapLoading => s('authBootstrapLoading');
   String get syncFail => s('syncFail');
   String get syncSchemaFail => s('syncSchemaFail');
@@ -655,6 +662,13 @@ const _pt = <String, Object>{
   'authSignOut': 'Sair da conta',
   'authConfirmEmail': 'Conta criada. Confirme o e-mail no link enviado e depois entre.',
   'authAttachFail': 'Não foi possível conectar ao servidor. Verifique a internet ou tente mais tarde.',
+  'authGoogle': 'Continuar com Google',
+  'testeFimT': 'Seu teste terminou',
+  'testeFimB': 'Seu progresso e o seu bicho continuam guardados na sua conta.',
+  'testeFimSite': 'Abrir o site do Baru',
+  'testeFimVerificar': 'Já resolvi, verificar de novo',
+  'authOuEmail': 'ou com e-mail',
+  'authGoogleFalhou': 'Não foi possível abrir o Google agora.',
   'authBootstrapLoading': 'Carregando seu habitat…',
   'syncFail': 'Não foi possível sincronizar ({q}). Seus dados ficam salvos neste aparelho.',
   'syncSchemaFail': 'O banco na nuvem está desatualizado: falta a tabela {t}. Seus dados ficam salvos neste aparelho.',
@@ -1021,13 +1035,13 @@ const _pt = <String, Object>{
       'Sessões de foco ilimitadas, a loja completa do habitat e o relatório diário.',
   'payAnnual': 'Anual',
   'payMonthly': 'Mensal',
-  'payAnnualNote': '7 dias grátis, depois R\$ 179,90 por ano',
-  'payMonthlyNote': 'R\$ 34,90 por mês, cancele quando quiser',
+  'payAnnualNote': '7 dias grátis, depois R\$ 99,90 por ano',
+  'payMonthlyNote': 'R\$ 12,90 por mês, cancele quando quiser',
   'payBest': 'Melhor valor',
   'payCta': 'Começar 7 dias grátis',
   'payCtaActive': 'Teste ativo — continuar',
-  'priceA': 'R\$ 179,90',
-  'priceM': 'R\$ 34,90',
+  'priceA': 'R\$ 99,90',
+  'priceM': 'R\$ 12,90',
   'questsT': 'Hoje',
   'quest1': 'Uma sessão de foco',
   'quest2': 'Fechar o dia abaixo da meta',
@@ -1230,6 +1244,13 @@ const _en = <String, Object>{
   'authSignOut': 'Sign out',
   'authConfirmEmail': 'Account created. Confirm your email with the link we sent, then sign in.',
   'authAttachFail': 'Could not reach the server. Check your connection or try again later.',
+  'authGoogle': 'Continue with Google',
+  'testeFimT': 'Your trial has ended',
+  'testeFimB': 'Your progress and your pet are still saved in your account.',
+  'testeFimSite': 'Open the Baru website',
+  'testeFimVerificar': 'Already sorted, check again',
+  'authOuEmail': 'or with email',
+  'authGoogleFalhou': 'Could not open Google right now.',
   'authBootstrapLoading': 'Loading your habitat…',
   'syncFail': 'Could not sync ({q}). Your data stays saved on this device.',
   'syncSchemaFail': 'The cloud database is out of date: table {t} is missing. Your data stays saved on this device.',
@@ -1795,6 +1816,13 @@ const _es = <String, Object>{
   'authSignOut': 'Cerrar sesión',
   'authConfirmEmail': 'Cuenta creada. Confirma tu correo con el enlace que enviamos y luego entra.',
   'authAttachFail': 'No se pudo conectar al servidor. Revisa tu conexión o inténtalo más tarde.',
+  'authGoogle': 'Continuar con Google',
+  'testeFimT': 'Tu prueba terminó',
+  'testeFimB': 'Tu progreso y tu mascota siguen guardados en tu cuenta.',
+  'testeFimSite': 'Abrir el sitio de Baru',
+  'testeFimVerificar': 'Ya lo resolví, verificar de nuevo',
+  'authOuEmail': 'o con correo',
+  'authGoogleFalhou': 'No se pudo abrir Google ahora.',
   'authBootstrapLoading': 'Cargando tu hábitat…',
   'syncFail': 'No se pudo sincronizar ({q}). Tus datos quedan guardados en este dispositivo.',
   'syncSchemaFail': 'La base en la nube está desactualizada: falta la tabla {t}. Tus datos quedan guardados en este dispositivo.',
@@ -2362,6 +2390,13 @@ const _zh = <String, Object>{
   'authSignOut': '退出登录',
   'authConfirmEmail': '账号已创建。请点击我们发送的链接确认邮箱，然后登录。',
   'authAttachFail': '无法连接服务器。请检查网络或稍后重试。',
+  'authGoogle': '使用 Google 继续',
+  'testeFimT': '试用已结束',
+  'testeFimB': '你的进度和宠物仍保存在你的账户中。',
+  'testeFimSite': '打开 Baru 网站',
+  'testeFimVerificar': '已处理，重新检查',
+  'authOuEmail': '或使用邮箱',
+  'authGoogleFalhou': '暂时无法打开 Google。',
   'authBootstrapLoading': '正在加载你的栖息地…',
   'syncFail': '同步失败（{q}）。你的数据已保存在本机。',
   'syncSchemaFail': '云端数据库版本过旧：缺少数据表 {t}。你的数据已保存在本机。',

@@ -3,6 +3,66 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-10-30 — 1.0.3 na Google Play, publicada por API
+
+### Adicionado
+
+- **Publicação sem navegador.** `~/lhcx/tools/play-publicar.py` fala com a
+  Google Play Developer API (`androidpublisher v3`) por uma conta de serviço:
+  cria a edit, sobe o bundle, grava as notas nos 3 idiomas, aponta a faixa,
+  valida e commita. Sem `--publicar` é ensaio e desfaz a edit; `--so-conferir`
+  mostra o que está em cada faixa. Serve para os 4 apps da conta.
+- **Login com Google configurado nas duas pontas**: status "Em produção" no
+  Google Auth Platform (escopos `email profile`, que não pedem revisão) e
+  `tech.lhcx.baru://login-callback` na lista de redirects do Supabase — o glob
+  `.../login-callback/**` que já existia não casa o endereço sem a barra.
+
+### Alterado
+
+- **1.0.3 (código 4) em produção, 100%.** A anterior era a 1.0.2 (código 3).
+- Documentação: `STATE.md` reescrito, `BACKLOG.md` com a fila de hoje,
+  `BLOCKERS.md` com os vencidos marcados (BL-05, BL-10, BL-13 e os de
+  migration) e `README.md` sem a frase "ainda não publicável".
+
+## 2026-10-30 — assinaturas no Asaas
+
+### Adicionado
+
+- **7 dias grátis e depois assinatura**, mensal ou anual, comprada no site. O
+  app só pergunta ao servidor (`baru_meu_acesso`) e mostra uma tela neutra,
+  sem preço, quando o teste acaba. A chave `baru_cobranca.ligada_em` mantém
+  tudo liberado até a cobrança ser ligada, e o teste de quem já tinha conta
+  conta a partir dela.
+- Edge Functions `asaas-assinatura` e `asaas-webhook`, no modelo do Ecoin.
+- Excluir a conta cancela antes a assinatura no Asaas.
+
+## 2026-10-30 — entrar com Google (1.0.3, código 4)
+
+### Adicionado
+
+- **Continuar com Google** na tela de entrar e na de criar conta, nos 4
+  idiomas. Abre o navegador e volta por `tech.lhcx.baru://login-callback`; a
+  sessão chega pelo deep link e o `AuthGate` entra ao ouvir `signedIn`.
+
+## 2026-10-30 — pausas ao longo do dia, nos picos de tela, e notificações animadas
+
+### Adicionado
+
+- **Pausas ao longo do dia** (ADR-028). O app lê os últimos 7 dias de uso,
+  acha as horas em que a pessoa mais fica presa na tela — e as maratonas de
+  20 min ou mais — e chama para uma pausa nesses momentos: até 3 por dia,
+  entre 9h e 21h, longe dos outros recados. Hora ignorada perde peso; quem
+  ignora todas passa a receber uma. Tocar começa o descanso na hora.
+- **Notificações animadas.** Pausa, convite, raiz e despedida mostram o bicho
+  respirando e piscando, num cenário de acordo com o recado (árvore, trilha,
+  raiz, ninho) e na luz da hora em que tocam.
+- Canal "Pausas ao longo do dia" nos ajustes de notificação do sistema.
+
+### Alterado
+
+- O pedido de permissão de notificação deixou de prometer "um lembrete por
+  dia": fala em lembretes curtos nas horas em que a tela mais prende.
+
 ## 2026-10-20 — material da Google Play, e o relatório que mostrava as chaves
 
 ### Adicionado

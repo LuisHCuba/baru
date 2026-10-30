@@ -11,6 +11,7 @@ import 'data/descanso_retencao.dart';
 import 'data/missoes.dart';
 import 'data/recados.dart';
 import 'l10n.dart';
+import 'l10n_pausas.dart';
 import 'services/notification_service.dart';
 
 const textosDoDescanso = <String, Map<String, String>>{
@@ -487,7 +488,9 @@ TextoDeLembrete textoDeAmanhaSemNumero(T t, {required String nomeDoPet}) {
 /// Os nomes dos canais de recado, no idioma da pessoa.
 Map<String, String> nomesDosCanais(T t) {
   garanteTextosDoDescanso();
+  garanteTextosDasPausas();
   return {
+    BaruNotifications.canalPausa: t.canalNomePausa,
     BaruNotifications.canalFim: t.canalNomeFim,
     BaruNotifications.canalRaiz: t.canalNomeRaiz,
     BaruNotifications.canalConvite: t.canalNomeConvite,

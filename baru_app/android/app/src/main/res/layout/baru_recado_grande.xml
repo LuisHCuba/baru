@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A vista expandida do recado animado: o texto inteiro em cima e, embaixo,
+     a cena do tema (arvore da pausa, trilha do convite, raiz, ninho) na luz
+     da hora, com o bicho do tema respirando por cima, no lado direito, que
+     o fundo deixa livre. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/baru_recado_titulo"
+        style="@style/TextAppearance.Compat.Notification.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="2" />
+
+    <TextView
+        android:id="@+id/baru_recado_corpo"
+        style="@style/TextAppearance.Compat.Notification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="3" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="112dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/baru_recado_moldura"
+        android:clipToOutline="true">
+
+        <ImageView
+            android:id="@+id/baru_recado_fundo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:importantForAccessibility="no"
+            android:contentDescription="@null" />
+
+        <ViewFlipper
+            android:id="@+id/baru_recado_bicho"
+            android:layout_width="124dp"
+            android:layout_height="104dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="12dp"
+            android:autoStart="true"
+            android:flipInterval="260"
+            android:inAnimation="@anim/baru_quadro_entra"
+            android:outAnimation="@anim/baru_quadro_sai" />
+    </FrameLayout>
+</LinearLayout>

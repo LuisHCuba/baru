@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A vista curta do recado animado (e a do heads-up): o bicho respirando a
+     esquerda, o recado a direita. O ViewFlipper e o que o sistema anima
+     sozinho; os quadros entram pelo RecadoAnimado.kt. Os estilos de texto
+     sao os da notificacao, para seguir o tema claro e o escuro. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <ViewFlipper
+        android:id="@+id/baru_recado_bicho"
+        android:layout_width="48dp"
+        android:layout_height="40dp"
+        android:autoStart="true"
+        android:flipInterval="260"
+        android:inAnimation="@anim/baru_quadro_entra"
+        android:outAnimation="@anim/baru_quadro_sai" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/baru_recado_titulo"
+            style="@style/TextAppearance.Compat.Notification.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/baru_recado_corpo"
+            style="@style/TextAppearance.Compat.Notification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1" />
+    </LinearLayout>
+</LinearLayout>

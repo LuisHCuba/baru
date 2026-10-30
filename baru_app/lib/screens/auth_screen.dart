@@ -46,6 +46,7 @@ class AuthScreen extends StatefulWidget {
   static const chaveDigitar = Key('auth-digitar');
   static const chaveOutraConta = Key('auth-outra-conta');
   static const chaveEsqueci = Key('auth-esqueci');
+  static const chaveGoogle = Key('auth-google');
   static const chaveReenviar = Key('auth-reenviar');
 
   @override
@@ -372,6 +373,67 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   /// Onde entra o código de 8 dígitos do e-mail (cadastro ou senha).
+  /// A sessão volta pelo deep link: aqui só se abre o navegador.
+  Future<void> _entrarComGoogle() async {
+    if (!BaruSupabase.instance.attached) {
+      setState(() => _error = t.authAttachFail);
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+      _recado = null;
+    });
+    try {
+      await BaruSupabase.instance.entraComGoogle();
+    } catch (_) {
+      if (mounted) setState(() => _error = t.authGoogleFalhou);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Widget _botaoGoogle() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      OutlinedButton.icon(
+        key: AuthScreen.chaveGoogle,
+        onPressed: _loading ? null : _entrarComGoogle,
+        icon: const Text(
+          'G',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF4285F4)),
+        ),
+        label: Text(
+          t.authGoogle,
+          style: nunito(size: 15.5, weight: FontWeight.w700),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.greenDeep,
+          minimumSize: const Size.fromHeight(52),
+          side: BorderSide(color: AppColors.greenA(0.45), width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.button),
+          ),
+        ),
+      ),
+      const SizedBox(height: Espaco.md),
+      Row(
+        children: [
+          const Expanded(child: Divider()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Espaco.sm),
+            child: Text(
+              t.authOuEmail,
+              style: nunito(size: 13.5, color: Cores.tinta700),
+            ),
+          ),
+          const Expanded(child: Divider()),
+        ],
+      ),
+      const SizedBox(height: Espaco.md),
+    ],
+  );
+
   Widget _corpoCodigo() {
     garanteTextosDoCodigo();
     final senha = _codigo == _Codigo.senha;
@@ -634,6 +696,7 @@ class _AuthScreenState extends State<AuthScreen> {
             titulo: isLogin ? t.authLoginTitle : t.authSignupTitle,
             sub: t.s(isLogin ? 'codLoginSub' : 'codCadastroSub'),
           ),
+          _botaoGoogle(),
           _field(
             label: t.authEmail,
             controller: _email,

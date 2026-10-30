@@ -1,165 +1,117 @@
-# Estado — 2026-08-27, fim do turno
+# Estado — 2026-10-30, fim do turno
 
-Branch: `night/2026-08-27`, integrada em `main` | Build: **verde**
+Branch: `develop`, **5 commits à frente de `main`** | Build: **verde**
+Google Play: **1.0.3 (código 4) em produção, 100%**, na revisão do Google.
 
-| Portão | Resultado (execução real) |
+| Portão | Resultado (execução real, hoje) |
 |---|---|
-| `flutter analyze` | No issues found |
-| `flutter test` | **460 passando, 1 pulado** (era 151 no início do dia) |
-| `flutter test test/integration` | 7/7 contra Supabase local |
-| `supabase db reset` em banco limpo | **8 migrations · 15 tabelas · 58 políticas · nenhuma sem RLS** (a migration 9 ainda não foi rodada em banco limpo) |
-| Evidência visual | 58 PNGs em `docs/evidence/2026-08-27/` |
-| `flutter build apk --release` | **app-release.apk, 51,5 MB** |
+| `flutter analyze` | **No issues found** (3,6 s) |
+| `flutter test` | **1244 passando, 26 pulados** (era 460 no retrato anterior) |
+| `flutter build appbundle --release` | **app-release.aab, 65,1 MB**, assinado com a chave de upload (SHA-1 `CC:29:72:A5:…:E4:3C`) |
+| Publicação | código **4** na faixa `production`, 100% — confirmado pela Developer API |
+| Schema remoto | as **20 migrations** do repositório respondem na sonda REST, inclusive `baru_cobranca` e `baru_assinaturas` |
+| Edge Functions | `asaas-assinatura` (v8) e `asaas-webhook` (v6), ambas **ACTIVE** |
+| `flutter test test/integration` | não rodou neste turno (precisa de Docker e do stack local) |
+
+## O que mudou de status desde o retrato de 2026-08-27
+
+As três frases que o documento antigo repetia e que **deixaram de ser verdade**:
+
+- **"Ainda não publicável."** É publicável e está publicado. A keystore existe
+  fora do repositório, `android/app/build.gradle.kts` aponta o `signingConfig`
+  de release para ela e cai no debug só quando o `key.properties` falta.
+- **"O banco remoto está atrás do repositório."** Não está mais. A sonda de
+  hoje achou `baru_app_categories`, `baru_progression` com
+  `missoes_resgatadas` e `dias_abaixo_na_semana`/`semana_de`,
+  `baru_inventory_items.equipped` e `baru_settings.som`. Os bloqueios BL-10,
+  BL-12 e BL-16 de migration estão vencidos.
+- **"Trial e planos existem só localmente."** Existe cobrança de verdade: 7
+  dias grátis e assinatura mensal ou anual comprada no site, com o direito de
+  acesso decidido pelo servidor (`baru_meu_acesso`), nunca pelo aparelho.
 
 ## Abra o app e você vê
 
-Frases que são verdade hoje e não eram ontem:
+Frases que são verdade hoje e não eram no retrato anterior:
 
-- **O botão voltar do aparelho funciona**: num detalhe volta um passo, numa
-  aba volta para a home, e **na home pergunta antes de fechar**, com o bicho
-  na folha. Durante a sessão, pergunta também.
-- **A trilha virou um caminho** com nós grandes, linha tracejada no que falta
-  e "VOCÊ ESTÁ AQUI" no passo atual.
-- **Tela "Sua conta"**: e-mail, trocar e-mail, trocar senha, recuperar senha,
-  plano e sair.
-- **Uma pergunta do quiz por tela**, com a barra andando a cada resposta;
-  escolher já avança, e dá para voltar sem perder o que foi respondido. No
-  fim se escolhe bicho, sexo, pelagem e nome na mesma tela.
-- **"Apagar meus dados"** em Sua conta: apaga aqui e no servidor, atrás de
-  uma folha de confirmação onde "Cancelar" é o botão cheio e "Apagar tudo"
-  se declara em vermelho — antes ele saía cinza, com cara de desabilitado.
-- **O APK de release compila.** Não compilava: `usage_stats` 1.3.1 fica num
-  `compileSdk` anterior à API 31 e o `verifyReleaseResources` quebrava em
-  `android:attr/lStar not found`.
-- **O APK de release tem internet.** O primeiro exportado não tinha: o
-  template do Flutter declara `INTERNET` só em `debug/` e `profile/`, e o
-  release funde apenas o `main`. O app instalava, abria e toda chamada de
-  rede morria em "erro de internet". Há teste lendo o manifesto.
-- **Sair do app durante o foco chama o Baru de volta.** Antes não fazia
-  nada: com o app em segundo plano o Flutter **não executa**, e o único
-  gatilho estava no `didChangeAppLifecycleState`, que só dispara quando a
-  pessoa volta. Agora um serviço em primeiro plano pergunta a cada 2 s quem
-  está na frente e traz o companheiro por cima, com um minuto de descanso
-  entre aparições.
-- **O ícone do app é o Baru**, gerado pelo mesmo `CustomPainter` que desenha
-  o bicho na tela, e troca quando você troca de espécie. Verificado no
-  aparelho: o Android resolve o LAUNCHER para `IconeCapybara`.
-- **Faltar "desenhar sobre outros apps" deixou de ser silêncio.** Sem essa
-  permissão o vigia via a pessoa sair e não conseguia aparecer, sem dizer
-  nada — indistinguível de "o app não funciona".
-- **O botão voltar do aparelho funciona nas abas.** Fechava o app. A causa
-  não era o `app.voltar()` — era antes: o Flutter avisa o Android com
-  `canHandlePop = navigatorCanPop || routeBlocksPop`, e numa aba a pilha tem
-  uma página só. Com `targetSdk 36` o *predictive back* vem ligado por
-  padrão e o sistema encerrava a activity sem chamar o Dart. A página de
-  baixo agora declara que segura o voltar.
-- **Arrastar no bicho faz carinho, não rola a tela.** O `pan` só reivindica
-  a arena depois de `kPanSlop`, o dobro do que a rolagem usa: ela sempre
-  ganhava o dedo primeiro.
-- **A permissão travada pelo Android tem passo a passo.** Do Android 13 em
-  diante o `PACKAGE_USAGE_STATS` fica bloqueado para app instalado por
-  arquivo — o sistema fala em risco a dados pessoais. O aviso antigo mandava
-  para a tela onde o botão está travado; agora há os quatro toques que
-  destravam e um atalho para começar.
-- **A ofensiva virou "raiz"**, nos quatro idiomas: dia presente aprofunda a
-  raiz, e é ela que segura o hábito quando a vontade falta.
-- **As missões dizem o que fazer e levam onde se faz.** Cada cartão ganhou
-  uma linha de "como", e tocar numa missão por fazer abre a tela da ação.
-- **A chegada do dia ganha cena.** Abrir o app no primeiro dia novo mostra a
-  mesma celebração de conquista, com som e háptico — uma vez por dia, nunca
-  a cada volta do background.
-- **"Lembrar meus dados" no login**, cifrado no Keystore — e a volta abre
-  com "Que bom te ver de novo" e o botão de digital, não com formulário
-  vazio. O desbloqueio usa digital, rosto **ou** o PIN do aparelho, então
-  quem não cadastrou biometria não fica de fora. Digitar a senha nunca some,
-  e credencial recusada pelo servidor cai no formulário em vez de deixar a
-  pessoa repetindo uma digital que nunca vai funcionar.
-- **As telas entram com transição** e a barra de destinos é fixa.
-- **Dá para acariciar o Baru**: ele acompanha a mão, aperta os olhos, o pelo
-  se levanta sob o dedo, sobem corações, e a mão ronrona.
-- **As quatro espécies são um elenco coerente**, todas de frente, com cabeça
-  grande e cara legível.
-- **O Baru respira, pisca e reage ao toque**, e **faz coisas sozinho**: a
-  cada 7–15 s parado ele se espreguiça com bocejo, sacode a cabeça ou olha em
-  volta.
-- **Insistir no carinho faz subir coraçõezinhos** — do terceiro toque em 3 s.
-- O habitat tem céu em gradiente, colinas que derivam e reflexos andando na
-  água.
-- **O habitat às 22h é diferente do das 9h** — céu índigo, lua com halo, água
-  escura.
-- **Comprar um item o faz cair na cena com mola**, e ele projeta sombra.
-- **"Seu tempo de tela"** mostra quanto conta para a meta, quanto foi no total,
-  a quebra por categoria e a lista por app. O Spotify aparece como Áudio, fora
-  da meta.
-- **Uma aba "Trilha"** com nível, XP, o próximo passo em destaque e doze marcos
-  ligados por uma linha.
-- **Subir de nível toma a tela** com partículas e háptico.
-- **Uma aba "Missões"** com progresso x/y, recompensa exata, prazo e um botão
-  "Resgatar" que faz o saldo de folhas subir animado.
-- **A sessão de foco aparece na barra de notificações** com contagem regressiva
-  e botão "Desistir".
+- **Continuar com Google** na tela de entrar e na de criar conta, nos 4
+  idiomas. Abre o navegador e volta por `tech.lhcx.baru://login-callback`.
+- **7 dias grátis e depois assinatura.** Quando o teste acaba o app mostra uma
+  tela **neutra, sem preço** — ele só pergunta ao servidor se há acesso. A
+  compra acontece no site, e `baru_cobranca.ligada_em` mantém tudo liberado
+  até a cobrança ser ligada de fato.
+- **Pausas ao longo do dia** (ADR-028): o app lê 7 dias de uso, acha as horas
+  em que a tela mais prende e as maratonas de 20 min, e chama para descansar
+  nesses momentos — até 3 por dia, entre 9h e 21h. Hora ignorada perde peso.
+- **Notificações animadas**: o companheiro respira e pisca dentro do recado,
+  em cenário de acordo com o assunto e na luz da hora em que toca.
+- **Widget na tela inicial** no padrão dos apps de hábito, em dois tamanhos na
+  lista do Android, e ícone próprio na barra de notificação.
+- **Rastro do carinho embaixo do dedo**, e a festa interrompe o episódio: se o
+  bicho estiver comendo ou pastando, ele larga e pula.
+- **Excluir a conta cancela a assinatura no Asaas** antes de apagar o dado.
+
+E segue valendo tudo o que o retrato anterior listou: botão voltar que
+funciona, trilha como caminho, "Sua conta", quiz uma pergunta por tela,
+apagar meus dados, carinho no bicho, habitat por hora do dia, tempo de tela
+por categoria, trilha, missões, celebração de nível.
 
 ## Pronto e funcionando
 
-- Cinco fatias verticais completas neste turno (dado → regra → persistência →
-  tela → animação → háptico → 4 idiomas → teste → evidência).
-- Design system em código: tokens de cor, espaço, raio, elevação e tipografia;
-  sistema de movimento com durações nomeadas e curvas com física.
-- Nunito empacotada: o app não baixa mais a própria fonte.
-- Tempo de tela por contabilidade de intervalos, não por soma bruta.
-- Progressão real: XP, níveis, doze marcos, espécies desbloqueáveis.
-- Missões com sorteio determinístico e resgate idempotente.
-- Backend: 14 tabelas com RLS, schema reproduzível do zero.
+- Flutter 3.44 · 1244 testes · 4 idiomas (pt, en, es, zh).
+- Design system em código: tokens de cor, espaço, raio, elevação, tipografia;
+  movimento com durações nomeadas e curvas com física.
+- Backend: 19 tabelas com RLS, schema reproduzível do zero, 20 migrations.
+- Cobrança: duas Edge Functions no ar, webhook do Asaas, direito de acesso no
+  servidor.
+- Publicação por API: `~/lhcx/tools/play-publicar.py` sobe o AAB sem navegador
+  (conta de serviço `play-publisher@baru-513221`).
 
 ## Em andamento
 
-Nada pela metade. Todos os ciclos fecharam com portões verdes.
+Nada pela metade. Os portões fecharam verdes antes da publicação.
 
-**Próximo passo exato:** aplicar as migrations 7 e 8 no Supabase remoto
-(**BL-10**) — é o que faz o "erro ao sincronizar" sumir. Precisa de um humano
-com acesso ao projeto; o comando está no arquivo de bloqueios.
+**Próximo passo exato:** **testar o login com Google num aparelho**, com a
+build da loja quando a revisão liberar. A configuração das duas pontas — status
+"Em produção" no Google Auth Platform e `tech.lhcx.baru://login-callback` na
+lista de redirects do Supabase — foi fechada hoje, depois do AAB; nada disso
+vive dentro do app, mas também nada disso foi exercido por uma pessoa de
+verdade.
 
 ## Próximos itens da fila
 
-1. **Aplicar as migrations no remoto** (BL-10).
-2. **B-15 assinatura de release do Android** — único bloqueio de publicação.
-3. **Estágios de habitat visíveis** — o dado existe (`estagioDoHabitat` sobe
-   com os marcos) mas a cena ainda não muda com ele.
-4. **Lembretes com propósito** (§6) — sequência em risco, missão quase
-   concluída, marco ao alcance.
-5. **Onboarding e paywall no novo design system** — as duas telas que ainda
-   usam os valores antigos.
+1. **Login com Google em aparelho** — o único caminho novo não exercido.
+2. **Ligar a cobrança** (`baru_cobranca.ligada_em`) quando os planos estiverem
+   publicados no site; até lá todo mundo segue liberado.
+3. **Estágios de habitat visíveis** (C-03) — o dado existe e a cena ignora.
+4. **Relatório usando o histórico de sessões** (C-07).
+5. **Onboarding e paywall no design system** (C-05).
 
 ## Riscos e dívidas conhecidas
 
-- **O banco remoto está atrás do repositório** (BL-10): faltam
-  `baru_app_categories` e `baru_progression`. O app avisa qual tabela falta e
-  segue gravando local; nada se perde, mas nada de ajustes, tempo de tela e
-  progressão sobe.
-- **Nada foi verificado em aparelho.** Animações, notificação e permissão de
-  uso têm teste, mas ninguém rodou o app num telefone depois deste turno.
-- **A permissão de tempo de tela nunca rodou contra o Android real.** A
-  reconstrução de intervalos tem 25 casos sintéticos; a leitura dos eventos
-  crus depende de aparelho.
-- **Economia autoritativa no cliente** — vira problema no dia do IAP.
+- **O login com Google nunca rodou num aparelho.** Se estiver quebrado, o
+  estrago é o botão do Google falhar; e-mail e senha continuam funcionando.
+- **Pagamento fora da loja é a aposta mais arriscada do produto.** A Google
+  Play exige o faturamento dela para bens digitais vendidos *dentro* do app; a
+  tela neutra sem preço e sem link de compra é exatamente o que mantém isso
+  dentro da política. Qualquer preço, botão de assinar ou link para o site
+  nessa tela tira o app da loja.
+- **Não se sabe daqui se o Asaas está em sandbox ou produção.** O
+  `_shared/asaas.ts` usa `ASAAS_API_URL` com padrão de produção, mas o valor
+  real é segredo da Edge Function. A sonda anônima em `baru_cobranca` devolve
+  vazio — pode ser tabela vazia ou RLS; não dá para concluir sem login.
+- **Nada deste turno foi verificado em aparelho** além do que a loja aceitou.
+- **A permissão de tempo de tela nunca rodou contra o Android real.**
+- **Economia autoritativa no cliente** — folhas e XP decididos no aparelho.
 - **`AppState` passou de 1200 linhas.** Concentra domínio, plataforma e
   persistência.
-- **Nada foi aplicado no Supabase remoto.** A migration 7 existe no
-  repositório e foi validada localmente; aplicar é do humano.
+- **Suíte de integração não rodou neste turno** (precisa de Docker).
 
 ## Bloqueios para o humano
 
-| # | O quê |
-|---|---|
-| BL-01 | Ledger de migrations ausente no projeto remoto |
-| BL-03 | Proteção contra senha vazada desligada |
-| BL-04 | Um usuário de teste sem e-mail confirmado |
-| BL-05 | Keystore de release do Android |
-| BL-06 | Entitlement de Screen Time no iOS |
-| BL-07 | Produtos de IAP nas lojas |
-| BL-09 | **Verificar a notificação da sessão num aparelho** (roteiro no arquivo) |
-| BL-10 | ~~Migrations 7, 8 e 9~~ — **aplicadas** (sonda REST em 2026-08-27: as duas tabelas e as colunas novas respondem 200) |
-| BL-11 | **O "erro ao sincronizar" ainda aparece no aparelho.** O schema remoto está em dia, então a causa é outra. O app agora nomeia o domínio que falhou; preciso desse nome para investigar |
+Os de migration venceram. O que sobra está em [BLOCKERS.md](BLOCKERS.md), e o
+que importa hoje é verificação em aparelho (BL-09, BL-12, BL-14, BL-15, BL-16)
+mais os itens de conta: senha vazada desligada (BL-03), usuário de teste sem
+e-mail confirmado (BL-04) e entitlement de Screen Time no iOS (BL-06).
 
 ## Comandos para rodar e validar agora
 
@@ -169,6 +121,17 @@ flutter pub get
 flutter analyze
 flutter test
 flutter run
+```
+
+Publicar uma versão nova (o `--publicar` precisa ser você — o modo automático
+do agente bloqueia):
+
+```
+flutter build appbundle --release
+~/.local/share/lhcx-play-venv/bin/python ~/lhcx/tools/play-publicar.py baru --so-conferir
+~/.local/share/lhcx-play-venv/bin/python ~/lhcx/tools/play-publicar.py baru \
+  --aab baru_app/build/app/outputs/bundle/release/app-release.aab \
+  --notas <arquivo de notas> --nome "1.0.4 (5)" --publicar
 ```
 
 Evidência visual e banco local:

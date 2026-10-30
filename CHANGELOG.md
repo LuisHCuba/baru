@@ -3,6 +3,27 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-10-30 — 1.0.3 na Google Play, publicada por API
+
+### Adicionado
+
+- **Publicação sem navegador.** `~/lhcx/tools/play-publicar.py` fala com a
+  Google Play Developer API (`androidpublisher v3`) por uma conta de serviço:
+  cria a edit, sobe o bundle, grava as notas nos 3 idiomas, aponta a faixa,
+  valida e commita. Sem `--publicar` é ensaio e desfaz a edit; `--so-conferir`
+  mostra o que está em cada faixa. Serve para os 4 apps da conta.
+- **Login com Google configurado nas duas pontas**: status "Em produção" no
+  Google Auth Platform (escopos `email profile`, que não pedem revisão) e
+  `tech.lhcx.baru://login-callback` na lista de redirects do Supabase — o glob
+  `.../login-callback/**` que já existia não casa o endereço sem a barra.
+
+### Alterado
+
+- **1.0.3 (código 4) em produção, 100%.** A anterior era a 1.0.2 (código 3).
+- Documentação: `STATE.md` reescrito, `BACKLOG.md` com a fila de hoje,
+  `BLOCKERS.md` com os vencidos marcados (BL-05, BL-10, BL-13 e os de
+  migration) e `README.md` sem a frase "ainda não publicável".
+
 ## 2026-10-30 — assinaturas no Asaas
 
 ### Adicionado

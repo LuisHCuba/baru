@@ -1,5 +1,7 @@
 # Backlog — Baru
 
+Atualizado em 2026-10-30, com o app **publicado** (1.0.3, código 4).
+
 Priorizado pela função objetivo do mandato de produto: o app não mente → o app
 é sentido → o app enriquece → nada quebrado → retomável.
 
@@ -16,9 +18,9 @@ permissão com pré-visualização.
 
 | # | Item | Por que não saiu ainda |
 |---|---|---|
-| W-01 | **Widget de tela inicial** (Android AppWidget) | Precisa de `AppWidgetProvider`, `RemoteViews`, layouts XML e um provedor de dados que leia o snapshot fora do processo Flutter. É um turno inteiro sozinho. |
+| ~~W-01~~ | ~~**Widget de tela inicial** (Android AppWidget)~~ | **Feito em 2026-10-29.** `BaruWidget` + `WidgetService`: o bicho vai para o widget como PNG rasterizado pelo mesmo painter, porque `RemoteViews` não executa `CustomPainter`. Dois tamanhos na lista do Android. Verificação em aparelho é o BL-14. |
 | W-02 | **Widget de tela de bloqueio** | No Android, widget de bloqueio só existe de novo no **Android 15+** (`WIDGET_CATEGORY_LOCK_SCREEN` voltou em preview); entre o 5 e o 14 a API não existe. No iOS seria WidgetKit, e o app ainda não tem alvo iOS configurado. **Prometer isso para "o celular" hoje seria mentira.** O que dá para fazer nesta faixa é a notificação persistente, que já existe. |
-| W-03 | **Ícone do launcher** | O `ic_launcher` ainda é o padrão do Flutter. Fazer certo é gerar as densidades, o adaptativo (fore/background) e o monocromático do Android 13. |
+| ~~W-03~~ | ~~**Ícone do launcher**~~ | **Feito em 2026-08-27.** Gerado pelo mesmo `CustomPainter` que desenha o bicho, e troca com a espécie. |
 | ~~W-04~~ | ~~As espécies do `baru-pets.html`~~ | **Feito em 2026-08-27.** Axolote, pinguim, gata e raposa — painter, paleta, nome em 4 idiomas, desbloqueio na trilha e migration 12. Baru, Rio, Tuca e Kiwi já eram a capivara, a lontra, a tartaruga e a coruja. |
 
 ---
@@ -27,8 +29,10 @@ permissão com pré-visualização.
 
 | # | Item | Valor | Esforço | Risco | Pronto quando |
 |---|---|---|---|---|---|
+| C-14 | **Login com Google em aparelho** | **Alto** — é a manchete da 1.0.3 e nunca foi exercida | P | Médio | Navegador abre, volta por `tech.lhcx.baru://login-callback`, `AuthGate` entra; testado também com e-mail que já tem conta por senha |
+| C-15 | **Ligar a cobrança** (`baru_cobranca.ligada_em`) | Alto — hoje todo mundo segue liberado | P | Médio | Planos publicados no site, `ligada_em` gravado, e um teste de ponta a ponta de assinatura e webhook |
 | C-01 | ~~Rotas de verdade e transições (§4B)~~ | **Feito em 2026-08-27** — `lib/navegacao.dart`, 17 testes | — | — | — |
-| C-02 | Assinatura de release do Android | **Bloqueia publicação** | M | Alto | Keystore fora do repo, `key.properties`, build assinado (BL-05) |
+| C-02 | ~~Assinatura de release do Android~~ | — | — | — | **Feito.** Keystore fora do repo, `key.properties` apontado pelo `signingConfig`, e **1.0.3 (código 4) publicado em produção em 2026-10-30** |
 | C-03 | Estágios de habitat visíveis | Alto — o dado existe e a cena ignora | M | Baixo | `estagioDoHabitat` muda a cena: mais vegetação, companheiros visitantes, água mais viva |
 | C-04 | Lembretes com propósito (§6) | Alto — o app só fala quando a sessão roda | M | Baixo | Sequência em risco, missão quase concluída, marco ao alcance; cada um cancelado quando o motivo some; ajuste por categoria respeitado |
 | C-05 | Onboarding e paywall no design system | Médio — são as duas telas com valores soltos | M | Baixo | Nenhum valor de cor, espaço ou raio fora dos tokens; transições entre passos |
@@ -62,6 +66,19 @@ dados.
 - Arte Rive no lugar dos `CustomPainter`.
 
 ---
+
+## Concluído em outubro de 2026
+
+| Fatia | Onde |
+|---|---|
+| Widgets de tela inicial, dois tamanhos, no padrão dos apps de hábito | `BaruWidget.kt`, `widget_service.dart` |
+| Notificações no padrão Duolingo, com ícone próprio na barra | `notification_service.dart`, ADR-025 |
+| Pausas ao longo do dia nos picos de tela, em notificação animada | ADR-028, `pausas.dart`, `RecadoAnimado.kt` |
+| Material da Google Play nos 3 idiomas, e as capturas geradas por teste | `play-store/`, `test/capturas_loja_test.dart` |
+| Assinatura de release, 1.0.2 e 1.0.3 publicadas | `android/key.properties`, `~/lhcx/tools/play-publicar.py` |
+| Entrar com Google | `supabase_gateway.dart`, `auth_screen.dart` |
+| Assinaturas no Asaas: 7 dias grátis, tela neutra, acesso decidido no servidor | `supabase/functions/asaas-*`, migration 20 |
+| Espécies redesenhadas pela biologia, sistema visual com glifo por moeda | ADR-026, ADR-027 |
 
 ## Concluído no turno de 2026-08-27
 

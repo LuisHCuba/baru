@@ -11,9 +11,10 @@ habitat muda com a hora do dia. O tempo de tela é **contabilizado**, não
 somado: só conta a tela ligada e desbloqueada, por categoria de app, e você
 pode discordar da classificação.
 
-> Estado atual: MVP funcional em 4 idiomas com backend Supabase ligado.
-> Ainda **não publicável** — ver [docs/BLOCKERS.md](docs/BLOCKERS.md).
+> Estado atual: **publicado na Google Play** — 1.0.3 (código 4), em 4 idiomas,
+> com backend Supabase e assinatura pelo Asaas.
 > Retrato do agora: [docs/STATE.md](docs/STATE.md).
+> O que ainda depende de um humano: [docs/BLOCKERS.md](docs/BLOCKERS.md).
 > Como as telas estão hoje: [docs/evidence/](docs/evidence/).
 
 ## Stack

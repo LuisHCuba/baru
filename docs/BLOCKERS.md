@@ -2,9 +2,27 @@
 
 Cada item traz a ação exata. Tudo o que dependia do agente já está pronto.
 
+**Revisado em 2026-10-30.** Venceram: BL-05 (o app está assinado e publicado) e
+todos os de migration — BL-10, o BL-12 de migrations e o BL-16 de migrations —,
+porque a sonda REST de hoje achou no remoto as 20 migrations do repositório.
+BL-07 e BL-11 foram substituídos: a cobrança não é IAP, é assinatura no site
+pelo Asaas.
+
+**Atenção à numeração:** `BL-12` e `BL-16` aparecem **duas vezes** cada, de
+turnos diferentes. Os que ainda valem são os de **verificação em aparelho** (o
+vigia da sessão e a contagem na barra); os homônimos de migration estão
+resolvidos. Os números não foram renumerados porque DATA_MODEL.md e
+DECISIONS.md apontam para eles.
+
 ---
 
-## BL-16 — Migrations 14, 15 e 16: preparadas, **não aplicadas**
+## BL-16 — RESOLVIDO em 2026-10-30 — Migrations 14, 15 e 16
+
+**Aplicadas.** Sonda REST com a chave anon: `baru_settings.som` e
+`baru_progression.dias_abaixo_na_semana`/`.semana_de` respondem. O registro
+abaixo fica pelo raciocínio das migrations.
+
+### Era
 
 **O que corrigem.** Seis campos do `AppSnapshot` que não chegavam ao banco.
 Quatro deles não viraram coluna — viraram conta sobre `baru_sessions`, que já
@@ -98,7 +116,12 @@ flutter test test/integration \
 
 ---
 
-## BL-12 — Faltam as migrations 10 e 11 no remoto
+## BL-12 — RESOLVIDO em 2026-10-30 — Migrations 10 e 11
+
+**Aplicadas.** Sonda REST: `baru_progression.missoes_resgatadas` e
+`baru_inventory_items.equipped` respondem.
+
+### Era
 
 **Situação.** As migrations 7, 8 e 9 já foram aplicadas (sonda REST em
 2026-08-27: as tabelas e colunas respondem 200). Faltam duas, ambas aditivas
@@ -122,7 +145,14 @@ Ou cole os dois arquivos no SQL Editor, nessa ordem.
 
 ---
 
-## BL-10 — **O banco remoto está atrás do repositório. É isto que causa o "erro ao sincronizar".**
+## BL-10 — RESOLVIDO em 2026-10-30 — o banco remoto está em dia
+
+**Já não está atrás.** Sonda REST de hoje: `baru_app_categories` e
+`baru_progression` existem e respondem, e com elas as 20 migrations do
+repositório. O "erro ao sincronizar" por tabela ausente não tem mais causa — se
+voltar a aparecer, é outro domínio, e o app nomeia qual.
+
+### Era
 
 **Situação, verificada agora** (sonda REST com a chave anon deste repositório,
 em 2026-08-27):
@@ -173,7 +203,13 @@ Se o `db push` reclamar do ledger, resolva o BL-01 primeiro.
 
 ## BL-01 — Ledger de migrations ausente no projeto remoto
 
-**Situação.** As 5 migrations foram aplicadas à mão pelo SQL Editor. O schema
+**Ainda de pé, e é o único item de banco que sobrou.** As 20 migrations estão
+no remoto (sonda de 2026-10-30), mas não se sabe se
+`supabase_migrations.schema_migrations` passou a existir — isso só se vê com
+token do projeto. Se o `db push` futuro tentar reaplicar tudo, as migrations são
+reexecutáveis (ADR-003).
+
+**Situação original.** As 5 migrations foram aplicadas à mão pelo SQL Editor. O schema
 `supabase_migrations.schema_migrations` **não existe** no banco (verificado por
 query). O CLI não sabe o que já rodou.
 
@@ -248,15 +284,17 @@ desenvolvimento.
 
 ---
 
-## BL-05 — Assinatura de release do Android
+## BL-05 — RESOLVIDO em 2026-10-23/30 — assinatura de release
 
-**Situação.** `android/app/build.gradle.kts` ainda usa a config de assinatura de
-**debug** no build de release (TODO do template Flutter intacto). Não é
-publicável. Gerar keystore é irreversível e envolve segredo — o agente não faz.
+**Feito.** Keystore em `~/Downloads/baru-chave-upload-google-play/`, fora do
+repositório; `android/key.properties` (gitignored) aponta o `storeFile`
+absoluto; `android/app/build.gradle.kts` usa o `signingConfig` de release
+quando esse arquivo existe e cai no debug quando falta. Certificado de upload
+SHA-1 `CC:29:72:A5:…:E4:3C`.
 
-**Ação pedida.** Gerar a keystore, guardá-la **fora** do repositório, criar
-`android/key.properties` (já coberto pelo `.gitignore`) e apontar o
-`signingConfig` de release para ela.
+**Publicado:** 1.0.2 (código 3) e, em 2026-10-30, **1.0.3 (código 4) em
+produção, 100%** — este pela Developer API, com
+`~/lhcx/tools/play-publicar.py`.
 
 ---
 
@@ -272,7 +310,15 @@ lá, a flag mantém o iOS honesto.
 
 ---
 
-## BL-07 — IAP (compra dentro do app)
+## BL-07 — SUBSTITUÍDO em 2026-10-30 — não vai ser IAP
+
+A cobrança escolhida foi **assinatura no site pelo Asaas**, com o app mostrando
+uma tela neutra sem preço e perguntando ao servidor (`baru_meu_acesso`) se há
+acesso. Nada de IAP, RevenueCat ou Play Billing. O que resta é operacional, não
+de código: publicar os planos no site e gravar `baru_cobranca.ligada_em` (fila
+C-15 do BACKLOG).
+
+### Era
 
 **Situação.** Trial e planos existem só localmente: `startTrial()` e
 `restorePurchases()` ligam um booleano, sem validação de loja. Não há receita
@@ -329,7 +375,14 @@ Activity no iOS. O primeiro exige código nativo e uma permissão a mais; o
 segundo exige entitlement da Apple (ver BL-06). A contagem via cronômetro do
 sistema cobre o caso principal sem nenhum dos dois.
 
-## BL-11 — Pagamento: precisa de contas que só você abre
+## BL-11 — SUBSTITUÍDO em 2026-10-30 — a cobrança existe
+
+Resolvido por outro caminho que o recomendado aqui: Asaas no site, Edge
+Functions `asaas-assinatura` e `asaas-webhook` no ar, direito de acesso no
+servidor. A recomendação de RevenueCat abaixo **não foi seguida** e fica como
+registro do que se pensou.
+
+### Era
 
 **O que está travado.** A tela de plano existe e fala em "7 dias grátis",
 mas não há cobrança por trás. Nada disso é código: são contas, cadastros e
@@ -402,7 +455,14 @@ O item 2 depende do acesso ao uso concedido **e** de "desenhar sobre outros
 apps". Sem o primeiro, o vigia sobe e não vê nada; sem o segundo, vê e não
 aparece.
 
-## BL-13 — Widgets de tela inicial: não entregues
+## BL-13 — RESOLVIDO em 2026-10-29 — o widget de tela inicial saiu
+
+Entregue como `BaruWidget` + `WidgetService`, pelo caminho que este registro
+previu: PNG rasterizado pelo mesmo painter, porque `RemoteViews` não executa
+`CustomPainter`. Dois tamanhos na lista do Android. A verificação em aparelho é
+o **BL-14**. Segue de pé só o **W-02**, widget de tela de bloqueio.
+
+### Era
 
 **O que foi pedido.** Widget na tela inicial mostrando o Baru.
 

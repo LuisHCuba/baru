@@ -81,6 +81,45 @@ class UsageService {
     );
   }
 
+  /// Os trechos de uso dos últimos [dias] dias inteiros, até [agora].
+  ///
+  /// É o material do perfil das pausas (`momentos_de_pausa.dart`): o
+  /// mesmo par de eventos do tempo de tela, só que por mais dias. O Android
+  /// guarda os eventos crus por cerca de uma semana; pedir mais não traz
+  /// nada e só deixa a consulta lenta.
+  Future<List<IntervaloDeUso>> intervalosDosUltimosDias({
+    int dias = 7,
+    DateTime? agora,
+  }) async {
+    if (!Platform.isAndroid || !await hasUsageAccess()) return const [];
+
+    final fim = agora ?? DateTime.now();
+    final inicio = DateTime(fim.year, fim.month, fim.day - dias);
+    final crus = await UsageStats.queryEvents(
+      inicio.subtract(ReconstrutorDeUso.janelaDeAquecimento),
+      fim,
+    );
+    final eventos = <EventoDeUso>[];
+    for (final e in crus) {
+      final tipo = int.tryParse(e.eventType ?? '');
+      final ms = int.tryParse(e.timeStamp ?? '');
+      final pacote = e.packageName;
+      if (tipo == null || ms == null || pacote == null) continue;
+      eventos.add(
+        EventoDeUso(
+          tipo: tipo,
+          quando: DateTime.fromMillisecondsSinceEpoch(ms),
+          pacote: pacote,
+        ),
+      );
+    }
+    return _contabilidade.reconstrutor.intervalos(
+      eventos,
+      de: inicio,
+      ate: fim,
+    );
+  }
+
   /// Minutos que a meta compara: dispersivo + neutro.
   ///
   /// `null` quer dizer "não sei" — sem permissão o app não estima.

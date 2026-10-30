@@ -10,6 +10,7 @@ import 'data/crescimento.dart';
 import 'data/cofre.dart';
 import 'data/descanso_do_dia.dart';
 import 'data/descanso_retencao.dart';
+import 'data/momentos_de_pausa.dart';
 import 'data/auth_errors.dart';
 import 'data/baru_env.dart';
 import 'data/repositories.dart';
@@ -24,6 +25,7 @@ import 'l10n.dart';
 import 'l10n_descanso.dart';
 import 'l10n_humor.dart';
 import 'l10n_missoes.dart';
+import 'l10n_pausas.dart';
 import 'l10n_sobreposicao.dart';
 import 'l10n_widget.dart';
 import 'theme.dart';
@@ -1622,9 +1624,26 @@ class AppState extends ChangeNotifier {
       BaruNotifications.rotaMissoes => AppScreen.missoes,
       BaruNotifications.rotaRelatorio => AppScreen.report,
       BaruNotifications.rotaHome => AppScreen.home,
+      BaruNotifications.rotaPausa => AppScreen.missoes,
       _ => null,
     };
     if (destino != null) go(destino);
+    if (rota == BaruNotifications.rotaPausa) {
+      unawaited(_comecaODescansoPelaPausa());
+    }
+  }
+
+  /// A pausa prometeu "toque e eu conto": o toque começa o descanso.
+  ///
+  /// Com o tempo de tela **relido antes**: no arranque a frio o resumo é o
+  /// do snapshot, de horas atrás, e um descanso que começa com a conta
+  /// velha veria como fuga todo o uso entre ela e agora — e romperia no
+  /// primeiro minuto.
+  Future<void> _comecaODescansoPelaPausa() async {
+    if (!usageAccess) return;
+    await _refreshUsageFromOs(notify: false);
+    if (descansoComecouEm != null || missaoDoDescanso.concluida) return;
+    comecaODescanso();
   }
 
   /// Sincroniza toggles com permissões reais do SO e atualiza tempo de tela.
@@ -1922,7 +1941,7 @@ class AppState extends ChangeNotifier {
       );
     }
 
-    final marcados = await notif.sincronizaRetencao(
+    final retencao = await notif.sincronizaRetencao(
       plano: plano,
       textos: textosDosLembretes(
         t,
@@ -1937,7 +1956,140 @@ class AppState extends ChangeNotifier {
       escada: degraus,
       despedida: despedida,
     );
-    if (caderno != null) await notif.guardaCaderno(caderno, marcados);
+
+    // As pausas ao longo do dia, longe de todos os outros recados.
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    DateTime em(DateTime dia, int hora, [int minuto = 0]) =>
+        DateTime(dia.year, dia.month, dia.day, hora, minuto);
+    final ocupados = <DateTime>[
+      for (final l in plano) ...[
+        if (!l.pulaHoje) em(hoje, l.hora, l.minuto),
+        if (l.repeteTodoDia) em(amanha, l.hora, l.minuto),
+      ],
+      if (evening) ...[
+        em(hoje, eveningHour, eveningMinute),
+        em(amanha, eveningHour, eveningMinute),
+      ],
+      if (textoDeAmanha != null) em(amanha, horaDeAmanha),
+      for (final d in degraus) d.quando,
+      ?despedida?.quando,
+    ];
+    final pausas = await notif.sincronizaPausas(
+      await _planejaPausas(agora: agora, caderno: caderno, ocupados: ocupados),
+      agora: agora,
+    );
+
+    if (caderno != null) {
+      await notif.guardaCaderno(caderno, [...retencao, ...pausas]);
+    }
+  }
+
+  /// O perfil de uso das pausas e quando ele foi feito.
+  ///
+  /// Refeito no máximo a cada seis horas: são sete dias de eventos crus, e
+  /// os recados são ressincronizados a cada gravação.
+  PerfilDeUso? _perfilDeUso;
+  DateTime? _perfilFeitoEm;
+
+  Future<PerfilDeUso?> _perfilDasPausas(DateTime agora) async {
+    if (kIsWeb || !usageAccess) return null;
+    final feito = _perfilFeitoEm;
+    if (_perfilDeUso != null &&
+        feito != null &&
+        feito.day == agora.day &&
+        agora.difference(feito) < const Duration(hours: 6)) {
+      return _perfilDeUso;
+    }
+    try {
+      final intervalos = await UsageService.instance.intervalosDosUltimosDias(
+        agora: agora,
+      );
+      const contabilidade = ContabilidadeDeTela();
+      _perfilDeUso = perfilDeUso(
+        intervalos,
+        // O que conta para a meta: é esse uso que a pausa quer interromper.
+        conta: (pacote) => switch (contabilidade.categoriaDe(
+          pacote,
+          ajustesDeCategoria,
+        )) {
+          CategoriaDeApp.dispersivo || CategoriaDeApp.neutro => true,
+          _ => false,
+        },
+        agora: agora,
+      );
+      _perfilFeitoEm = agora;
+    } catch (_) {
+      // Sem leitura, fica o perfil de antes — ou nenhum, e nenhuma pausa.
+    }
+    return _perfilDeUso;
+  }
+
+  /// As pausas de hoje e de amanhã, com o texto de cada uma.
+  ///
+  /// **Hoje fica quieto** depois do descanso do dia cumprido, ou com um em
+  /// curso: a missão já está feita ou acontecendo. E nada antes de uma hora
+  /// depois do fim da sessão em curso, nem de duas depois do último foco
+  /// concluído — quem acabou de largar o telefone não precisa ouvir que
+  /// devia largar o telefone.
+  Future<List<({DateTime quando, TextoDeLembrete texto})>> _planejaPausas({
+    required DateTime agora,
+    required HistoricoDeRecados? caderno,
+    required List<DateTime> ocupados,
+  }) async {
+    final perfil = await _perfilDasPausas(agora);
+    if (perfil == null || perfil.vazio) return const [];
+
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    final amanha = DateTime(agora.year, agora.month, agora.day + 1);
+    final maximo = (caderno?.pausasIgnoradas ?? false) ? 1 : 3;
+
+    DateTime? naoAntesDe;
+    void depoisDe(DateTime limite) {
+      final atual = naoAntesDe;
+      if (atual == null || limite.isAfter(atual)) naoAntesDe = limite;
+    }
+
+    final fimDaSessao = sessionEndsAt;
+    if (running && fimDaSessao != null) {
+      depoisDe(fimDaSessao.add(const Duration(hours: 1)));
+    }
+    for (final s in sessions) {
+      if (s.completed) depoisDe(s.at.add(const Duration(hours: 2)));
+    }
+
+    final hojeLivre =
+        descansoComecouEm == null && !missaoDoDescanso.concluida;
+    final momentos = [
+      if (hojeLivre)
+        ...momentosDePausa(
+          perfil,
+          dia: hoje,
+          agora: agora,
+          ocupados: ocupados,
+          naoAntesDe: naoAntesDe,
+          receptividade: caderno?.receptividadeDaHora,
+          maximo: maximo,
+        ),
+      ...momentosDePausa(
+        perfil,
+        dia: amanha,
+        agora: agora,
+        ocupados: ocupados,
+        naoAntesDe: naoAntesDe,
+        receptividade: caderno?.receptividadeDaHora,
+        maximo: maximo,
+      ),
+    ];
+    final textos = textosDasPausasDoDia(
+      t,
+      nomeDoPet: displayName,
+      momentos: momentos,
+      historico: caderno,
+    );
+    return [
+      for (var i = 0; i < momentos.length; i++)
+        (quando: momentos[i].quando, texto: textos[i]),
+    ];
   }
 
   /// Onboarding passo 6 — abre fluxo nativo; só avança se o SO conceder.

@@ -3,6 +3,25 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-10-30 — pausas ao longo do dia, nos picos de tela, e notificações animadas
+
+### Adicionado
+
+- **Pausas ao longo do dia** (ADR-028). O app lê os últimos 7 dias de uso,
+  acha as horas em que a pessoa mais fica presa na tela — e as maratonas de
+  20 min ou mais — e chama para uma pausa nesses momentos: até 3 por dia,
+  entre 9h e 21h, longe dos outros recados. Hora ignorada perde peso; quem
+  ignora todas passa a receber uma. Tocar começa o descanso na hora.
+- **Notificações animadas.** Pausa, convite, raiz e despedida mostram o bicho
+  respirando e piscando, num cenário de acordo com o recado (árvore, trilha,
+  raiz, ninho) e na luz da hora em que tocam.
+- Canal "Pausas ao longo do dia" nos ajustes de notificação do sistema.
+
+### Alterado
+
+- O pedido de permissão de notificação deixou de prometer "um lembrete por
+  dia": fala em lembretes curtos nas horas em que a tela mais prende.
+
 ## 2026-10-20 — material da Google Play, e o relatório que mostrava as chaves
 
 ### Adicionado

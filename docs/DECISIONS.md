@@ -1030,3 +1030,69 @@ e a pílula de preço da loja como `BotaoBaru` (ela é uma pílula de 36 dp
 dentro da vitrine; virou glifo, não botão 3D). **Não verificado:** a leitura
 do glifo da raiz a 16–18 px com pessoas; é um desenho novo e ambíguo
 sozinho, e só se lê como "raiz" junto do rótulo.
+
+
+## ADR-028 — Pausas ao longo do dia, nos picos de tela, em notificação animada (2026-10-30)
+
+**Contexto.** O app só chamava a pessoa duas vezes por dia: o convite, no
+horário em que ela costuma **usar o Baru**, e a raiz em risco, à noite. Nenhum
+dos dois alcança o momento que a missão do descanso existe para cortar — a
+hora em que a pessoa está presa no feed. Esse momento já estava medido: os
+eventos crus do Android (ADR-009) dizem, hora a hora, quando a tela fica
+ligada num app que conta para a meta. O dono do produto pediu notificações
+ao longo do dia, nos momentos estratégicos, e que fossem animadas como o
+widget, com imagem de acordo com o recado.
+
+**Decisão.**
+
+- **Perfil de uso** (`lib/data/momentos_de_pausa.dart`): os últimos 7 dias
+  inteiros de trechos contáveis (dispersivo e neutro), em minutos por hora,
+  separando dia útil de fim de semana (com pelo menos 2 dias de cada), mais
+  as **maratonas** — uso contínuo de 20 min ou mais, com folga de 2 min — na
+  hora em que começam. Hoje fica de fora: o dia pela metade pesaria a manhã.
+- **Momentos**: nota da hora = média de minutos + 10 × maratonas por dia,
+  vezes a receptividade da hora. Entre 9h e 21h, aos 15 minutos da hora; no
+  máximo 3 por dia, a 3 h uma da outra e a 2 h de qualquer outro recado
+  (convite, raiz, relatório, escada). Só hoje e amanhã: quem some há dois
+  dias sai das pausas e fica com a escada, que tem fim.
+- **Silêncio**: hoje fica quieto com o descanso do dia cumprido ou em curso;
+  nada antes de 1 h depois do fim da sessão em curso, nem de 2 h depois do
+  último foco concluído. **Sem acesso ao uso, nenhuma pausa** — horário de
+  pico inventado seria a mentira que o ADR-009 tirou do tempo de tela.
+- **Fadiga** (`HistoricoDeRecados.horasDaPausa`): cada hora tem sua conta de
+  envios e acertos (abrir o app em até 3 h). A nota é multiplicada por
+  `2·(acertos+1)/(envios+2)`: hora ignorada cede lugar. Seis pausas
+  ignoradas sem nenhum acerto: passa a uma por dia. O texto é escolhido pelo
+  mesmo bandit da pesquisa 26, entre quatro modelos; um deles diz o padrão
+  ("por volta das 22h você costuma passar 35 min na tela").
+- **O toque começa o descanso** (`rotaPausa`): abre as missões e inicia a
+  tentativa, com o tempo de tela relido antes — no arranque a frio o resumo
+  é o do snapshot, e a conta velha romperia o descanso no primeiro minuto.
+- **Canal próprio** `baru_pausa_alta`, de importância alta: a pausa chega no
+  meio do feed, e só na gaveta ela seria vista depois da maratona.
+- **Notificação animada** (`RecadoAnimado.kt`, `CenasDosRecados.kt`,
+  `lib/services/cenas_dos_recados.dart`): pausa, convite, raiz e despedida
+  passam a ser postadas pelo Kotlin, com `RemoteViews` e um `ViewFlipper`
+  que o sistema anima sozinho — o bicho do tema respira (4 quadros, ida e
+  volta, com fusão de 220 ms) e pisca, sobre o cenário do tema na luz da
+  hora (manhã, tarde, noite). Bocejando debaixo da árvore na pausa, contente
+  na trilha de brotos no convite, radiante sobre a raiz, dormindo no ninho
+  na despedida. Os quadros e fundos são o `PetView` e um `CustomPainter`
+  rasterizados pelo Dart ao sair do app, como os da sobreposição. O Dart
+  continua decidindo quando e o que dizer; o Kotlin guarda o recado, arma o
+  alarme inexato (o mesmo modo do plugin), rearma depois de religar o
+  aparelho e descarta o que atrasou mais de 2 h.
+- **Teto do Binder**: quadros de 144×122 px, fundo de 320×140 sem alfa,
+  vista curta com quadros de no máximo 84 px e sem vista própria de
+  heads-up. Se o sistema recusar a vista, o recado sai na forma comum.
+
+**Fora desta decisão.** O relatório da noite, o recado de volta e o aviso do
+teste continuam no plugin, estáticos. Pausa **reativa** (perceber a maratona
+enquanto ela acontece) exigiria um serviço vigiando o uso o dia inteiro, e o
+único serviço em primeiro plano do app é o da sessão (ADR-011). Um ajuste no
+app para desligar só as pausas — hoje se desliga pelo canal, nos ajustes do
+sistema.
+
+**Não verificado em aparelho.** O `ViewFlipper` dentro de notificação e o
+tamanho final da transação dependem do Android e do fabricante; os testes
+travam a escolha dos momentos, os textos e o que o Dart desenha e envia.

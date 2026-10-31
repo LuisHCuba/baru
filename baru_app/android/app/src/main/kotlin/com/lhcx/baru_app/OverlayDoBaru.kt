@@ -55,6 +55,12 @@ class OverlayDoBaru : Service() {
         const val ACAO_MOSTRAR = "com.lhcx.baru_app.MOSTRAR_OVERLAY"
         const val ACAO_ESCONDER = "com.lhcx.baru_app.ESCONDER_OVERLAY"
 
+        /** O balão está na tela agora (o vigia o tira de cima de uma chamada). */
+        @JvmStatic
+        @Volatile
+        var visivel = false
+            private set
+
         /** Tempo até sumir sozinho. Um lembrete que fica é um estorvo. */
         const val SEGUNDOS_ATE_SUMIR = 12L
 
@@ -96,7 +102,17 @@ class OverlayDoBaru : Service() {
             ?: 0xFFB07A4E.toInt()
         val especie = intent?.getStringExtra(EXTRA_ESPECIE) ?: "capybara"
         val rotuloFechar = intent?.getStringExtra(EXTRA_ACAO_FECHAR).orEmpty()
-        val rotuloMais = intent?.getStringExtra(EXTRA_ACAO_MAIS).orEmpty()
+        // O "+5 min" vem do Dart com o número cinco; durante uma sessão
+        // vigiada, cada pedido dá mais tempo que o anterior (5, 10, 15...),
+        // e o rótulo diz quanto. Só se troca o número: o texto continua
+        // sendo o do catálogo, no idioma da pessoa.
+        val rotuloMais = intent?.getStringExtra(EXTRA_ACAO_MAIS).orEmpty().let {
+            if (VigiaDaSessao.dePe) {
+                it.replaceFirst(Regex("\\d+"), VigiaDaSessao.proximoAdiamentoMin().toString())
+            } else {
+                it
+            }
+        }
 
         val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         // O bicho da pessoa, se o Dart ja deixou os quadros; senao, o
@@ -127,7 +143,12 @@ class OverlayDoBaru : Service() {
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
             },
-            aoAdiar = { esconde() },
+            aoAdiar = {
+                // Antes só escondia, e o vigia voltava em um minuto: o
+                // "+5 min" era mentira (relato de teste).
+                VigiaDaSessao.adia()
+                esconde()
+            },
         )
 
         val tipo =
@@ -163,6 +184,7 @@ class OverlayDoBaru : Service() {
         Log.i(VigiaDaSessao.TAG_LOG, "overlay: Baru na tela")
         janela = wm
         vista = v
+        visivel = true
         v.entra()
         v.postDelayed(sumir, SEGUNDOS_ATE_SUMIR * 1000)
     }
@@ -176,6 +198,7 @@ class OverlayDoBaru : Service() {
             // Já removida — nada a fazer.
         }
         vista = null
+        visivel = false
     }
 
     override fun onDestroy() {

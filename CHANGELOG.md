@@ -3,6 +3,21 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-10-31 — o Baru menos insistente (1.0.5, código 6)
+
+### Corrigido
+
+- **O "+5 min" agora espera de verdade.** O botão só escondia o balão, e o
+  vigia voltava um minuto depois. Agora ele silencia o vigia pelo tempo pedido.
+- **Mais tempo a cada pedido.** O segundo toque dá 10 min, o terceiro 15, até
+  30, e o rótulo do botão mostra o número. Antes era sempre 5.
+- **Nada de balão durante ligação ou chamada de vídeo.** Com o áudio fora do
+  modo normal (telefone, WhatsApp, Meet, Zoom), o Baru não aparece, e some se
+  já estava na tela quando a chamada começou.
+- **Ignorar não traz o balão a cada minuto.** O silêncio entre aparições sem
+  resposta dobra (1, 2, 4, 8 min, até 10) e volta a um minuto quando a pessoa
+  retorna ao Baru.
+
 ## 2026-10-30 — a contagem do teste à vista, e a cobrança ligada (1.0.4, código 5)
 
 ### Adicionado

@@ -48,12 +48,16 @@ const _nadam = {
   Species.axolotl,
 };
 
-/// O passo inteiro numa fase `f` (0..1 é um ciclo: dois passos).
-SaidaDaVida passoNa(double f, {required bool saltita}) {
+/// O passo inteiro numa fase `f` (0..1 é um ciclo: dois passos). Correndo
+/// (atrás da bola), o quique é de galope, o corpo pende bem mais para a
+/// frente e cada pata que bate levanta poeira — `MotorDeVida._passo`.
+SaidaDaVida passoNa(double f, {required bool saltita, bool correndo = false}) {
   final fase = f * 2 * math.pi;
   final onda = math.sin(fase);
   final arco = math.sin(math.pi * ((f * 2) % 1));
-  final sobe = saltita ? arco * 7.0 : (1 - math.cos(2 * fase)) / 2 * 3.0;
+  final sobe = saltita
+      ? arco * (correndo ? 12.0 : 7.0)
+      : (1 - math.cos(2 * fase)) / 2 * (correndo ? 8.0 : 3.0);
   final s = (f * 2) % 1;
   final elastico = saltita
       ? (s < 0.14
@@ -69,7 +73,12 @@ SaidaDaVida passoNa(double f, {required bool saltita}) {
     passada: onda,
     gingado: saltita ? 0 : onda * 0.045,
     andando: 1,
-    inclina: 0.03,
+    inclina: correndo ? 0.10 : 0.03,
+    corrida: correndo ? 1 : 0,
+    // A poeira das duas últimas pisadas, atrás de quem corre (x, idade 0..1).
+    poeira: correndo
+        ? [Offset(-16, (f * 2) % 1), Offset(-22, ((f * 2) % 1 + 0.5) % 1)]
+        : const [],
     elastico: elastico.toDouble(),
     pataEsquerda: saltita ? arco * (par ? 1.0 : 0.35) : math.max(0.0, onda),
     pataDireita: saltita ? arco * (par ? 0.35 : 1.0) : math.max(0.0, -onda),
@@ -133,6 +142,52 @@ void main() {
             vida: passoNa(t(i), saltita: _saltitam.contains(sp)),
           )),
           'anda-${sp.name}/$i',
+        );
+      }
+    }
+  });
+
+  testWidgets('a corrida atrás da bola', skip: !_ligado, (tester) async {
+    for (final sp in Species.values) {
+      for (var i = 0; i < n; i++) {
+        await grava(
+          tester,
+          _cena(sp, Activity.idle, QuadroFixo(
+            acao: AcaoDoBicho.ocioso,
+            vida: passoNa(t(i), saltita: _saltitam.contains(sp), correndo: true),
+          ), humor: Mood.radiant),
+          'corre-${sp.name}/$i',
+        );
+      }
+    }
+  });
+
+  // Comer: a bocada (a cabeça desce até a comida e volta) e a mastigação de
+  // cabeça erguida, com a comida na boca. Capivara e tartaruga pastam (a
+  // cabeça vai mais fundo, no capim); as outras sete petiscam
+  // (`acaoDoBicho` com Activity.graze decide).
+  testWidgets('o episódio de comer', skip: !_ligado, (tester) async {
+    const quadros = 16;
+    for (final sp in Species.values) {
+      for (var i = 0; i < quadros; i++) {
+        final f = i / quadros;
+        // 0..0,35: a bocada; 0,35..1: mastiga (quatro mordidas).
+        final bocada = f < 0.35 ? math.sin(math.pi * f / 0.35) : 0.0;
+        final mastiga = f < 0.35 ? 0.0 : 0.5 - 0.5 * math.cos((f - 0.35) / 0.65 * math.pi * 2 * 4);
+        await grava(
+          tester,
+          _cena(sp, Activity.graze, QuadroFixo(
+            respiro: math.sin(f * 2 * math.pi) * 0.3,
+            vida: SaidaDaVida(
+              atividadeAtiva: true,
+              corpoLivre: false,
+              cabecaNoChao: bocada,
+              mastigando: mastiga,
+              comendo: f >= 0.3,
+              cicloDaAtividade: f,
+            ),
+          )),
+          'come-${sp.name}/$i',
         );
       }
     }

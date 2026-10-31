@@ -80,8 +80,9 @@ verdade.
 ## Próximos itens da fila
 
 1. **Login com Google em aparelho** — o único caminho novo não exercido.
-2. **Ligar a cobrança** (`baru_cobranca.ligada_em`) quando os planos estiverem
-   publicados no site; até lá todo mundo segue liberado.
+2. **Provar o webhook do Asaas** (C-16): há uma assinatura PIX pendente e
+   `baru_asaas_eventos` está com **zero eventos**. Se o Asaas não estiver
+   chamando `/functions/v1/asaas-webhook`, PIX pago não abre acesso.
 3. **Estágios de habitat visíveis** (C-03) — o dado existe e a cena ignora.
 4. **Relatório usando o histórico de sessões** (C-07).
 5. **Onboarding e paywall no design system** (C-05).
@@ -95,10 +96,9 @@ verdade.
   tela neutra sem preço e sem link de compra é exatamente o que mantém isso
   dentro da política. Qualquer preço, botão de assinar ou link para o site
   nessa tela tira o app da loja.
-- **Não se sabe daqui se o Asaas está em sandbox ou produção.** O
-  `_shared/asaas.ts` usa `ASAAS_API_URL` com padrão de produção, mas o valor
-  real é segredo da Edge Function. A sonda anônima em `baru_cobranca` devolve
-  vazio — pode ser tabela vazia ou RLS; não dá para concluir sem login.
+- **O Asaas está em produção**: há assinatura real criada em 30/10 às 20:00,
+  `monthly`, R$ 12,90, PIX, com id e link no Asaas. O que não se provou é o
+  **webhook**: `baru_asaas_eventos` está vazio.
 - **Nada deste turno foi verificado em aparelho** além do que a loja aceitou.
 - **A permissão de tempo de tela nunca rodou contra o Android real.**
 - **Economia autoritativa no cliente** — folhas e XP decididos no aparelho.

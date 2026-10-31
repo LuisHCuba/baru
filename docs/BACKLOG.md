@@ -30,7 +30,8 @@ permissão com pré-visualização.
 | # | Item | Valor | Esforço | Risco | Pronto quando |
 |---|---|---|---|---|---|
 | C-14 | **Login com Google em aparelho** | **Alto** — é a manchete da 1.0.3 e nunca foi exercida | P | Médio | Navegador abre, volta por `tech.lhcx.baru://login-callback`, `AuthGate` entra; testado também com e-mail que já tem conta por senha |
-| C-15 | **Ligar a cobrança** (`baru_cobranca.ligada_em`) | Alto — hoje todo mundo segue liberado | P | Médio | Planos publicados no site, `ligada_em` gravado, e um teste de ponta a ponta de assinatura e webhook |
+| C-15 | ~~**Ligar a cobrança**~~ | — | — | — | **Feito em 2026-10-30.** `ligada_em = 20:10`; teste de quem já tinha conta vence em 06/11. Falta só o teste de ponta a ponta do webhook (C-16) |
+| C-16 | **Provar o webhook do Asaas** | **Alto** — PIX pago sem webhook não abre acesso | P | Alto | `baru_asaas_eventos` recebe evento e `pago_ate` preenche depois de um pagamento real |
 | C-01 | ~~Rotas de verdade e transições (§4B)~~ | **Feito em 2026-08-27** — `lib/navegacao.dart`, 17 testes | — | — | — |
 | C-02 | ~~Assinatura de release do Android~~ | — | — | — | **Feito.** Keystore fora do repo, `key.properties` apontado pelo `signingConfig`, e **1.0.3 (código 4) publicado em produção em 2026-10-30** |
 | C-03 | Estágios de habitat visíveis | Alto — o dado existe e a cena ignora | M | Baixo | `estagioDoHabitat` muda a cena: mais vegetação, companheiros visitantes, água mais viva |

@@ -3,6 +3,44 @@
 Formato: entradas por data, agrupadas em Adicionado / Corrigido / Alterado /
 Removido. Datas em AAAA-MM-DD.
 
+## 2026-10-30 — a contagem do teste à vista, e a cobrança ligada (1.0.4, código 5)
+
+### Adicionado
+
+- **A contagem dos dias de teste aparece.** O app sabia e não dizia:
+  `acessoLiberado()` devolvia um booleano e descartava o `testeAte` que o
+  `baru_meu_acesso` já mandava, e o cartão de plano em "Sua conta" estava atrás
+  de `cobrancaNaLoja`, que é `false`. Agora há `MeuAcesso` com a resposta
+  inteira, um `ValueNotifier` que o `AuthGate` alimenta no arranque e a cada
+  volta do segundo plano, um cartão em "Sua conta" e uma faixa na home nos
+  três últimos dias. O prazo é **o do servidor** — relógio de aparelho se muda
+  nos ajustes.
+- **Caminho para os planos no site** nos dois lugares, sem preço dentro do app.
+- `test/acesso_test.dart`: 15 casos — a conta de dias no limite do dia, a
+  precedência de quem paga, o mapa do RPC, e que nenhum dos 10 textos novos
+  carrega preço em nenhum dos 4 idiomas.
+
+### Alterado
+
+- **A cobrança foi ligada**: `baru_cobranca.ligada_em = 2026-10-30 20:10`. Até
+  aqui `baru_meu_acesso` devolvia `liberado` para todo mundo, para sempre, e a
+  `TesteEncerradoScreen` era inalcançável. Quem já tinha conta tem teste até
+  **06/11**; quem criar depois conta 7 dias da criação.
+- Os textos antigos de plano (`planTrial`, "o plano anual começa em {d}")
+  continuam no catálogo mas não são mais usados: prometiam cobrança automática,
+  que não existe neste modelo.
+
+### Verificado
+
+- RLS dos dois bancos auditada. **Baru: 29 tabelas, todas com RLS**; as 5 sem
+  política são negação por padrão. **Ecoin: 47 tabelas, nenhuma sem RLS**, e as
+  12 funções `admin_*` todas com guarda `eh_admin_global`. As views `admin_*` do
+  Baru têm `where baru_e_admin()` e devolvem só agregados — o ERROR do linter
+  sobre `auth.users` exposta é falso positivo no conteúdo.
+- Pendente nos dois: proteção contra senha vazada, que é no dashboard.
+- Ecoin não precisou de mudança: a faixa de contagem já está no Início
+  (`painel_page.dart`) e a tela de planos já leva ao site.
+
 ## 2026-10-30 — 1.0.3 na Google Play, publicada por API
 
 ### Adicionado

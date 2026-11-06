@@ -8,7 +8,10 @@ import 'package:flutter/foundation.dart';
 const cobrancaNaLoja = false;
 
 /// Página inicial do site do Baru: é de lá que a pessoa chega à assinatura.
-const siteDoBaru = 'https://baru.lhcx.tech/';
+/// URL base do site (APP_BASE_URL). Troca no build:
+///   flutter build apk --dart-define=APP_BASE_URL=https://meubaru.com
+const appBaseUrl = String.fromEnvironment('APP_BASE_URL', defaultValue: 'https://meubaru.com');
+const siteDoBaru = '$appBaseUrl/';
 
 /// O que o servidor respondeu sobre o acesso desta conta.
 ///

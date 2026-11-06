@@ -10,6 +10,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -142,8 +143,10 @@ object ContagemDaBarra {
  *
  * **O que ele faz.** Enquanto a sessao corre, pergunta a cada
  * [INTERVALO_MS] qual app esta na frente. Se nao for o Baru, o companheiro
- * aparece por cima — uma vez, e so de novo passado o [DESCANSO_MS], porque
- * insistir a cada dois segundos e assedio, nao companhia.
+ * aparece por cima — uma vez, e so de novo passado um descanso que cresce a
+ * cada aparicao ignorada ([silencioDepoisDe]), porque insistir e assedio, nao
+ * companhia. O "+5 min" do balao e respeitado de verdade ([adia]), e durante
+ * ligacao ou chamada de video ele nao aparece ([emChamada]).
  *
  * **A fala varia com o app.** "O YouTube de novo?" nao e a mesma frase que
  * "o TikTok de novo?", e so aqui se sabe qual app esta na frente no instante
@@ -187,13 +190,77 @@ class VigiaDaSessao : Service() {
         private const val INTERVALO_MS = 2_000L
 
         /**
-         * Silencio entre duas aparicoes.
+         * Silencio depois da primeira aparicao.
          *
          * Quem trocou de app de proposito nao precisa ser lembrado a cada
          * dois segundos. Um minuto da tempo de a pessoa notar e voltar por
          * conta propria antes do segundo toque no ombro.
          */
         private const val DESCANSO_MS = 60_000L
+
+        /**
+         * Teto do silencio entre aparicoes ignoradas.
+         *
+         * Um minuto fixo virava despertador: o balao sumia sozinho, voltava
+         * um minuto depois, e de novo, enquanto a pessoa estava numa chamada
+         * com a mae (relato de teste). Agora o silencio dobra a cada aparicao
+         * sem resposta — 1, 2, 4, 8 minutos — ate este teto.
+         */
+        private const val DESCANSO_MAXIMO_MS = 10 * 60_000L
+
+        /** Quanto o primeiro "+5 min" vale; cada novo pedido soma mais isto. */
+        private const val ADIAMENTO_MIN = 5
+
+        /** Teto de um pedido de "mais tempo". */
+        private const val ADIAMENTO_MAXIMO_MIN = 30
+
+        /**
+         * Ate quando o companheiro fica quieto porque a pessoa pediu mais
+         * tempo. Estatico porque quem recebe o toque e o [OverlayDoBaru], no
+         * mesmo processo; um `Intent` a mais so para levar um numero seria
+         * cerimonia.
+         */
+        @Volatile
+        private var silencioAte = 0L
+
+        /** Quantos "+ min" a pessoa ja pediu nesta sessao. */
+        @Volatile
+        private var adiamentos = 0
+
+        /**
+         * Minutos que o proximo toque em "mais tempo" vai dar: 5, depois 10,
+         * depois 15... ate [ADIAMENTO_MAXIMO_MIN]. Quem pediu mais tempo uma
+         * vez e voltou para o mesmo app provavelmente precisa de mais do que
+         * cinco minutos (relato de teste).
+         */
+        @JvmStatic
+        fun proximoAdiamentoMin(): Int =
+            minOf(ADIAMENTO_MIN * (adiamentos + 1), ADIAMENTO_MAXIMO_MIN)
+
+        /** A pessoa tocou em "mais tempo": silencio de verdade, sem atalho. */
+        @JvmStatic
+        fun adia() {
+            val minutos = proximoAdiamentoMin()
+            adiamentos += 1
+            silencioAte = System.currentTimeMillis() + minutos * 60_000L
+            Log.i(TAG_LOG, "adiado por $minutos min")
+        }
+
+        /**
+         * Ha uma ligacao, chamada de video ou toque de chamada em curso.
+         *
+         * Telefone, WhatsApp, Meet, Zoom: todos tiram o audio do modo normal
+         * enquanto a chamada dura (`MODE_IN_CALL`, `MODE_IN_COMMUNICATION`,
+         * `MODE_RINGTONE`...). Aparecer por cima de uma conversa nao e
+         * lembrete, e interrupcao — e o botao de desligar pode estar
+         * justamente embaixo do balao.
+         */
+        @JvmStatic
+        fun emChamada(ctx: Context): Boolean {
+            val audio = ctx.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                ?: return false
+            return audio.mode != AudioManager.MODE_NORMAL
+        }
 
         /**
          * Codigos de requisicao dos tres `PendingIntent` da notificacao.
@@ -228,6 +295,9 @@ class VigiaDaSessao : Service() {
     private val laco = Handler(Looper.getMainLooper())
     private var rodando = false
     private var ultimaAparicao = 0L
+
+    /** Aparicoes seguidas sem a pessoa voltar ao Baru: alongam o silencio. */
+    private var aparicoesSeguidas = 0
 
     /**
      * O ultimo app visto na frente, entre rodadas.
@@ -320,6 +390,10 @@ class VigiaDaSessao : Service() {
         if (rodando) return
         rodando = true
         ultimoNaFrente = null
+        // Sessao nova, paciencia nova.
+        aparicoesSeguidas = 0
+        adiamentos = 0
+        silencioAte = 0L
         // A primeira rodada ja vale: a pessoa pode ter saido no instante em
         // que a sessao comecou.
         laco.post(rodada)
@@ -371,7 +445,24 @@ class VigiaDaSessao : Service() {
             Log.d(TAG_LOG, "sem app na frente (sem acesso ao uso ou sem eventos)")
             return
         }
-        if (naFrente == packageName) return
+        // Em chamada, nem aparece — e some, se ja estava na tela quando o
+        // telefone tocou.
+        if (emChamada(this)) {
+            if (OverlayDoBaru.visivel) {
+                Log.i(TAG_LOG, "em chamada: esconde o Baru")
+                startService(
+                    Intent(this, OverlayDoBaru::class.java).apply {
+                        action = OverlayDoBaru.ACAO_ESCONDER
+                    },
+                )
+            }
+            return
+        }
+        if (naFrente == packageName) {
+            // Voltou por conta propria: a paciencia recomeca do minuto.
+            aparicoesSeguidas = 0
+            return
+        }
         // Launcher e telas do sistema nao sao fuga: sao o caminho.
         if (ehDoSistema(naFrente)) {
             Log.d(TAG_LOG, "na frente: $naFrente (sistema, ignorado)")
@@ -379,8 +470,10 @@ class VigiaDaSessao : Service() {
         }
 
         val agora = System.currentTimeMillis()
-        if (agora - ultimaAparicao < DESCANSO_MS) return
+        if (agora < silencioAte) return
+        if (agora - ultimaAparicao < silencioDepoisDe(aparicoesSeguidas)) return
         ultimaAparicao = agora
+        aparicoesSeguidas += 1
 
         if (!OverlayDoBaru.temPermissao(this)) {
             Log.w(TAG_LOG, "na frente: $naFrente, mas sem permissao de sobreposicao")
@@ -397,6 +490,16 @@ class VigiaDaSessao : Service() {
                 putExtra(OverlayDoBaru.EXTRA_ACAO_MAIS, acaoMais)
             },
         )
+    }
+
+    /**
+     * Silencio que se espera depois de [vezes] aparicoes sem resposta:
+     * 1, 2, 4, 8 minutos, ate [DESCANSO_MAXIMO_MS]. Nunca menos de um
+     * minuto, nem quando a pessoa acabou de voltar ao Baru e saiu de novo.
+     */
+    private fun silencioDepoisDe(vezes: Int): Long {
+        val dobras = (vezes - 1).coerceIn(0, 4)
+        return minOf(DESCANSO_MS shl dobras, DESCANSO_MAXIMO_MS)
     }
 
     /**

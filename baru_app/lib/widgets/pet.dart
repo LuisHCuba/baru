@@ -1606,9 +1606,20 @@ class _AfagoVenceARolagem extends PanGestureRecognizer {
 /// Só os dois movimentos que a sobreposição anima do lado nativo: o peito
 /// (respiro) e o olho (piscar). O resto fica em repouso — a fase 0 de cada
 /// laço, a mesma que o "reduzir movimento" usa.
+///
+/// [acao], [ciclo] e [vida] servem para fotografar uma pose qualquer do
+/// motor de vida — um passo, uma batida de asa, uma braçada — fora do
+/// relógio: é assim que o site recebe as mesmas animações do app, quadro a
+/// quadro, sem um segundo desenho dos bichos (`test/animacoes_site_test.dart`).
 @immutable
 class QuadroFixo {
-  const QuadroFixo({this.respiro = 0, this.pisca = 0});
+  const QuadroFixo({
+    this.respiro = 0,
+    this.pisca = 0,
+    this.acao,
+    this.ciclo = 0,
+    this.vida = const SaidaDaVida(),
+  });
 
   /// -1 (vazio) a 1 (cheio), como em `_Pose.respiro`.
   final double respiro;
@@ -1616,26 +1627,41 @@ class QuadroFixo {
   /// 0 aberto, 1 fechado.
   final double pisca;
 
+  /// A ação desenhada. Nula, vale a da atividade do bicho.
+  final AcaoDoBicho? acao;
+
+  /// 0..1, a fase do laço da ação (a braçada, a batida de asa).
+  final double ciclo;
+
+  /// O quadro do motor de vida: passo, gingado, voo, salto.
+  final SaidaDaVida vida;
+
   _Pose _pose(AcaoDoBicho acao) => _Pose(
-    acao: acao,
-    ciclo: 0,
+    acao: this.acao ?? acao,
+    ciclo: ciclo,
     respiro: respiro,
-    boia: 0,
-    cauda: 0,
+    boia: vida.boia,
+    cauda: vida.cauda,
     pisca: pisca,
     orelha: 0,
     toque: 0,
-    olhar: Offset.zero,
+    olhar: vida.olhar,
     animado: false,
     amplitude: 1,
+    vida: vida,
   );
 
   @override
   bool operator ==(Object other) =>
-      other is QuadroFixo && other.respiro == respiro && other.pisca == pisca;
+      other is QuadroFixo &&
+      other.respiro == respiro &&
+      other.pisca == pisca &&
+      other.acao == acao &&
+      other.ciclo == ciclo &&
+      identical(other.vida, vida);
 
   @override
-  int get hashCode => Object.hash(respiro, pisca);
+  int get hashCode => Object.hash(respiro, pisca, acao, ciclo);
 }
 
 /// Os valores animados de um quadro. O painter não sabe de controllers.

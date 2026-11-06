@@ -131,7 +131,7 @@ flutter build appbundle --release
 ~/.local/share/lhcx-play-venv/bin/python ~/lhcx/tools/play-publicar.py baru --so-conferir
 ~/.local/share/lhcx-play-venv/bin/python ~/lhcx/tools/play-publicar.py baru \
   --aab baru_app/build/app/outputs/bundle/release/app-release.aab \
-  --notas <arquivo de notas> --nome "1.0.4 (5)" --publicar
+  --notas <arquivo de notas> --nome "1.0.5 (6)" --publicar
 ```
 
 Evidência visual e banco local:

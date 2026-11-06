@@ -7,7 +7,7 @@ const cabecalhos = {
 
 /** Origem exata; nunca refletir uma origem arbitrária. O app não manda origem. */
 function origemPermitida(origem: string): boolean {
-  const configuradas = Deno.env.get('CORS_ALLOWED_ORIGINS') ?? 'https://baru.lhcx.tech,http://localhost:8787'
+  const configuradas = Deno.env.get('CORS_ALLOWED_ORIGINS') ?? 'https://meubaru.com,https://www.meubaru.com,https://baru.lhcx.tech,http://localhost:8787'
   return configuradas.split(',').map(valor => valor.trim()).includes(origem)
 }
 

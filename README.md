@@ -174,3 +174,17 @@ baru/
 ## Licença
 
 Projeto privado. Sem licença de distribuição definida.
+
+## Domínios
+
+| O quê | Endereço |
+|---|---|
+| Site (produção) | `https://meubaru.com` (repositório `baru.lhcx`, Worker `baru-lhcx`); `www` e `baru.lhcx.tech` → 301 |
+| URL base no app | `appBaseUrl` em `baru_app/lib/cobranca.dart` (`--dart-define=APP_BASE_URL=…`, padrão `https://meubaru.com`) |
+| Supabase | projeto `slqpuppkapiewjqvedtj`; Site URL `https://meubaru.com` |
+| Callback do Auth no app | `tech.lhcx.baru://login-callback` (cadastrado nas Redirect URLs) |
+| CORS das Edge Functions | secret `CORS_ALLOWED_ORIGINS` = `https://meubaru.com,https://www.meubaru.com,https://baru.lhcx.tech` |
+| Webhook Asaas | `https://slqpuppkapiewjqvedtj.supabase.co/functions/v1/asaas-webhook` |
+| Deep links | `tech.lhcx.baru://login-callback`, `baru://`; App Links: `https://meubaru.com/.well-known/assetlinks.json` |
+| Google Play | pacote `tech.lhcx.baru`; site `https://meubaru.com/`, privacidade `https://meubaru.com/privacidade/`, exclusão `https://meubaru.com/excluir-conta/` |
+| Contato | `contato@meubaru.com` e `suporte@meubaru.com` (Email Routing → luishcuba@gmail.com) |

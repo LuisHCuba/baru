@@ -53,10 +53,13 @@ void main() {
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,
-        child: Center(child: RepaintBoundary(key: chave, child: w)),
+        child: Center(
+          child: RepaintBoundary(key: chave, child: w),
+        ),
       ),
     );
-    final b = chave.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    final b =
+        chave.currentContext!.findRenderObject()! as RenderRepaintBoundary;
     await tester.runAsync(() async {
       final img = await b.toImage(pixelRatio: _densidade);
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
@@ -106,12 +109,20 @@ void main() {
       for (final b in [0.0, 0.5, 1.0]) {
         await grava(
           tester,
-          _cena(sp, Mood.content, QuadroFixo(vida: SaidaDaVida(susto: 1, boca: b))),
+          _cena(
+            sp,
+            Mood.content,
+            QuadroFixo(vida: SaidaDaVida(susto: 1, boca: b)),
+          ),
           '$n/susto-${(b * 10).round()}',
         );
         await grava(
           tester,
-          _cena(sp, Mood.radiant, QuadroFixo(vida: SaidaDaVida(festa: 1, boca: b))),
+          _cena(
+            sp,
+            Mood.radiant,
+            QuadroFixo(vida: SaidaDaVida(festa: 1, boca: b)),
+          ),
           '$n/festa-${(b * 10).round()}',
         );
       }
@@ -132,7 +143,11 @@ void main() {
       for (final o in olhares.entries) {
         await grava(
           tester,
-          _cena(sp, Mood.content, QuadroFixo(vida: SaidaDaVida(olhar: o.value))),
+          _cena(
+            sp,
+            Mood.content,
+            QuadroFixo(vida: SaidaDaVida(olhar: o.value)),
+          ),
           '$n/olhar-${o.key}',
         );
         await grava(
@@ -140,86 +155,141 @@ void main() {
           _cena(
             sp,
             Mood.content,
-            QuadroFixo(vida: SaidaDaVida(olhar: o.value, virada: o.value)),
+            QuadroFixo(
+              vida: SaidaDaVida(olhar: o.value, virada: o.value),
+            ),
           ),
           '$n/virada-${o.key}',
         );
       }
       await grava(
         tester,
-        _cena(sp, Mood.content, const QuadroFixo(vida: SaidaDaVida(cabecaGiro: 0.35))),
+        _cena(
+          sp,
+          Mood.content,
+          const QuadroFixo(vida: SaidaDaVida(cabecaGiro: 0.35)),
+        ),
         '$n/cabeca-giro',
       );
       await grava(
         tester,
-        _cena(sp, Mood.content, const QuadroFixo(vida: SaidaDaVida(cabecaDesce: 14))),
+        _cena(
+          sp,
+          Mood.content,
+          const QuadroFixo(vida: SaidaDaVida(cabecaDesce: 14)),
+        ),
         '$n/cabeca-desce',
       );
       await grava(
         tester,
-        _cena(sp, Mood.content, const QuadroFixo(vida: SaidaDaVida(inclina: 0.25))),
+        _cena(
+          sp,
+          Mood.content,
+          const QuadroFixo(vida: SaidaDaVida(inclina: 0.25)),
+        ),
         '$n/inclina',
       );
     }
   });
 
-  testWidgets('atlas: poses do corpo, comendo, água, estágios', skip: !_ligado, (
-    tester,
-  ) async {
-    for (final sp in especies) {
-      final n = sp.name;
-      const poses = {
-        'deita': SaidaDaVida(deita: 1),
-        'reverencia': SaidaDaVida(reverencia: 1),
-        'estica': SaidaDaVida(elastico: -0.9, altura: 40, desloca: Offset(0, -40)),
-        'achata': SaidaDaVida(elastico: 0.9),
-        'achata-pouso': SaidaDaVida(achata: 1),
-        'carregado': SaidaDaVida(carregado: true, altura: 60, desloca: Offset(0, -60)),
-        'dedo': SaidaDaVida(dente: Offset(0, -10), denteForca: 1),
-        'derretido': SaidaDaVida(derretido: 1),
-        'emburrado': SaidaDaVida(emburrado: true),
-        'pescoco-recolhe': SaidaDaVida(pescoco: -4.2),
-        'pescoco-estica': SaidaDaVida(pescoco: 1),
-        'mastiga': SaidaDaVida(atividadeAtiva: true, comendo: true, mastigando: 0.8),
-        'come-fechado': SaidaDaVida(atividadeAtiva: true, comendo: true, mastigando: 0.0),
-        'giro-meio': SaidaDaVida(giro: 0.5),
-      };
-      for (final p in poses.entries) {
-        await grava(
-          tester,
-          _cena(sp, Mood.content, QuadroFixo(vida: p.value)),
-          '$n/pose-${p.key}',
-        );
-      }
-      await grava(
-        tester,
-        _cena(sp, Mood.sleepy, const QuadroFixo(vida: SaidaDaVida(adormecido: true, deita: 1)), atividade: Activity.nap),
-        '$n/pose-dormindo',
-      );
-      // Na água: parado e remando.
-      for (final c in [0.0, 0.25, 0.5, 0.75]) {
+  testWidgets(
+    'atlas: poses do corpo, comendo, água, estágios',
+    skip: !_ligado,
+    (tester) async {
+      for (final sp in especies) {
+        final n = sp.name;
+        const poses = {
+          'deita': SaidaDaVida(deita: 1),
+          'reverencia': SaidaDaVida(reverencia: 1),
+          'estica': SaidaDaVida(
+            elastico: -0.9,
+            altura: 40,
+            desloca: Offset(0, -40),
+          ),
+          'achata': SaidaDaVida(elastico: 0.9),
+          'achata-pouso': SaidaDaVida(achata: 1),
+          'carregado': SaidaDaVida(
+            carregado: true,
+            altura: 60,
+            desloca: Offset(0, -60),
+          ),
+          'dedo': SaidaDaVida(dente: Offset(0, -10), denteForca: 1),
+          'derretido': SaidaDaVida(derretido: 1),
+          'emburrado': SaidaDaVida(emburrado: true),
+          // −1 é o máximo que o motor emite (episodios.dart); −4,2 exagerava
+          // a retração 4× e enviesava o material (auditoria rodada 1).
+          'pescoco-recolhe': SaidaDaVida(pescoco: -1),
+          'pescoco-estica': SaidaDaVida(pescoco: 1),
+          'mastiga': SaidaDaVida(
+            atividadeAtiva: true,
+            comendo: true,
+            mastigando: 0.8,
+          ),
+          'come-fechado': SaidaDaVida(
+            atividadeAtiva: true,
+            comendo: true,
+            mastigando: 0.0,
+          ),
+          'giro-meio': SaidaDaVida(giro: 0.5),
+        };
+        for (final p in poses.entries) {
+          await grava(
+            tester,
+            _cena(sp, Mood.content, QuadroFixo(vida: p.value)),
+            '$n/pose-${p.key}',
+          );
+        }
         await grava(
           tester,
           _cena(
             sp,
-            Mood.content,
-            QuadroFixo(acao: AcaoDoBicho.nado, ciclo: c, vida: SaidaDaVida(atividadeAtiva: true, cicloDaAtividade: c, forcaDaAtividade: 1)),
-            atividade: Activity.swim,
-            agua: const Color(0xFF7FB7A6),
+            Mood.sleepy,
+            const QuadroFixo(vida: SaidaDaVida(adormecido: true, deita: 1)),
+            atividade: Activity.nap,
           ),
-          '$n/agua-${(c * 100).round()}',
+          '$n/pose-dormindo',
         );
-      }
-      for (final e in EstagioDoBicho.values) {
+        // Na água: parado e remando.
+        for (final c in [0.0, 0.25, 0.5, 0.75]) {
+          await grava(
+            tester,
+            _cena(
+              sp,
+              Mood.content,
+              QuadroFixo(
+                acao: AcaoDoBicho.nado,
+                ciclo: c,
+                vida: SaidaDaVida(
+                  atividadeAtiva: true,
+                  cicloDaAtividade: c,
+                  forcaDaAtividade: 1,
+                ),
+              ),
+              atividade: Activity.swim,
+              agua: const Color(0xFF7FB7A6),
+            ),
+            '$n/agua-${(c * 100).round()}',
+          );
+        }
+        for (final e in EstagioDoBicho.values) {
+          await grava(
+            tester,
+            _cena(sp, Mood.content, const QuadroFixo(), estagio: e),
+            '$n/estagio-${e.name}',
+          );
+        }
+        // Fôlego: peito cheio e vazio.
         await grava(
           tester,
-          _cena(sp, Mood.content, const QuadroFixo(), estagio: e),
-          '$n/estagio-${e.name}',
+          _cena(sp, Mood.content, const QuadroFixo(respiro: 1)),
+          '$n/respiro-cheio',
+        );
+        await grava(
+          tester,
+          _cena(sp, Mood.content, const QuadroFixo(respiro: -1)),
+          '$n/respiro-vazio',
         );
       }
-      // Fôlego: peito cheio e vazio.
-      await grava(tester, _cena(sp, Mood.content, const QuadroFixo(respiro: 1)), '$n/respiro-cheio');
-      await grava(tester, _cena(sp, Mood.content, const QuadroFixo(respiro: -1)), '$n/respiro-vazio');
-    }
-  });
+    },
+  );
 }

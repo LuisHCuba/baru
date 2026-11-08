@@ -177,12 +177,13 @@ class Cores {
   static const plastraoDoTracaja = Color(0xFFD9C27A);
   static const manchaDoTracaja = Color(0xFFF7D96A);
 
-  /// Coruja: castanho, ruivo, cinza-pardo e creme.
+  /// Coruja: pardo-acinzentado da buraqueira (laudo 32 R13: medido #847262,
+  /// +8 % de saturação), ruivo, cinza-pardo e creme.
   static const pelagemCoruja = [
-    Color(0xFF9C7A5E),
+    Color(0xFF8A7461),
     Color(0xFF7A5E45),
     Color(0xFFB89773),
-    Color(0xFF6B5747),
+    Color(0xFF6E6358),
     Color(0xFF8C7B6B),
     Color(0xFFC2A585),
   ];
@@ -197,12 +198,14 @@ class Cores {
     Color(0xFFF2C6CB),
   ];
 
-  /// Pinguim: azul-ardósia a grafite.
+  /// Pinguim: o ardósia do magalhães (laudo 32 R8: medido #1E2635–#293342,
+  /// +8 % de saturação) nas três primeiras escuras; as claras ficam como
+  /// "jovem/azul". Os índices são persistidos: só a cor muda.
   static const pelagemPinguim = [
-    Color(0xFF4E6E7E),
-    Color(0xFF3E5A68),
+    Color(0xFF253143),
+    Color(0xFF1D2636),
     Color(0xFF648697),
-    Color(0xFF44525C),
+    Color(0xFF2D3A48),
     Color(0xFF5A7E90),
     Color(0xFF7C9AA8),
   ];

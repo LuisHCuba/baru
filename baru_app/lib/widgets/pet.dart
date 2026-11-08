@@ -1745,12 +1745,10 @@ class BocaDaEspecie {
 
   static BocaDaEspecie de(Species sp) => switch (sp) {
     Species.capybara => const BocaDaEspecie(
-      // No terço de baixo do bloco do focinho (laudo 31 R5); as narinas
-      // ficam no topo dele, longe do lábio.
-      origem: Offset(0, 30),
+      origem: Offset(0, 27),
       largura: 26,
       hMax: 12,
-      folgaNariz: 18,
+      folgaNariz: 7.5,
       temDentes: true,
     ),
     Species.otter => const BocaDaEspecie(
@@ -1760,11 +1758,10 @@ class BocaDaEspecie {
       folgaNariz: 6.5,
     ),
     Species.tortoise => const BocaDaEspecie(
-      // Na ponta do focinho (laudo 31 R7), logo abaixo das narinas.
-      origem: Offset(0, 18),
-      largura: 22,
+      origem: Offset(0, 16),
+      largura: 24,
       hMax: 12,
-      folgaNariz: 4,
+      folgaNariz: 7.5,
     ),
     Species.owl => const BocaDaEspecie(
       origem: Offset(0, 13),
@@ -2456,16 +2453,6 @@ class _PetPainter extends CustomPainter {
 
   Color get sombra => Color.lerp(pelo, Cores.tinta, 0.30)!;
   Color get sombraForte => Color.lerp(pelo, Cores.tinta, 0.46)!;
-
-  /// A sombra **colorida** de Baru, Rio e Toco (laudo 31 R9, G6): mais fria
-  /// que o pelo, não o pelo escurecido — Bluey não tem sombra neutra. Nas
-  /// outras espécies é a [sombra] de sempre.
-  Color get sombraFria => switch (species) {
-    Species.capybara => Color.lerp(pelo, const Color(0xFF3B2A3A), 0.35)!,
-    Species.otter => Color.lerp(pelo, const Color(0xFF2B2F3A), 0.35)!,
-    Species.tortoise => Color.lerp(pelo, const Color(0xFF2F3A33), 0.35)!,
-    _ => sombra,
-  };
   Color get claro => Color.lerp(pelo, Cores.superficie, 0.30)!;
   Color get barriga => Color.lerp(pelo, Cores.superficie, 0.26)!;
   Color get luz => Color.lerp(pelo, Colors.white, 0.30)!;
@@ -2537,51 +2524,6 @@ class _PetPainter extends CustomPainter {
   }
 
   void _oval(Canvas c, Rect r, Color cor) => c.drawOval(r, _p(cor));
-
-  /// Uma fita de largura variável ao longo de uma cúbica [a]→[d] (controles
-  /// [b], [c]): [base] de largura na partida, [ponta] no fim. É a cauda da
-  /// lontra e o pescoço do tracajá — grossos na raiz, afinando sem o
-  /// caminho se cruzar (RIO-08: duas cúbicas soltas viravam gravata).
-  Path _fita(
-    Offset a,
-    Offset b,
-    Offset c,
-    Offset d, {
-    required double base,
-    required double ponta,
-    int passos = 14,
-  }) {
-    final esq = <Offset>[];
-    final dir = <Offset>[];
-    for (var i = 0; i <= passos; i++) {
-      final t = i / passos;
-      final u = 1 - t;
-      final p =
-          a * (u * u * u) +
-          b * (3 * u * u * t) +
-          c * (3 * u * t * t) +
-          d * (t * t * t);
-      var tg =
-          (b - a) * (3 * u * u) + (c - b) * (6 * u * t) + (d - c) * (3 * t * t);
-      if (tg.distance < 1e-3) tg = d - a;
-      final n = Offset(-tg.dy, tg.dx) / tg.distance;
-      // Afina devagar: a raiz fica grossa por mais tempo que uma reta.
-      final w = (base + (ponta - base) * math.pow(t, 1.4)) / 2;
-      esq.add(p + n * w);
-      dir.add(p - n * w);
-    }
-    final path = Path()..moveTo(esq.first.dx, esq.first.dy);
-    for (final o in esq.skip(1)) {
-      path.lineTo(o.dx, o.dy);
-    }
-    // Ponta arredondada.
-    path.arcToPoint(dir.last, radius: Radius.circular(ponta / 2));
-    for (final o in dir.reversed.skip(1)) {
-      path.lineTo(o.dx, o.dy);
-    }
-    path.close();
-    return path;
-  }
 
   // --- entrada ------------------------------------------------------------
 
@@ -3179,7 +3121,7 @@ class _PetPainter extends CustomPainter {
   /// A sombra que a cabeça faz no corpo, logo abaixo do queixo. É o que
   /// separa as duas massas: sem ela, cabeça e corpo da mesma cor viravam
   /// uma coisa só, e a cabeça parecia colada na frente.
-  void _sombraDoQueixo(Canvas c, double largura, double altura, {Color? cor}) {
+  void _sombraDoQueixo(Canvas c, double largura, double altura) {
     c.drawOval(
       Rect.fromCenter(
         center: Offset(-_rosto.dx * 0.3, altura / 2 - 2),
@@ -3187,7 +3129,7 @@ class _PetPainter extends CustomPainter {
         height: 15,
       ),
       Paint()
-        ..color = cor ?? Cores.tintaA(0.17)
+        ..color = Cores.tintaA(0.17)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.5),
     );
   }
@@ -3277,45 +3219,17 @@ class _PetPainter extends CustomPainter {
     final amp = pose.amplitude;
     final passo = pose.pernas * amp;
 
-    // Patas de trás, insinuadas: dois ovais atrás das da frente, saindo dos
-    // lados da barriga (CAP-20). Sentada, a capivara se apoia em quatro, não
-    // em dois pezinhos sob um barril.
-    for (final lado in [-1.0, 1.0]) {
-      canvas.drawPath(
-        _bolha(
-          Rect.fromCenter(center: Offset(lado * 38, 57), width: 30, height: 12),
-          base: 0.8,
-        ),
-        _p(sombraFria),
-      );
-    }
+    // Patas da frente, apoiadas. Sobem e descem alternadas ao boiar — e
+    // remam de verdade quando ele está na água (ver [_pata]).
+    // Em y 55 (era 51): o pé sai 4 u abaixo da barriga e se vê levantar no
+    // galope; a 51 ficava escondido atrás do corpo e o passo não lia.
+    _pata(canvas, const Offset(-23, 55), 27, 17, sombra, passo * 1.6, rema: -1);
+    _pata(canvas, const Offset(23, 55), 27, 17, sombra, -passo * 1.6, rema: 1);
 
-    // Patas da frente, curtas (laudo 31 R5) e apoiadas. Sobem e descem
-    // alternadas ao boiar — e remam de verdade na água (ver [_pata]).
-    _pata(
-      canvas,
-      const Offset(-26, 55),
-      24,
-      14,
-      sombraFria,
-      passo * 1.6,
-      rema: -1,
-    );
-    _pata(
-      canvas,
-      const Offset(26, 55),
-      24,
-      14,
-      sombraFria,
-      -passo * 1.6,
-      rema: 1,
-    );
-
-    // Corpo: barril **mais largo que alto** (104 × 74, laudo 31 R5). O
-    // 92 × 80 de antes era quase redondo e lia como urso sentado.
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(0, 22), width: 104, height: 74),
+      Rect.fromCenter(center: const Offset(0, 18), width: 92, height: 80),
       topo: 0.86,
+      base: 1.02,
     );
     canvas.drawPath(corpo, _p(pelo));
 
@@ -3323,27 +3237,12 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(corpo);
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 36), width: 70, height: 54),
+        Rect.fromCenter(center: const Offset(0, 32), width: 64, height: 62),
         topo: 0.9,
       ),
       _p(barriga),
     );
     canvas.restore();
-
-    // Pelo longo, grosso e ralo, em traços (laudo 31 R5): quatro na garupa
-    // e cinco no alto da cabeça. Detalhe mínimo, como o Hey Duggee.
-    final fio = _traco(
-      Color.lerp(pelo, const Color(0xFF613529), 0.6)!.withValues(alpha: 0.6),
-      1.4,
-    );
-    for (final (x, y, dx) in const [
-      (-42.0, 12.0, -2.0),
-      (-48.0, 20.0, -2.0),
-      (42.0, 12.0, 2.0),
-      (48.0, 20.0, 2.0),
-    ]) {
-      canvas.drawLine(Offset(x, y), Offset(x + dx, y - 7), fio);
-    }
 
     // --- cabeça -----------------------------------------------------------
     canvas.save();
@@ -3353,84 +3252,77 @@ class _PetPainter extends CustomPainter {
     // era a mais "gêmea" do elenco (laudo 31 R11).
     _posicionaCabeca(canvas, _cabecaGiro * 0.9 + 0.06, pescoco: 38);
     canvas.scale(_cabecaDoEstagio);
-    _sombraDoQueixo(canvas, 94, 96, cor: sombraFria.withValues(alpha: 0.35));
+    _sombraDoQueixo(canvas, 94, 78);
 
     // Orelhas antes da cabeça: nascem atrás dela, então a base some sob o
-    // contorno. Pequenas — 10 × 9, ≈ 11 % da largura da cabeça — e no alto
-    // dos cantos: eram 16 × 14 (17 %) e era o traço que mais estragava a
-    // espécie (laudo 31 R5, CAP-18).
-    _orelhaRedonda(canvas, const Offset(-41, -27), 10, 9, -0.55);
-    _orelhaRedonda(canvas, const Offset(41, -27), 10, 9, 0.55);
+    // contorno em vez de ficar boiando em cima.
+    // Orelhas pequenas e afastadas: na capivara elas são dois botõezinhos
+    // nos cantos de cima. Grandes e altas, ela vira urso.
+    _orelhaRedonda(canvas, const Offset(-40, -19), 16, 14, -0.34);
+    _orelhaRedonda(canvas, const Offset(40, -19), 16, 14, 0.34);
 
-    // Cabeça quase retangular, a marca da capivara: um bloco com cantos
-    // arredondados, não uma bola.
+    // Cabeça larga e de topo baixo: a capivara é quadradona, não redonda.
+    // Cabeça quase retangular. É a marca da capivara: um bloco com cantos
+    // arredondados, não uma bola. Com `_bolha` ela virava um urso.
     canvas.drawPath(
       Path()..addRRect(
         RRect.fromRectAndCorners(
-          Rect.fromLTRB(-47, -35, 47, 36 + _queixoDesce),
+          Rect.fromLTRB(-47, -35, 47, 39 + _queixoDesce),
           topLeft: const Radius.circular(34),
           topRight: const Radius.circular(34),
-          bottomLeft: const Radius.circular(24),
-          bottomRight: const Radius.circular(24),
+          bottomLeft: const Radius.circular(26),
+          bottomRight: const Radius.circular(26),
         ),
       ),
       _p(pelo),
     );
-    for (final (x, dx) in const [
-      (-18.0, -1.5),
-      (-9.0, -0.5),
-      (0.0, 0.0),
-      (9.0, 0.5),
-      (18.0, 1.5),
-    ]) {
-      // Curtos e tombando para fora: em pé e iguais viravam antenas.
-      canvas.drawLine(Offset(x, -30), Offset(x + dx * 2, -36), fio);
-    }
 
-    _rostoVira(canvas);
-    // Focinho **rombudo**: um bloco que é a parte mais funda da cabeça e
-    // passa do queixo (laudo 31 R5). A faixa clara rasa com um botão de
-    // nariz no meio lia como ursinho/hamster (CAP-18).
-    canvas.drawPath(
+    // Focinho: uma faixa larga e **baixa**, encostada no queixo, com o topo
+    // suave. Como oval isolado no meio da cara, lia como máscara colada.
+    canvas.save();
+    canvas.clipPath(
       Path()..addRRect(
-        RRect.fromRectAndCorners(
-          Rect.fromLTRB(-35, -4, 35, 48 + _queixoDesce),
-          topLeft: const Radius.circular(14),
-          topRight: const Radius.circular(14),
-          bottomLeft: const Radius.circular(28),
-          bottomRight: const Radius.circular(28),
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(-47, -35, 47, 39 + _queixoDesce),
+          const Radius.circular(30),
         ),
+      ),
+    );
+    _rostoVira(canvas);
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 27), width: 74, height: 44),
+        topo: 0.74,
       ),
       _p(claro),
     );
-    // Lábio superior volumoso: uma vinco fino na quina do bloco.
+    canvas.restore();
+    _rostoVira(canvas);
+
+    // Focinheira: o bloco escuro em cima do focinho, entre as narinas.
     canvas.drawPath(
-      Path()
-        ..moveTo(-31, 19)
-        ..quadraticBezierTo(0, 25, 31, 19),
-      _traco(sombraFria.withValues(alpha: 0.18), 1.6),
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 12), width: 26, height: 15),
+        base: 1.12,
+      ),
+      _p(sombraForte),
     );
-    // Duas narinas no **topo** do focinho, não um botão no meio.
-    _narina(canvas, const Offset(-9, 4));
-    _narina(canvas, const Offset(9, 4));
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(-5, 9), width: 7, height: 4),
+      _p(luz.withValues(alpha: 0.4)),
+    );
 
     _boca(canvas);
     if (feliz) {
-      _bochecha(
-        canvas,
-        const Offset(-36, 14),
-        const Offset(36, 14),
-        w: 12,
-        h: 7,
-      );
+      _bochecha(canvas, const Offset(-34, 18), const Offset(34, 18));
     }
 
-    // Olhos altos e afastados (±30, −15): na capivara eles ficam quase na
-    // linha das orelhas, para olhar em volta com o corpo na água.
-    _olho(canvas, const Offset(-30, -15), 7.5);
-    _olho(canvas, const Offset(30, -15), 7.5);
+    // Olhos altos e afastados: na capivara eles ficam quase na linha das
+    // orelhas, para o bicho olhar em volta com o corpo na água.
+    _olho(canvas, const Offset(-26, -13), 7.5);
+    _olho(canvas, const Offset(26, -13), 7.5);
     _rostoVolta(canvas);
-    _veste(canvas, 94, 84);
+    _veste(canvas, 96, 78);
 
     canvas.restore();
   }
@@ -3461,51 +3353,53 @@ class _PetPainter extends CustomPainter {
     // No susto a cauda levanta rígida, ponta 20 acima (laudo 31 R3).
     final levanta = 20 * sustoDaLontra;
 
-    // Cauda de verdade (laudo 31 R6, RIO-08): grossa na raiz — 22 u, 35 %
-    // da largura do corpo —, cônica, em S: sai do flanco direito, desce e
-    // enrola **à frente** da pata quando ela está sentada. Na água passa
-    // para trás e a ponta sobe e desce ±12 no compasso da remada.
-    final cauda = _fita(
-      const Offset(27, 40),
-      Offset(36 + balanca, 52 - levanta * 0.3),
-      Offset(30 + balanca * 4, 68 + balanca * 2 - levanta * 0.8),
-      Offset(54 + balanca * 5, 62 + balanca * 4.6 - levanta),
-      base: 21,
-      ponta: 5,
+    // Cauda grossa saindo por trás, para um lado, afinando na ponta.
+    canvas.drawPath(
+      Path()
+        ..moveTo(26, 34)
+        ..cubicTo(
+          58 + balanca * 5,
+          40 - levanta * 0.3,
+          74 + balanca * 8,
+          24 + balanca * 4 - levanta * 0.7,
+          78 + balanca * 9,
+          6 + balanca * 6 - levanta,
+        )
+        ..cubicTo(
+          70 + balanca * 6,
+          12 + balanca * 3 - levanta * 0.8,
+          58 + balanca * 3,
+          30 - levanta * 0.3,
+          26,
+          50,
+        )
+        ..close(),
+      _p(sombraForte),
     );
-    final tintaDaCauda = _p(sombraForte);
-    if (pose.nadando) canvas.drawPath(cauda, tintaDaCauda);
 
-    // Patas curtas e grossas, da frente um pouco maiores (segurar comida),
-    // apoiadas no chão — o corpo não desce abaixo delas (RIO-09). Na água
-    // ficam paradas junto ao peito (ver [_pata]).
+    // Na água as patas da frente ficam paradas junto ao peito (ver [_pata]).
     final sobeDesce = pose.nadando ? 0.0 : rema * 1.6;
-    _pata(canvas, Offset(-20, 55 + sobeDesce), 18, 14, sombraFria, 0, rema: -1);
-    _pata(canvas, Offset(20, 55 - sobeDesce), 18, 14, sombraFria, 0, rema: 1);
+    _patinha(canvas, Offset(-20, 50 + sobeDesce), sombra, rema: -1);
+    _patinha(canvas, Offset(20, 50 - sobeDesce), sombra, rema: 1);
 
     final corpo = _bolha(
       // Comprida e estreita, não um barril: a silhueta de lontra e a de
-      // capivara se sobrepunham em 83 % (laudo 06, rec. 5; laudo 31 R6).
-      Rect.fromCenter(center: const Offset(0, 13), width: 62, height: 92),
+      // capivara se sobrepunham em 83% (laudo 06, rec. 5).
+      Rect.fromCenter(center: const Offset(0, 14), width: 66, height: 90),
       topo: 0.88,
     );
     canvas.drawPath(corpo, _p(pelo));
 
-    // Garganta, peito e barriga: **uma** mancha clara só, do queixo ao
-    // ventre — é o traço que separa lontra de capivara à distância (laudo
-    // 31 R6, RIO-11). A parte de cima está na cabeça; esta é a de baixo.
-    final garganta = Color.lerp(claro, const Color(0xFFC9A991), 0.5)!;
     canvas.save();
     canvas.clipPath(corpo);
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 22), width: 44, height: 66),
+        Rect.fromCenter(center: const Offset(0, 26), width: 44, height: 66),
         topo: 0.9,
       ),
-      _p(garganta),
+      _p(barriga),
     );
     canvas.restore();
-    if (!pose.nadando) canvas.drawPath(cauda, tintaDaCauda);
 
     // --- cabeça -----------------------------------------------------------
     canvas.save();
@@ -3513,80 +3407,52 @@ class _PetPainter extends CustomPainter {
     _cabecaSemFolego(canvas);
     _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 31);
     canvas.scale(_cabecaDoEstagio);
-    _sombraDoQueixo(canvas, 82, 58, cor: sombraFria.withValues(alpha: 0.35));
+    _sombraDoQueixo(canvas, 78, 62);
 
+    // Orelhas pequenas e altas: na lontra elas quase somem na cabeça.
     // Orelhas pequenas e baixas, quase no lado da cabeça chata.
-    _orelhaRedonda(canvas, const Offset(-35, -12), 11, 9, -0.30);
-    _orelhaRedonda(canvas, const Offset(35, -12), 11, 9, 0.30);
+    _orelhaRedonda(canvas, const Offset(-31, -16), 11, 9, -0.30);
+    _orelhaRedonda(canvas, const Offset(31, -16), 11, 9, 0.30);
 
     canvas.drawPath(
       _bolha(
-        // Cabeça pequena e **chata** (82 × 56, 1,46 : 1), mais baixa que a
-        // da capivara (laudo 31 R6, RIO-10).
-        Rect.fromCenter(center: Offset.zero, width: 82, height: 56),
-        topo: 0.92,
-        base: 1.02 + _queixoDesce / 28,
+        // Cabeça chata e larga, mais baixa que a da capivara.
+        Rect.fromCenter(center: Offset.zero, width: 78, height: 62),
+        base: 1.02 + _queixoDesce / 31,
       ),
       _p(pelo),
     );
     _rostoVira(canvas);
 
-    // Garganta clara, emendada na barriga do corpo (uma mancha só).
+    // Máscara clara do focinho, larga e baixa.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 22), width: 44, height: 40),
+        Rect.fromCenter(center: const Offset(0, 14), width: 50, height: 34),
         topo: 0.9,
       ),
-      _p(garganta),
-    );
-    // Lábio superior e queixo prateados: a parte mais clara do bicho.
-    canvas.drawPath(
-      _bolha(
-        Rect.fromCenter(center: const Offset(0, 12), width: 48, height: 30),
-        topo: 0.9,
-      ),
-      _p(Color.lerp(claro, const Color(0xFFE1B79C), 0.6)!),
+      _p(claro),
     );
 
-    // Bigodes: numerosos, longos e **claros** — 5 por lado, 26 u, saindo de
-    // dentro do focinho (laudo 31 R6). Escuros a 50 % somiam na home.
-    const corDoBigode = Color(0xE6E1B79C);
-    _bigodes(
-      canvas,
-      const Offset(-18, 10),
-      quantos: 5,
-      comprimento: 26,
-      espaco: 2.6,
-      cor: corDoBigode,
-      espessura: 1.3,
-    );
-    _bigodes(
-      canvas,
-      const Offset(18, 10),
-      lado: 1,
-      quantos: 5,
-      comprimento: 26,
-      espaco: 2.6,
-      cor: corDoBigode,
-      espessura: 1.3,
-    );
+    // Bigodes presos na borda do focinho, dos dois lados.
+    _bigodes(canvas, const Offset(-22, 12));
+    _bigodes(canvas, const Offset(22, 12), lado: 1);
 
     // Focinheira escura, o traço que faz ler "lontra" e não "gato".
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 5), width: 19, height: 13),
+        Rect.fromCenter(center: const Offset(0, 6), width: 19, height: 13),
         base: 1.1,
       ),
       _p(sombraForte),
     );
     canvas.drawOval(
-      Rect.fromCenter(center: const Offset(-3.5, 2), width: 6, height: 3.5),
+      Rect.fromCenter(center: const Offset(-3.5, 3), width: 6, height: 3.5),
       _p(luz.withValues(alpha: 0.45)),
     );
 
     _boca(canvas);
     if (feliz) {
-      _bochecha(canvas, const Offset(-30, 9), const Offset(30, 9));
+      _bochecha(canvas, const Offset(-30, 11), const Offset(30, 11));
     }
     // A lontra come segurando a comida com as duas patas da frente, junto
     // da boca, e a leva à boca a cada mordida (pesquisa 24: lontras comem
@@ -3598,22 +3464,19 @@ class _PetPainter extends CustomPainter {
       for (final lado in [-1.0, 1.0]) {
         canvas.drawOval(
           Rect.fromCenter(
-            center: Offset(lado * 10, 34 - sobe),
+            center: Offset(lado * 9, 34 - sobe),
             width: 13,
             height: 10,
           ),
-          // Na cor das patas, não na do traço da boca: as duas mãos juntas
-          // sob o sorriso liam como uma segunda boca (RIO-05).
-          _p(sombraFria),
+          _p(sombraForte),
         );
       }
     }
 
-    // Olhos altos, no terço de cima da cabeça chata (laudo 31 R10).
-    _olho(canvas, const Offset(-22, -14), 7.5);
-    _olho(canvas, const Offset(22, -14), 7.5);
+    _olho(canvas, const Offset(-21, -12), 7.5);
+    _olho(canvas, const Offset(21, -12), 7.5);
     _rostoVolta(canvas);
-    _veste(canvas, 82, 58);
+    _veste(canvas, 84, 74);
 
     canvas.restore();
   }
@@ -3633,244 +3496,167 @@ class _PetPainter extends CustomPainter {
     // corpo afundou 13 px e sem isto a cabeça entraria junto, o que numa
     // tartaruga é afogamento, não nado.
     // Susto e festa da espécie (laudo 31 R3/R4): assustado, o tracajá
-    // recolhe — a cabeça dobra de lado, as patas entram 6 sob o casco;
-    // festejando, o pescoço sai todo (+14).
+    // recolhe — a cabeça desce 10 e dobra de lado, as patas entram 6 sob o
+    // casco; festejando, o pescoço sai todo (+14).
     final sustoDoToco = pose.vida.susto.clamp(0.0, 1.0);
     final festaDoToco = pose.vida.festa.clamp(0.0, 1.0);
-    // O motor emite −1..1; as capturas antigas mandavam −4,2 e a retração
-    // saía 4× exagerada (auditoria, "material enviesado").
-    final pescocoDaVida = pose.vida.pescoco.clamp(-1.0, 1.0);
-    // Recolher (−) é **dobrar de lado**, o gesto do tracajá (laudo 31 R7,
-    // TOCO-09): a cabeça vai 16 para o lado, desce 10 até a borda e gira
-    // 0,35 rad; o pescoço vira um S. Dormindo ela fica dobrada também
-    // (laudo 06 §4.5). Descer em linha reta pela frente do casco era
-    // anatomicamente impossível.
-    final dormeDobrado = (pose.vida.adormecido ?? false) ? 0.8 : 0.0;
-    final recolhe = math.max((-pescocoDaVida).clamp(0.0, 1.0), dormeDobrado);
-    final dobra = (sustoDoToco + recolhe).clamp(0.0, 1.0);
-    // O lado da dobra acompanha a virada do olhar (sem motor sorteando).
-    final lado = _virada.dx < -0.05 ? -1.0 : 1.0;
     final estica =
         (pose.boia * 2.4 * amp) +
         pose.carinho * 7 +
         (nadando ? 11 : 0) +
-        // Esticando o pescoço ao sol (+).
-        math.max(pescocoDaVida, 0.0) * 9 * amp -
+        // Recolhendo a cabeça (−) ou esticando o pescoço ao sol (+).
+        pose.vida.pescoco * 9 * amp -
         10 * sustoDoToco +
         14 * festaDoToco;
-    // O giro é em volta da base do pescoço (30 abaixo do centro da cabeça)
-    // e puxa o centro ≈ 10 de volta (e os olhos, mais altos, ≈ 13): 28 de
-    // translação dão os 16 líquidos do laudo.
-    final cabecaX = lado * 28 * dobra;
-    final cabecaY = -31 - estica + 10 * recolhe + _cabecaDesce;
-    final centroX = cabecaX - lado * 10.3 * dobra;
 
-    // Patas: as quatro (laudo 31 R7, TOCO-07). As traseiras saem atrás do
-    // casco, mais para fora; as da frente, mais para dentro, por baixo da
-    // borda. Na água remam em diagonal — frente-esquerda em fase com
-    // trás-direita — a 2 remadas por ciclo.
-    final passo = pose.pernas * amp * 1.4;
-    final recua = 6 * sustoDoToco;
+    // Patas: saem por baixo do casco, nos cantos. Na água elas viram remos —
+    // a tartaruga-de-orelha-vermelha nada com as quatro.
+    // Em y 56 (era 52): os pés tocam o chão, abaixo do plastrão (TOCO-08),
+    // e é a pata que se vê alternar no arrasto.
     _pata(
       canvas,
-      Offset(-52 + recua, 62),
+      Offset(-47 + 6 * sustoDoToco, 56),
+      25,
       22,
-      16,
-      sombraFria,
-      -passo,
-      rema: 1,
-      cadencia: 2,
+      sombra,
+      pose.pernas * amp * 1.4,
+      rema: -1,
     );
     _pata(
       canvas,
-      Offset(52 - recua, 62),
+      Offset(47 - 6 * sustoDoToco, 56),
+      25,
       22,
-      16,
-      sombraFria,
-      passo,
-      rema: -1,
-      cadencia: 2,
-    );
-    _pata(
-      canvas,
-      Offset(-40 + recua, 58),
-      24,
-      18,
-      sombraFria,
-      passo,
-      rema: -1,
-      cadencia: 2,
-    );
-    _pata(
-      canvas,
-      Offset(40 - recua, 58),
-      24,
-      18,
-      sombraFria,
-      -passo,
+      sombra,
+      -pose.pernas * amp * 1.4,
       rema: 1,
-      cadencia: 2,
-    );
-
-    // Pescoço, **atrás** do casco: sai de dentro dele, por baixo da borda,
-    // e vai até a cabeça. Na cor da pele (TOCO-13: em `claro` era um
-    // colarinho de boneco). Em S quando a cabeça dobra de lado.
-    canvas.drawPath(
-      _fita(
-        const Offset(0, 16),
-        const Offset(0, -4),
-        Offset(centroX * 0.55, cabecaY + 28),
-        Offset(centroX, cabecaY + 12),
-        base: 32,
-        ponta: 26,
-      ),
-      _p(pelo),
     );
 
     // --- casco, atrás da cabeça -------------------------------------------
     //
-    // Oval, **baixo** e largo (118 × 70, 1,69 : 1; laudo 31 R7, TOCO-06):
-    // a cúpula 102 × 78 de frente lia como "babador sobre saco". Com anel
-    // marginal, quilha baixa e plastrão amarelo.
+    // O casco fica **atrás**: desenhado por cima, ele engolia o queixo e o
+    // bicho parecia dentro de uma panela. Atrás, lê como carapaça nas costas.
     final casco = _bolha(
-      Rect.fromCenter(center: const Offset(0, 26), width: 118, height: 70),
-      topo: 0.86,
-      base: 0.9,
+      Rect.fromCenter(center: const Offset(0, 26), width: 102, height: 78),
+      topo: 0.94,
+      base: 0.94,
     );
-    // Queratina, não pele: oliva-acinzentado puxado da foto (laudo 31 R9).
-    final corDoCasco = Color.lerp(sombra, const Color(0xFF6E6A55), 0.45)!;
-    final corDaBorda = Color.lerp(corDoCasco, const Color(0xFFB4AC8F), 0.5)!;
-    canvas.drawPath(casco, _p(corDaBorda));
-    // O aro marginal é uma saia: fino no alto (a carapaça foge para trás),
-    // grosso embaixo — um anel igual em volta lia como prato fundo.
-    final miolo = _bolha(
-      Rect.fromCenter(center: const Offset(0, 22), width: 110, height: 62),
-      topo: 0.86,
-      base: 0.9,
-    );
-    canvas.drawPath(miolo, _p(corDoCasco));
+    // O casco é queratina, não pele: puxa para o oliva-amarronzado, senão
+    // fica um verde chapado igual ao da cabeça.
+    final corDoCasco = Color.lerp(sombra, const Color(0xFF6B5334), 0.32)!;
+    canvas.drawPath(casco, _p(corDoCasco));
 
     canvas.save();
-    canvas.clipPath(miolo);
+    canvas.clipPath(casco);
     // Escudos: precisam de contraste de verdade. Verde sobre verde some, e o
     // casco vira uma bolha lisa.
-    final linha = _traco(Cores.tintaA(0.22), 2);
+    final linha = _traco(Cores.tintaA(0.32), 2.6);
 
-    // Fileira vertebral mais clara: é ela que dá o volume baixo.
+    // Fileira central mais clara: é ela que dá a cúpula.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 26), width: 54, height: 48),
-        topo: 0.9,
+        Rect.fromCenter(center: const Offset(0, 32), width: 62, height: 60),
+        topo: 0.92,
       ),
-      _p(Color.lerp(corDoCasco, Cores.superficie, 0.14)!),
+      _p(Color.lerp(corDoCasco, Cores.superficie, 0.16)!),
     );
     canvas.drawPath(
       Path()
-        ..moveTo(-27, 50)
-        ..cubicTo(-27, 2, 27, 2, 27, 50),
+        ..moveTo(-31, 62)
+        ..cubicTo(-31, 4, 31, 4, 31, 62),
       linha,
     );
     // Fileira marginal: o anel de baixo.
     canvas.drawPath(
       Path()
-        ..moveTo(-56, 40)
-        ..cubicTo(-30, 26, 30, 26, 56, 40),
+        ..moveTo(-52, 48)
+        ..cubicTo(-30, 32, 30, 32, 52, 48),
       linha,
     );
-    for (final x in [-14.0, 0.0, 14.0]) {
-      canvas.drawLine(Offset(x, 2), Offset(x * 1.1, 26), linha);
+    for (final x in [-17.0, 0.0, 17.0]) {
+      canvas.drawLine(Offset(x, 4), Offset(x * 1.1, 34), linha);
     }
     for (final x in [-42.0, -22.0, 22.0, 42.0]) {
-      canvas.drawLine(Offset(x, 28), Offset(x * 1.06, 52), linha);
+      canvas.drawLine(Offset(x, 34), Offset(x * 1.08, 64), linha);
     }
-    // Quilha: um traço central do topo até 30 % da altura do casco.
-    canvas.drawLine(
-      const Offset(0, -3),
-      const Offset(0, 17),
-      _traco(Color.lerp(corDoCasco, Cores.superficie, 0.35)!, 2),
-    );
-    // Plastrão amarelo: a faixa da barriga, na frente do casco.
+    // Plastrão: a faixa clara da barriga, na frente do casco.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 50), width: 72, height: 26),
+        Rect.fromCenter(center: const Offset(0, 54), width: 68, height: 42),
         topo: 0.9,
       ),
-      _p(Color.lerp(barriga, Cores.plastraoDoTracaja, 0.75)!),
+      _p(barriga),
     );
     canvas.restore();
 
     // --- cabeça, na frente ------------------------------------------------
     canvas.save();
-    // 3° de giro no repouso (laudo 31 R11), para o pescoço não ser um eixo.
-    canvas.translate(cabecaX, cabecaY);
+    // No susto a cabeça dobra de lado (16 para o lado da cauda, −0,35 rad):
+    // é a leitura do susto numa tartaruga, não o olho arregalado. E 3° de
+    // giro no repouso (laudo 31 R11), para o pescoço não ser um eixo.
+    canvas.translate(16 * sustoDoToco, -36 - estica + _cabecaDesce);
     _cabecaSemFolego(canvas);
     _posicionaCabeca(
       canvas,
-      _cabecaGiro * 0.8 + 0.052 - lado * 0.35 * dobra,
+      _cabecaGiro * 0.8 + 0.052 - 0.35 * sustoDoToco,
       pescoco: 30,
     );
     canvas.scale(_cabecaDoEstagio);
-    // A única das nove sem sombra de queixo (TOCO-26): a cabeça encostava
-    // no casco sem separação.
-    _sombraDoQueixo(canvas, 70, 50, cor: sombraFria.withValues(alpha: 0.35));
 
-    // Cabeça achatada (70 × 52) com o focinho em ponta: o tracajá não é
-    // uma bola verde (laudo 31 R7, TOCO-17).
-    final cabeca = _bolha(
-      Rect.fromCenter(center: Offset.zero, width: 70, height: 52),
-      base: 0.8 + _queixoDesce / 30,
+    // Pescoço: sai da cabeça e entra no casco. É ele que faz a cabeça
+    // **sair** do casco em vez de ficar apoiada nele como um chapéu.
+    //
+    // E ele estica junto. Com comprimento fixo, levantar a cabeça 11 px para
+    // fora d'água abria um buraco entre a cabeça e a carapaça: a tartaruga
+    // ficava com a cara boiando solta. O 38 + 1.34·estica mantém a ponta do
+    // pescoço sempre uns 5 px **dentro** do casco, em qualquer esticada.
+    final pescoco = 38 + estica * 1.34;
+    canvas.drawPath(
+      Path()
+        ..moveTo(-17, 6)
+        ..cubicTo(-19, pescoco, 19, pescoco, 17, 6)
+        ..cubicTo(9, 14, -9, 14, -17, 6)
+        ..close(),
+      _p(claro),
     );
-    final focinho = Path()
-      ..moveTo(-20, 8)
-      ..quadraticBezierTo(-6, 26 + _queixoDesce, 0, 27 + _queixoDesce)
-      ..quadraticBezierTo(6, 26 + _queixoDesce, 20, 8)
-      ..close();
-    canvas.drawPath(cabeca, _p(pelo));
-    canvas.drawPath(focinho, _p(pelo));
 
-    // O rosto vira; as manchas vão junto (TOCO-11: fixas no contorno, o
-    // olho passava por cima delas).
+    // Cabeça menor que o casco: numa tartaruga a carapaça é o corpo.
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: Offset.zero, width: 66, height: 60),
+        base: 1.04 + _queixoDesce / 30,
+      ),
+      _p(pelo),
+    );
+
+    // A listra vermelha atrás do olho — é dela que vem o nome
+    // "tartaruga-de-orelha-vermelha", e é o que tira a cabeça de "bola
+    // verde". Antes era um oval lavado que ninguém via.
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 22, -10)
+          ..cubicTo(lado * 29, -10, lado * 32, -6, lado * 32, 0)
+          ..cubicTo(lado * 29, 4, lado * 24, 3, lado * 22, -1)
+          ..close(),
+        _p(Color.lerp(Cores.acento, Cores.terracotaDaArte, 0.35)!),
+      );
+    }
+
+    // As listras ficam no contorno (são do lado da cabeça); o rosto vira.
     _rostoVira(canvas);
-    // Manchas amarelas (laudo 06 §4.1, laudo 31 R7): as do lado da cabeça,
-    // atrás dos olhos, e duas pequenas no focinho. É o que separa o
-    // tracajá da tartaruga-de-orelha-vermelha das lojas.
-    canvas.save();
-    canvas.clipPath(Path.combine(PathOperation.union, cabeca, focinho));
-    for (final (x, y, w, h) in const [
-      (-31.0, -4.0, 10.0, 8.0),
-      (31.0, -4.0, 10.0, 8.0),
-      (-10.0, 15.0, 5.0, 4.0),
-      (10.0, 15.0, 5.0, 4.0),
-    ]) {
-      canvas.drawOval(
-        Rect.fromCenter(center: Offset(x, y), width: w, height: h),
-        _p(Cores.manchaDoTracaja),
-      );
-    }
-    canvas.restore();
-
-    // Narinas pequenas na ponta do focinho, e um barbilhão sob o queixo.
-    for (final x in [-3.5, 3.5]) {
-      canvas.drawOval(
-        Rect.fromCenter(center: Offset(x, 13), width: 3.6, height: 2.8),
-        _p(sombraForte),
-      );
-    }
-    canvas.drawLine(
-      Offset(0, 26 + _queixoDesce),
-      Offset(1, 30 + _queixoDesce),
-      _traco(sombraForte, 1.4),
-    );
+    _narina(canvas, const Offset(-6, 6));
+    _narina(canvas, const Offset(6, 6));
     _boca(canvas);
     // Sem bochecha rosada: réptil não cora, e sobre o verde a mancha rosa
     // ficava um adesivo colado.
 
-    // Olhos **laterais** (±22 a 70 de largura: 63 % da cabeça entre eles,
-    // laudo 31 R10). Sem sobrancelha: a tartaruga não tem (TOCO-18).
-    _olho(canvas, const Offset(-22, -8), 6.5, sobrancelha: false);
-    _olho(canvas, const Offset(22, -8), 6.5, sobrancelha: false);
+    // Sem sobrancelha: a tartaruga não tem (TOCO-18) — a saudade e o susto
+    // ficam na pálpebra e na cabeça.
+    _olho(canvas, const Offset(-14, -9), 7, sobrancelha: false);
+    _olho(canvas, const Offset(14, -9), 7, sobrancelha: false);
     _rostoVolta(canvas);
-    _veste(canvas, 70, 52);
+    _veste(canvas, 66, 60);
 
     canvas.restore();
   }
@@ -6790,7 +6576,6 @@ class _PetPainter extends CustomPainter {
     double desloca, {
     bool dedos = true,
     double? rema,
-    double cadencia = 1,
   }) {
     var pos = Offset(o.dx + desloca, o.dy);
     // No passo, a pata do lado levanta num arco e vai um pouco à frente.
@@ -6815,9 +6600,7 @@ class _PetPainter extends CustomPainter {
       giraAPata = (o.dx < 0 ? 1 : -1) * 0.3 * noAr;
     }
     if (rema != null && pose.nadando) {
-      // [cadencia] > 1 rema mais vezes por ciclo (o tracajá, 2 por
-      // segundo, laudo 31 R7).
-      final a = (pose.ciclo * cadencia + (rema < 0 ? 0.0 : 0.5)) * math.pi * 2;
+      final a = (pose.ciclo + (rema < 0 ? 0.0 : 0.5)) * math.pi * 2;
       // O -9 recolhe a pata para debaixo do peito. Bicho nadando não deixa a
       // perna esticada onde ela fica de pé: ela puxa embaixo do corpo. E era
       // o que a fazia sair pela borda de baixo do quadro, já que o corpo
@@ -6852,6 +6635,9 @@ class _PetPainter extends CustomPainter {
     }
     canvas.restore();
   }
+
+  void _patinha(Canvas canvas, Offset o, Color cor, {double? rema}) =>
+      _pata(canvas, o, 16, 13, cor, 0, rema: rema);
 
   /// Orelha com concha interna, e um tremor rápido quando o bicho escuta algo.
   void _orelhaRedonda(
@@ -7649,13 +7435,7 @@ class _PetPainter extends CustomPainter {
     );
   }
 
-  void _bochecha(
-    Canvas canvas,
-    Offset a,
-    Offset b, {
-    double w = 14,
-    double h = 8,
-  }) {
+  void _bochecha(Canvas canvas, Offset a, Offset b) {
     // Desligadas no susto (laudo 31 R3); meia força na festa (CAP-21).
     final susto = pose.vida.susto.clamp(0.0, 1.0);
     final festa = pose.vida.festa.clamp(0.0, 1.0);
@@ -7663,28 +7443,17 @@ class _PetPainter extends CustomPainter {
       alpha: (0.24 + pose.carinho * 0.20 + 0.26 * festa) * (1 - susto),
     );
     for (final o in [a, b]) {
-      canvas.drawOval(Rect.fromCenter(center: o, width: w, height: h), _p(cor));
+      canvas.drawOval(
+        Rect.fromCenter(center: o, width: 14, height: 8),
+        _p(cor),
+      );
     }
   }
 
   /// Bigodes. [lado] -1 aponta para a esquerda, 1 para a direita — de frente
   /// o bicho tem os dois.
-  ///
-  /// A lontra pede os dela **claros** e em maior número ([cor], [quantos],
-  /// [comprimento]): escuros a 50 % sobre pelo escuro sumiam na home
-  /// (laudo 31 R6, contraste 1,1 : 1).
-  void _bigodes(
-    Canvas canvas,
-    Offset o, {
-    double lado = -1,
-    int quantos = 3,
-    double comprimento = 19,
-    double espaco = 3.5,
-    Color? cor,
-    double espessura = 1.2,
-  }) {
-    final t = _traco(cor ?? sombraForte.withValues(alpha: 0.5), espessura);
-    final k = comprimento / 19;
+  void _bigodes(Canvas canvas, Offset o, {double lado = -1}) {
+    final t = _traco(sombraForte.withValues(alpha: 0.5), 1.2);
     // Os bigodes acompanham a respiração de leve.
     final abre = pose.respiro * pose.amplitude * 1.1;
     // No susto vão para a frente (lontra, laudo 31 R3) — para trás na gata
@@ -7695,20 +7464,18 @@ class _PetPainter extends CustomPainter {
     canvas.translate(o.dx, o.dy);
     canvas.rotate(vira);
     canvas.translate(-o.dx, -o.dy);
-    for (var i = 0; i < quantos; i++) {
-      final dy = (i - (quantos - 1) / 2) * espaco;
-      // Os de cima sobem, os de baixo descem: um leque, não um pente.
-      final leque = (i - (quantos - 1) / 2) * 1.6;
+    for (var i = 0; i < 3; i++) {
+      final dy = (i - 1) * 3.5;
       canvas.drawPath(
         Path()
           ..moveTo(o.dx, o.dy + dy)
           ..cubicTo(
-            o.dx + lado * 7 * k,
-            o.dy + dy - 1 - abre + leque * 0.3,
-            o.dx + lado * 13 * k,
-            o.dy + dy - 2 - abre * 1.3 + leque * 0.7,
-            o.dx + lado * 19 * k,
-            o.dy + dy - 3 - abre * 1.5 + leque,
+            o.dx + lado * 7,
+            o.dy + dy - 1 - abre,
+            o.dx + lado * 13,
+            o.dy + dy - 2 - abre * 1.3,
+            o.dx + lado * 19,
+            o.dy + dy - 3 - abre * 1.5,
           ),
         t,
       );

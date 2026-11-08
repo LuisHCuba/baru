@@ -173,6 +173,76 @@ bool _mergulhador(Species especie) =>
     especie == Species.penguin ||
     especie == Species.axolotl;
 
+/// O jeito de cada espécie se deslocar e perseguir: o tipo de passo e a
+/// cadência (laudo 34 R3), a cauda à toa (MOV-16) e a espreita do bote
+/// (pesquisa 20, mecânica 9: o cão corre direto; o gato encara, rebola e
+/// dá o bote; a tartaruga vai no tempo dela). É a tabela única que o app e
+/// as folhas da série usam.
+JeitoDeCacar jeitoDaEspecie(Species especie) => switch (especie) {
+  Species.cat => const JeitoDeCacar(
+    espreita: 0.8,
+    velocidade: 50,
+    locomocao: Locomocao.saltito,
+    passosPorSegundo: 2.0,
+    passosCorrendo: 4.0,
+    // Parada, varredura lenta e preguiçosa; o chicote é irritação.
+    cauda: JeitoDaCauda(frequencia: 0.3, amplitude: 0.08, f: 1.5, zeta: 0.65),
+  ),
+  Species.fox => const JeitoDeCacar(
+    espreita: 0.8,
+    velocidade: 50,
+    locomocao: Locomocao.saltito,
+    passosPorSegundo: 2.2,
+    passosCorrendo: 4.0,
+    cauda: JeitoDaCauda(frequencia: 0.5, amplitude: 0.15, f: 2, zeta: 0.5),
+  ),
+  Species.owl => const JeitoDeCacar(
+    espreita: 0.4,
+    velocidade: 46,
+    locomocao: Locomocao.saltinhos,
+    passosPorSegundo: 2.5,
+    passosCorrendo: 4.0,
+  ),
+  Species.tortoise => const JeitoDeCacar(
+    velocidade: 12,
+    locomocao: Locomocao.arrasto,
+    passosPorSegundo: 0.6,
+    passosCorrendo: 1.0,
+  ),
+  Species.penguin => const JeitoDeCacar(
+    velocidade: 30,
+    locomocao: Locomocao.gingado,
+    passosPorSegundo: 1.8,
+    passosCorrendo: 2.5,
+  ),
+  Species.frenchie => const JeitoDeCacar(
+    velocidade: 58,
+    locomocao: Locomocao.bamboleio,
+    passosPorSegundo: 2.0,
+    passosCorrendo: 3.0,
+    // O cão abana em rajadas quando feliz; parado, quase nada.
+    cauda: JeitoDaCauda(frequencia: 0.6, amplitude: 0.1, f: 4, zeta: 0.4),
+  ),
+  Species.otter => const JeitoDeCacar(
+    velocidade: 58,
+    locomocao: Locomocao.saltito,
+    passosPorSegundo: 2.4,
+    passosCorrendo: 4.0,
+    cauda: JeitoDaCauda(frequencia: 0.5, amplitude: 0.2, f: 2.5, zeta: 0.4),
+  ),
+  Species.capybara => const JeitoDeCacar(
+    locomocao: Locomocao.galopePesado,
+    passosPorSegundo: 2.0,
+    passosCorrendo: 3.5,
+  ),
+  Species.axolotl => const JeitoDeCacar(
+    locomocao: Locomocao.ondulacao,
+    passosPorSegundo: 0.8,
+    passosCorrendo: 1.2,
+    cauda: JeitoDaCauda(frequencia: 0.5, amplitude: 0.2, f: 2, zeta: 0.4),
+  ),
+};
+
 /// As marcações de pelagem do buldogue francês.
 ///
 /// Só esta espécie tem: nas outras oito a paleta é uma escada de tons do
@@ -997,24 +1067,7 @@ class _PetViewState extends State<PetView>
       ..hora = DateTime.now().hour
       // O cão corre direto; o gato encara, rebola e dá o bote (Miyamoto,
       // pesquisa 20, mec. 9); a tartaruga vai no tempo dela.
-      ..jeito = switch (widget.species) {
-        Species.cat || Species.fox => const JeitoDeCacar(
-          espreita: 0.8,
-          velocidade: 50,
-          saltita: true,
-        ),
-        Species.owl => const JeitoDeCacar(
-          espreita: 0.4,
-          velocidade: 46,
-          saltita: true,
-        ),
-        Species.tortoise => const JeitoDeCacar(velocidade: 12),
-        Species.penguin => const JeitoDeCacar(velocidade: 30),
-        Species.frenchie ||
-        Species.otter => const JeitoDeCacar(velocidade: 58, saltita: true),
-        Species.capybara => const JeitoDeCacar(saltita: true),
-        Species.axolotl => const JeitoDeCacar(),
-      }
+      ..jeito = jeitoDaEspecie(widget.species)
       // O que só esta espécie faz (etograma, pesquisa 22).
       ..repertorio = switch (widget.species) {
         Species.capybara => const {
@@ -2058,10 +2111,13 @@ class _Pose {
     // Sentado e de frente, comer é um aceno de cabeça até o capim, e não
     // a cabeça inteira afundada no peito: descendo 32, ela engolia o corpo
     // e o bicho virava uma cabeça com patas.
+    // Pastando a cabeça vai ao capim (16 u; `cabecaNoChao` pode passar de
+    // 1: a folha da série pede 1,25, a bocada de 19 u do MOV-08; no app o
+    // motor limita a 1,2). Quem petisca pega e come em cima: aceno curto.
     AcaoDoBicho.pasto when vida.atividadeAtiva && !comendoDaMao =>
-      3 + vida.cabecaNoChao * 10 * amplitude,
+      3 + vida.cabecaNoChao * 13 * amplitude,
     AcaoDoBicho.petisco when vida.atividadeAtiva && !comendoDaMao =>
-      2 + vida.cabecaNoChao * 8 * amplitude,
+      2 + vida.cabecaNoChao * 5 * amplitude,
     AcaoDoBicho.pasto =>
       3 + _fase(ciclo, 0.04, 0.12, 0.14, 0.66) * 10 * amplitude,
     AcaoDoBicho.petisco =>
@@ -2311,7 +2367,13 @@ class _PetPainter extends CustomPainter {
   /// embaixo.
   double get afunda {
     if (!nadando) return 0;
-    final base = mergulha ? 20.0 : 13.0;
+    // A capivara boia com o dorso rente e só olhos, orelhas e narinas de
+    // fora (laudo 31 R8): a lâmina passa logo abaixo do nariz.
+    final base = mergulha
+        ? 20.0
+        : species == Species.capybara
+        ? 27.0
+        : 13.0;
     // O axolote não sai da água, então a atividade dele é a altura em que
     // fica nela: comendo, mais fundo, junto ao fundo; à toa, mais à tona.
     if (species == Species.axolotl) {
@@ -2639,10 +2701,13 @@ class _PetPainter extends CustomPainter {
       AcaoDoBicho.cochilo => -0.16,
       // Rola de um lado para o outro na braçada — é a ondulação do nado.
       // Quem mergulha rola mais: o corpo dele é o remo.
+      // (A postura de nado — pender para onde vai com a cabeça à frente,
+      // MOV-06 — é do motor, em `inclina`/`cabecaAtraso`, que já sabe o
+      // sentido; aqui só o rolar da braçada.)
       AcaoDoBicho.nado =>
         -0.04 +
             math.sin(pose.ciclo * math.pi * 2) *
-                (mergulha ? 0.10 : 0.045) *
+                (mergulha ? 0.08 : 0.045) *
                 amp *
                 pose._forcaDoNado,
       AcaoDoBicho.voo => math.sin(pose.ciclo * math.pi * 2) * 0.05 * amp,
@@ -2680,7 +2745,10 @@ class _PetPainter extends CustomPainter {
     final e = pose.estica;
     // 1,5 e não 2,1 no sono: a 2,1 o corpo variava 14% de pico a pico e a
     // cara se esmagava (auditoria da Onda 3, 11a-M3).
-    final fundura = dormindo ? 1.5 : 1.0;
+    // 1,15 no sono: a 1,5 o topo subia 12 u e o corpo enchia de um lado só
+    // como balão (MOV-09); o fôlego do sono se vê pelo ritmo, não pelo
+    // tamanho.
+    final fundura = dormindo ? 1.15 : 1.0;
     // A postura do humor, pelos pés.
     final (px, py) = _posturaDoHumor;
     if (px != 1 || py != 1) {
@@ -2735,12 +2803,30 @@ class _PetPainter extends CustomPainter {
       ladoEsquerdo: vida.pataEsquerda * amp,
       ladoDireito: vida.pataDireita * amp,
       pes: _pes,
-      // Nadando, o corpo ondula no ritmo da braçada; quem mergulha (o corpo
-      // é o remo) ondula mais.
+      // Nadando, o corpo ondula no ritmo da braçada, por espécie (laudo 31
+      // R8, 34 R10): o axolote de lado, crescendo até a cauda; a lontra
+      // com o dorso subindo e descendo; capivara e tartaruga, pouco. Em
+      // terra, o axolote anda ondulando pela fase do passo (MOV-04).
       ondula: nadando
-          ? (amp * pose._forcaDoNado * (mergulha ? 1.0 : 0.55)).clamp(0.0, 1.0)
+          ? (amp *
+                    pose._forcaDoNado *
+                    switch (species) {
+                      Species.axolotl => 1.0,
+                      Species.otter => 0.3,
+                      Species.penguin => 0.5,
+                      _ => 0.55,
+                    })
+                .clamp(0.0, 1.0)
+          : species == Species.axolotl
+          ? (vida.andando * 0.5 * amp).clamp(0.0, 1.0)
           : 0,
-      faseDaOnda: pose.ciclo * math.pi * 2,
+      faseDaOnda: nadando
+          ? pose.ciclo * math.pi * 2
+          : vida.faseDoPasso * math.pi * 2,
+      ondaVertical: nadando && species == Species.otter
+          ? (amp * pose._forcaDoNado).clamp(0.0, 1.0)
+          : 0,
+      ondaNaCauda: species == Species.axolotl,
       // O corpo é espelhado quando ele vira; o dedo, não.
       dente: Offset(
         vida.virado ? -vida.dente.dx : vida.dente.dx,
@@ -3014,15 +3100,7 @@ class _PetPainter extends CustomPainter {
   static const _corDaPoeira = Color(0xFFB8A27A);
 
   /// Quem anda aos saltinhos (ver `JeitoDeCacar.saltita`).
-  bool get _saltita => switch (species) {
-    Species.capybara ||
-    Species.cat ||
-    Species.fox ||
-    Species.frenchie ||
-    Species.otter ||
-    Species.owl => true,
-    _ => false,
-  };
+  bool get _saltita => jeitoDaEspecie(species).saltita;
 
   /// Quanto o corpo desce deitado: o bastante para as patas da frente
   /// sumirem sob ele.
@@ -3141,8 +3219,10 @@ class _PetPainter extends CustomPainter {
 
     // Patas da frente, apoiadas. Sobem e descem alternadas ao boiar — e
     // remam de verdade quando ele está na água (ver [_pata]).
-    _pata(canvas, const Offset(-23, 51), 27, 17, sombra, passo * 1.6, rema: -1);
-    _pata(canvas, const Offset(23, 51), 27, 17, sombra, -passo * 1.6, rema: 1);
+    // Em y 55 (era 51): o pé sai 4 u abaixo da barriga e se vê levantar no
+    // galope; a 51 ficava escondido atrás do corpo e o passo não lia.
+    _pata(canvas, const Offset(-23, 55), 27, 17, sombra, passo * 1.6, rema: -1);
+    _pata(canvas, const Offset(23, 55), 27, 17, sombra, -passo * 1.6, rema: 1);
 
     final corpo = _bolha(
       Rect.fromCenter(center: const Offset(0, 18), width: 92, height: 80),
@@ -3257,9 +3337,16 @@ class _PetPainter extends CustomPainter {
     // cauda ficava vadiando atrás, em outro tempo.
     final sustoDaLontra = pose.vida.susto.clamp(0.0, 1.0);
     final festaDaLontra = pose.vida.festa.clamp(0.0, 1.0);
-    // Festejando a cauda chicoteia (balanço × 2, laudo 31 R4).
+    // Nadando, a cauda chicoteia para cima 2–3 quadros depois do dorso, com
+    // o dobro da amplitude (laudo 31 R8): ela é o remo. Festejando ela
+    // chicoteia em dobro (laudo 31 R4).
     final balanca =
-        (pose.nadando ? pose.pernas * amp * 1.3 : pose.cauda * amp) *
+        (pose.nadando
+            ? math.sin(pose.ciclo * math.pi * 2 - 0.9) *
+                  2.6 *
+                  amp *
+                  pose._forcaDoNado
+            : pose.cauda * amp) *
         (1 + festaDaLontra);
     // No susto a cauda levanta rígida, ponta 20 acima (laudo 31 R3).
     final levanta = 20 * sustoDaLontra;
@@ -3288,8 +3375,10 @@ class _PetPainter extends CustomPainter {
       _p(sombraForte),
     );
 
-    _patinha(canvas, Offset(-20, 50 + rema * 1.6), sombra, rema: -1);
-    _patinha(canvas, Offset(20, 50 - rema * 1.6), sombra, rema: 1);
+    // Na água as patas da frente ficam paradas junto ao peito (ver [_pata]).
+    final sobeDesce = pose.nadando ? 0.0 : rema * 1.6;
+    _patinha(canvas, Offset(-20, 50 + sobeDesce), sombra, rema: -1);
+    _patinha(canvas, Offset(20, 50 - sobeDesce), sombra, rema: 1);
 
     final corpo = _bolha(
       // Comprida e estreita, não um barril: a silhueta de lontra e a de
@@ -3420,9 +3509,11 @@ class _PetPainter extends CustomPainter {
 
     // Patas: saem por baixo do casco, nos cantos. Na água elas viram remos —
     // a tartaruga-de-orelha-vermelha nada com as quatro.
+    // Em y 56 (era 52): os pés tocam o chão, abaixo do plastrão (TOCO-08),
+    // e é a pata que se vê alternar no arrasto.
     _pata(
       canvas,
-      Offset(-47 + 6 * sustoDoToco, 52),
+      Offset(-47 + 6 * sustoDoToco, 56),
       25,
       22,
       sombra,
@@ -3431,7 +3522,7 @@ class _PetPainter extends CustomPainter {
     );
     _pata(
       canvas,
-      Offset(47 - 6 * sustoDoToco, 52),
+      Offset(47 - 6 * sustoDoToco, 56),
       25,
       22,
       sombra,
@@ -3707,26 +3798,47 @@ class _PetPainter extends CustomPainter {
     //
     // Pernas longas e claras: a buraqueira fica de pé no chão, alta sobre
     // as pernas — é o traço que a separa das corujas de galho.
-    final recolhe = pose.voando ? 9.0 : 0.0;
+    //
+    // No voo os pés ficam recolhidos contra a barriga, dedos fechados e
+    // menores (60 %): de pé num chão invisível ela lia como coruja parada
+    // batendo asa. Freando para pousar, as pernas estendem 10 u para baixo
+    // (o flare, laudo 34 R12). No chão, as pernas alternam no passo: a
+    // livre dobra e sobe (NINA-09: dois palitos rígidos saindo juntos).
+    final freio = pose.vida.freio.clamp(0.0, 1.0);
+    final recolhe = pose.voando ? 14.0 * (1 - freio) - 10.0 * freio : 0.0;
+    final fecha = pose.voando ? 1 - 0.6 * (1 - freio) : 0.0;
     final garra = _traco(const Color(0xFFCDBB9C), 4.2)
       ..strokeJoin = StrokeJoin.round;
     for (final x in [-15.0, 15.0]) {
-      canvas.drawLine(
-        Offset(x, 30 - recolhe * 0.4),
-        Offset(x, 52 - recolhe),
+      final noAr = pose.voando
+          ? 0.0
+          : (x < 0 ? pose.vida.pataEsquerda : pose.vida.pataDireita) * amp;
+      // A perna livre sobe 8 u e dobra no joelho, para trás.
+      final sobe = noAr * 8;
+      final joelho = Offset(
+        x + (x < 0 ? 1 : -1) * noAr * 5,
+        42 - recolhe * 0.7 - sobe * 0.6,
+      );
+      final pe = Offset(x, 52 - recolhe - sobe);
+      canvas.drawPath(
+        Path()
+          ..moveTo(x, 30 - recolhe * 0.4)
+          ..quadraticBezierTo(joelho.dx, joelho.dy, pe.dx, pe.dy),
         garra,
       );
+      final escala = 1 - 0.4 * fecha;
       for (final dedo in [-1.0, 0.0, 1.0]) {
+        final d = dedo * (1 - 0.7 * fecha);
         canvas.drawPath(
           Path()
-            ..moveTo(x, 52 - recolhe)
+            ..moveTo(pe.dx, pe.dy)
             ..cubicTo(
-              x + dedo * 7,
-              55 - recolhe * 1.3,
-              x + dedo * 10,
-              57 - recolhe * 1.5,
-              x + dedo * 11,
-              59 - recolhe * 1.7,
+              pe.dx + d * 7 * escala,
+              pe.dy + 3 * escala,
+              pe.dx + d * 10 * escala,
+              pe.dy + 5 * escala,
+              pe.dx + d * 11 * escala,
+              pe.dy + 7 * escala,
             ),
           garra,
         );
@@ -3777,7 +3889,8 @@ class _PetPainter extends CustomPainter {
     final sustoDaNina = pose.vida.susto.clamp(0.0, 1.0);
     final festaDaNina = pose.vida.festa.clamp(0.0, 1.0);
     for (final lado in pose.voando ? const <double>[] : const [-1.0, 1.0]) {
-      final abre = (asa * 2.6 + 4 * sustoDaNina + 8 * festaDaNina) * lado;
+      // ≤ 0,8 u com a respiração (MOV-10); susto e festa abrem mais.
+      final abre = (asa * 0.6 + 4 * sustoDaNina + 8 * festaDaNina) * lado;
       // Borda externa quase no limite do corpo (±47): a asa fica **dobrada**
       // sobre ele e só se afasta ao respirar. Chegando a ±56 no repouso ela
       // virava um halo escuro atrás do bicho em vez de asa.
@@ -3932,7 +4045,14 @@ class _PetPainter extends CustomPainter {
     // A cauda longa com a barbatana clara por cima e por baixo: sem ela o
     // axolote não é axolote (laudo 07, R5). Nasce atrás do corpo e balança
     // no ritmo próprio da cauda.
-    final varre = pose.cauda * amp * 6;
+    // Nadando, a cauda é o motor: onda de enguia com a ponta varrendo
+    // ≥ 13 u (laudo 32 R7); à toa, só o balanço lento.
+    final varre = pose.nadando
+        ? math.sin(pose.ciclo * math.pi * 2 - 1.2) *
+              14 *
+              amp *
+              pose._forcaDoNado
+        : pose.cauda * amp * 6;
     final cauda = Path()
       ..moveTo(16, 30)
       ..cubicTo(40, 44, 62 + varre * 0.5, 40, 82 + varre, 22 + varre * 0.6)
@@ -4147,6 +4267,10 @@ class _PetPainter extends CustomPainter {
     // O pinguim "voa" embaixo d'água: é a nadadeira que o empurra, e ela
     // alterna. Abrindo as duas juntas, como no repouso, ele parecia estar
     // dando de ombros.
+    // Nadando ele "voa" embaixo d'água: batida BILATERAL, as duas descem
+    // juntas para fora e para baixo e sobem recolhendo (laudo 32 R11);
+    // alternadas liam como dar de ombros. Em repouso abrem ≤ 0,8 u com a
+    // respiração (MOV-10: a 3 u era uma asa abanando a cada fôlego).
     for (final lado in [-1.0, 1.0]) {
       final alterna = pose.nadando ? lado : 1.0;
       // Susto: nadadeiras abertas (NINO-06); festa: erguidas, a exibição
@@ -4154,7 +4278,7 @@ class _PetPainter extends CustomPainter {
       final sustoDoNino = pose.vida.susto.clamp(0.0, 1.0);
       final festaDoNino = pose.vida.festa.clamp(0.0, 1.0);
       final abre =
-          asa * 3 * lado * alterna +
+          (pose.nadando ? asa * 3 : asa * 0.8) * lado * alterna +
           (8 * sustoDoNino + 14 * festaDoNino) * lado;
       final sobe =
           (pose.nadando ? asa * 5 * lado : 0.0) -
@@ -6238,15 +6362,22 @@ class _PetPainter extends CustomPainter {
     final noAr = o.dx < 0 ? pose.vida.pataEsquerda : pose.vida.pataDireita;
     // Na reverência as patas da frente abrem para os lados.
     pos = pos + Offset((o.dx < 0 ? -1 : 1) * 7 * pose.vida.reverencia, 0);
-    // Pouco para cima: as patas ficam atrás da barriga, e subindo muito
-    // sumiam. O gingado já levanta o lado da pata livre.
-    // A pata no ar mexe à vista. Quem saltita: no ar ela fica pendurada
-    // abaixo do corpo, esticada para o chão (subindo, sumia atrás da
-    // barriga e o pé parecia parado). Quem ginga: sobe e vai à frente.
+    // A pata no ar LEVANTA num arco e recolhe (laudo 34 R7): o ponto mais
+    // baixo dela sobe ≥ 10 % da altura do corpo, sem deslizar de lado. Quem
+    // saltita sobe 6 u (o corpo já sobe 7); a capivara, de galope pesado,
+    // sobe a pata 9 u porque o corpo quase não sobe; quem ginga sobe 8 e
+    // vai um fio à frente. Pendurada para baixo (o +6 de antes) ela
+    // cancelava a subida do corpo e o pé ficava grudado no chão (MOV-01).
+    final sobeAPata = switch (species) {
+      Species.capybara => 9.0,
+      Species.frenchie => 6.0,
+      _ => _saltita ? 6.0 : 8.0,
+    };
+    var giraAPata = 0.0;
     if (noAr > 0) {
-      pos = _saltita
-          ? pos + Offset(noAr * 3, noAr * 6)
-          : pos + Offset(noAr * 3, -noAr * 8);
+      pos = pos + Offset(noAr * 2, -noAr * sobeAPata);
+      // Os dedos viram para trás ao recolher.
+      giraAPata = (o.dx < 0 ? 1 : -1) * 0.3 * noAr;
     }
     if (rema != null && pose.nadando) {
       final a = (pose.ciclo + (rema < 0 ? 0.0 : 0.5)) * math.pi * 2;
@@ -6254,15 +6385,21 @@ class _PetPainter extends CustomPainter {
       // perna esticada onde ela fica de pé: ela puxa embaixo do corpo. E era
       // o que a fazia sair pela borda de baixo do quadro, já que o corpo
       // inteiro afundou.
-      pos =
-          o +
-          Offset(
-            math.cos(a) * 7 * pose.amplitude,
-            math.sin(a) * 9 * pose.amplitude - 9,
-          );
+      //
+      // A lontra rema só com as de trás: as da frente ficam paradas junto
+      // ao peito (laudo 31 R8). A remada visível (12 × 10) sai da água no
+      // retorno (MOV-06).
+      pos = species == Species.otter
+          ? o + const Offset(0, -9)
+          : o +
+                Offset(
+                  math.cos(a) * 12 * pose.amplitude,
+                  math.sin(a) * 10 * pose.amplitude - 9,
+                );
     }
     canvas.save();
     canvas.translate(pos.dx, pos.dy);
+    if (giraAPata != 0) canvas.rotate(giraAPata);
     canvas.drawPath(
       _bolha(
         Rect.fromCenter(center: Offset.zero, width: w, height: h),

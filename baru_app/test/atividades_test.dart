@@ -403,13 +403,17 @@ void main() {
       }
 
       // A tartaruga estica o pescoço fora d'água, então ela não entra nesta
-      // comparação — o topo do quadro dela é o focinho, não o dorso.
+      // comparação — o topo do quadro dela é o focinho, não o dorso. A
+      // capivara boia com o dorso rente e só olhos e narinas de fora (laudo
+      // 31 R8, lote movimento): afunda tanto quanto a lontra que mergulha,
+      // de propósito — antes ela ficava com a cabeça inteira de fora, como
+      // um flutuador, e a lontra tinha de estar mais fundo que ela.
       expect(
-        await topo(Species.otter),
-        greaterThan(await topo(Species.capybara)),
+        await topo(Species.capybara),
+        greaterThanOrEqualTo(await topo(Species.otter) - 2),
         reason:
-            'a lontra é um torpedo e a capivara é um flutuador; nadando '
-            'igual, as duas são a mesma capivara de outra cor',
+            'a capivara boia só com os olhos e as narinas de fora: tem de '
+            'afundar tanto quanto a lontra',
       );
     });
   });
@@ -481,10 +485,17 @@ void main() {
         await tester.pump();
         final vistos = <int>[];
         for (final q in await _voltaCompleta(tester, _umaVoltaLonga, 40)) {
-          vistos.add(_topoDe(q, 40, 70));
+          // A largura toda, não a coluna 40–70: com a virada de rosto maior
+          // (lote expressões) a cabeça sai dessa coluna e a medida pegava o
+          // ombro, "descendo" 119 px sem bocada nenhuma.
+          vistos.add(_topoDe(q, 0, _larguraDoQuadro));
         }
-        return vistos.reduce((a, b) => a > b ? a : b) -
-            vistos.reduce((a, b) => a < b ? a : b);
+        // Percentis 10–90, não os extremos: um aceno de cabeça de um
+        // quadro (os gestos do motor de vida) não é bocada, e com os
+        // extremos a lontra "descia" 24 px por um pulo de 2 quadros.
+        vistos.sort();
+        return vistos[(0.9 * (vistos.length - 1)).round()] -
+            vistos[(0.1 * (vistos.length - 1)).round()];
       }
 
       // A capivara enfia a cabeça no capim; a lontra pega e come em cima.

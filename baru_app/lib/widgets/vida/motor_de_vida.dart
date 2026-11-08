@@ -94,13 +94,28 @@ class JeitoDeCacar {
   const JeitoDeCacar({
     this.espreita = 0,
     this.velocidade = 44,
-    this.saltita = false,
-  });
+    bool saltita = false,
+    Locomocao? locomocao,
+    this.passosPorSegundo = 2.0,
+    this.passosCorrendo = 3.5,
+    this.cauda = const JeitoDaCauda(),
+  }) : locomocao =
+           locomocao ?? (saltita ? Locomocao.saltito : Locomocao.gingado);
+
+  /// O tipo de passo desta espécie (ver [Locomocao]).
+  final Locomocao locomocao;
 
   /// Anda aos saltinhos, como mascote de frente anda (Finch, Animal
   /// Crossing): o corpo inteiro sai do chão a cada passo e pousa, em vez de
   /// deslizar sentado. Quem não saltita (tartaruga, pinguim) gingando anda.
-  final bool saltita;
+  bool get saltita =>
+      locomocao == Locomocao.saltito || locomocao == Locomocao.saltinhos;
+
+  /// Cadência (passos por segundo) andando e correndo, na velocidade de
+  /// cruzeiro — a tabela do laudo 34 R3 (Williams: 12 quadros por passo é
+  /// andar natural). O comprimento do ciclo sai daqui, não de um 36 fixo.
+  final double passosPorSegundo;
+  final double passosCorrendo;
 
   /// Segundos parado rebolando antes do bote (0 = vai direto).
   final double espreita;
@@ -108,6 +123,249 @@ class JeitoDeCacar {
   /// Andando, em unidades do desenho por segundo. Correndo atrás de alguma
   /// coisa, quase o dobro.
   final double velocidade;
+
+  /// A cauda à toa (ver [JeitoDaCauda]).
+  final JeitoDaCauda cauda;
+
+  /// Unidades por ciclo (dois passos) andando e correndo: quanto o bicho
+  /// percorre a cada volta da fase do passo.
+  double get cicloAndando => 2 * velocidade / passosPorSegundo;
+  double get cicloCorrendo => 2 * velocidade * 1.8 / passosCorrendo;
+}
+
+/// Como a espécie se desloca de frente para a câmera (laudo 34 R3/R11,
+/// laudo 31 R12, laudo 33 R6). Cada tipo tem as suas poses-chave e a sua
+/// cadência; a conta está em [CicloDoPasso].
+enum Locomocao {
+  /// Capivara: galope curto e pesado — o corpo quase não sobe (≤ 3 u), as
+  /// patas levantam, a cabeça baixa vai atrás.
+  galopePesado,
+
+  /// Lontra, gata, raposa: saltito — cada passo é um arco, o corpo sai do
+  /// chão, as patas sobem e recolhem, cede no pouso.
+  saltito,
+
+  /// Coruja-buraqueira no chão: corridinha de pernas longas, saltinhos
+  /// curtos, as pernas alternam.
+  saltinhos,
+
+  /// Pinguim: gingado — rola de lado por cima do pé de apoio, quase sem
+  /// sobe-desce (a energia vai para o lado, não para cima).
+  gingado,
+
+  /// Tartaruga: arrasta — sem quique, sem borracha; patas alternadas em
+  /// diagonal, a cabeça avança no apoio.
+  arrasto,
+
+  /// Buldogue: bamboleio — base larga, rolamento de ombro, pouco sobe-desce.
+  bamboleio,
+
+  /// Axolote no fundo: ondulação lateral com as patinhas alternando.
+  ondulacao,
+}
+
+/// A cauda por espécie (MOV-16): a gata parada varre devagar, o cão abana
+/// em rajadas, a lontra e o axolote ondulam lentos; o chicote de 3 Hz é
+/// irritação, não contentamento.
+class JeitoDaCauda {
+  const JeitoDaCauda({
+    this.frequencia = 1.2,
+    this.amplitude = 0.25,
+    this.f = 3,
+    this.zeta = 0.35,
+  });
+
+  /// Hz do balanço à toa, e a amplitude dele (0..1).
+  final double frequencia;
+  final double amplitude;
+
+  /// A mola da cauda (follow-through): frequência natural e amortecimento.
+  final double f;
+  final double zeta;
+}
+
+/// O quadro do passo numa fase do ciclo (0..1 = dois passos), por tipo de
+/// locomoção. É a conta que o [MotorDeVida] usa no app e que a folha de 24
+/// quadros da série (`passoNa`) usa — uma só, para o site andar como o app
+/// (laudo 34 R14).
+///
+/// Chaves (laudo 34 R1/R2/R7): o corpo cede 2–3 quadros DEPOIS do contato
+/// (não no contato), estica logo depois de decolar e quase nada no ápice,
+/// agacha um quadro antes de saltar; as duas metades do laço alternam de
+/// lado (rolagem pelo pé de apoio, cauda para o lado oposto), o segundo
+/// salto é mais baixo que o primeiro; a pata livre sobe num arco.
+class CicloDoPasso {
+  const CicloDoPasso({
+    required this.sobe,
+    required this.elastico,
+    required this.gingado,
+    required this.pataEsquerda,
+    required this.pataDireita,
+    required this.cauda,
+    required this.cabecaDx,
+    required this.contraRolo,
+  });
+
+  /// Subida do corpo (unidades); positivo para cima.
+  final double sobe;
+
+  /// -1..1: a borracha (positivo achata, negativo estica).
+  final double elastico;
+
+  /// Radianos: rolagem pelo pé de apoio (alterna de sinal a cada passo).
+  final double gingado;
+
+  /// 0..1: cada pata no ar.
+  final double pataEsquerda;
+  final double pataDireita;
+
+  /// -1..1: a cauda, meia fase atrás do passo e para o lado oposto.
+  final double cauda;
+
+  /// Unidades: a cabeça adiante (tartaruga avança no apoio; buldogue pende
+  /// para o lado do apoio; correndo, a cabeça vai à frente do corpo).
+  final double cabecaDx;
+
+  /// Radianos: a cabeça contra-rola (fica mais reta que o tronco).
+  final double contraRolo;
+
+  /// Interpolação suave (cosseno) numa lista de chaves (fase, valor).
+  static double _chaves(List<(double, double)> k, double s) {
+    for (var i = 0; i < k.length - 1; i++) {
+      final (s0, v0) = k[i];
+      final (s1, v1) = k[i + 1];
+      if (s >= s0 && s <= s1) {
+        final u = (s - s0) / (s1 - s0);
+        final e = 0.5 - 0.5 * math.cos(u * math.pi);
+        return v0 + (v1 - v0) * e;
+      }
+    }
+    return k.last.$2;
+  }
+
+  /// A borracha de quem salta: agacha antes de decolar, cede um quadro
+  /// depois do contato (o pico), estica logo depois de decolar, ≈0 no
+  /// ápice, estica de leve na queda. Os valores são a forma; a escala
+  /// (0,55 no saltito) mantém o curso do topo em ≤ 6 % da altura (laudo 34
+  /// R2: 0,33 × 14 u para baixo + 0,17 × 14 u para cima ≈ 7 u em 120).
+  static const _borrachaDoSalto = [
+    (0.0, 0.30),
+    (0.08, 0.60),
+    (0.18, 0.0),
+    (0.28, -0.30),
+    (0.50, -0.05),
+    (0.72, -0.20),
+    (0.86, 0.0),
+    (1.0, 0.30),
+  ];
+
+  static CicloDoPasso em(Locomocao loc, double fase, {double corrida = 0}) {
+    final f = fase % 1;
+    final rad = f * 2 * math.pi;
+    final onda = math.sin(rad);
+    // A fase dentro do passo (0 = contato) e qual dos dois passos é.
+    final s = (f * 2) % 1;
+    final par = (f * 2).floor().isEven;
+    final lado = par ? 1.0 : -1.0;
+    final arco = math.sin(math.pi * s);
+    // O segundo salto é mais baixo: as metades do laço não são iguais.
+    final altura = par ? 1.0 : 0.85;
+    // A pata que vai na frente sobe inteira, a outra menos; correndo, as
+    // duas recolhem na fase aérea.
+    double pata(double parte) => arco * (parte + (1 - parte) * corrida * 0.6);
+    final caudaAtras = -math.sin(rad - 0.65);
+    switch (loc) {
+      case Locomocao.saltito:
+        return CicloDoPasso(
+          sobe: arco * (7 + 4 * corrida) * altura,
+          elastico: _chaves(_borrachaDoSalto, s) * 0.55,
+          gingado: lado * 0.07 * arco,
+          pataEsquerda: pata(par ? 1.0 : 0.4),
+          pataDireita: pata(par ? 0.4 : 1.0),
+          // Correndo a cauda vai esticada atrás, quase horizontal.
+          cauda: caudaAtras * 0.9 * (1 - corrida * 0.6) - corrida * 0.9,
+          cabecaDx: 6 * corrida,
+          contraRolo: -lado * 0.02 * arco,
+        );
+      case Locomocao.galopePesado:
+        // O corpo quase não sobe; as patas é que levantam. Correndo, um
+        // galope curto com um pouco mais de ar.
+        return CicloDoPasso(
+          sobe: arco * (2.5 + 2.5 * corrida) * altura,
+          elastico: _chaves(_borrachaDoSalto, s) * (0.4 + 0.3 * corrida),
+          gingado: lado * 0.05 * arco,
+          pataEsquerda: pata(par ? 1.0 : 0.5),
+          pataDireita: pata(par ? 0.5 : 1.0),
+          cauda: caudaAtras * 0.5,
+          cabecaDx: 5 * corrida,
+          contraRolo: -lado * 0.02 * arco,
+        );
+      case Locomocao.saltinhos:
+        return CicloDoPasso(
+          sobe: arco * (4 + 5 * corrida) * altura,
+          elastico: _chaves(_borrachaDoSalto, s) * 0.5,
+          gingado: lado * 0.05 * arco,
+          pataEsquerda: pata(par ? 1.0 : 0.3),
+          pataDireita: pata(par ? 0.3 : 1.0),
+          cauda: 0,
+          cabecaDx: 4 * corrida,
+          contraRolo: -lado * 0.02 * arco,
+        );
+      case Locomocao.gingado:
+        // Rola ±9° pelo pé plantado; vertical ≤ 2 u; borracha curta no
+        // contato; a cabeça contra-rola meia fase atrás.
+        final cos8 = math.pow(math.cos(rad).abs(), 8).toDouble();
+        return CicloDoPasso(
+          sobe: (1 - math.cos(2 * rad)) / 2 * (1.5 + 1.5 * corrida),
+          elastico: cos8 * 0.2 - (1 - cos8) * 0.05,
+          gingado: onda * 0.16,
+          pataEsquerda: math.max(0.0, onda),
+          pataDireita: math.max(0.0, -onda),
+          cauda: caudaAtras * 0.4,
+          cabecaDx: 0,
+          contraRolo: -math.sin(rad - 0.5) * 0.08,
+        );
+      case Locomocao.arrasto:
+        // Sem quique e sem borracha: patas alternadas em diagonal, a
+        // cabeça avança 3 u no apoio e recua na passagem, rola ±4°.
+        return CicloDoPasso(
+          sobe: 0,
+          elastico: 0,
+          gingado: onda * 0.07,
+          pataEsquerda: math.max(0.0, onda),
+          pataDireita: math.max(0.0, -onda),
+          cauda: 0,
+          cabecaDx: math.cos(rad * 2) * 3,
+          contraRolo: -onda * 0.06,
+        );
+      case Locomocao.bamboleio:
+        // Rolamento ±5° de ombro, quadril de lado, quique ≤ 3 px; a pata
+        // de apoio desce, a livre sobe; a cabeça pende para o apoio.
+        return CicloDoPasso(
+          sobe: arco * (2 + 2 * corrida) * altura,
+          elastico: _chaves(_borrachaDoSalto, s) * (0.35 + 0.3 * corrida),
+          gingado: onda * 0.09,
+          pataEsquerda: math.max(0.0, onda),
+          pataDireita: math.max(0.0, -onda),
+          cauda: caudaAtras * 0.6,
+          cabecaDx: -onda * 2 + 4 * corrida,
+          contraRolo: -onda * 0.03,
+        );
+      case Locomocao.ondulacao:
+        // A onda lateral do corpo é do deformador (`ondula` pela fase do
+        // passo); aqui só as patinhas alternando e um quique curto.
+        return CicloDoPasso(
+          sobe: (1 - math.cos(2 * rad)) / 2 * 1.5,
+          elastico: 0,
+          gingado: onda * 0.03,
+          pataEsquerda: math.max(0.0, onda),
+          pataDireita: math.max(0.0, -onda),
+          cauda: math.sin(rad - 1.2) * 0.8,
+          cabecaDx: 0,
+          contraRolo: 0,
+        );
+    }
+  }
 }
 
 /// Onde está a coisa, em unidades do desenho relativas ao repouso do corpo.
@@ -256,10 +514,15 @@ class SaidaDaVida {
     this.semBoca = false,
     this.pescoco = 0,
     this.voando = false,
+    this.faseDoPasso = 0,
   });
 
   /// No ar, batendo asa (a coruja): o desenho é o do voo.
   final bool voando;
+
+  /// 0..1 dando a volta: a fase do ciclo do passo (dois passos). Quem anda
+  /// ondulando (axolote) dobra o corpo por ela.
+  final double faseDoPasso;
 
   /// 0..1: a abertura da boca ou do bico sem comida (zurro, alisar as
   /// penas, fala). É contínua: a mandíbula desce `hMax · boca` (laudo 30,
@@ -663,7 +926,14 @@ class MotorDeVida {
   InteresseDoBicho? interesse;
 
   /// Como ele persegue (por espécie).
-  JeitoDeCacar jeito = const JeitoDeCacar();
+  JeitoDeCacar get jeito => _jeito;
+  JeitoDeCacar _jeito = const JeitoDeCacar();
+  set jeito(JeitoDeCacar j) {
+    _jeito = j;
+    // A mola da cauda é da espécie: a gata assenta (f 1,5 / ζ 0,65), a
+    // lontra repica.
+    _cauda.ajusta(f: j.cauda.f, zeta: j.cauda.zeta);
+  }
 
   /// Chegou na coisa: a cena decide (chutar a bola, comer o petisco).
   void Function(TipoDeInteresse)? aoAlcancar;
@@ -683,7 +953,9 @@ class MotorDeVida {
 
   // --- olhar ------------------------------------------------------------
   final _pupila = Mola2(f: 11, zeta: 0.88);
-  final _cabeca = Mola2(f: 1.8, zeta: 0.7);
+  // O olho salta, a cabeça segue em ~0,35 s (MOV-17): a 1,8 Hz ela chegava
+  // em 0,12 s, um tranco atrás de cada sacada.
+  final _cabeca = Mola2(f: 1.0, zeta: 0.9);
 
   /// A cabeça virando para onde ele olha: lenta (os olhos chegam antes) e
   /// sem balanço. Segue a fixação, não a pupila, para as olhadelas rápidas
@@ -771,19 +1043,24 @@ class MotorDeVida {
     _vx += (desejada - _vx).clamp(-acel * dt, acel * dt);
     // Saltitando, ele avança no ar e quase para no chão: o pé não desliza.
     // A média do fator é 1, então a velocidade de cruzeiro é a mesma.
+    // No contato o corpo quase para (0,1): a pata plantada não arrasta
+    // (MOV-02).
     var avanco = 1.0;
     if (jeito.saltita && _noChao && !nadando && !_voando && !noColo) {
       final s = math.sin(math.pi * ((_faseDoPasso * 2) % 1));
-      avanco = 0.25 + 1.5 * s * s;
+      avanco = 0.1 + 1.8 * s * s;
     }
     _px += _vx * dt * avanco;
     if (_px < _min || _px > _max) {
       _px = _px.clamp(_min, _max);
       _vx = 0;
     }
-    // Uma volta são dois passos de ~18 unidades. A /15 dava seis passos por
-    // segundo: um tremor de patas, não um andar (pesquisa 24).
-    _faseDoPasso += _vx.abs() * dt / 36;
+    // Uma volta são dois passos. O comprimento do ciclo sai da cadência da
+    // espécie (laudo 34 R3: capivara 2 passos/s andando, 3,5 correndo…), e
+    // correndo o passo é mais comprido — senão a corrida virava um tremor
+    // de 4,4 saltos/s (MOV-03).
+    final ciclo = _correndo ? jeito.cicloCorrendo : jeito.cicloAndando;
+    _faseDoPasso += _vx.abs() * dt / ciclo;
   }
 
   // --- salto e queda ----------------------------------------------------
@@ -1239,7 +1516,9 @@ class MotorDeVida {
         (1 + 0.2 * _rRespiro.em(_t * 0.11));
     _faseRespiro += dt / periodo;
     final fundura = dormindo
-        ? 1.5 + 0.12 * _rFundura.em(_t * 0.05)
+        // Dormindo o fôlego é mais fundo, mas não o dobro: a 1,5 o topo
+        // subia 12 u e o corpo enchia como balão (MOV-09).
+        ? 1.0 + 0.1 * _rFundura.em(_t * 0.05)
         : 0.8 +
               0.22 * _rFundura.em(_t * 0.07) +
               (descansando ? 0.25 : 0) +
@@ -1351,10 +1630,13 @@ class MotorDeVida {
         (_intencao == IntencaoDoBicho.festejar ? 1 : 0) +
         (_t - _ultimaInteracao < 3 && !emburrado ? 0.6 : 0);
     final abano = (vontade > 0.62 ? (vontade - 0.62) * 2.6 : 0) + feliz;
-    _faseAbano += dt * (1.2 + abano * 2.4) * (emburrado ? 0.2 : 1);
+    // À toa, no ritmo da espécie (a gata varre a 0,3 Hz, o cão quase parado,
+    // a lontra ondula lenta); o chicote rápido só com motivo (MOV-16).
+    final jc = jeito.cauda;
+    _faseAbano += dt * (jc.frequencia + abano * 2.4) * (emburrado ? 0.2 : 1);
     _cauda.alvo =
         math.sin(_faseAbano * 2 * math.pi) *
-            (0.25 + 0.75 * abano.clamp(0.0, 1.0)) -
+            (jc.amplitude + (1 - jc.amplitude) * abano.clamp(0.0, 1.0)) -
         _vx * 0.004;
     _cauda.passo(dt);
 
@@ -1419,42 +1701,32 @@ class MotorDeVida {
     final fase = _faseDoPasso * 2 * math.pi;
     final onda = math.sin(fase);
     final passada = onda * intensidade + _rebola;
-    // Mais alto na passagem (uma pata no ar), mais baixo no contato.
-    // Correndo, o quique é de galope: maior.
+    final corrida = _correndo ? intensidade : 0.0;
+    // O quadro do passo pelo tipo de locomoção da espécie: galope pesado,
+    // saltito, gingado, arrasto, bamboleio… (ver [CicloDoPasso]).
     final saltita = jeito.saltita;
-    // Saltitando, cada passo é um arco: sai do chão e pousa (a cúspide do
-    // |seno| é o pouso). Andando de frente, um gingado com quique curto.
-    final arco = math.sin(math.pi * ((_faseDoPasso * 2) % 1));
-    final sobeNoPasso = saltita
-        ? arco * (_correndo ? 12.0 : 7.0) * intensidade
-        : (1 - math.cos(2 * fase)) / 2 * (_correndo ? 8.0 : 3.0) * intensidade;
-    // Borracha no salto: achata no impulso e no pouso, estica no ar.
-    final s = (_faseDoPasso * 2) % 1;
-    _elastico = saltita
-        ? intensidade *
-              (s < 0.14
-                  ? (1 - s / 0.14) * 0.9
-                  : s > 0.9
-                  ? (s - 0.9) / 0.1 * 0.9
-                  : -math.sin(math.pi * (s - 0.14) / 0.76) * 0.55)
-        // Gingando (pinguim, tartaruga): achata a cada pisada (o contato é
-        // quando a onda do passo cruza o zero) e estica de leve entre elas.
-        : intensidade *
-              (math.pow(math.cos(fase).abs(), 8) * 0.55 -
-                  (1 - math.pow(math.cos(fase).abs(), 8)) * 0.15);
+    final ciclo = CicloDoPasso.em(
+      jeito.locomocao,
+      _faseDoPasso,
+      corrida: _correndo ? 1 : 0,
+    );
+    final sobeNoPasso = ciclo.sobe * intensidade;
+    _elastico = ciclo.elastico * intensidade;
+    final saltoPar = (_faseDoPasso * 2).floor().isEven;
     final pousou =
         saltita &&
         intensidade > 0.3 &&
         ((_faseDoPasso * 2) % 1) < ((_faseAntesDoSalto * 2) % 1);
     _faseAntesDoSalto = _faseDoPasso;
     if (pousou) {
-      // O pouso: um amassado curto (até 4%) e o rabo e as orelhas seguindo
-      // atrasados o corpo que parou — o movimento secundário.
-      _achata.empurra(2.5 * intensidade);
-      _cauda.empurra((_sorte.nextBool() ? 1 : -1) * 5 * intensidade);
+      // O pouso: o rabo e as orelhas seguindo atrasados o corpo que parou —
+      // o movimento secundário. A cauda vai para o lado oposto ao do passo,
+      // alternando (laudo 34 R1), não sorteada; o amassado do pouso já está
+      // na borracha do ciclo.
+      _achata.empurra(1.2 * intensidade);
+      _cauda.empurra((saltoPar ? -1 : 1) * 4 * intensidade);
       if (_sorte.nextDouble() < 0.25) _evento(EventoDaVida.orelha);
     }
-    final corrida = _correndo ? intensidade : 0.0;
     if (intensidade > 0.25 && (onda >= 0) != (_ondaAntes >= 0)) {
       // Cada pata que bate no chão correndo levanta um pouco de poeira,
       // um tanto atrás, onde ela pisou.
@@ -1470,20 +1742,20 @@ class MotorDeVida {
     _freioSuave += ((_voando && _freando ? 1.0 : 0.0) - _freioSuave) * asa;
     _reverenciaSuave += (_reverencia - _reverenciaSuave) * suave;
     _quadrilSuave += (_quadril - _quadrilSuave) * (1 - math.exp(-dt * 30));
-    final gingado =
-        (saltita ? 0.0 : onda * 0.045 * intensidade) + _quadrilSuave * 0.04;
+    // O corpo rola pelo pé de apoio, alternando de lado a cada passo (quem
+    // saltita também: ±4°; o pinguim ±9°, o buldogue ±5°).
+    final gingado = ciclo.gingado * intensidade + _quadrilSuave * 0.04;
     // Pende para a frente (o lado para onde vai, já espelhado em `virado`).
-    // Correndo, pende bem mais: o peso vai à frente das patas.
-    final pende = 0.03 * intensidade + 0.07 * corrida;
-    // Saltitando, a cada salto uma pata vai na frente (sobe mais), em trote;
-    // gingando, alternam no passo.
-    final saltoPar = (_faseDoPasso * 2).floor().isEven;
-    final pataEsquerda = saltita
-        ? arco * (saltoPar ? 1.0 : 0.35) * intensidade
-        : math.max(0.0, onda) * intensidade;
-    final pataDireita = saltita
-        ? arco * (saltoPar ? 0.35 : 1.0) * intensidade
-        : math.max(0.0, -onda) * intensidade;
+    // Correndo, pende bem mais (≈ 10°): o peso vai à frente das patas, e é
+    // o que separa a corrida do andar na silhueta (MOV-03).
+    // Nadando pende ≈ 7° para onde vai, com a cabeça à frente: não fica de
+    // pé dentro d'água (MOV-06).
+    final pende =
+        0.03 * intensidade +
+        0.14 * corrida +
+        (nadando ? 0.13 * _forcaDaAtividade.valor.clamp(0.0, 1.0) : 0);
+    final pataEsquerda = ciclo.pataEsquerda * intensidade;
+    final pataDireita = ciclo.pataDireita * intensidade;
     var desloca = Offset(_px, 0);
     var balanco = 0.0;
     var inclinaNoColo = 0.0;
@@ -1567,7 +1839,16 @@ class MotorDeVida {
     );
     _cabecaSegue.alvo = apoio;
     final segue = _cabecaSegue.passo(dt) - apoio;
-    final atraso = Offset(segue.dx.clamp(-6.0, 6.0), segue.dy.clamp(-7.0, 7.0));
+    // Mais a cabeça adiante do passo (correndo, à frente do corpo; a
+    // tartaruga avança no apoio; o buldogue pende para o lado do apoio).
+    final sentido = _virado ? -1.0 : 1.0;
+    final atraso = Offset(
+      segue.dx.clamp(-6.0, 6.0) +
+          (ciclo.cabecaDx * intensidade +
+                  (nadando ? 5 * _forcaDaAtividade.valor.clamp(0.0, 1.0) : 0)) *
+              sentido,
+      segue.dy.clamp(-7.0, 7.0),
+    );
     final gesto = _gestosDeCabeca(dt);
 
     return SaidaDaVida(
@@ -1621,7 +1902,9 @@ class MotorDeVida {
       freando: _freando,
       virada: _virada.valor * a,
       cabecaAtraso: atraso * a,
-      cabecaGiro: gesto.dx * a,
+      // A cabeça contra-rola o gingado: fica mais reta que o tronco.
+      cabecaGiro: (gesto.dx + ciclo.contraRolo * intensidade) * a,
+      faseDoPasso: _faseDoPasso % 1,
       cabecaDesce: gesto.dy * a,
       atividadeAtiva: !reduzido,
       corpoLivre: _desenhaLivre,

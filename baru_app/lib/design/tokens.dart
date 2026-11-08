@@ -101,6 +101,7 @@ class Cores {
 
   // --- acento ------------------------------------------------------------
   static const acento = Color(0xFFEF8354);
+
   /// Texto na cor da raiz: é o [raiz600].
   static const acentoTexto = raiz600;
   static const acentoForte = raiz700;
@@ -127,11 +128,15 @@ class Cores {
   // não existe: a carapaça de uma tartaruga-de-orelha-vermelha é oliva a
   // verde-musgo. Cada espécie agora tem os seus tons plausíveis.
   //
-  // Todas com seis entradas: o índice é persistido e o banco tem
+  // Seis ou sete entradas: o índice é persistido e o banco tem
   // `check (coat between 0 and 8)`, então o tamanho não pode encolher abaixo
   // do que já foi gravado nem passar de nove.
 
-  /// Capivara: castanho-avermelhado a areia.
+  // Baru, Rio e Toco (laudo 31 R9): a sétima entrada de cada um é a cor
+  // "real", medida na foto de referência e saturada +8 % para o estilo
+  // chapado. Os seis índices antigos ficam onde estão (são persistidos).
+
+  /// Capivara: castanho-avermelhado a areia; [6] é o dorso da foto.
   static const pelagemCapivara = [
     Color(0xFFB07A4E),
     Color(0xFF8F5F3A),
@@ -139,27 +144,38 @@ class Cores {
     Color(0xFF9C6B47),
     Color(0xFFD9A87C),
     Color(0xFF7A5133),
+    Color(0xFF8A5344),
   ];
 
-  /// Lontra: marrom escuro e molhado, do chocolate ao pardo.
+  /// Lontra: castanho-acinzentado lustroso, não chocolate (laudo 31 R6):
+  /// [0] e [1] esfriaram; [5] segue a clara, para contraste; [6] é a medida.
   static const pelagemLontra = [
-    Color(0xFF6E4B33),
-    Color(0xFF56382A),
+    Color(0xFF5E4A40),
+    Color(0xFF4A3A33),
     Color(0xFF8A6247),
     Color(0xFF473026),
     Color(0xFF7D5C45),
     Color(0xFF9C7A5E),
+    Color(0xFF584744),
   ];
 
-  /// Tartaruga: oliva, musgo e verde-acinzentado.
+  /// Tracajá: oliva escuro e cinza na pele — o verde-claro vai para o
+  /// reflexo d'água, não para o bicho. [0] escureceu para as manchas
+  /// amarelas da cabeça lerem com contraste ≥ 4,5 : 1 (laudo 31 R7/R9);
+  /// [6] é a pele medida na foto.
   static const pelagemTartaruga = [
-    Color(0xFF6F7D4A),
+    Color(0xFF566241),
     Color(0xFF556B3F),
     Color(0xFF8A9A5B),
     Color(0xFF47603C),
     Color(0xFF7E8C5C),
     Color(0xFF9AA870),
+    Color(0xFF5D5950),
   ];
+
+  /// Plastrão amarelo e manchas da cabeça do tracajá (laudo 31 R9).
+  static const plastraoDoTracaja = Color(0xFFD9C27A);
+  static const manchaDoTracaja = Color(0xFFF7D96A);
 
   /// Coruja: castanho, ruivo, cinza-pardo e creme.
   static const pelagemCoruja = [
@@ -316,7 +332,8 @@ class Raio {
   static const pilula = 999.0;
 
   static BorderRadius todos(double r) => BorderRadius.circular(r);
-  static BorderRadius topo(double r) => BorderRadius.vertical(top: Radius.circular(r));
+  static BorderRadius topo(double r) =>
+      BorderRadius.vertical(top: Radius.circular(r));
 }
 
 /// Escala de elevação. Sombra suave e difusa, nunca dura.
@@ -325,57 +342,57 @@ class Elevacao {
 
   /// Cartão em repouso.
   static List<BoxShadow> get cartao => [
-        BoxShadow(
-          color: Cores.tintaA(0.055),
-          blurRadius: 12,
-          offset: const Offset(0, 2),
-        ),
-      ];
+    BoxShadow(
+      color: Cores.tintaA(0.055),
+      blurRadius: 12,
+      offset: const Offset(0, 2),
+    ),
+  ];
 
   /// Cartão sob o dedo ou em foco.
   static List<BoxShadow> get cartaoElevado => [
-        BoxShadow(
-          color: Cores.tintaA(0.10),
-          blurRadius: 20,
-          offset: const Offset(0, 6),
-        ),
-      ];
+    BoxShadow(
+      color: Cores.tintaA(0.10),
+      blurRadius: 20,
+      offset: const Offset(0, 6),
+    ),
+  ];
 
   /// A cena do habitat.
   static List<BoxShadow> get cena => [
-        BoxShadow(
-          color: Cores.tintaA(0.10),
-          blurRadius: 22,
-          offset: const Offset(0, 6),
-        ),
-      ];
+    BoxShadow(
+      color: Cores.tintaA(0.10),
+      blurRadius: 22,
+      offset: const Offset(0, 6),
+    ),
+  ];
 
   /// Ação primária — a sombra é colorida para o botão parecer aceso.
   static List<BoxShadow> get acaoPrimaria => [
-        BoxShadow(
-          color: Cores.primaria.withValues(alpha: 0.32),
-          blurRadius: 24,
-          offset: const Offset(0, 10),
-        ),
-      ];
+    BoxShadow(
+      color: Cores.primaria.withValues(alpha: 0.32),
+      blurRadius: 24,
+      offset: const Offset(0, 10),
+    ),
+  ];
 
   /// Folha modal subindo sobre a tela.
   static List<BoxShadow> get folha => [
-        BoxShadow(
-          color: Cores.tintaA(0.18),
-          blurRadius: 30,
-          offset: const Offset(0, -6),
-        ),
-      ];
+    BoxShadow(
+      color: Cores.tintaA(0.18),
+      blurRadius: 30,
+      offset: const Offset(0, -6),
+    ),
+  ];
 
   /// Moldura de aparelho no desktop.
   static List<BoxShadow> get aparelho => [
-        BoxShadow(
-          color: Cores.tintaA(0.16),
-          blurRadius: 40,
-          offset: const Offset(0, 18),
-        ),
-      ];
+    BoxShadow(
+      color: Cores.tintaA(0.16),
+      blurRadius: 40,
+      offset: const Offset(0, 18),
+    ),
+  ];
 }
 
 /// Escala tipográfica: tamanho, peso e altura de linha andam juntos.

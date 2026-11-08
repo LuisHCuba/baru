@@ -185,6 +185,8 @@ class SaidaDaVida {
     double susto = 0,
     double festa = 0,
     double canto = 0,
+    double grito = 0,
+    double riso = 0,
   }) : this(
          boca: bocaDoVisema(v).abertura,
          largura: bocaDoVisema(v).largura,
@@ -193,6 +195,8 @@ class SaidaDaVida {
          susto: susto,
          festa: festa,
          canto: canto,
+         grito: grito,
+         riso: riso,
        );
 
   const SaidaDaVida({
@@ -226,6 +230,8 @@ class SaidaDaVida {
     this.denteForca = 0,
     this.susto = 0,
     this.festa = 0,
+    this.grito = 0,
+    this.riso = 0,
     this.planeio = 0,
     this.freio = 0,
     this.corrida = 0,
@@ -362,6 +368,15 @@ class SaidaDaVida {
 
   /// 0..1: está festejando; o corpo rebola entre os saltos.
   final double festa;
+
+  /// 0..1: o grito ("!" com envelope cheio, laudo 30 §3.5) — boca D mais
+  /// alta que larga, olhos apertados, cabeça para trás. Segura ≥ 6 quadros.
+  final double grito;
+
+  /// 0..1: o riso. Zero é sem riso; acima disso o valor **é a fase do
+  /// pulso** da boca (0,5↔0,9 de abertura a 5 Hz, laudo 30 §3.5): o painter
+  /// lê qualquer valor > 0 como "rindo" e abre a boca `0,5 + 0,4·riso`.
+  final double riso;
 
   /// -1..1: o corpo como borracha no salto — positivo achata (no
   /// impulso e no pouso), negativo estica (no ar). Vai para o contorno
@@ -512,6 +527,11 @@ class MotorDeVida {
   /// Mediana do intervalo entre piscadas (s). Desenho lê melhor com mais
   /// piscadas que o bicho real (cão ~9 s, gato ~15 s).
   double medianaDoPiscar = 3.5;
+
+  /// Teto do intervalo entre piscadas, em segundos. A coruja usa 3,2: num
+  /// laço de 4 s ela tem de piscar ao menos uma vez (NINA-17), senão vira
+  /// estátua na série.
+  double maxIntervaloDoPiscar = 12.0;
 
   /// Se o bicho pode sair do lugar agora.
   bool podeAndar = true;
@@ -679,6 +699,7 @@ class MotorDeVida {
   double _piscadaT = -1;
   bool _piscadaLenta = false;
   bool _piscadaDupla = false;
+  bool _duplaPendente = false;
 
   // --- o corpo ------------------------------------------------------------
   // Vivo, mas controlado: cada mola passa do ponto **uma vez** e assenta
@@ -886,11 +907,8 @@ class MotorDeVida {
       _inclina.empurra(-onde.dx * 1.6);
       _cauda.empurra(14);
     } else if (n == 2) {
-      // Susto: o corpo estica de uma vez (e volta), e um pulinho.
-      _susto.fixa(1);
-      _susto.alvo = 0;
-      _achata.empurra(4);
-      pula(240);
+      // Susto: agacha dois quadros, estica de uma vez (e volta), pulinho.
+      assusta();
     } else if (n <= 4) {
       // Cócegas: tremidinha rápida, olhinho apertado, cauda a mil.
       _agitacao = 1;
@@ -1058,6 +1076,93 @@ class MotorDeVida {
   double _festaGuardada = 0;
   double _festaEm = -1;
   double _duracaoDaFesta = 0;
+
+  // --- as três assinaturas do rosto (laudo 30 §3.5, laudo 31 R3) ---------
+  //
+  // Cada uma tem **antecipação** (laudo 34 R5): o corpo faz o contrário por
+  // dois quadros antes do gesto, e é isso que faz o gesto ler como peso e
+  // não como teleporte.
+  double _sustoEm = -1; // quando o estirão do susto começa (após a agachada)
+  double _pulaEm = -1; // o pulo da festa, depois da agachada
+  double _pousouEm = -10; // o último pouso
+  double _gritoT = -1; // tempo dentro do grito
+  double _risoT = -1; // tempo dentro do riso
+  double _risoDura = 0;
+  static const _antecipacao = 2 / 30; // dois quadros a 30 qps
+
+  /// Susto: 2 quadros de agachada (−4 % de altura), depois o estirão com
+  /// volume (+9 % de altura, −9 % de largura, no painter) com repique de
+  /// mola, e um pulinho. O rosto (olhos arregalados, pupila pequena, boca
+  /// em "o", orelhas para cima) vem de [SaidaDaVida.susto] no painter.
+  void assusta() {
+    if (_sustoEm >= 0) return;
+    _sustoEm = _t + _antecipacao;
+  }
+
+  /// Grito: estica +3 % dois quadros antes, depois boca D alta, olhos
+  /// apertados e cabeça para trás por ≥ 6 quadros (0,2 s), soltando em
+  /// 0,15 s.
+  void grita() {
+    if (_gritoT >= 0) return;
+    _gritoT = 0;
+  }
+
+  /// Riso: a boca pulsa 0,5↔0,9 a 5 Hz, os olhos fecham 0,6 (Duchenne), a
+  /// cabeça vai para trás e o corpo quica 2 unidades no mesmo ritmo.
+  void ri({double duracao = 1.2}) {
+    if (_risoT >= 0) return;
+    _risoT = 0;
+    _risoDura = duracao;
+  }
+
+  /// O achatar extra deste quadro vindo das assinaturas: a agachada do
+  /// susto, o estirão do grito e o quique do riso. Soma-se à mola do corpo.
+  double _pulsoDasAssinaturas(double dt) {
+    var pulso = 0.0;
+    if (_pulaEm >= 0 && _t < _pulaEm) pulso += 0.17; // agachada da festa
+    if (_sustoEm >= 0) {
+      if (_t < _sustoEm) {
+        pulso += 0.17; // agachada: −4 % de altura (0,17 · 1,6 · 14 ≈ 3,8)
+      } else {
+        _sustoEm = -1;
+        _susto.fixa(1);
+        _susto.alvo = 0;
+        if (_noChao && !reduzido && !_ficaNaToca) {
+          _vy = 240;
+          _noChao = false;
+        }
+      }
+    }
+    if (_gritoT >= 0) {
+      _gritoT += dt;
+      if (_gritoT < _antecipacao + 1e-6) pulso -= 0.14; // estica +3 % antes
+      if (_gritoT > _antecipacao + 0.2 + 0.15) _gritoT = -1;
+    }
+    if (_risoT >= 0) {
+      _risoT += dt;
+      // Quica 2 unidades no ritmo do pulso: metade da onda, só para cima.
+      pulso -= 0.09 * math.max(0, math.sin(_risoT * 2 * math.pi * 5));
+      if (_risoT > _risoDura) _risoT = -1;
+    }
+    return pulso;
+  }
+
+  /// 0..1 do grito neste quadro: cheio por 6 quadros, solta em 0,15 s.
+  double get _gritoAgora {
+    if (_gritoT < 0 || _gritoT < _antecipacao) return 0;
+    final t = _gritoT - _antecipacao;
+    if (t <= 0.2) return 1;
+    return (1 - (t - 0.2) / 0.15).clamp(0.0, 1.0);
+  }
+
+  /// O riso neste quadro: envelope × fase do pulso, nunca zero enquanto ri.
+  double get _risoAgora {
+    if (_risoT < 0) return 0;
+    final sobe = (_risoT / 0.1).clamp(0.0, 1.0);
+    final desce = ((_risoDura - _risoT) / 0.2).clamp(0.0, 1.0);
+    final pulso = 0.5 + 0.5 * math.sin(_risoT * 2 * math.pi * 5);
+    return (0.12 + 0.88 * pulso) * math.min(sobe, desce);
+  }
 
   /// Terminou de comer: satisfeito, a piscada lenta.
   void comeu() {
@@ -1429,6 +1534,7 @@ class MotorDeVida {
           _achata.empurra(impacto * 11);
           _vy = 0;
           _noChao = true;
+          _pousouEm = _t;
           if (_veioDoColo) {
             // Caiu do colo: sacode o corpo e olha para quem soltou.
             _veioDoColo = false;
@@ -1446,6 +1552,8 @@ class MotorDeVida {
     }
     if (anteEspirro > 0) _achata.alvo = -anteEspirro * 0.4;
     _achata.passo(dt);
+    final pulso = _pulsoDasAssinaturas(dt);
+    final achataDoQuadro = (_achata.valor + pulso).clamp(-0.6, 0.6);
 
     final pisca = _piscar(dt);
 
@@ -1469,7 +1577,7 @@ class MotorDeVida {
       ciclo: _faseCiclo,
       olhar: _pupila.valor,
       inclina: (_inclina.valor + inclinaNoColo * 0.5 + pende + _pitchDoVoo) * a,
-      achata: _achata.valor.clamp(-0.6, 0.6) * a,
+      achata: achataDoQuadro * a,
       desloca: desloca,
       virado: _virado,
       balanco: balanco * a,
@@ -1501,6 +1609,8 @@ class MotorDeVida {
       denteForca: _dente.passo(dt) * a,
       susto: _susto.passo(dt) * a,
       festa: _intencao == IntencaoDoBicho.festejar ? a : 0,
+      grito: _gritoAgora * a,
+      riso: _risoAgora * a,
       adormecido:
           dormindo || (sonolento && (destino == null || _paradoNoDestino)),
       planeio: _planeioSuave,
@@ -1605,8 +1715,10 @@ class MotorDeVida {
       _fixacao = alvo + Offset(math.cos(ang), math.sin(ang)) * r;
       // Fixações com mediana de ~1,1 s à toa.
       _proximaSacada = _t + _logNormal(1.1, 0.5).clamp(0.4, 3.5);
-      // Piscar junto de uma troca grande de olhar.
-      if (grande && _sorte.nextDouble() < 0.4) _piscaAgora(lenta: false);
+      // Piscar junto de uma troca grande de olhar — em 30 % delas, e nunca
+      // dentro do período refratário (CAP-11): antes era a cada sacada, e
+      // o laço de vida tinha quatro piscadas em dois segundos.
+      if (grande && _sorte.nextDouble() < 0.3) _piscaAgora(lenta: false);
     }
   }
 
@@ -1619,15 +1731,31 @@ class MotorDeVida {
   double _logNormal(double mediana, double sigma) =>
       math.exp(math.log(mediana) + sigma * _gauss());
 
-  void _piscaAgora({required bool lenta}) {
+  /// Quando a última piscada terminou: o período refratário conta daqui.
+  double _fimDaUltimaPiscada = -10;
+
+  /// Pede uma piscada. Fora da dupla e da lenta, só depois de 1,2 s da
+  /// anterior (CAP-11, MOV-11): piscadas em rajada leem como cisco no olho,
+  /// não como vida.
+  void _piscaAgora({required bool lenta, bool dupla = false}) {
     if (_piscadaT >= 0) return;
+    if (!lenta && !dupla && _t - _fimDaUltimaPiscada < 1.2) return;
     _piscadaT = 0;
     _piscadaLenta = lenta;
-    _piscadaDupla = !lenta && _sorte.nextDouble() < 0.12;
+    _piscadaDupla = !lenta && !dupla && _sorte.nextDouble() < 0.12;
   }
 
-  /// 0..1 de olho fechado. Fecha em ~80 ms e abre em ~170 ms: a abertura é
-  /// a fase mais lenta. A lenta (confiança): 220 / 300 / 400 ms.
+  /// Os olhos da festa: fechados em arco feliz do salto até logo depois do
+  /// pouso — mais de metade do ciclo (laudo 31 R4).
+  double get _olhosDaFesta {
+    if (_intencao != IntencaoDoBicho.festejar) return 0;
+    return !_noChao || _t - _pousouEm < 0.1 ? 1 : 0;
+  }
+
+  /// 0..1 de olho fechado. Fecha em ~50 ms, segura 30 e abre em ~90 ms —
+  /// cinco quadros a 30 qps, a abertura a fase mais lenta (fecha rápido,
+  /// abre devagar: laudo 34 §2.4). A lenta (confiança): 150 / 180 / 250 ms,
+  /// 0,58 s ao todo — a de 0,92 s lia como cochilo no meio da cena (MOV-11).
   double _piscar(double dt) {
     if (dormindo) return 0; // o desenho do sono já tem os olhos fechados
     var base = 0.0;
@@ -1640,14 +1768,23 @@ class MotorDeVida {
     // O episódio pede olhos fechados ou semicerrados (sol, cochilo).
     _olhosSuaves.alvo = _fechaOlhos;
     base = math.max(base, _olhosSuaves.passo(dt).clamp(0.0, 1.0));
+    base = math.max(base, _olhosDaFesta);
+    // O grito aperta os olhos 0,3; o riso fecha 0,6 (Duchenne).
+    base = math.max(base, 0.3 * _gritoAgora);
+    if (_risoT >= 0) {
+      base = math.max(base, 0.6 * (_risoAgora / 0.12).clamp(0.0, 1.0));
+    }
     if (_piscadaT < 0) {
-      if (_t >= _proximaPiscada) _piscaAgora(lenta: false);
+      if (_t >= _proximaPiscada) {
+        _piscaAgora(lenta: false, dupla: _duplaPendente);
+        _duplaPendente = false;
+      }
       if (_piscadaT < 0) return base;
     }
     _piscadaT += dt;
-    final fecha = _piscadaLenta ? 0.22 : 0.08;
-    final segura = _piscadaLenta ? 0.30 : 0.03;
-    final abre = _piscadaLenta ? 0.40 : 0.17;
+    final fecha = _piscadaLenta ? 0.15 : 0.05;
+    final segura = _piscadaLenta ? 0.18 : 0.03;
+    final abre = _piscadaLenta ? 0.25 : 0.09;
     double v;
     if (_piscadaT < fecha) {
       final u = _piscadaT / fecha;
@@ -1660,12 +1797,18 @@ class MotorDeVida {
     } else {
       v = 0;
       _piscadaT = -1;
+      _fimDaUltimaPiscada = _t;
       if (_piscadaDupla) {
         _piscadaDupla = false;
+        _duplaPendente = true;
         _proximaPiscada = _t + 0.12 + _sorte.nextDouble() * 0.1;
       } else {
         _proximaPiscada =
-            _t + _logNormal(medianaDoPiscar, 0.55).clamp(1.0, 12.0);
+            _t +
+            _logNormal(
+              medianaDoPiscar,
+              0.55,
+            ).clamp(1.0, math.max(1.0, maxIntervaloDoPiscar));
       }
     }
     return math.max(base, v);
@@ -1823,9 +1966,17 @@ class MotorDeVida {
         _olharAoAcaso(intervalo: (3.0, 6.0), alcance: 0.25);
       case IntencaoDoBicho.festejar:
         _alvoDoOlhar = const Offset(0, -0.2);
+        // O ciclo da festa (laudo 31 R4, laudo 34 R5): ~0,5 s por pulo, com
+        // dois quadros de agachada antes de decolar, o pulo baixo (7–11
+        // unidades: é alegria, não fuga) e o amassado do pouso. Entre 45 e
+        // 56 % do tempo no ar.
         if (_noChao && _t >= _proximoPulo) {
-          pula(220 + _sorte.nextDouble() * 70);
-          _proximoPulo = _t + 0.5 + _sorte.nextDouble() * 0.15;
+          if (_pulaEm < 0) _pulaEm = _t + _antecipacao;
+          if (_t >= _pulaEm) {
+            _pulaEm = -1;
+            pula(125 + _sorte.nextDouble() * 25);
+            _proximoPulo = _t + 0.55 + _sorte.nextDouble() * 0.1;
+          }
         }
     }
   }

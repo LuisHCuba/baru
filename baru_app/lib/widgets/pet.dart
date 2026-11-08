@@ -241,19 +241,27 @@ const _respiracaoNoEsforco = Duration(milliseconds: 2200);
 })
 geometriaDoOlho(Offset o, double r, {required bool triste}) {
   final dentro = o.dx < 0 ? 1.0 : -1.0;
+  // Neutro: só um toque de peso (−0,78·r). A 0,42·r a pálpebra cortava a
+  // íris e o neutro lia como tédio ou desdém (MEL-08, LUME-10).
+  // A sobrancelha da saudade encosta na pálpebra caída (TOCO-18): a 1,85·r
+  // ela flutuava quase no topo da cabeça, solta do olho.
   return (
     palpebraDentro: Offset(
       o.dx + dentro * r * 1.05,
-      o.dy - r * (triste ? 1.0 : 0.42),
+      o.dy - r * (triste ? 1.0 : 0.78),
     ),
     palpebraFora: Offset(
       o.dx - dentro * r * 1.05,
-      o.dy - r * (triste ? 0.52 : 0.42),
+      o.dy - r * (triste ? 0.52 : 0.78),
     ),
-    sobrancelhaDentro: o + Offset(dentro * r * 0.35, -r * 1.85),
-    sobrancelhaFora: o + Offset(-dentro * r * 0.95, -r * 1.25),
+    sobrancelhaDentro: o + Offset(dentro * r * 0.35, -r * 1.30),
+    sobrancelhaFora: o + Offset(-dentro * r * 0.95, -r * 0.90),
   );
 }
+
+/// A íris da espécie (laudo 33, R1): disco escuro, fenda vertical da gata
+/// sobre íris âmbar, ou oval da raposa.
+enum EstiloDoOlho { redondo, fenda, oval }
 
 /// A ação da espécie, corrigida pelo estágio de vida.
 ///
@@ -1058,7 +1066,10 @@ class _PetViewState extends State<PetView>
         Species.cat || Species.fox || Species.owl => 4.6,
         Species.frenchie => 3.0,
         _ => 3.6,
-      };
+      }
+      // A coruja nunca passa 3,2 s sem piscar: no laço de 4 s da série ela
+      // ficava de olho aberto o tempo todo (NINA-17).
+      ..maxIntervaloDoPiscar = widget.species == Species.owl ? 3.2 : 12.0;
     if (!_relogio.isActive) _relogio.start();
     // A piscada é do motor agora (log-normal, amarrada ao olhar); o
     // agendador antigo só serve ao quadro fixo.
@@ -2179,7 +2190,7 @@ class _PetPainter extends CustomPainter {
 
   /// O traço do olho fechado: tinta, ou creme sobre o pelo escuro, onde a
   /// tinta sumia (buldogue preto, lontra escura dormindo).
-  Color get _tracoDoOlho => pelo.computeLuminance() < 0.08
+  Color get _tracoDoOlho => pelo.computeLuminance() < 0.16
       ? Color.lerp(Cores.superficie, pelo, 0.30)!
       : Cores.tinta;
 
@@ -2281,7 +2292,11 @@ class _PetPainter extends CustomPainter {
   static const _pes = 60.0;
   bool get triste => mood == Mood.missingYou;
   bool get feliz =>
-      mood == Mood.radiant || pose.carinho > 0.35 || pose.gosto > 0.25;
+      mood == Mood.radiant ||
+      pose.carinho > 0.35 ||
+      pose.gosto > 0.25 ||
+      pose.vida.festa > 0.5 ||
+      pose.vida.riso > 0;
   bool get nadando => acao == AcaoDoBicho.nado;
   bool get pastando => pose.pastando;
 
@@ -2317,11 +2332,15 @@ class _PetPainter extends CustomPainter {
     // Com sono e ainda de pé, as pálpebras pesam, mas ele enxerga para onde
     // vai; deitado, fecha. Fechado o tempo todo, andava e ficava sentado de
     // olhos fechados, "dormindo" sentado.
-    if (acao == AcaoDoBicho.cochilo || (pose.vida.adormecido ?? dormindo)) {
+    // Com sono mas acordado (o quadro fixo da série, o humor sono sem o
+    // motor): pálpebra pesada, não olho fechado — fechado só com
+    // `adormecido` ou cochilando (MEL-07, TOCO-05).
+    if (acao == AcaoDoBicho.cochilo ||
+        (pose.vida.adormecido ?? (acao == AcaoDoBicho.cochilo))) {
       return 1.0;
     }
     if (dormindo) {
-      return math.max(0.72, math.max(pose.pisca, pose.bocejo)).clamp(0.0, 1.0);
+      return math.max(0.6, math.max(pose.pisca, pose.bocejo)).clamp(0.0, 1.0);
     }
     final derrete = ((pose.gosto - 0.34) / 0.16).clamp(0.0, 1.0);
     return math.max(math.max(pose.pisca, pose.bocejo), derrete).clamp(0.0, 1.0);
@@ -2675,7 +2694,13 @@ class _PetPainter extends CustomPainter {
     // peito sobe e desce sem virar pulo. Pelos pés, que não saem do chão, e
     // só no tronco: a cabeça desfaz a escala em [_cabecaSemFolego] e é
     // levada pelo peito, em vez de achatar junto com ele.
-    _folego = (1 + sopro * 0.034 * fundura, 1 - sopro * 0.026 * fundura);
+    // O susto estica o tronco com volume (laudo 31 R3): +9 % de altura,
+    // −9 % de largura, pelos pés; a cabeça desfaz a escala e sobe junto.
+    final estirao = 0.09 * vida.susto.clamp(0.0, 1.0);
+    _folego = (
+      (1 + sopro * 0.034 * fundura) * (1 - estirao),
+      (1 - sopro * 0.026 * fundura) * (1 + estirao),
+    );
     canvas.translate(0, _pes);
     canvas.scale(_folego.$1, _folego.$2);
     canvas.translate(0, -_pes);
@@ -2692,9 +2717,9 @@ class _PetPainter extends CustomPainter {
                       _virada.dx * 0.22 * (1 - vida.andando)) *
                   amp)
               .clamp(-1.0, 1.0),
-      // O susto estica o corpo de uma vez (achata negativo) e ele volta.
-      achata: ((vida.achata * 1.6 + vida.elastico - vida.susto * 0.9) * amp)
-          .clamp(-1.0, 1.0),
+      // (O estirão do susto é escala com volume, em [_folego]; aqui só
+      // chega a agachada de antecipação, pelo `achata` do motor.)
+      achata: ((vida.achata * 1.6 + vida.elastico) * amp).clamp(-1.0, 1.0),
       folego: (sopro * fundura).clamp(-1.0, 1.0),
       // Andando, o quadril vai com o passo; parado, ele se acomoda devagar
       // de um lado para o outro, o peso mudando de pata.
@@ -2781,7 +2806,11 @@ class _PetPainter extends CustomPainter {
       _zzz(canvas, size);
       _folhaDoSono(canvas, size);
     }
-    if (feliz) _brilhos(canvas, size);
+    // Na festa os brilhos só depois do pouso (laudo 31 R4): no ar, o corpo
+    // é que comemora.
+    if (feliz && !(pose.vida.festa > 0 && pose.vida.altura > 0.5)) {
+      _brilhos(canvas, size);
+    }
     if (pose.animado && pose.toque > 0) _coracoes(canvas, size);
     if (pose.gosto > 0) _afago(canvas, size);
   }
@@ -2883,11 +2912,12 @@ class _PetPainter extends CustomPainter {
   /// parada no meio lê como boneco, não como bicho conferindo se está tudo
   /// bem antes de voltar a comer.
   Offset get _olhoDesvio => Offset(
-    // 3 px e não 1,8: seguindo o dedo pela cena, menos que isso não se
-    // via que ele estava olhando.
-    _espelho * pose.olhar.dx * 3.0 * pose.amplitudeToque +
+    // 4,5 e não 3 (RIO-25): a 3 o olhar era 36 % do raio e no tamanho da
+    // home não se via para onde ele olhava. O limite para a íris não sair
+    // do olho fica em [_olho].
+    _espelho * pose.olhar.dx * 4.5 * pose.amplitudeToque +
         pose.olhadaDoPasto * 2.2,
-    pose.olhar.dy * 2.2 * pose.amplitudeToque,
+    pose.olhar.dy * 3.0 * pose.amplitudeToque,
   );
 
   /// Para onde a cabeça está virada (-1..1): o motor de vida, mais a
@@ -2917,13 +2947,21 @@ class _PetPainter extends CustomPainter {
   /// do Spine). Olhos, focinho e boca andam juntos; o contorno anda bem
   /// menos ([_posicionaCabeca]); a sombra do queixo, para o outro lado.
   Offset get _rosto =>
-      Offset(_virada.dx * 8.5, _virada.dy * 3.5) * pose.amplitudeToque;
+      Offset(_virada.dx * (_ehCoruja ? 12.0 : 8.5), _virada.dy * 3.5) *
+      pose.amplitudeToque;
+
+  /// A coruja vira a cabeça inteira (olho tubular, preso na órbita): o
+  /// rosto desliza mais e encurta mais (laudo 32 R3, NINA-07).
+  bool get _ehCoruja => species == Species.owl;
 
   // Virando, o rosto também encurta na horizontal: os olhos se aproximam,
   // como num três quartos. Só deslizando, o olho de trás escorregava até a
   // borda da cabeça e parecia cair para fora (pesquisa 24).
   double get _encurtaRosto =>
-      1 - 0.14 * _virada.dx.abs().clamp(0.0, 1.0) * pose.amplitudeToque;
+      1 -
+      (_ehCoruja ? 0.24 : 0.14) *
+          _virada.dx.abs().clamp(0.0, 1.0) *
+          pose.amplitudeToque;
 
   void _rostoVira(Canvas c) {
     c.translate(_rosto.dx, _rosto.dy);
@@ -2945,12 +2983,32 @@ class _PetPainter extends CustomPainter {
     if (ay != 1) c.scale(1 / ax, 1 / ay);
     // Atrasada em relação ao corpo, e com o gesto de cabeça da vez.
     c.translate(
-      vida.cabecaAtraso.dx + _virada.dx * 3.2 * pose.amplitudeToque,
-      vida.cabecaAtraso.dy + vida.cabecaDesce,
+      vida.cabecaAtraso.dx +
+          _virada.dx * (_ehCoruja ? 6.4 : 3.2) * pose.amplitudeToque,
+      vida.cabecaAtraso.dy + vida.cabecaDesce + _cabecaDaExpressao,
     );
     c.translate(0, pescoco);
     c.rotate(giro + vida.cabecaGiro);
     c.translate(0, -pescoco);
+  }
+
+  /// Quanto a cabeça sobe (negativo) ou desce com as assinaturas do rosto:
+  /// no susto recua (a lontra encolhe o pescoço: desce), no grito vai 6
+  /// unidades para trás, no riso 4 (laudo 30 §3.5, laudo 31 R3).
+  double get _cabecaDaExpressao {
+    final vida = pose.vida;
+    final susto = vida.susto.clamp(0.0, 1.0);
+    final grito = vida.grito.clamp(0.0, 1.0);
+    final riso = (vida.riso / 0.12).clamp(0.0, 1.0);
+    // (O estirão do corpo já leva a cabeça ~8 para cima; mais que isso
+    // abria pescoço entre cabeça e tronco e a silhueta crescia 5 %.)
+    final doSusto = switch (species) {
+      Species.otter => 6.0,
+      Species.tortoise => 0.0, // dobra de lado, em [_tartaruga]
+      Species.owl || Species.penguin => -2.0,
+      _ => -1.0,
+    };
+    return doSusto * susto - 6 * grito - 4 * riso;
   }
 
   static const _corDaPoeira = Color(0xFFB8A27A);
@@ -3108,7 +3166,9 @@ class _PetPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -30 + pose.respiro * amp * 0.7 + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 38);
+    // Um fio de giro sempre (0,06 rad): a cabeça-bloco perfeitamente reta
+    // era a mais "gêmea" do elenco (laudo 31 R11).
+    _posicionaCabeca(canvas, _cabecaGiro * 0.9 + 0.06, pescoco: 38);
     canvas.scale(_cabecaDoEstagio);
     _sombraDoQueixo(canvas, 94, 78);
 
@@ -3195,7 +3255,14 @@ class _PetPainter extends CustomPainter {
     // A cauda da lontra é o leme, e na água ela bate no compasso da braçada
     // em vez de balançar no ritmo solto dela. Sem isto o corpo nadava e a
     // cauda ficava vadiando atrás, em outro tempo.
-    final balanca = pose.nadando ? pose.pernas * amp * 1.3 : pose.cauda * amp;
+    final sustoDaLontra = pose.vida.susto.clamp(0.0, 1.0);
+    final festaDaLontra = pose.vida.festa.clamp(0.0, 1.0);
+    // Festejando a cauda chicoteia (balanço × 2, laudo 31 R4).
+    final balanca =
+        (pose.nadando ? pose.pernas * amp * 1.3 : pose.cauda * amp) *
+        (1 + festaDaLontra);
+    // No susto a cauda levanta rígida, ponta 20 acima (laudo 31 R3).
+    final levanta = 20 * sustoDaLontra;
 
     // Cauda grossa saindo por trás, para um lado, afinando na ponta.
     canvas.drawPath(
@@ -3203,17 +3270,17 @@ class _PetPainter extends CustomPainter {
         ..moveTo(26, 34)
         ..cubicTo(
           58 + balanca * 5,
-          40,
+          40 - levanta * 0.3,
           74 + balanca * 8,
-          24 + balanca * 4,
+          24 + balanca * 4 - levanta * 0.7,
           78 + balanca * 9,
-          6 + balanca * 6,
+          6 + balanca * 6 - levanta,
         )
         ..cubicTo(
           70 + balanca * 6,
-          12 + balanca * 3,
+          12 + balanca * 3 - levanta * 0.8,
           58 + balanca * 3,
-          30,
+          30 - levanta * 0.3,
           26,
           50,
         )
@@ -3337,18 +3404,25 @@ class _PetPainter extends CustomPainter {
     // Nadando ela estica o pescoço para manter o focinho fora d'água — o
     // corpo afundou 13 px e sem isto a cabeça entraria junto, o que numa
     // tartaruga é afogamento, não nado.
+    // Susto e festa da espécie (laudo 31 R3/R4): assustado, o tracajá
+    // recolhe — a cabeça desce 10 e dobra de lado, as patas entram 6 sob o
+    // casco; festejando, o pescoço sai todo (+14).
+    final sustoDoToco = pose.vida.susto.clamp(0.0, 1.0);
+    final festaDoToco = pose.vida.festa.clamp(0.0, 1.0);
     final estica =
         (pose.boia * 2.4 * amp) +
         pose.carinho * 7 +
         (nadando ? 11 : 0) +
         // Recolhendo a cabeça (−) ou esticando o pescoço ao sol (+).
-        pose.vida.pescoco * 9 * amp;
+        pose.vida.pescoco * 9 * amp -
+        10 * sustoDoToco +
+        14 * festaDoToco;
 
     // Patas: saem por baixo do casco, nos cantos. Na água elas viram remos —
     // a tartaruga-de-orelha-vermelha nada com as quatro.
     _pata(
       canvas,
-      const Offset(-47, 52),
+      Offset(-47 + 6 * sustoDoToco, 52),
       25,
       22,
       sombra,
@@ -3357,7 +3431,7 @@ class _PetPainter extends CustomPainter {
     );
     _pata(
       canvas,
-      const Offset(47, 52),
+      Offset(47 - 6 * sustoDoToco, 52),
       25,
       22,
       sombra,
@@ -3424,9 +3498,16 @@ class _PetPainter extends CustomPainter {
 
     // --- cabeça, na frente ------------------------------------------------
     canvas.save();
-    canvas.translate(0, -36 - estica + _cabecaDesce);
+    // No susto a cabeça dobra de lado (16 para o lado da cauda, −0,35 rad):
+    // é a leitura do susto numa tartaruga, não o olho arregalado. E 3° de
+    // giro no repouso (laudo 31 R11), para o pescoço não ser um eixo.
+    canvas.translate(16 * sustoDoToco, -36 - estica + _cabecaDesce);
     _cabecaSemFolego(canvas);
-    _posicionaCabeca(canvas, _cabecaGiro * 0.8, pescoco: 30);
+    _posicionaCabeca(
+      canvas,
+      _cabecaGiro * 0.8 + 0.052 - 0.35 * sustoDoToco,
+      pescoco: 30,
+    );
     canvas.scale(_cabecaDoEstagio);
 
     // Pescoço: sai da cabeça e entra no casco. É ele que faz a cabeça
@@ -3477,8 +3558,10 @@ class _PetPainter extends CustomPainter {
     // Sem bochecha rosada: réptil não cora, e sobre o verde a mancha rosa
     // ficava um adesivo colado.
 
-    _olho(canvas, const Offset(-14, -9), 7);
-    _olho(canvas, const Offset(14, -9), 7);
+    // Sem sobrancelha: a tartaruga não tem (TOCO-18) — a saudade e o susto
+    // ficam na pálpebra e na cabeça.
+    _olho(canvas, const Offset(-14, -9), 7, sobrancelha: false);
+    _olho(canvas, const Offset(14, -9), 7, sobrancelha: false);
     _rostoVolta(canvas);
     _veste(canvas, 66, 60);
 
@@ -3689,8 +3772,12 @@ class _PetPainter extends CustomPainter {
     // Asas dobradas, encostadas no corpo — abrem de leve ao respirar.
     // Mais escuras e mais largas que antes: encostadas no corpo com a mesma
     // cor, elas sumiam.
+    // Assustada as penas sobem (as asas dobradas abrem 6, NINA-03); na festa
+    // as três batidas de asa dobrada (+8, laudo 32 R12).
+    final sustoDaNina = pose.vida.susto.clamp(0.0, 1.0);
+    final festaDaNina = pose.vida.festa.clamp(0.0, 1.0);
     for (final lado in pose.voando ? const <double>[] : const [-1.0, 1.0]) {
-      final abre = asa * 2.6 * lado;
+      final abre = (asa * 2.6 + 4 * sustoDaNina + 8 * festaDaNina) * lado;
       // Borda externa quase no limite do corpo (±47): a asa fica **dobrada**
       // sobre ele e só se afasta ao respirar. Chegando a ±56 no repouso ela
       // virava um halo escuro atrás do bicho em vez de asa.
@@ -3779,6 +3866,12 @@ class _PetPainter extends CustomPainter {
       Mood.sleepy => 0.4,
       _ => 0.0,
     };
+    // No susto e no grito as duas sobrancelhas sobem 5 (NINA-03).
+    canvas.save();
+    canvas.translate(
+      0,
+      -5 * math.max(pose.vida.susto, pose.vida.grito).clamp(0.0, 1.0),
+    );
     for (final lado in [-1.0, 1.0]) {
       final dentroY = -11 - 7 * ergue;
       final foraY = -10 + 5 * ergue;
@@ -3791,6 +3884,7 @@ class _PetPainter extends CustomPainter {
         _p(branco),
       );
     }
+    canvas.restore();
     canvas.drawPath(
       Path()
         ..moveTo(-14, 20)
@@ -3912,9 +4006,15 @@ class _PetPainter extends CustomPainter {
     };
     final haste = _traco(corDaGuelra, 4.2)..strokeCap = StrokeCap.round;
     final fio = _traco(corDoFilamento, 2.6)..strokeCap = StrokeCap.round;
+    // Susto: guelras para trás (fecham 18 % e sobem, laudo 32 R12); festa:
+    // abertas.
+    final sustoDoLume = pose.vida.susto.clamp(0.0, 1.0);
+    final festaDoLume = pose.vida.festa.clamp(0.0, 1.0);
+    canvas.save();
+    canvas.scale(1 - 0.18 * sustoDoLume + 0.08 * festaDoLume, 1);
     for (final lado in [-1.0, 1.0]) {
       final l = lado;
-      final a = abana * 3 * l;
+      final a = (abana * 3 - 7 * sustoDoLume + 4 * festaDoLume) * l;
       final ramos = [
         Path()
           ..moveTo(l * 32, -16)
@@ -3942,6 +4042,7 @@ class _PetPainter extends CustomPainter {
         }
       }
     }
+    canvas.restore();
 
     canvas.drawPath(
       _bolha(
@@ -4048,8 +4149,17 @@ class _PetPainter extends CustomPainter {
     // dando de ombros.
     for (final lado in [-1.0, 1.0]) {
       final alterna = pose.nadando ? lado : 1.0;
-      final abre = asa * 3 * lado * alterna;
-      final sobe = pose.nadando ? asa * 5 * lado : 0.0;
+      // Susto: nadadeiras abertas (NINO-06); festa: erguidas, a exibição
+      // extática do magalhães (laudo 32 R9).
+      final sustoDoNino = pose.vida.susto.clamp(0.0, 1.0);
+      final festaDoNino = pose.vida.festa.clamp(0.0, 1.0);
+      final abre =
+          asa * 3 * lado * alterna +
+          (8 * sustoDoNino + 14 * festaDoNino) * lado;
+      final sobe =
+          (pose.nadando ? asa * 5 * lado : 0.0) -
+          4 * sustoDoNino -
+          22 * festaDoNino;
       // Borda externa em ±44 num corpo de ±45: a nadadeira fica **dentro**
       // do contorno. Passando dele, sobrava uma fresta do fundo entre as
       // duas, que lia como risco branco no bicho.
@@ -4160,7 +4270,11 @@ class _PetPainter extends CustomPainter {
     // Brincando, a cauda chicoteia no compasso do salto. É o rabo que
     // denuncia o bicho animado; no ritmo solto de sempre ele parecia
     // distraído no meio do pulo.
-    final balanca = pose.brincando ? pose.pernas * amp * 1.5 : pose.cauda * amp;
+    final sustoDaMel = pose.vida.susto.clamp(0.0, 1.0);
+    final festaDaMel = pose.vida.festa.clamp(0.0, 1.0);
+    final balanca =
+        (pose.brincando ? pose.pernas * amp * 1.5 : pose.cauda * amp) *
+        (1 + festaDaMel);
 
     // Cauda tubular, na cor do pelo, com anéis: a cunha escura de antes lia
     // como castor (laudo 08, R6). O humor decide a forma — em pé com a
@@ -4174,7 +4288,9 @@ class _PetPainter extends CustomPainter {
       Mood.missingYou => (46.0, 50.0, 0.0),
     };
     final topoX = _porHumor((m) => formaDoRabo(m).$1);
-    final topoY = _porHumor((m) => formaDoRabo(m).$2);
+    // Susto: cauda em pé e arrepiada; festa: em pé (MEL-10, MEL-11).
+    final topoY =
+        _porHumor((m) => formaDoRabo(m).$2) - 20 * sustoDaMel - 12 * festaDaMel;
     final gancho = _porHumor((m) => formaDoRabo(m).$3);
     final rabo = Path()
       ..moveTo(26, 40)
@@ -4192,7 +4308,10 @@ class _PetPainter extends CustomPainter {
         -14 * gancho,
         -6 * gancho,
       );
-    canvas.drawPath(rabo, _traco(pelo, 11)..strokeCap = StrokeCap.round);
+    canvas.drawPath(
+      rabo,
+      _traco(pelo, 11 * (1 + 0.15 * sustoDaMel))..strokeCap = StrokeCap.round,
+    );
     // Os anéis do tabby: poucos, curtos e suaves, da metade para a ponta.
     // Compridos e juntos eles viravam uma escada.
     final anel = _traco(sombra.withValues(alpha: 0.7), 3)
@@ -4250,7 +4369,12 @@ class _PetPainter extends CustomPainter {
       final treme = pose.orelha * 0.6 * lado;
       canvas.save();
       canvas.translate(lado * 24, -16);
-      canvas.rotate(lado * abre);
+      // Achatadas para os lados no susto, um fio para a frente na festa, e
+      // a direita 0,1 rad diferente da esquerda (laudo 31 R11, MEL-22).
+      canvas.rotate(
+        lado * (abre + 0.5 * sustoDaMel - 0.08 * festaDaMel) +
+            (lado > 0 ? 0.1 : 0.0),
+      );
       canvas.translate(-lado * 24, 16);
       canvas.drawPath(
         Path()
@@ -4346,8 +4470,8 @@ class _PetPainter extends CustomPainter {
     _boca(canvas);
     if (feliz) _bochecha(canvas, const Offset(-30, 12), const Offset(30, 12));
 
-    _olho(canvas, const Offset(-19, -6), 7.5);
-    _olho(canvas, const Offset(19, -6), 7.5);
+    _olho(canvas, const Offset(-19, -6), 7.5, estilo: EstiloDoOlho.fenda);
+    _olho(canvas, const Offset(19, -6), 7.5, estilo: EstiloDoOlho.fenda);
     _rostoVolta(canvas);
     _veste(canvas, 82, 69);
 
@@ -4364,23 +4488,32 @@ class _PetPainter extends CustomPainter {
 
   void _raposa(Canvas canvas) {
     final amp = pose.amplitude;
-    // Mesma razão da gata: no salto a pluma acompanha o corpo.
-    final balanca = pose.brincando ? pose.pernas * amp * 1.5 : pose.cauda * amp;
+    // Mesma razão da gata: no salto a pluma acompanha o corpo. Na festa,
+    // chicoteia (RAP-11).
+    final sustoDaFaisca = pose.vida.susto.clamp(0.0, 1.0);
+    final festaDaFaisca = pose.vida.festa.clamp(0.0, 1.0);
+    final balanca =
+        (pose.brincando ? pose.pernas * amp * 1.5 : pose.cauda * amp) *
+        (1 + 1.5 * festaDaFaisca);
 
     // Cauda em pluma, **na cor do pelo** e com a ponta branca: a cauda
     // escura com ponta bege era a do panda-vermelho, e foi como ela lia
     // (laudo 08, R5). Sai baixa, atrás do corpo, e engrossa até a ponta.
     // O humor mexe nela: sobe no radiante, cai e encosta no chão na saudade
     // (laudo 08, R4 — a cauda é o canal que a raposa mais usa).
-    final ergue = _porHumor(
-      (m) => switch (m) {
-        Mood.radiant => -12.0,
-        Mood.content => 0.0,
-        Mood.neutral => 4.0,
-        Mood.sleepy => 12.0,
-        Mood.missingYou => 16.0,
-      },
-    );
+    // Susto: cauda baixa; festa: alta (RAP-03, RAP-11).
+    final ergue =
+        _porHumor(
+          (m) => switch (m) {
+            Mood.radiant => -12.0,
+            Mood.content => 0.0,
+            Mood.neutral => 4.0,
+            Mood.sleepy => 12.0,
+            Mood.missingYou => 16.0,
+          },
+        ) +
+        12 * sustoDaFaisca -
+        20 * festaDaFaisca;
     final pontaX = 74 + balanca * 6;
     final pontaY = 2 + balanca * 7 + ergue;
     final cauda = Path()
@@ -4468,7 +4601,12 @@ class _PetPainter extends CustomPainter {
       final t = treme * 7;
       canvas.save();
       canvas.translate(lado * 26, -14);
-      canvas.rotate(lado * abre);
+      // Para trás no susto, em pé na festa; a direita 0,1 rad diferente
+      // (laudo 31 R11).
+      canvas.rotate(
+        lado * (abre + 0.4 * sustoDaFaisca - 0.15 * festaDaFaisca) +
+            (lado > 0 ? 0.1 : 0.0),
+      );
       canvas.translate(-lado * 26, 14);
       canvas.drawPath(
         Path()
@@ -4558,8 +4696,8 @@ class _PetPainter extends CustomPainter {
     _boca(canvas);
     if (feliz) _bochecha(canvas, const Offset(-30, 14), const Offset(30, 14));
 
-    _olho(canvas, const Offset(-19, -4), 7.5);
-    _olho(canvas, const Offset(19, -4), 7.5);
+    _olho(canvas, const Offset(-19, -4), 7.5, estilo: EstiloDoOlho.oval);
+    _olho(canvas, const Offset(19, -4), 7.5, estilo: EstiloDoOlho.oval);
     _rostoVolta(canvas);
     _veste(canvas, 80, 66);
 
@@ -4862,8 +5000,17 @@ class _PetPainter extends CustomPainter {
     final tomba = _orelhaTomba;
 
     // Orelhas antes da cabeça: a base some sob o contorno, como nas outras.
+    // Susto: mais eretas e abertas (tomba −0,15, BOL-B6); festa: tremendo;
+    // a direita um fio diferente (laudo 31 R11).
     for (final lado in [-1.0, 1.0]) {
-      _orelhaDeMorcego(canvas, lado, tomba);
+      _orelhaDeMorcego(
+        canvas,
+        lado,
+        (tomba -
+                0.15 * pose.vida.susto.clamp(0.0, 1.0) +
+                (lado > 0 ? 0.06 : 0.0))
+            .clamp(0.0, 1.0),
+      );
     }
 
     // O crânio, **com a papada dentro do mesmo contorno**: topo largo e
@@ -5377,8 +5524,10 @@ class _PetPainter extends CustomPainter {
     // humor: a sobrancelha erguida de quem está de olhos fechados lê como
     // bicho fingindo que dorme.
     final sono = acao == AcaoDoBicho.cochilo ? 1.0 : 0.0;
-    final a = -10.0 + dentro * (1 - sono) + sono * 1.5;
-    final b = -10.0 + fora * (1 - sono) + sono * 3.0;
+    // Susto e grito: as duas sobem 6 (BOL-B6, laudo 30 §3.5).
+    final sobe = 6 * math.max(pose.vida.susto, pose.vida.grito).clamp(0.0, 1.0);
+    final a = -10.0 + dentro * (1 - sono) + sono * 1.5 - sobe;
+    final b = -10.0 + fora * (1 - sono) + sono * 3.0 - sobe;
     canvas.drawPath(
       Path()
         ..moveTo(lado * 18, a)
@@ -6142,9 +6291,23 @@ class _PetPainter extends CustomPainter {
     double giroBase,
   ) {
     final treme = math.sin(pose.orelha * math.pi * 2) * 0.24 * pose.amplitude;
+    final susto = pose.vida.susto.clamp(0.0, 1.0);
+    final festa = pose.vida.festa.clamp(0.0, 1.0);
+    final lado = o.dx < 0 ? -1.0 : 1.0;
+    // Susto: em pé (giram 0,45 rad para dentro, sobem 3) e tremendo no
+    // repique da mola; festa: para cima e para fora (CAP-05, CAP-21). E
+    // uma orelha 0,1 rad diferente da outra no repouso (laudo 31 R11):
+    // orelhas gêmeas denunciam o procedural.
+    final tremor = math.sin(susto * math.pi * 7) * 0.10 * susto;
+    final giro =
+        giroBase -
+        lado * 0.45 * susto +
+        lado * 0.30 * festa +
+        (lado > 0 ? 0.1 : 0.0) +
+        tremor;
     canvas.save();
-    canvas.translate(o.dx, o.dy);
-    canvas.rotate(giroBase + treme);
+    canvas.translate(o.dx, o.dy - 3 * susto - 2 * festa);
+    canvas.rotate(giro + treme);
     _oval(
       canvas,
       Rect.fromCenter(center: Offset.zero, width: w, height: h),
@@ -6158,43 +6321,149 @@ class _PetPainter extends CustomPainter {
     canvas.restore();
   }
 
-  /// Olho: esclera, íris, pupila e dois brilhos.
+  /// Olho: esclera, íris, pupila e dois brilhos — e, por cima, a **pálpebra**.
   ///
-  /// A piscada comprime verticalmente e fecha com a pálpebra — bem diferente
-  /// de trocar o desenho por um traço.
+  /// A piscada é uma pálpebra que desce: um segmento de círculo na cor do
+  /// pelo recortado no disco do olho, com a borda em arco raso seguindo o
+  /// contorno. Íris e brilhos ficam redondos e são ocluídos. Antes o olho
+  /// inteiro era escalado na vertical (`canvas.scale(1, 1 − f)`) com uma
+  /// barra reta no meio: a íris virava uma lente achatada e a meia piscada —
+  /// que o sono, o derretido e o emburrado seguram por segundos — lia como
+  /// olho riscado (CAP-03, RIO-14, TOCO-05, NINA-05, MEL-06, RAP-04, BOL-O1).
+  ///
+  /// O susto arregala (1,25·r, pupila 0,30·r, pálpebra pesada some,
+  /// sobrancelha sobe 0,4·r — laudo 31 R3); o grito aperta 0,3; o riso fecha
+  /// 0,6 em arco feliz (laudo 30 §3.5).
   ///
   /// [sobrancelha] desliga o risco de tristeza que este método desenha por
   /// conta própria. Existe por causa do buldogue: ele tem par de
   /// sobrancelhas desenhado à parte, que muda de ângulo nos cinco humores, e
   /// as duas coisas empilhadas viravam quatro traços em cima de dois olhos.
+  ///
+  /// [estilo] é a íris da espécie (laudo 33 R1): a gata tem íris âmbar com
+  /// pupila em fenda vertical, a raposa íris âmbar com pupila oval; as outras
+  /// o disco escuro de sempre.
   void _olho(
     Canvas canvas,
     Offset o,
     double r, {
     bool coruja = false,
     bool sobrancelha = true,
+    EstiloDoOlho estilo = EstiloDoOlho.redondo,
   }) {
+    final vida = pose.vida;
+    final susto = vida.susto.clamp(0.0, 1.0);
+    final grito = vida.grito.clamp(0.0, 1.0);
+    final rindo = vida.riso > 0;
     // Olho um pouco maior na saudade: é o olhar pidão que pede, não fecha.
-    r *= _olhoDoEstagio * (triste ? 1.1 : 1.0);
-    final f = fechamento;
+    // No susto, arregalado.
+    r *= _olhoDoEstagio * (triste ? 1.1 : 1.0) * (1 + 0.25 * susto);
+    var f = fechamento;
+    // Olhar para baixo pesa a pálpebra de cima (RIO-25).
+    final olharBaixo = (pose.olhar.dy * pose.amplitudeToque).clamp(0.0, 1.0);
+    f = math.max(f, 0.15 * olharBaixo);
+    // O susto abre o olho: as pálpebras pesadas (sono, emburrado, derretido)
+    // somem; só uma piscada de verdade continua fechando.
+    if (f < 0.94) f *= 1 - susto;
+    final alegre = feliz || rindo;
+    final corDaPalpebra = coruja
+        ? Color.lerp(pelo, Cores.superficie, 0.22)!
+        : pelo;
 
     if (f > 0.94) {
-      // Fechado: um arco de pálpebra, virado para cima quando feliz.
+      _olhoFechado(canvas, o, r, alegre: alegre);
+    } else {
+      _olhoAberto(
+        canvas,
+        o,
+        r,
+        f,
+        coruja: coruja,
+        estilo: estilo,
+        susto: susto,
+        corDaPalpebra: corDaPalpebra,
+      );
+    }
+
+    // --- sobrancelhas: fora do caminho do olho fechado (RAP-17) -----------
+    final g = geometriaDoOlho(o, r, triste: triste);
+    if (triste && sobrancelha && susto < 0.3) {
+      // A sobrancelha "pidona": a ponta de dentro sobe, a de fora desce — o
+      // que o músculo da testa faz num cão pedindo alguma coisa (AU1+AU4 no
+      // FACS). Encostada na pálpebra caída (TOCO-18): longe dela, flutuava.
+      final dentro = o.dx < 0 ? 1.0 : -1.0;
+      canvas.drawPath(
+        Path()
+          ..moveTo(g.sobrancelhaDentro.dx, g.sobrancelhaDentro.dy)
+          ..quadraticBezierTo(
+            o.dx - dentro * r * 0.25,
+            o.dy - r * 1.35,
+            g.sobrancelhaFora.dx,
+            g.sobrancelhaFora.dy,
+          ),
+        _traco(sombraForte, 2.0),
+      );
+    }
+    // Susto e grito: as sobrancelhas sobem 0,4·r, em arco, sem a curva
+    // pidona (laudo 31 R3, laudo 30 §3.5).
+    final ergue = math.max(susto, grito);
+    if (ergue > 0.05 && sobrancelha) {
+      final y = o.dy - r * (1.25 + 0.4 * ergue);
+      canvas.drawPath(
+        Path()
+          ..moveTo(o.dx - r * 0.85, y + r * 0.12)
+          ..quadraticBezierTo(
+            o.dx,
+            y - r * 0.25,
+            o.dx + r * 0.85,
+            y + r * 0.12,
+          ),
+        _traco(sombraForte.withValues(alpha: ergue), 1.8),
+      );
+    }
+  }
+
+  /// O olho fechado: só a linha da pálpebra, onde ela encontra a de baixo.
+  ///
+  /// Três traços: ∩ alto quando está contente (o arco feliz), ⌣ raso para o
+  /// sono e o derretido, e quase reto com um fio de ∩ para a piscada rápida
+  /// (CAP-12: o ∪ pendurado no centro do olho lampejava "olhinho dormindo"
+  /// em cada piscada). A linha fica em +0,78·r, onde a pálpebra que desce
+  /// termina (TOCO-16, RAP-17): sem salto entre a fenda e o fechado.
+  void _olhoFechado(Canvas canvas, Offset o, double r, {required bool alegre}) {
+    final t = _traco(_tracoDoOlho, 2.2);
+    if (alegre) {
       canvas.drawArc(
         Rect.fromCircle(center: o, radius: r * 0.95),
-        feliz ? math.pi + 0.3 : 0.28,
-        math.pi - (feliz ? 0.6 : 0.56),
+        math.pi + 0.3,
+        math.pi - 0.6,
         false,
-        _traco(_tracoDoOlho, 2.2),
+        t,
       );
       return;
     }
+    final sono = dormindo || pose.gosto > 0.34;
+    final y = o.dy + r * (sono ? 0.66 : 0.78);
+    final controle = o.dy + r * (sono ? 1.0 : 0.72);
+    canvas.drawPath(
+      Path()
+        ..moveTo(o.dx - r * 0.9, y)
+        ..quadraticBezierTo(o.dx, controle, o.dx + r * 0.9, y),
+      t,
+    );
+  }
 
-    canvas.save();
-    canvas.translate(o.dx, o.dy);
-    canvas.scale(1, (1 - f).clamp(0.06, 1.0));
-    canvas.translate(-o.dx, -o.dy);
-
+  /// O olho aberto (ou meio fechado): disco, íris, brilhos e as pálpebras.
+  void _olhoAberto(
+    Canvas canvas,
+    Offset o,
+    double r,
+    double f, {
+    required bool coruja,
+    required EstiloDoOlho estilo,
+    required double susto,
+    required Color corDaPalpebra,
+  }) {
     // A coruja-buraqueira tem o olho amarelo inteiro, sem branco à vista.
     canvas.drawCircle(
       o,
@@ -6202,29 +6471,89 @@ class _PetPainter extends CustomPainter {
       _p(coruja ? const Color(0xFFF2C94C) : Cores.superficie),
     );
 
-    // Na saudade o olhar sobe para quem chegou, grande e marejado: o "olhar
-    // pidão". Olhando para baixo, com a boca virada, ele lia como emburrado —
-    // e um bicho emburrado depois de uma desistência é cobrança.
-    final desvio =
-        _olhoDesvio + (triste ? const Offset(0.4, -0.7) : Offset.zero);
-    final iris = o + desvio;
+    // A íris: encolhe no susto (pupila ponto), cresce na saudade.
     final raioDaIris =
         r *
         (coruja
-            ? (triste ? 0.50 : 0.42)
-            : (triste ? 0.58 : (feliz ? 0.56 : 0.50)));
-    canvas.drawCircle(iris, raioDaIris, _p(Cores.tinta));
+            ? ((triste ? 0.50 : 0.42) - 0.12 * susto)
+            : switch (estilo) {
+                EstiloDoOlho.fenda => 0.62 - 0.10 * susto,
+                EstiloDoOlho.oval => 0.52 - 0.18 * susto,
+                EstiloDoOlho.redondo =>
+                  (triste ? 0.58 : (feliz ? 0.56 : 0.50)) * (1 - 0.4 * susto),
+              });
 
-    canvas.drawCircle(
-      iris + Offset(-r * 0.30, -r * 0.32),
-      r * (triste ? 0.25 : 0.20),
-      _p(Colors.white),
-    );
-    canvas.drawCircle(
-      iris + Offset(r * 0.20, r * 0.16),
-      r * (triste ? 0.13 : 0.10),
-      _p(Colors.white70),
-    );
+    // Na saudade o olhar sobe para quem chegou, grande e marejado: o "olhar
+    // pidão". Olhando para baixo, com a boca virada, ele lia como emburrado —
+    // e um bicho emburrado depois de uma desistência é cobrança.
+    //
+    // A coruja tem o olho tubular, preso na órbita: a pupila quase não anda
+    // (0,25), o olhar vai na cabeça (NINA-07, laudo 32 R2). E a íris nunca
+    // sai da esclera (RIO-25): o desvio para com uma folga de 0,6 da borda.
+    var desvio =
+        _olhoDesvio * (coruja ? 0.25 : 1.0) +
+        (triste ? const Offset(0.4, -0.7) : Offset.zero);
+    final maxDesvio = math.max(0.0, r - raioDaIris - 0.6);
+    if (desvio.distance > maxDesvio) {
+      desvio = desvio / desvio.distance * maxDesvio;
+    }
+    final iris = o + desvio;
+
+    switch (estilo) {
+      case EstiloDoOlho.redondo:
+        canvas.drawCircle(iris, raioDaIris, _p(Cores.tinta));
+      case EstiloDoOlho.fenda:
+        // Gata: íris âmbar e pupila em fenda vertical, que arredonda no
+        // susto (MEL-09, laudo 33 R1).
+        canvas.drawCircle(iris, raioDaIris, _p(const Color(0xFFD9A441)));
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: iris,
+            width: r * (0.22 + 0.26 * susto),
+            height: r * 0.56,
+          ),
+          _p(Cores.tinta),
+        );
+      case EstiloDoOlho.oval:
+        // Raposa: anel âmbar e pupila oval (RAP-23).
+        canvas.drawCircle(iris, raioDaIris, _p(const Color(0xFFD79A3C)));
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: iris,
+            width: raioDaIris * 1.2,
+            height: raioDaIris * 1.38,
+          ),
+          _p(Cores.tinta),
+        );
+    }
+
+    // Brilhos. Na coruja, dentro da pupila (NINA-06): é o ponto de luz no
+    // olho escuro que faz "olho de coruja". Nos outros, reflexo de
+    // superfície: acompanham a íris pela metade (RIO-25), não colados nela.
+    if (coruja) {
+      canvas.drawCircle(
+        iris + Offset(-0.42, -0.42) * raioDaIris,
+        raioDaIris * 0.32,
+        _p(Colors.white),
+      );
+      canvas.drawCircle(
+        iris + Offset(0.35, 0.30) * raioDaIris,
+        raioDaIris * 0.16,
+        _p(Colors.white70),
+      );
+    } else {
+      final brilho = o + desvio * 0.5;
+      canvas.drawCircle(
+        brilho + Offset(-r * 0.30, -r * 0.32),
+        r * (triste ? 0.25 : 0.20),
+        _p(Colors.white),
+      );
+      canvas.drawCircle(
+        brilho + Offset(r * 0.20, r * 0.16),
+        r * (triste ? 0.13 : 0.10),
+        _p(Colors.white70),
+      );
+    }
     if (triste) {
       // O brilho de baixo, em meia-lua: olho úmido, não fechado.
       canvas.drawArc(
@@ -6236,62 +6565,105 @@ class _PetPainter extends CustomPainter {
       );
     }
 
+    // --- pálpebras --------------------------------------------------------
+    //
+    // Tudo recortado em r + 0,8: no raio exato da esclera sobrava a franja
+    // antisserrilhada dela por cima, um aro fantasma (CAP-10, RIO-13,
+    // TOCO-23, NINA-20, RAP-18).
+    final disco = Path()..addOval(Rect.fromCircle(center: o, radius: r + 0.8));
+    const curva = 2.5; // raio do arco da borda da pálpebra, em r
+
     // Pálpebra caída quando neutro ou triste, **espelhada por olho**.
     //
-    // O lado de dentro é o que fica virado para o meio da cara. Antes as duas
-    // pálpebras eram desenhadas com a mesma inclinação: num olho a ponta de
-    // dentro subia (tristeza), no outro descia (raiva), e a "saudade" lia
-    // como bicho bravo nas nove espécies. Triste é a ponta de **fora** caída e
-    // a de dentro erguida; neutro é uma pálpebra reta, só um pouco baixa.
-    final g = geometriaDoOlho(o, r, triste: triste);
-    if (mood == Mood.neutral || triste) {
-      // Recortada pelo olho: a pálpebra só existe **sobre** ele. Sem o
-      // recorte, onde o olho fica num disco claro (a coruja) o retângulo de
-      // pelo aparecia em volta como uma viseira.
-      canvas.save();
-      canvas.clipPath(Path()..addOval(Rect.fromCircle(center: o, radius: r)));
-      // Na coruja a pálpebra é mais fina e mais clara: cor de pelo cobrindo
-      // metade do olho amarelo fazia um olhar de lado, meio fechado.
-      final sobe = coruja ? Offset(0, -r * 0.30) : Offset.zero;
+    // O lado de dentro é o que fica virado para o meio da cara. Triste é a
+    // ponta de **fora** caída e a de dentro erguida; neutro é uma pálpebra
+    // reta, só um toque de peso (−0,78·r: a 0,42 cortava a íris e lia como
+    // tédio, MEL-08, LUME-10). No susto ela some.
+    if ((mood == Mood.neutral || triste) && susto < 0.95) {
+      final g = geometriaDoOlho(o, r, triste: triste);
+      final sobe = coruja ? -r * 0.30 : 0.0;
+      final caida = Path()
+        ..moveTo(g.palpebraDentro.dx, g.palpebraDentro.dy + sobe)
+        ..lineTo(g.palpebraFora.dx, g.palpebraFora.dy + sobe)
+        ..lineTo(g.palpebraFora.dx, o.dy - r * 1.35)
+        ..lineTo(g.palpebraDentro.dx, o.dy - r * 1.35)
+        ..close();
+      final cor = corDaPalpebra.withValues(alpha: 1 - susto);
       canvas.drawPath(
-        Path()
-          ..moveTo(g.palpebraDentro.dx, g.palpebraDentro.dy + sobe.dy)
-          ..lineTo(g.palpebraFora.dx, g.palpebraFora.dy + sobe.dy)
-          ..lineTo(g.palpebraFora.dx, o.dy - r * 1.35)
-          ..lineTo(g.palpebraDentro.dx, o.dy - r * 1.35)
-          ..close(),
-        _p(coruja ? Color.lerp(pelo, Cores.superficie, 0.35)! : pelo),
+        Path.combine(PathOperation.intersect, disco, caida),
+        _p(cor),
       );
-      canvas.restore();
+      if (coruja) {
+        // Na coruja a pálpebra tem quase a cor do disco: a linha de cílios
+        // é o que a faz ler como pálpebra, não como olho achatado.
+        canvas.save();
+        canvas.clipPath(disco);
+        canvas.drawLine(
+          Offset(g.palpebraDentro.dx, g.palpebraDentro.dy + sobe),
+          Offset(g.palpebraFora.dx, g.palpebraFora.dy + sobe),
+          _traco(sombraForte.withValues(alpha: 0.6 * (1 - susto)), 1.4),
+        );
+        canvas.restore();
+      }
     }
 
-    // A sobrancelha "pidona": a ponta de dentro sobe, a de fora desce — o que
-    // o músculo da testa faz num cão pedindo alguma coisa (AU1+AU4 no FACS).
-    if (triste && sobrancelha) {
-      final dentro = o.dx < 0 ? 1.0 : -1.0;
-      canvas.drawPath(
-        Path()
-          ..moveTo(g.sobrancelhaDentro.dx, g.sobrancelhaDentro.dy)
-          ..quadraticBezierTo(
-            o.dx - dentro * r * 0.25,
-            o.dy - r * 1.80,
-            g.sobrancelhaFora.dx,
-            g.sobrancelhaFora.dy,
-          ),
-        _traco(sombraForte, 1.8),
+    if (f <= 0.02) return;
+
+    // A pálpebra que fecha. De cima: a borda desce de −r a +0,79·r com f e
+    // a de baixo sobe um fio (RIO-14) — a esclera visível vira uma lente. A
+    // coruja dormindo fecha de baixo para cima (laudo 32 R2).
+    final deBaixo = coruja && dormindo;
+    final tinta = _p(corDaPalpebra);
+    // A linha de cílios: sombra do pelo (creme no pelo escuro), não tinta —
+    // em tinta ela voltava a ler como a barra preta de antes.
+    final cilio = _traco(
+      (pelo.computeLuminance() < 0.16 ? _tracoDoOlho : sombraForte).withValues(
+        alpha: 0.85,
+      ),
+      1.3,
+    );
+    // A pálpebra desce com f² (não linear): em f = 0,5 cobre um quarto do
+    // olho e a íris continua inteira (RIO-14, MEL-06); em 0,94 chega a
+    // +0,73·r, onde a linha do olho fechado fica (TOCO-16).
+    final desce = f * f * 1.96;
+    // A borda de cada pálpebra segue o contorno do olho: a de cima é um
+    // arco mais alto no meio (o topo de um círculo grande **abaixo** dela),
+    // a de baixo um arco mais baixo no meio (o fundo de um círculo grande
+    // **acima**). Com a curva ao contrário a meia piscada lia como cara de
+    // bravo: era a pálpebra descendo mais no meio do olho.
+    Rect circulo(double centroY) =>
+        Rect.fromCircle(center: Offset(o.dx, centroY), radius: r * curva);
+    Path foraDo(double centroY) => Path.combine(
+      PathOperation.difference,
+      disco,
+      Path()..addOval(circulo(centroY)),
+    );
+    void cilioEm(double yBorda) {
+      if (f < 0.2) return;
+      final meia = math.sqrt(math.max(0.0, r * r - math.pow(yBorda - o.dy, 2)));
+      final ang = math.asin((meia / (r * curva)).clamp(0.0, 1.0));
+      canvas.drawArc(
+        circulo(yBorda + r * curva),
+        3 * math.pi / 2 - ang,
+        2 * ang,
+        false,
+        cilio,
       );
     }
 
-    canvas.restore();
-
-    // A pálpebra que fecha, por cima e sem a escala vertical.
-    if (f > 0.45) {
-      canvas.drawLine(
-        o + Offset(-r * 0.95, 0),
-        o + Offset(r * 0.95, 0),
-        _traco(Cores.tinta, 2),
-      );
+    if (deBaixo) {
+      // A de baixo subindo: o que fica abaixo do fundo do círculo de cima.
+      final yBorda = o.dy + r - r * desce;
+      canvas.drawPath(foraDo(yBorda - r * curva), tinta);
+      return;
     }
+    // A de cima: o que fica acima do topo do círculo de baixo.
+    final yCima = o.dy - r + r * desce;
+    canvas.drawPath(foraDo(yCima + r * curva), tinta);
+    cilioEm(yCima);
+    // A de baixo, discreta: sobe 0,06·2r.
+    final yBaixo = o.dy + r - 2 * r * f * 0.06;
+    canvas.drawPath(foraDo(yBaixo - r * curva), tinta);
   }
 
   void _narina(Canvas canvas, Offset o) {
@@ -6354,16 +6726,26 @@ class _PetPainter extends CustomPainter {
 
     final tinta = cor ?? sombraForte;
     final a = _abertura;
-    if (a == 0 && vida.largura == 0 && vida.canto == 0) {
+    // A emoção manda na boca antes do motor: o "o" do susto, o D da festa,
+    // o grito e o riso (laudo 30 §3.5).
+    final emo = _emocaoDaBoca;
+    final larguraPedida = emo?.largura ?? vida.largura;
+    final cantoPedido = emo?.canto ?? vida.canto;
+    final linguaPedida = emo?.lingua ?? vida.lingua;
+    final dentesPedidos = emo?.dentes ?? vida.dentes;
+    if (a == 0 && larguraPedida == 0 && cantoPedido == 0) {
       _bocaDoHumor(canvas, o, w, _traco(tinta, 1.9));
       if (species == Species.frenchie) _dentinhosDoBuldogue(canvas, 0);
       return;
     }
 
     // --- o alvo aberto ----------------------------------------------------
-    final larg = (vida.largura + e.larguraBase).clamp(-1.0, 1.0);
+    final larg = (larguraPedida + e.larguraBase).clamp(-1.0, 1.0);
     final k = Curves.easeInOut.transform((a / 0.3).clamp(0.0, 1.0));
-    final canto = (vida.canto + _cantoDoHumor * k).clamp(-1.0, 1.0);
+    final canto = (cantoPedido + (emo == null ? _cantoDoHumor : 0) * k).clamp(
+      -1.0,
+      1.0,
+    );
     final sobe = math.min(a * e.labioSobe, e.folgaNariz - 2).clamp(0.0, 1.0);
     final vao = a * e.hMax + sobe;
     final base = w * (0.44 + 0.16 * a);
@@ -6382,16 +6764,16 @@ class _PetPainter extends CustomPainter {
     );
 
     // --- o repouso: a boca do humor, apertada ou franzida pela largura ---
-    final t = (vida.largura.abs() / 0.35).clamp(0.0, 1.0);
+    final t = (larguraPedida.abs() / 0.35).clamp(0.0, 1.0);
     final humor = _curvaDoHumor(o, w);
     final apertada = _CurvaDaBoca(
-      xCanto: w * (0.35 + 0.15 * vida.largura.clamp(-1.0, 1.0)),
-      yCanto: o.dy - vida.canto * 1.5,
+      xCanto: w * (0.35 + 0.15 * larguraPedida.clamp(-1.0, 1.0)),
+      yCanto: o.dy - cantoPedido * 1.5,
       topo: o.dy,
       bico: 0.6,
     );
     final fechada = _CurvaDaBoca.lerp(
-      humor.cantosEm(humor.yCanto - vida.canto * 1.5),
+      humor.cantosEm(humor.yCanto - cantoPedido * 1.5),
       apertada,
       t,
     );
@@ -6407,12 +6789,12 @@ class _PetPainter extends CustomPainter {
       canvas.drawPath(caminho, _p(Color.lerp(Cores.tinta, pelo, 0.25)!));
       canvas.save();
       canvas.clipPath(caminho);
-      if (e.temDentes && vida.dentes > 0 && species != Species.frenchie) {
-        _dentes(canvas, o.dx, curva, vida.dentes.clamp(0.0, 1.0));
+      if (e.temDentes && dentesPedidos > 0 && species != Species.frenchie) {
+        _dentes(canvas, o.dx, curva, dentesPedidos.clamp(0.0, 1.0));
       }
-      if (e.temLingua && vida.lingua > 0 && a > 0.45 && !_linguaDeFora) {
+      if (e.temLingua && linguaPedida > 0 && a > 0.45 && !_linguaDeFora) {
         final mostra =
-            ((a - 0.45) / 0.1).clamp(0.0, 1.0) * vida.lingua.clamp(0.0, 1.0);
+            ((a - 0.45) / 0.1).clamp(0.0, 1.0) * linguaPedida.clamp(0.0, 1.0);
         final alta = vao * 0.32;
         canvas.drawOval(
           Rect.fromCenter(
@@ -6441,12 +6823,71 @@ class _PetPainter extends CustomPainter {
   /// (`pet_vivo_test`: "depois do toque nada fica preso na pose").
   double get _abertura {
     final afago = ((pose.carinho - 0.12) / 0.88).clamp(0.0, 1.0) * 0.6;
+    final emocao = _emocaoDaBoca?.abertura ?? 0;
     return math
         .max(
-          math.max(pose.bocejo, afago),
+          math.max(math.max(pose.bocejo, afago), emocao),
           math.max(pose.mastiga, pose.vida.boca),
         )
         .clamp(0.0, 1.0);
+  }
+
+  /// A boca das assinaturas do rosto (laudo 30 §3.5), por prioridade:
+  ///
+  /// - **grito**: D inteiro mais alto que largo (largura −0,45), sem canto;
+  /// - **riso**: a abertura pulsa 0,5↔0,9 com a fase que o motor manda em
+  ///   `riso`, cantos +0,8, mais larga;
+  /// - **susto** sem fala: o "o" do visema E, franzido até ficar redondo
+  ///   (B03: o vão mais alto que largo), entrando entre 0,3 e 0,7 de susto;
+  /// - **festa** sem fala: D a 0,6 com cantos para cima e língua (CAP-21).
+  ///
+  /// Nulo quando nenhuma delas está ligada: a boca segue o motor.
+  ({
+    double abertura,
+    double largura,
+    double canto,
+    double lingua,
+    double dentes,
+  })?
+  get _emocaoDaBoca {
+    final v = pose.vida;
+    if (v.grito > 0.05) {
+      final g = v.grito.clamp(0.0, 1.0);
+      return (abertura: g, largura: -0.45 * g, canto: 0, lingua: 1, dentes: 0);
+    }
+    if (v.riso > 0) {
+      final fase = v.riso.clamp(0.0, 1.0);
+      return (
+        abertura: 0.5 + 0.4 * fase,
+        largura: 0.4,
+        canto: 0.8,
+        lingua: 1,
+        dentes: 0,
+      );
+    }
+    final fala = v.boca > 0.08;
+    if (v.susto > 0.3 && !fala) {
+      final k = ((v.susto - 0.3) / 0.4).clamp(0.0, 1.0);
+      final e = bocaDoVisema(Visema.e);
+      return (
+        abertura: e.abertura * k,
+        largura: -(0.6 + 0.4 * k),
+        canto: 0,
+        lingua: 0,
+        dentes: 0,
+      );
+    }
+    if (v.festa > 0.3 && !fala) {
+      final k = ((v.festa - 0.3) / 0.4).clamp(0.0, 1.0);
+      return (
+        abertura: 0.6 * k,
+        largura: 0.2,
+        canto: 0.8 * k,
+        lingua: 1,
+        dentes: 0,
+      );
+    }
+    return null;
   }
 
   /// O que o humor faz com os cantos da boca aberta (laudo 30, §3.1 e §3.5).
@@ -6638,7 +7079,12 @@ class _PetPainter extends CustomPainter {
   }
 
   void _bochecha(Canvas canvas, Offset a, Offset b) {
-    final cor = Cores.acento.withValues(alpha: 0.24 + pose.carinho * 0.20);
+    // Desligadas no susto (laudo 31 R3); meia força na festa (CAP-21).
+    final susto = pose.vida.susto.clamp(0.0, 1.0);
+    final festa = pose.vida.festa.clamp(0.0, 1.0);
+    final cor = Cores.acento.withValues(
+      alpha: (0.24 + pose.carinho * 0.20 + 0.26 * festa) * (1 - susto),
+    );
     for (final o in [a, b]) {
       canvas.drawOval(
         Rect.fromCenter(center: o, width: 14, height: 8),
@@ -6653,6 +7099,14 @@ class _PetPainter extends CustomPainter {
     final t = _traco(sombraForte.withValues(alpha: 0.5), 1.2);
     // Os bigodes acompanham a respiração de leve.
     final abre = pose.respiro * pose.amplitude * 1.1;
+    // No susto vão para a frente (lontra, laudo 31 R3) — para trás na gata
+    // (MEL-10): 0,3 rad em volta da raiz.
+    final susto = pose.vida.susto.clamp(0.0, 1.0);
+    final vira = (species == Species.cat ? 0.2 : -0.3) * lado * susto;
+    canvas.save();
+    canvas.translate(o.dx, o.dy);
+    canvas.rotate(vira);
+    canvas.translate(-o.dx, -o.dy);
     for (var i = 0; i < 3; i++) {
       final dy = (i - 1) * 3.5;
       canvas.drawPath(
@@ -6669,6 +7123,7 @@ class _PetPainter extends CustomPainter {
         t,
       );
     }
+    canvas.restore();
   }
 
   // --- efeitos de cena ----------------------------------------------------

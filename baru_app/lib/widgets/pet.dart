@@ -5601,6 +5601,10 @@ class _PetPainter extends CustomPainter {
     // (a de dentro, de [_boca]). Pendurada durante a fala, cobria os dentes
     // e o queixo e a boca não lia.
     if (_abertura > 0.02) return;
+    // Na camada de corpo da série (sem boca) ela não entra: lá a boca é
+    // outra camada que abre e fecha, e a língua do corpo ficava pendurada
+    // debaixo da boca aberta.
+    if (vida.semBoca) return;
     // Ela cresce com a alegria em vez de aparecer inteira de uma vez: um
     // apêndice que liga e desliga entre dois quadros lê como falha de
     // desenho.

@@ -5597,6 +5597,10 @@ class _PetPainter extends CustomPainter {
   /// falta viraria um cão ofegante, que é outra coisa.
   void _linguaDoBuldogue(Canvas canvas) {
     if (mood != Mood.radiant && pose.gosto < 0.5) return;
+    // Falando, a língua não fica pendurada: ela volta para dentro da boca
+    // (a de dentro, de [_boca]). Pendurada durante a fala, cobria os dentes
+    // e o queixo e a boca não lia.
+    if (_abertura > 0.02) return;
     // Ela cresce com a alegria em vez de aparecer inteira de uma vez: um
     // apêndice que liga e desliga entre dois quadros lê como falha de
     // desenho.
@@ -6873,7 +6877,10 @@ class _PetPainter extends CustomPainter {
     final dentesPedidos = emo?.dentes ?? vida.dentes;
     if (a == 0 && larguraPedida == 0 && cantoPedido == 0) {
       _bocaDoHumor(canvas, o, w, _traco(tinta, 1.9));
-      if (species == Species.frenchie) _dentinhosDoBuldogue(canvas, 0);
+      if (species == Species.frenchie) {
+        final h = _curvaDoHumor(o, w);
+        _dentinhosDoBuldogue(canvas, o.dx, h.topo, h.xCanto);
+      }
       return;
     }
 
@@ -6945,7 +6952,9 @@ class _PetPainter extends CustomPainter {
       }
       canvas.restore();
     }
-    if (species == Species.frenchie) _dentinhosDoBuldogue(canvas, a);
+    if (species == Species.frenchie) {
+      _dentinhosDoBuldogue(canvas, o.dx, fundo, curva.xCanto);
+    }
   }
 
   /// A cor da língua — a mesma que o buldogue já punha para fora.
@@ -7054,7 +7063,8 @@ class _PetPainter extends CustomPainter {
   /// o bicho ficava com duas.
   bool get _linguaDeFora =>
       species == Species.frenchie &&
-      (mood == Mood.radiant || pose.gosto >= 0.5);
+      (mood == Mood.radiant || pose.gosto >= 0.5) &&
+      _abertura <= 0.02;
 
   /// A linha de dentes de cima, pendurada no lábio dentro do vão — o B da
   /// fala ("ligeiramente aberta, dentes cerrados"). A capivara mostra os dois
@@ -7087,19 +7097,33 @@ class _PetPainter extends CustomPainter {
   ///
   /// Recém-nascido e filhote não mostram: cachorro nasce sem dente, e os
   /// de leite só despontam pela terceira semana.
-  void _dentinhosDoBuldogue(Canvas canvas, double abertura) {
+  void _dentinhosDoBuldogue(
+    Canvas canvas,
+    double cx,
+    double labioDeBaixo,
+    double meiaLargura,
+  ) {
     if (estagio.index < EstagioDoBicho.jovem.index) return;
-    final y = 34 + abertura * BocaDaEspecie.de(species).hMax * 0.5;
+    // Presos ao lábio de baixo (a mandíbula): apoiados nele, apontando para
+    // cima, e sempre dentro da largura da boca. Numa posição fixa do rosto
+    // eles flutuavam abaixo da boca fechada e se descolavam dela quando a
+    // boca abria.
+    final x = math.min(4.2, meiaLargura * 0.42);
     for (final lado in [-1.0, 1.0]) {
       canvas.drawPath(
         _bolha(
-          Rect.fromCenter(center: Offset(lado * 4.4, y), width: 5.6, height: 6),
+          Rect.fromCenter(
+            center: Offset(cx + lado * x, labioDeBaixo - 1.6),
+            width: 5.0,
+            height: 5.2,
+          ),
           topo: 0.8,
         ),
         _p(Cores.superficie),
       );
     }
   }
+
 
   /// A boca do humor como curva paramétrica, para o formato aberto nascer
   /// dela. São aproximações, com um cúbico só, dos arcos de [_bocaDoHumor]:

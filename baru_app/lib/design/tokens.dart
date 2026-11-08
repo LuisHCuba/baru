@@ -101,7 +101,6 @@ class Cores {
 
   // --- acento ------------------------------------------------------------
   static const acento = Color(0xFFEF8354);
-
   /// Texto na cor da raiz: é o [raiz600].
   static const acentoTexto = raiz600;
   static const acentoForte = raiz700;
@@ -193,12 +192,8 @@ class Cores {
   ];
 
   /// Gata: mel, cinza e branco-sujo.
-  ///
-  /// O índice 0 é o flanco medido na foto de uma tabby laranja (laudo 33,
-  /// R10: `#C18B54`) com +8 % de saturação — o mel de antes puxava para o
-  /// amarelo.
   static const pelagemGata = [
-    Color(0xFFC58B50),
+    Color(0xFFC9964F),
     Color(0xFFA97D3E),
     Color(0xFFDCB176),
     Color(0xFF8C8175),
@@ -207,11 +202,8 @@ class Cores {
   ];
 
   /// Raposa: laranja-queimado a ruivo.
-  ///
-  /// O índice 0 é o flanco medido na foto (laudo 33, R10: `#A86232`) com
-  /// +8 % de saturação: a raposa-vermelha é ferrugem, não laranja de desenho.
   static const pelagemRaposa = [
-    Color(0xFFAD612D),
+    Color(0xFFC4663D),
     Color(0xFFA85330),
     Color(0xFFD8845C),
     Color(0xFF96482C),
@@ -219,7 +211,7 @@ class Cores {
     Color(0xFFE29A76),
   ];
 
-  /// Buldogue francês: pelagens do cão, não graduações de um pigmento.
+  /// Buldogue francês: as cores que o padrão da raça de fato admite.
   ///
   /// A única paleta do elenco que **não** é uma família de tons do mesmo
   /// pigmento, e é de propósito: nas outras oito o que varia é a intensidade
@@ -228,15 +220,12 @@ class Cores {
   /// bege daria a mesma escolha de sempre e apagaria o traço da raça.
   ///
   /// O índice 0 é o fulvo porque é o que o ícone e as capturas usam
-  /// (`coat: 0`), e é a cor pela qual a raça é reconhecida à primeira vista:
-  /// o fulvo medido na foto (laudo 33, R10: `#D69653`) com +8 % de
-  /// saturação. Blue e preto **desqualificam** no padrão da raça, mas ficam
-  /// aqui como cores de brinquedo, não de registro.
+  /// (`coat: 0`), e é a cor pela qual a raça é reconhecida à primeira vista.
   /// O tigrado e o preto entram escuros de propósito: `sombraForte` deriva
   /// deles e é ela que desenha vinco e narina — num pelo já claro os vincos
   /// da testa somem, e sem vinco não é buldogue.
   static const pelagemBuldogue = [
-    Color(0xFFDB964E), // fulvo
+    Color(0xFFCBA274), // fulvo
     Color(0xFFA9773F), // fulvo escuro
     Color(0xFFE2CFB0), // creme, a base do pied
     Color(0xFF6B5A4B), // tigrado
@@ -327,8 +316,7 @@ class Raio {
   static const pilula = 999.0;
 
   static BorderRadius todos(double r) => BorderRadius.circular(r);
-  static BorderRadius topo(double r) =>
-      BorderRadius.vertical(top: Radius.circular(r));
+  static BorderRadius topo(double r) => BorderRadius.vertical(top: Radius.circular(r));
 }
 
 /// Escala de elevação. Sombra suave e difusa, nunca dura.
@@ -337,57 +325,57 @@ class Elevacao {
 
   /// Cartão em repouso.
   static List<BoxShadow> get cartao => [
-    BoxShadow(
-      color: Cores.tintaA(0.055),
-      blurRadius: 12,
-      offset: const Offset(0, 2),
-    ),
-  ];
+        BoxShadow(
+          color: Cores.tintaA(0.055),
+          blurRadius: 12,
+          offset: const Offset(0, 2),
+        ),
+      ];
 
   /// Cartão sob o dedo ou em foco.
   static List<BoxShadow> get cartaoElevado => [
-    BoxShadow(
-      color: Cores.tintaA(0.10),
-      blurRadius: 20,
-      offset: const Offset(0, 6),
-    ),
-  ];
+        BoxShadow(
+          color: Cores.tintaA(0.10),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
+        ),
+      ];
 
   /// A cena do habitat.
   static List<BoxShadow> get cena => [
-    BoxShadow(
-      color: Cores.tintaA(0.10),
-      blurRadius: 22,
-      offset: const Offset(0, 6),
-    ),
-  ];
+        BoxShadow(
+          color: Cores.tintaA(0.10),
+          blurRadius: 22,
+          offset: const Offset(0, 6),
+        ),
+      ];
 
   /// Ação primária — a sombra é colorida para o botão parecer aceso.
   static List<BoxShadow> get acaoPrimaria => [
-    BoxShadow(
-      color: Cores.primaria.withValues(alpha: 0.32),
-      blurRadius: 24,
-      offset: const Offset(0, 10),
-    ),
-  ];
+        BoxShadow(
+          color: Cores.primaria.withValues(alpha: 0.32),
+          blurRadius: 24,
+          offset: const Offset(0, 10),
+        ),
+      ];
 
   /// Folha modal subindo sobre a tela.
   static List<BoxShadow> get folha => [
-    BoxShadow(
-      color: Cores.tintaA(0.18),
-      blurRadius: 30,
-      offset: const Offset(0, -6),
-    ),
-  ];
+        BoxShadow(
+          color: Cores.tintaA(0.18),
+          blurRadius: 30,
+          offset: const Offset(0, -6),
+        ),
+      ];
 
   /// Moldura de aparelho no desktop.
   static List<BoxShadow> get aparelho => [
-    BoxShadow(
-      color: Cores.tintaA(0.16),
-      blurRadius: 40,
-      offset: const Offset(0, 18),
-    ),
-  ];
+        BoxShadow(
+          color: Cores.tintaA(0.16),
+          blurRadius: 40,
+          offset: const Offset(0, 18),
+        ),
+      ];
 }
 
 /// Escala tipográfica: tamanho, peso e altura de linha andam juntos.

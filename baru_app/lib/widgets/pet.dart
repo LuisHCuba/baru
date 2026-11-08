@@ -352,6 +352,14 @@ class PetView extends StatefulWidget {
   /// ao aparecer e de novo de tempos em tempos.
   final bool comemora;
 
+  /// Para as capturas da novelinha: chamado ao desenhar a boca (ou o bico),
+  /// com a transformação do canvas naquele instante e a origem e a largura
+  /// da boca no espaço local da cabeça. É a âncora da camada de boca: a
+  /// série desenha o corpo uma vez e troca só a boca, por cima, no lugar
+  /// certo de cada quadro. Nulo fora das capturas.
+  static void Function(Float64List transformacao, Offset origem, double largura)?
+  aoDesenharBoca;
+
   /// Já saudou nesta abertura do app: a home remontada não festeja de novo.
   @visibleForTesting
   static bool saudouNaAbertura = false;
@@ -3607,6 +3615,7 @@ class _PetPainter extends CustomPainter {
     _olho(canvas, const Offset(19, 2), 9, coruja: true, sobrancelha: false);
 
     // Bico claro, amarelado, entre os discos.
+    PetView.aoDesenharBoca?.call(canvas.getTransform(), const Offset(0, 13), 12);
     canvas.drawPath(
       Path()
         ..moveTo(-6, 7)
@@ -3936,6 +3945,7 @@ class _PetPainter extends CustomPainter {
     // Bico escuro e robusto, com a faixa clara perto da ponta do
     // magalhães — o único traço reto do bicho.
     final bico = Color.lerp(sombraForte, Cores.tinta, 0.55)!;
+    PetView.aoDesenharBoca?.call(canvas.getTransform(), const Offset(0, 11), 12);
     canvas.drawPath(
       Path()
         ..moveTo(-6, 5)
@@ -6071,6 +6081,7 @@ class _PetPainter extends CustomPainter {
   /// já escuro somem uma na outra — sobravam dois dentinhos brancos flutuando
   /// sem boca nenhuma em volta. Nas outras oito o padrão continua valendo.
   void _boca(Canvas canvas, Offset o, double w, {Color? cor}) {
+    PetView.aoDesenharBoca?.call(canvas.getTransform(), o, w);
     final t = _traco(cor ?? sombraForte, 1.9);
     final mastigando = pose.mastiga > 0.30;
     final aberta =

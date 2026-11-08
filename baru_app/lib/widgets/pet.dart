@@ -3797,7 +3797,10 @@ class _PetPainter extends CustomPainter {
     // dela na sessão de foco.
     //
     // Pernas longas e claras: a buraqueira fica de pé no chão, alta sobre
-    // as pernas — é o traço que a separa das corujas de galho.
+    // as pernas — é o traço que a separa das corujas de galho. O tarso dela
+    // tem 43 mm num bicho de 19–25 cm (laudo 32 §2.2): aqui a perna visível
+    // vai da base do corpo (30) ao pé (56), 26 u, com o tornozelo marcado
+    // e um anel claro de tarso emplumado (laudo 32 R4; NINA-19).
     //
     // No voo os pés ficam recolhidos contra a barriga, dedos fechados e
     // menores (60 %): de pé num chão invisível ela lia como coruja parada
@@ -3805,27 +3808,41 @@ class _PetPainter extends CustomPainter {
     // (o flare, laudo 34 R12). No chão, as pernas alternam no passo: a
     // livre dobra e sobe (NINA-09: dois palitos rígidos saindo juntos).
     final freio = pose.vida.freio.clamp(0.0, 1.0);
-    final recolhe = pose.voando ? 14.0 * (1 - freio) - 10.0 * freio : 0.0;
+    final recolhe = pose.voando ? 20.0 * (1 - freio) - 10.0 * freio : 0.0;
     final fecha = pose.voando ? 1 - 0.6 * (1 - freio) : 0.0;
-    final garra = _traco(const Color(0xFFCDBB9C), 4.2)
-      ..strokeJoin = StrokeJoin.round;
+    const corDaPerna = Color(0xFFCFC4AE);
+    final garra = _traco(corDaPerna, 4.2)..strokeJoin = StrokeJoin.round;
     for (final x in [-15.0, 15.0]) {
+      final lado = x < 0 ? -1.0 : 1.0;
       final noAr = pose.voando
           ? 0.0
           : (x < 0 ? pose.vida.pataEsquerda : pose.vida.pataDireita) * amp;
       // A perna livre sobe 8 u e dobra no joelho, para trás.
       final sobe = noAr * 8;
+      // O tornozelo (a "junta ao contrário" da ave) fica 2 u para dentro:
+      // a perna tem um leve ângulo em vez de ser um palito.
       final joelho = Offset(
-        x + (x < 0 ? 1 : -1) * noAr * 5,
+        x - lado * 2 - lado * noAr * 5,
         42 - recolhe * 0.7 - sobe * 0.6,
       );
-      final pe = Offset(x, 52 - recolhe - sobe);
+      final pe = Offset(x, 56 - recolhe - sobe);
       canvas.drawPath(
         Path()
-          ..moveTo(x, 30 - recolhe * 0.4)
+          ..moveTo(x, 26 - recolhe * 0.4)
           ..quadraticBezierTo(joelho.dx, joelho.dy, pe.dx, pe.dy),
         garra,
       );
+      // Anel de tarso emplumado, logo abaixo do corpo.
+      if (!pose.voando) {
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(x - lado * 0.6, 34 - sobe * 0.3),
+            width: 8,
+            height: 5,
+          ),
+          _p(Color.lerp(corDaPerna, Cores.superficie, 0.4)!),
+        );
+      }
       final escala = 1 - 0.4 * fecha;
       for (final dedo in [-1.0, 0.0, 1.0]) {
         final d = dedo * (1 - 0.7 * fecha);
@@ -3848,8 +3865,19 @@ class _PetPainter extends CustomPainter {
     // As asas abertas nascem nas costas: atrás do corpo, de frente.
     if (pose.voando) _asasDeVoo(canvas, sombraForte);
 
+    // Postura: relaxada (contente, radiante) a plumagem fica fofa e solta,
+    // o corpo 4 % mais largo; nos outros humores, penas no lugar (laudo 32
+    // R4). O corpo sobe 6 u para as pernas aparecerem (NINA-19).
+    final fofa = switch (mood) {
+      Mood.content || Mood.radiant => 1.0,
+      _ => 0.0,
+    };
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(0, -6), width: 90, height: 84),
+      Rect.fromCenter(
+        center: const Offset(0, -12),
+        width: 90 * (1 + 0.04 * fofa),
+        height: 84,
+      ),
       topo: 0.84,
       base: 1.02,
     );
@@ -3857,24 +3885,30 @@ class _PetPainter extends CustomPainter {
 
     canvas.save();
     canvas.clipPath(corpo);
+    // Peito claro, buff, como o da buraqueira (NINA-15).
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 10), width: 60, height: 60),
+        Rect.fromCenter(
+          center: const Offset(0, 4),
+          width: 60 * (1 + 0.06 * fofa),
+          height: 60,
+        ),
         topo: 0.9,
       ),
-      _p(barriga),
+      _p(Color.lerp(barriga, const Color(0xFFE6D5B8), 0.5)!),
     );
-    // Peito barrado de marrom, como o da buraqueira.
-    final penas = _traco(sombra.withValues(alpha: 0.32), 2);
+    // Peito barrado de marrom: barras horizontais curvas, não escamas
+    // (NINA-15 — os arcos fechados liam como peixe).
+    final penas = _traco(sombra.withValues(alpha: 0.40), 2.2)
+      ..strokeCap = StrokeCap.round;
     for (var linha = 0; linha < 3; linha++) {
-      final y = 4.0 + linha * 12;
+      final y = -4.0 + linha * 11;
       for (var i = -1; i <= 1; i++) {
         final x = i * 17.0 + (linha.isOdd ? 8 : 0);
-        canvas.drawArc(
-          Rect.fromCenter(center: Offset(x, y), width: 17, height: 12),
-          math.pi,
-          math.pi,
-          false,
+        canvas.drawPath(
+          Path()
+            ..moveTo(x - 7, y)
+            ..quadraticBezierTo(x, y + 3, x + 7, y),
           penas,
         );
       }
@@ -3888,6 +3922,7 @@ class _PetPainter extends CustomPainter {
     // as três batidas de asa dobrada (+8, laudo 32 R12).
     final sustoDaNina = pose.vida.susto.clamp(0.0, 1.0);
     final festaDaNina = pose.vida.festa.clamp(0.0, 1.0);
+    const pinta = Color(0xFFD9CCBB);
     for (final lado in pose.voando ? const <double>[] : const [-1.0, 1.0]) {
       // ≤ 0,8 u com a respiração (MOV-10); susto e festa abrem mais.
       final abre = (asa * 0.6 + 4 * sustoDaNina + 8 * festaDaNina) * lado;
@@ -3895,9 +3930,16 @@ class _PetPainter extends CustomPainter {
       // sobre ele e só se afasta ao respirar. Chegando a ±56 no repouso ela
       // virava um halo escuro atrás do bicho em vez de asa.
       final asaPath = Path()
-        ..moveTo(lado * 32, -28)
-        ..cubicTo(lado * (47 + abre), -8, lado * (45 + abre), 22, lado * 28, 34)
-        ..cubicTo(lado * 23, 10, lado * 25, -14, lado * 32, -28)
+        ..moveTo(lado * 32, -34)
+        ..cubicTo(
+          lado * (47 + abre),
+          -14,
+          lado * (45 + abre),
+          16,
+          lado * 28,
+          28,
+        )
+        ..cubicTo(lado * 23, 4, lado * 25, -20, lado * 32, -34)
         ..close();
       canvas.drawPath(asaPath, _p(sombraForte));
 
@@ -3908,19 +3950,29 @@ class _PetPainter extends CustomPainter {
       final risco = _traco(Cores.tintaA(0.18), 1.8);
       for (var i = 0; i < 3; i++) {
         canvas.drawLine(
-          Offset(lado * 24, 4 + i * 9),
-          Offset(lado * (46 + abre), 12 + i * 9),
+          Offset(lado * 24, -2 + i * 9),
+          Offset(lado * (46 + abre), 6 + i * 9),
           risco,
         );
+      }
+      // As pintas claras das asas e dos ombros, a pontuação branca do dorso
+      // da buraqueira (NINA-15).
+      for (final (dx, dy) in const [
+        (36.0, -20.0),
+        (41.0, -8.0),
+        (38.0, 6.0),
+        (31.0, 18.0),
+      ]) {
+        canvas.drawCircle(Offset(lado * (dx + abre * 0.5), dy), 1.6, _p(pinta));
       }
       canvas.restore();
     }
 
     // --- cabeça -----------------------------------------------------------
     canvas.save();
-    // -28 e não -32: a ponta do tufo ficava a 3 px do topo do quadro, e ao
-    // se espreguiçar (corpo 7% maior e 4 px acima) ela era cortada.
-    canvas.translate(0, -28 + pose.respiro * amp * 0.6 + _cabecaDesce);
+    // -34: sobe 6 com o corpo (NINA-19). Sem tufos a ponta da cabeça fica
+    // longe do topo do quadro.
+    canvas.translate(0, -34 + pose.respiro * amp * 0.6 + _cabecaDesce);
     _cabecaSemFolego(canvas);
     _posicionaCabeca(canvas, _cabecaGiro * 0.8, pescoco: 32);
     canvas.scale(_cabecaDoEstagio);
@@ -3945,8 +3997,10 @@ class _PetPainter extends CustomPainter {
       (28.0, -22.0),
       (-34.0, -12.0),
       (35.0, -10.0),
+      (-38.0, 2.0),
+      (38.0, 4.0),
     ]) {
-      canvas.drawCircle(Offset(x, y), 1.9, _p(claro));
+      canvas.drawCircle(Offset(x, y), 1.9, _p(pinta));
     }
     canvas.restore();
 
@@ -3956,24 +4010,29 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(cabeca);
     _rostoVira(canvas);
 
-    // O disco facial, mais claro que o pelo.
-    final disco = Color.lerp(pelo, Cores.superficie, 0.32)!;
+    // O disco facial: um pouco mais escuro que o pelo, com a borda clara —
+    // é nele que o olho amarelo acende (laudo 32 R13: olho × disco ≥ 3 : 1).
+    // Mais claro que o pelo, como antes, o amarelo afundava (1,7 : 1).
+    final disco = Color.lerp(pelo, Cores.tinta, 0.14)!;
+    const branco = Color(0xFFF3EDE3);
+    final bordaDoDisco = _traco(branco.withValues(alpha: 0.55), 1.6);
     for (final lado in [-1.0, 1.0]) {
-      _oval(
-        canvas,
-        Rect.fromCenter(center: Offset(lado * 19, 3), width: 42, height: 44),
-        disco,
+      final r = Rect.fromCenter(
+        center: Offset(lado * 19, 3),
+        width: 42,
+        height: 44,
       );
+      _oval(canvas, r, disco);
+      canvas.drawOval(r, bordaDoDisco);
     }
 
-    // As sobrancelhas brancas e o queixo branco: a cara da buraqueira.
+    // As sobrancelhas brancas e a garganta branca: a cara da buraqueira.
     //
     // A mancha branca **é** a sobrancelha dela, e é por ela que o humor
     // passa. Com a ponta de dentro mais baixa que a de fora ela formava um
     // V, e na saudade, com a sobrancelha de tristeza pintada por cima, a
     // coruja lia como desconfiada (auditoria da Onda 3, 11b-M2). Agora a
     // ponta de dentro sobe na tristeza e no sono, e fica reta no resto.
-    final branco = Color.lerp(Cores.superficie, pelo, 0.04)!;
     final ergue = switch (mood) {
       Mood.missingYou => 1.0,
       Mood.sleepy => 0.4,
@@ -3998,24 +4057,48 @@ class _PetPainter extends CustomPainter {
       );
     }
     canvas.restore();
-    canvas.drawPath(
-      Path()
-        ..moveTo(-14, 20)
-        ..quadraticBezierTo(0, 30, 14, 20)
-        ..quadraticBezierTo(0, 25, -14, 20)
-        ..close(),
-      _p(branco),
+
+    // A garganta: uma faixa branca horizontal (40 × 7, relação ≥ 4) fechada
+    // por baixo pelo colar escuro — e não o arco convexo que lia como um
+    // sorriso debaixo do bico, a "segunda boca" da Nina (laudo 32 R4,
+    // NINA-02). Ela cresce um pouco quando a cabeça balança, como a
+    // buraqueira "expande e exibe" a mancha. Fica antes do bico, que a cobre
+    // ao abrir, rente ao queixo (o contorno da cabeça recorta a base). O
+    // colar é reto de propósito: em U ele viraria outro sorriso.
+    final exibe = (pose.vida.cabecaGiro.abs() / 0.35).clamp(0.0, 1.0);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(0, 28.5 - exibe),
+          width: 36 + 8 * exibe,
+          height: 7 + 2 * exibe,
+        ),
+        const Radius.circular(3.5),
+      ),
+      _p(Color.lerp(branco, disco, 0.12)!),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(0, 32.2 - exibe * 0.5),
+          width: 40 + 8 * exibe,
+          height: 2.4,
+        ),
+        const Radius.circular(1.2),
+      ),
+      _p(const Color(0xFF4A3B31)),
     );
 
     // Sem a sobrancelha de tristeza por cima: a branca já faz esse papel.
     _olho(canvas, const Offset(-19, 2), 9, coruja: true, sobrancelha: false);
     _olho(canvas, const Offset(19, 2), 9, coruja: true, sobrancelha: false);
 
-    // Bico claro, amarelado, entre os discos. A mandíbula de baixo gira na
-    // articulação (0..25°) com a abertura; a de cima fica (ver [_bico]).
+    // Bico curto, cinza-oliva claro, entre os discos (laudo 32 R13; claro o
+    // bastante para 2 : 1 sobre o disco, NINA-15). A mandíbula de baixo gira
+    // na articulação (0..25°) com a abertura; a de cima fica (ver [_bico]).
     _bico(
       canvas,
-      cor: const Color(0xFFD9C79A),
+      cor: const Color(0xFFBDB48C),
       base: 7,
       ponta: 19,
       anguloMax: 25,
@@ -4042,6 +4125,18 @@ class _PetPainter extends CustomPainter {
         ? pose.pernas * amp * 1.2
         : (pose.cauda * amp) * 0.8;
 
+    // Estágios com corpo próprio (LUME-17): a larva não tem pés traseiros e
+    // leva uma barbatana alta, contínua da nuca à cauda; o jovem tem a
+    // barbatana ainda grande e as guelras menores; o adulto é o de sempre.
+    final larva =
+        estagio == EstagioDoBicho.inicio || estagio == EstagioDoBicho.filhote;
+    final alturaDaBarbatana = switch (estagio) {
+      EstagioDoBicho.inicio || EstagioDoBicho.filhote => 1.4,
+      EstagioDoBicho.jovem => 1.2,
+      _ => 1.0,
+    };
+    final corDaBarbatana = Color.lerp(claro, Cores.superficie, 0.35)!;
+
     // A cauda longa com a barbatana clara por cima e por baixo: sem ela o
     // axolote não é axolote (laudo 07, R5). Nasce atrás do corpo e balança
     // no ritmo próprio da cauda.
@@ -4058,37 +4153,48 @@ class _PetPainter extends CustomPainter {
       ..cubicTo(40, 44, 62 + varre * 0.5, 40, 82 + varre, 22 + varre * 0.6)
       ..cubicTo(64 + varre * 0.5, 30, 44, 30, 20, 18)
       ..close();
+    final b = alturaDaBarbatana;
     final barbatana = Path()
       ..moveTo(22, 24)
-      ..cubicTo(42, 14, 66 + varre * 0.5, 10, 84 + varre, 16 + varre * 0.6)
-      ..cubicTo(70 + varre * 0.5, 48, 44, 52, 22, 42)
+      ..cubicTo(
+        42,
+        24 - 10 * b,
+        66 + varre * 0.5,
+        24 - 14 * b,
+        84 + varre,
+        16 + varre * 0.6,
+      )
+      ..cubicTo(70 + varre * 0.5, 36 + 12 * b, 44, 36 + 16 * b, 22, 42)
       ..close();
-    canvas.drawPath(barbatana, _p(Color.lerp(claro, Cores.superficie, 0.35)!));
+    // A barbatana dorsal: a mesma lâmina clara segue pelas costas, da nuca
+    // até a raiz da cauda (laudo 32 §2.3: "barbatana da nuca à cloaca"). De
+    // frente ela aparece como a crista que emenda o dorso na cauda.
+    final dorsal = Path()
+      ..moveTo(-6, -14)
+      ..quadraticBezierTo(18, -24 - 6 * b, 40, -6 - 4 * b)
+      ..quadraticBezierTo(46, 10, 22, 24)
+      ..lineTo(22, 42)
+      ..quadraticBezierTo(10, 20, -6, 10)
+      ..close();
+    canvas.drawPath(dorsal, _p(corDaBarbatana));
+    canvas.drawPath(barbatana, _p(corDaBarbatana));
     canvas.drawPath(cauda, _p(pelo));
 
-    _pata(
-      canvas,
-      Offset(-20, 49 + rema * 1.4),
-      16,
-      12,
-      sombra,
-      0,
-      dedos: false,
-      rema: -1,
-    );
-    _pata(
-      canvas,
-      Offset(20, 49 - rema * 1.4),
-      16,
-      12,
-      sombra,
-      0,
-      dedos: false,
-      rema: 1,
-    );
+    // Pés traseiros, antes do corpo e saindo por baixo dele: finos, com
+    // dedos (LUME-06). A larva ainda não os tem.
+    if (!larva) {
+      _pata(canvas, Offset(-22, 57 + rema * 1.4), 15, 13, sombra, 0, rema: -1);
+      _pata(canvas, Offset(22, 57 - rema * 1.4), 15, 13, sombra, 0, rema: 1);
+    }
 
+    // Corpo achatado, mais largo que alto: o axolote vive deitado no fundo
+    // (laudo 32 §2.3). A larva é mais estreita.
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(0, 20), width: 82, height: 71),
+      Rect.fromCenter(
+        center: const Offset(0, 22),
+        width: larva ? 72 : 88,
+        height: 64,
+      ),
       topo: 0.88,
     );
     canvas.drawPath(corpo, _p(pelo));
@@ -4097,12 +4203,27 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(corpo);
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 31), width: 56, height: 55),
+        Rect.fromCenter(center: const Offset(0, 32), width: 60, height: 50),
         topo: 0.9,
       ),
-      _p(claro),
+      // A larva tem a barriga de vitelo, amarelada.
+      _p(larva ? Color.lerp(claro, const Color(0xFFF3E3A8), 0.5)! : claro),
     );
     canvas.restore();
+
+    // Braços curtos, depois do corpo, com três dedinhos: de frente, o
+    // axolote apoia as mãos no fundo (LUME-06). Na água cruzam a barriga.
+    for (final lado in [-1.0, 1.0]) {
+      final recolhe = pose.nadando ? 8.0 : 0.0;
+      _pata(
+        canvas,
+        Offset(lado * (30 - recolhe), 40 - rema * lado * 0.8),
+        11,
+        15,
+        Color.lerp(pelo, sombra, 0.7)!,
+        0,
+      );
+    }
 
     // --- cabeça -----------------------------------------------------------
     canvas.save();
@@ -4116,54 +4237,92 @@ class _PetPainter extends CustomPainter {
     // com filamentos — as "penas" que fazem o axolote (laudo 07, R5). Eram
     // três folhas lisas, que liam como orelhas de enfeite. Os filamentos
     // crescem com o estágio.
-    final corDaGuelra = Color.lerp(pelo, Cores.acento, 0.34)!;
-    final corDoFilamento = Color.lerp(corDaGuelra, Cores.superficie, 0.18)!;
+    //
+    // Cor própria, não derivada do pelo: a guelra é vermelha porque é
+    // **sangue** nos filamentos (laudo 32 R5). Derivada do rosa, ela sumia
+    // (1,06 : 1); agora contrasta ≥ 2,3 : 1 com as seis pelagens. Os três
+    // ramos nascem acima do queixo e abrem para trás e para cima, com
+    // filamentos dos dois lados da haste, afunilando para a ponta — pluma, e
+    // não pente (LUME-05).
+    const corDaGuelra = Color(0xFF9C2E39);
+    const corDoFilamento = Color(0xFF982C38);
+    const pontaDoFilamento = Color(0xFFE07A86);
     final filamentos = switch (estagio) {
-      EstagioDoBicho.inicio || EstagioDoBicho.filhote => 3,
-      EstagioDoBicho.jovem => 4,
-      EstagioDoBicho.adulto => 6,
-      EstagioDoBicho.pleno => 7,
+      EstagioDoBicho.inicio || EstagioDoBicho.filhote => 5,
+      EstagioDoBicho.jovem => 7,
+      EstagioDoBicho.adulto => 9,
+      EstagioDoBicho.pleno => 11,
+    };
+    final escalaDaGuelra = switch (estagio) {
+      EstagioDoBicho.jovem => 0.85,
+      _ => 1.0,
     };
     final haste = _traco(corDaGuelra, 4.2)..strokeCap = StrokeCap.round;
-    final fio = _traco(corDoFilamento, 2.6)..strokeCap = StrokeCap.round;
+    final contorno = _traco(Color.lerp(corDaGuelra, Cores.tinta, 0.3)!, 6.2)
+      ..strokeCap = StrokeCap.round;
+    final pluma = _traco(corDoFilamento.withValues(alpha: 0.35), 11)
+      ..strokeCap = StrokeCap.round;
+    final fio = _traco(corDoFilamento, 2.4)..strokeCap = StrokeCap.round;
+    final brilho = _traco(pontaDoFilamento, 2.4)..strokeCap = StrokeCap.round;
     // Susto: guelras para trás (fecham 18 % e sobem, laudo 32 R12); festa:
     // abertas.
     final sustoDoLume = pose.vida.susto.clamp(0.0, 1.0);
     final festaDoLume = pose.vida.festa.clamp(0.0, 1.0);
     canvas.save();
-    canvas.scale(1 - 0.18 * sustoDoLume + 0.08 * festaDoLume, 1);
+    canvas.scale(
+      (1 - 0.18 * sustoDoLume + 0.08 * festaDoLume) * escalaDaGuelra,
+      escalaDaGuelra,
+    );
     for (final lado in [-1.0, 1.0]) {
       final l = lado;
       final a = (abana * 3 - 7 * sustoDoLume + 4 * festaDoLume) * l;
       final ramos = [
         Path()
-          ..moveTo(l * 32, -16)
-          ..cubicTo(l * 44, -28 + a, l * 54, -33 + a, l * 62, -32 + a),
+          ..moveTo(l * 30, -18)
+          ..cubicTo(l * 42, -30 + a, l * 54, -36 + a, l * 64, -34 + a),
         Path()
-          ..moveTo(l * 36, -1)
-          ..cubicTo(l * 48, -4 - a, l * 56, -2 - a, l * 63, 3 - a),
+          ..moveTo(l * 36, -6)
+          ..cubicTo(l * 48, -12 - a, l * 58, -16 - a, l * 68, -16 - a),
         Path()
-          ..moveTo(l * 33, 13)
-          ..cubicTo(l * 44, 16 + a, l * 51, 21 + a, l * 56, 28 + a),
+          ..moveTo(l * 37, 4)
+          ..cubicTo(l * 48, 6 + a, l * 58, 4 + a, l * 66, 2 + a),
       ];
       for (final ramo in ramos) {
+        canvas.drawPath(ramo, pluma);
+        canvas.drawPath(ramo, contorno);
         canvas.drawPath(ramo, haste);
         for (final m in ramo.computeMetrics()) {
           for (var k = 0; k < filamentos; k++) {
-            final d =
-                m.length * (0.25 + 0.72 * k / math.max(1, filamentos - 1));
+            final f = k / math.max(1, filamentos - 1);
+            final d = m.length * (0.18 + 0.80 * f);
             final t = m.getTangentForOffset(d);
             if (t == null) continue;
-            // Filamento para fora da haste, inclinado para a ponta.
-            final normal = Offset(-t.vector.dy, t.vector.dx) * -l;
-            final dir = (normal + t.vector * 0.6) / 1.17;
-            canvas.drawLine(t.position, t.position + dir * 7.5, fio);
+            // Comprimento 10 → 3, afunilando para a ponta; um filamento de
+            // cada lado da haste, os dois inclinados para a ponta e
+            // curvando de leve na direção dela.
+            final comprimento = 10 - 7 * f;
+            for (final sinal in [-1.0, 1.0]) {
+              final normal = Offset(-t.vector.dy, t.vector.dx) * sinal;
+              final dir = (normal + t.vector * 0.7) / 1.22;
+              final fim = t.position + dir * comprimento;
+              final controle =
+                  t.position + normal * comprimento * 0.55 + t.vector * 1.5;
+              canvas.drawPath(
+                Path()
+                  ..moveTo(t.position.dx, t.position.dy)
+                  ..quadraticBezierTo(controle.dx, controle.dy, fim.dx, fim.dy),
+                fio,
+              );
+              // A ponta clara: o brilho do sangue na pele fina.
+              canvas.drawLine(fim - dir * 2.2, fim, brilho);
+            }
           }
         }
       }
     }
     canvas.restore();
 
+    // Cabeça larga e chata.
     canvas.drawPath(
       _bolha(
         Rect.fromCenter(center: const Offset(0, 0.7), width: 86, height: 73),
@@ -4188,8 +4347,8 @@ class _PetPainter extends CustomPainter {
   // PINGUIM — barriga clara, nadadeiras coladas, pés laranja
   // ======================================================================
 
-  /// O pé do magalhães: escuro, com manchas rosadas.
-  Color get _peDoPinguim => Color.lerp(sombraForte, Cores.tinta, 0.35)!;
+  /// O pé do magalhães: enegrecido, com manchas rosadas (laudo 32 R8).
+  Color get _peDoPinguim => const Color(0xFF3A3330);
   Color get _manchaDoPe => const Color(0xFFD9A5A3);
 
   void _pinguim(Canvas canvas) {
@@ -4197,80 +4356,126 @@ class _PetPainter extends CustomPainter {
     final asa = pose.asa * amp;
     final passo = pose.pernas * amp;
 
+    // Estágios com cara própria (NINO-11): o filhote é penugem cinza-parda
+    // com o rosto e a barriga claros, sem a faixa branca e sem o rosa; o
+    // jovem tem a cara cinza com a faixa só insinuada; o adulto é o
+    // magalhães inteiro. Um só branco para barriga e faixa (NINO-10).
+    final filhote =
+        estagio == EstagioDoBicho.inicio || estagio == EstagioDoBicho.filhote;
+    final jovem = estagio == EstagioDoBicho.jovem;
+    final adulto = estagio.index >= EstagioDoBicho.adulto.index;
+    final dorso = filhote ? const Color(0xFF9C948A) : pelo;
+    final escuro = filhote
+        ? Color.lerp(dorso, Cores.tinta, 0.35)!
+        : const Color(0xFF1D2636);
+    const branco = Color(0xFFEEF3F8);
+    final peito = filhote ? const Color(0xFFE3DED6) : branco;
+
     // Pés do pinguim-de-magalhães: escuros com manchas rosadas, e não
     // laranja — laranja de bico e pé é pinguim de desenho genérico, e o
     // bico igual ao da coruja apagava a espécie (laudo 07, R6). Na água não
     // caminham: ficam esticados atrás como leme, e quem move o pinguim são
     // as nadadeiras. Um pinguim que rema com o pé é um pato.
-    final leme = pose.nadando ? 7.0 : 0.0;
-    for (final lado in [-1.0, 1.0]) {
-      final desloca = lado * passo * 1.4;
-      canvas.save();
-      canvas.translate(lado * (17 + leme * 0.6) + desloca, 50 + leme);
-      canvas.drawPath(
-        _bolha(
-          Rect.fromCenter(center: Offset.zero, width: 20, height: 13),
-          base: 0.86,
-        ),
-        _p(_peDoPinguim),
-      );
-      for (final (dx, dy) in const [(-4.5, -1.0), (3.0, 1.5), (5.5, -2.5)]) {
-        canvas.drawCircle(Offset(dx, dy), 1.8, _p(_manchaDoPe));
+    //
+    // Em terra os pés ficam na frente do corpo, apontando para a frente —
+    // é o apoio que faltava (NINO-09); na água vão para trás do corpo e
+    // só a ponta aparece (NINO-22).
+    void pes({required bool atras}) {
+      for (final lado in [-1.0, 1.0]) {
+        final desloca = lado * passo * 1.4;
+        canvas.save();
+        canvas.translate(lado * 16 + desloca, atras ? 50 : 55);
+        canvas.drawPath(
+          _bolha(
+            Rect.fromCenter(center: Offset.zero, width: 24, height: 11),
+            base: 0.86,
+          ),
+          _p(_peDoPinguim),
+        );
+        if (!atras) {
+          for (final (dx, dy) in const [
+            (-5.5, -0.5),
+            (3.0, 1.5),
+            (6.5, -2.0),
+          ]) {
+            canvas.drawCircle(Offset(dx, dy), 2, _p(_manchaDoPe));
+          }
+        }
+        final dedo = _traco(Color.lerp(_peDoPinguim, Cores.tinta, 0.4)!, 1.5);
+        for (final dx in [-5.0, 0.0, 5.0]) {
+          canvas.drawLine(Offset(dx, 2.4), Offset(dx, 5.4), dedo);
+        }
+        canvas.restore();
       }
-      final dedo = _traco(Color.lerp(_peDoPinguim, Cores.tinta, 0.4)!, 1.5);
-      for (final dx in [-4.4, 0.0, 4.4]) {
-        canvas.drawLine(Offset(dx, 3.2), Offset(dx, 6.3), dedo);
-      }
-      canvas.restore();
     }
+
+    if (pose.nadando) pes(atras: true);
+
+    // O pescoço: um calço na cor do dorso, atrás da cabeça, emendando a
+    // cabeça (72 de largura) nos ombros (90) sem o vale entre duas bolas —
+    // o perfil do magalhães é uma gota contínua (laudo 32 R8, §3.4).
+    canvas.drawPath(
+      Path()
+        ..moveTo(-34, -44)
+        ..quadraticBezierTo(-40, -22, -46, 2)
+        ..lineTo(46, 2)
+        ..quadraticBezierTo(40, -22, 34, -44)
+        ..close(),
+      _p(dorso),
+    );
 
     final corpo = _bolha(
       Rect.fromCenter(center: const Offset(0, 12), width: 90, height: 91),
       topo: 0.9,
     );
-    canvas.drawPath(corpo, _p(pelo));
+    canvas.drawPath(corpo, _p(dorso));
 
     canvas.save();
     canvas.clipPath(corpo);
-    // Barriga: quase branca, é ela que faz ler "pinguim".
+    // Barriga: branca, é ela que faz ler "pinguim".
     canvas.drawPath(
       _bolha(
         Rect.fromCenter(center: const Offset(0, 17), width: 60, height: 82),
         topo: 0.9,
       ),
-      _p(Color.lerp(claro, Cores.superficie, 0.62)!),
+      _p(peito),
     );
     // As duas faixas escuras do peito — a marca do magalhães. Só no adulto:
     // o filhote e o jovem ainda não as têm, e elas chegando é um sinal de
-    // crescimento que se vê de longe.
-    if (estagio.index >= EstagioDoBicho.adulto.index) {
-      final faixa = _traco(sombraForte, 4.5)..strokeCap = StrokeCap.butt;
+    // crescimento que se vê de longe. A alta é o colar junto ao queixo; a
+    // baixa, a ferradura, começa bem abaixo, com peito branco largo entre
+    // elas (≥ 14 u, NINO-12), traço de 5 (laudo 32 R8).
+    if (adulto) {
+      final faixa = _traco(escuro, 5)..strokeCap = StrokeCap.round;
       canvas.drawPath(
         Path()
-          ..moveTo(-34, -2)
-          ..quadraticBezierTo(0, 10, 34, -2),
+          ..moveTo(-38, -6)
+          ..quadraticBezierTo(0, 4, 38, -6),
         faixa,
       );
       canvas.drawPath(
         Path()
-          ..moveTo(-30, 30)
-          ..quadraticBezierTo(-26, 12, 0, 12)
-          ..quadraticBezierTo(26, 12, 30, 30),
+          ..moveTo(-32, 38)
+          ..quadraticBezierTo(-28, 20, 0, 22)
+          ..quadraticBezierTo(28, 20, 32, 38),
         faixa,
       );
     }
     canvas.restore();
 
-    // Nadadeiras: coladas no corpo, abrem de leve ao respirar — e **remam**
-    // quando ele está na água, uma subindo enquanto a outra desce.
+    if (!pose.nadando) pes(atras: false);
+
+    // Nadadeiras: asas achatadas, nascem no ombro e saem do contorno do
+    // corpo — o pinguim anda com elas um pouco abertas, para equilibrar
+    // (laudo 32 R8: 0,12 rad em repouso; NINO-09: dentro do contorno liam
+    // como painéis). Abrem de leve ao respirar.
     //
-    // O pinguim "voa" embaixo d'água: é a nadadeira que o empurra, e ela
-    // alterna. Abrindo as duas juntas, como no repouso, ele parecia estar
-    // dando de ombros.
     // Nadando ele "voa" embaixo d'água: batida BILATERAL, as duas descem
     // juntas para fora e para baixo e sobem recolhendo (laudo 32 R11);
     // alternadas liam como dar de ombros. Em repouso abrem ≤ 0,8 u com a
     // respiração (MOV-10: a 3 u era uma asa abanando a cada fôlego).
+    // O filhote tem as nadadeiras em toco, metade do comprimento.
+    final comprimento = filhote ? 0.55 : 1.0;
     for (final lado in [-1.0, 1.0]) {
       final alterna = pose.nadando ? lado : 1.0;
       // Susto: nadadeiras abertas (NINO-06); festa: erguidas, a exibição
@@ -4284,31 +4489,34 @@ class _PetPainter extends CustomPainter {
           (pose.nadando ? asa * 5 * lado : 0.0) -
           4 * sustoDoNino -
           22 * festaDoNino;
-      // Borda externa em ±44 num corpo de ±45: a nadadeira fica **dentro**
-      // do contorno. Passando dele, sobrava uma fresta do fundo entre as
-      // duas, que lia como risco branco no bicho.
+      canvas.save();
+      // Gira pelo ombro: 0,12 rad abertas em repouso.
+      canvas.translate(lado * 30, -14);
+      canvas.rotate(lado * 0.12);
+      canvas.translate(-lado * 30, 14);
       canvas.drawPath(
         Path()
-          ..moveTo(lado * 30, -14 + sobe)
+          ..moveTo(lado * 28, -18 + sobe)
           ..cubicTo(
-            lado * (44 + abre),
-            0 + sobe,
-            lado * (43 + abre),
-            24 + sobe,
-            lado * 26,
-            36 + sobe,
+            lado * (50 + abre),
+            -8 + sobe,
+            lado * (66 + abre),
+            (12 + sobe) * comprimento + (1 - comprimento) * -6,
+            lado * (56 + abre * 0.6),
+            (30 + sobe) * comprimento + (1 - comprimento) * -2,
           )
           ..cubicTo(
-            lado * 22,
-            14 + sobe,
-            lado * 23,
-            -4 + sobe,
-            lado * 30,
-            -14 + sobe,
+            lado * (42 + abre * 0.3),
+            (26 + sobe) * comprimento,
+            lado * 36,
+            4 + sobe,
+            lado * 26,
+            -10 + sobe,
           )
           ..close(),
-        _p(sombraForte),
+        _p(escuro),
       );
+      canvas.restore();
     }
 
     // --- cabeça -----------------------------------------------------------
@@ -4317,45 +4525,63 @@ class _PetPainter extends CustomPainter {
     _cabecaSemFolego(canvas);
     _posicionaCabeca(canvas, _cabecaGiro * 0.9, pescoco: 30);
     canvas.scale(_cabecaDoEstagio);
-    _sombraDoQueixo(canvas, 72, 60);
+    // Sem a sombra do queixo: no pinguim a cabeça emenda no corpo, e a
+    // sombra sujava o colar e a barriga (NINO-20). O colar faz a separação.
 
-    canvas.drawPath(
-      _bolha(Rect.fromCenter(center: Offset.zero, width: 72, height: 60)),
-      _p(pelo),
+    final cabeca = _bolha(
+      Rect.fromCenter(center: Offset.zero, width: 72, height: 60),
     );
+    canvas.drawPath(cabeca, _p(dorso));
 
     // A faixa branca em C: nasce acima do olho, contorna a bochecha e fecha
     // no queixo. É o desenho da cabeça do magalhães, e o olho fica inteiro
-    // no escuro, dentro da curva.
+    // no escuro, dentro da curva. No jovem ela é só insinuada (45 %); o
+    // filhote tem o rosto claro de penugem no lugar dela.
     canvas.save();
-    canvas.clipPath(
-      _bolha(Rect.fromCenter(center: Offset.zero, width: 72, height: 60)),
-    );
+    canvas.clipPath(cabeca);
     _rostoVira(canvas);
-    final branco = _p(Color.lerp(claro, Cores.superficie, 0.70)!);
-    for (final lado in [-1.0, 1.0]) {
-      canvas.drawPath(
-        Path()
-          ..moveTo(lado * 11, -22)
-          ..cubicTo(lado * 30, -27, lado * 41, -4, lado * 28, 16)
-          ..quadraticBezierTo(lado * 16, 29, 0, 30)
-          ..lineTo(0, 25.5)
-          ..quadraticBezierTo(lado * 13, 25, lado * 23, 13)
-          ..cubicTo(lado * 33, -2, lado * 26, -18, lado * 12, -17.5)
-          ..close(),
-        branco,
-      );
-      // A pele rosada entre o olho e o bico. No auge ela cresce e aviva,
-      // como na época de ninho: é a marca real do adulto pleno.
-      final auge = estagio == EstagioDoBicho.pleno;
+    if (filhote) {
       canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(lado * 8, 2),
-          width: auge ? 10 : 7,
-          height: auge ? 7 : 5,
-        ),
-        _p(auge ? const Color(0xFFEE8E8B) : const Color(0xFFE7A3A0)),
+        Rect.fromCenter(center: const Offset(0, 4), width: 50, height: 40),
+        _p(peito),
       );
+    } else {
+      final faixaC = _p(jovem ? Color.lerp(dorso, branco, 0.45)! : branco);
+      for (final lado in [-1.0, 1.0]) {
+        canvas.drawPath(
+          Path()
+            ..moveTo(lado * 11, -22)
+            ..cubicTo(lado * 30, -27, lado * 41, -4, lado * 28, 16)
+            ..quadraticBezierTo(lado * 16, 29, 0, 30)
+            ..lineTo(0, 25.5)
+            ..quadraticBezierTo(lado * 13, 25, lado * 23, 13)
+            ..cubicTo(lado * 33, -2, lado * 26, -18, lado * 12, -17.5)
+            ..close(),
+          faixaC,
+        );
+      }
+    }
+    // A pele nua rosa do adulto: um anel em volta do olho e os lores, a
+    // gota entre o olho e o bico, acima da linha do bico (laudo 32 R8,
+    // NINO-18). No auge ela cresce e aviva, como na época de ninho.
+    if (adulto) {
+      final auge = estagio == EstagioDoBicho.pleno;
+      final rosa = auge ? const Color(0xFFEE8E8B) : const Color(0xFFE7A3A0);
+      for (final lado in [-1.0, 1.0]) {
+        canvas.drawCircle(
+          Offset(lado * 15, -3),
+          auge ? 9.2 : 8.6,
+          _traco(rosa, auge ? 2.6 : 2.0),
+        );
+        canvas.drawPath(
+          Path()
+            ..moveTo(lado * 4.5, 5)
+            ..quadraticBezierTo(lado * 3, -2, lado * 9, -6)
+            ..quadraticBezierTo(lado * (auge ? 10 : 8.5), 0, lado * 4.5, 5)
+            ..close(),
+          _p(rosa),
+        );
+      }
     }
     canvas.restore();
     _rostoVira(canvas);
@@ -4364,17 +4590,17 @@ class _PetPainter extends CustomPainter {
     _olho(canvas, const Offset(15, -3), 7);
 
     // Bico escuro e robusto, com a faixa clara perto da ponta do
-    // magalhães — o único traço reto do bicho. A mandíbula de baixo gira na
-    // articulação (0..30°) com a abertura (ver [_bico]); o remendo terracota
-    // dentro do bico fechado, que fazia as vezes de "aberto", saiu.
-    final bico = Color.lerp(sombraForte, Cores.tinta, 0.55)!;
+    // magalhães — o único traço reto do bicho (cores do laudo 32 R8). A
+    // mandíbula de baixo gira na articulação (0..30°) com a abertura (ver
+    // [_bico]); o remendo terracota dentro do bico fechado, que fazia as
+    // vezes de "aberto", saiu.
     _bico(
       canvas,
-      cor: bico,
+      cor: const Color(0xFF3F4149),
       base: 5,
       ponta: 17,
       anguloMax: 30,
-      faixa: Color.lerp(bico, Cores.superficie, 0.45)!,
+      faixa: const Color(0xFF9E9FA4),
       faixaEm: 12,
       lingua: true,
     );
@@ -6162,6 +6388,7 @@ class _PetPainter extends CustomPainter {
   /// antes de quem está dentro, a borda da frente depois —, para o filhote
   /// ficar **dentro** dele e não colado por cima.
   void _ninho(Canvas canvas, Offset chao, {required bool frente}) {
+    if (species == Species.owl) return _toca(canvas, chao, frente: frente);
     const marrom = Color(0xFF8B6440);
     final escuro = Color.lerp(marrom, Cores.tinta, 0.35)!;
     final claro = Color.lerp(marrom, const Color(0xFFE8D2A6), 0.45)!;
@@ -6195,6 +6422,87 @@ class _PetPainter extends CustomPainter {
         chao + Offset(x - c, y - d),
         chao + Offset(x + c, y + d),
         _traco(i.isEven ? claro : escuro, 1.6),
+      );
+    }
+  }
+
+  /// A toca da buraqueira: o ovo fica na boca de um buraco cavado no chão,
+  /// num montinho de terra com capim seco em volta — e não num ninho de
+  /// gravetos em taça, que é de ave de árvore (NINA-14; laudo 07).
+  void _toca(Canvas canvas, Offset chao, {required bool frente}) {
+    const terra = Color(0xFF8B6A4E);
+    const topoDaTerra = Color(0xFFA3815F);
+    const fundo = Color(0xFF4E3A2C);
+    const borda = Color(0xFF6B5240);
+    const capim = Color(0xFFC9A86A);
+    if (!frente) {
+      // O montinho e, atrás do ovo, o arco da entrada em corte.
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: chao + const Offset(0, -10),
+          width: 120,
+          height: 30,
+        ),
+        _p(terra),
+      );
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: chao + const Offset(0, -14),
+          width: 96,
+          height: 16,
+        ),
+        _p(topoDaTerra),
+      );
+      final arco = Path()
+        ..moveTo(chao.dx - 28, chao.dy - 8)
+        ..cubicTo(
+          chao.dx - 28,
+          chao.dy - 32,
+          chao.dx + 28,
+          chao.dy - 32,
+          chao.dx + 28,
+          chao.dy - 8,
+        )
+        ..close();
+      canvas.drawPath(arco, _p(fundo));
+      canvas.drawPath(arco, _traco(borda, 2));
+      return;
+    }
+    // A frente do montinho, que enterra 2 u do ovo, e o capim seco.
+    canvas.drawPath(
+      Path()
+        ..moveTo(chao.dx - 60, chao.dy - 10)
+        ..quadraticBezierTo(chao.dx, chao.dy - 4, chao.dx + 60, chao.dy - 10)
+        ..quadraticBezierTo(chao.dx + 52, chao.dy + 6, chao.dx, chao.dy + 7)
+        ..quadraticBezierTo(
+          chao.dx - 52,
+          chao.dy + 6,
+          chao.dx - 60,
+          chao.dy - 10,
+        )
+        ..close(),
+      _p(terra),
+    );
+    final fio = _traco(capim, 1.5)..strokeCap = StrokeCap.round;
+    for (final (x, alto, inclina) in const [
+      (-52.0, 12.0, -0.35),
+      (-44.0, 14.0, -0.15),
+      (-36.0, 10.0, 0.2),
+      (38.0, 11.0, -0.2),
+      (46.0, 14.0, 0.15),
+      (54.0, 10.0, 0.4),
+    ]) {
+      final base = chao + Offset(x, -8);
+      canvas.drawPath(
+        Path()
+          ..moveTo(base.dx, base.dy)
+          ..quadraticBezierTo(
+            base.dx + inclina * 10,
+            base.dy - alto * 0.6,
+            base.dx + inclina * 22,
+            base.dy - alto,
+          ),
+        fio,
       );
     }
   }

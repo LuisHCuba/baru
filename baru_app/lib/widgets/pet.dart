@@ -5604,7 +5604,7 @@ class _PetPainter extends CustomPainter {
     // Na camada de corpo da série (sem boca) ela não entra: lá a boca é
     // outra camada que abre e fecha, e a língua do corpo ficava pendurada
     // debaixo da boca aberta.
-    if (pose.vida.semBoca) return;
+    if (pose.vida.semBoca || PetView.aoDesenharBoca != null) return;   // na série (camadas capturadas) a língua não fica para fora
     // Ela cresce com a alegria em vez de aparecer inteira de uma vez: um
     // apêndice que liga e desliga entre dois quadros lê como falha de
     // desenho.

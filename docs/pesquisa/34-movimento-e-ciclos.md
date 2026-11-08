@@ -14,14 +14,16 @@ como ponto de partida que o motor já tem molas, ruído e sacadas.
 ## Resumo em 12 linhas
 
 1. **[App]** As folhas `corre-fox.webp` e `anda-otter.webp` (24 quadros) são
-   um pogo: o corpo inteiro sobe 29 px (raposa, 12 % do quadro) e 38 px
+   um pogo: o corpo inteiro sobe 49 px (raposa, 20 % do quadro) e 38 px
    (lontra, 18 %) e desce; as duas metades do laço são iguais salvo a pata
    (diferença média de alfa 9,8/255 na raposa); cauda, orelhas, olhar, boca e
    cabeça não mudam em nenhum quadro; no ápice a cabeça sai do quadro (topo = 0)
    e no pouso a lontra é cortada embaixo e dos dois lados.
-2. **[App]** O pouso é um único quadro de achatamento 0,9 (a lontra alarga 15 %
-   num quadro de 62 ms e volta), e o "squash" fica em platô por 24 % de cada
-   passo (`s < 0,14` e `s > 0,9`): dois quadros parados no chão.
+2. **[App]** O pouso é um único quadro de achatamento 0,9 exatamente no
+   contato (a 12 q por passo: 0,15 → **0,90** → 0,36; a lontra alarga 15 % num
+   quadro de 62 ms e volta), a raposa desce 20 px no último quadro, e o
+   estirão máximo (−0,55) cai no ápice, onde a velocidade é zero — o
+   contrário do que o peso pede.
 3. **[App]** Cadências: a lontra saltita 3,2 vezes/s andando e 5,8 correndo; o
    site toca a corrida a 2,1 passos/s (11 quadros por passo a 24 fps, tempo de
    *andar* na tabela de Williams) e ainda soma um quique de 5,4 Hz por cima.
@@ -49,12 +51,12 @@ como ponto de partida que o motor já tem molas, ruído e sacadas.
     com amplitude zero atrás da cabeça e máxima na ponta; a coruja bate asa a
     ~6 Hz e a buraqueira anda, saltita e corre no chão.
 11. **Recomendações altas**: R1 alternar os lados do laço (pelve, ombro,
-    cabeça, cauda), R2 squash de 2–3 quadros sem platô e sem corte do quadro,
+    cabeça, cauda), R2 squash de 2–3 quadros depois do contato, sem corte do quadro,
     R3 tabela de cadências por espécie, R4 fim do pingue-pongue, R5 antecipação
     antes de decolar (festa, susto), R6 crossfade de 4–8 quadros no `b4.js`.
 12. O que não fazer: pingue-pongue de qualquer coisa que tenha direção
     (piscada, sacada, passo); ciclos de 24 quadros tocados a 16 fps; o quique
-    extra em JS por cima de uma folha que já quica; squash em platô.
+    extra em JS por cima de uma folha que já quica; squash de um quadro só.
 
 ---
 
@@ -73,9 +75,10 @@ como ponto de partida que o motor já tem molas, ruído e sacadas.
   pinguim 1,67; tartaruga 0,67.
 - O quadro do passo (`_passo`, linhas 1215-1296): intensidade entra com
   `exp(-dt·9)` (≈ 110 ms); `sobeNoPasso` = arco de 7 u (12 correndo) para quem
-  saltita e `(1-cos 2φ)/2 · 3` (8 correndo) para quem ginga; `_elastico` =
-  **0,9 em platô** enquanto `s < 0,14` e `s > 0,9` (24 % do passo) e −0,55 no
-  meio (linhas 1232-1245); no pouso `_achata.empurra(2,5)`, cauda ±5 e 25 % de
+  saltita e `(1-cos 2φ)/2 · 3` (8 correndo) para quem ginga; `_elastico`
+  sobe de 0 a 0,9 em `s > 0,9`, cai de 0,9 a 0 em `s < 0,14` (a 12 q por
+  passo: 0,15 → **0,90** → 0,36, um pico de um quadro no contato) e vai a
+  −0,55 em `s = 0,5`, o ápice (linhas 1232-1245); no pouso `_achata.empurra(2,5)`, cauda ±5 e 25 % de
   chance de orelha (1250-1255); `gingado = onda·0,045` rad (**2,6°**) só para
   quem não saltita (linha 1270); `pende` 0,03 rad andando (1,7°) e +0,07
   correndo (1273); patas: `arco·(1,0 | 0,35)` alternando por salto (1278-1285).
@@ -97,7 +100,8 @@ como ponto de partida que o motor já tem molas, ruído e sacadas.
   Gravidade 900 u/s² (linha 680): v = 220–290 dá 0,49–0,64 s de voo.
 - Festa (`1727-1733`): pula a cada **0,5–0,65 s** com v 220–290 → o corpo
   está no ar 75–100 % do tempo: um pogo sem pausa, sem agachar, sem rebolar
-  entre saltos (o rebolado está no pintor, `pet.dart:2515`, a 7 Hz).
+  entre saltos (o rebolado está no pintor, `pet.dart:2515`, 7 voltas por
+  ciclo de 7 s ≈ 1 Hz, e só se vê quando ele está no chão).
 - Susto (`796-800`): `_susto.fixa(1)` (estica de uma vez) **e**
   `_achata.empurra(4)` (achata) **e** `pula(240)` no mesmo quadro — a
   antecipação para baixo e o estirão para cima se anulam em parte.
@@ -148,28 +152,31 @@ como ponto de partida que o motor já tem molas, ruído e sacadas.
   (`n2 = 2n − 2 = 238` a 30 fps, volta de 7,9 s). Troca de pose
   (`parado`/`anda`/`corre`/`respira`) é `display: inline/none` sem mistura e a
   folha nova começa do quadro que o relógio global apontar (linha 114).
-- `b4.js:51` `piscaEm`: fechado por 0,13 s, um quadro só (`m·7+6`), intervalo
-  uniforme 2,6–4,4 s. `b4.js:94-95`: respiração `1 + sin(2,4t)·0,012`
+- `b4.js:51` `piscaEm`: fechado por 0,13 s com um único desenho (`m·7+6`),
+  sem meio-fechado antes nem depois; intervalo uniforme 2,6–4,4 s. `b4.js:94-95`: respiração `1 + sin(2,4t)·0,012`
   (período 2,6 s, 1,2 % de escala) e balanço `sin(1,7t)·1,2°`.
 
 ### 1.6 Medições das folhas (`assets/img/app/`, 08/11/2026)
 
-`corre-fox.webp` 24 × 272×243; `anda-otter.webp` 24 × 181×206. Caixa de
-alfa > 40 por quadro:
+`corre-fox.webp` 24 × 272×243; `anda-otter.webp` 24 × 181×206. Caixa por
+quadro (lontra: alfa > 40; raposa: só o pelo laranja, alfa > 200, para
+excluir os brilhos cor-de-rosa e a poeira, que são fixos):
 
 | | raposa (corre) | lontra (anda) |
 |---|---|---|
-| curso vertical do topo | 29 px (12 % do quadro) | 38 px (18 %) |
+| curso vertical do topo | 49 px (20 % do quadro) | 38 px (18 %) |
 | topo no ápice | **0** (cortada) | **0** (cortada) |
-| pouso | quadros 0-1 e 12-13 **iguais** (platô 2 q = 125 ms a 16 fps) | 1 quadro; largura 157→**180** (+15 %), cortada embaixo (205/206) e dos lados (0 e 180/181) |
-| Δtopo quadro a quadro | 0,−10,−8,−6,−4,−1,+1,+3,+6,+7,+11,+1 | −13,−10,−6,−5,−3,−1,+1,+2,+5,+5,+8,**+17** |
+| pouso | 1 quadro; largura 177→**188** (+6 %); o topo desce **20 px** no último quadro | 1 quadro; largura 157→**180** (+15 %), cortada embaixo (205/206) e dos lados (0 e 180/181) |
+| Δtopo quadro a quadro | −16,−13,−8,−6,−4,−2,+1,+4,+5,+8,+11,**+20** | −13,−10,−6,−5,−3,−1,+1,+2,+5,+5,+8,**+17** |
 | metade 2 vs metade 1 | diferença média de alfa 0→9,8/255 (só a pata) | 0→18/255 (só a pata) |
 | cauda, orelha, olhar, boca, inclinação da cabeça | fixos nos 24 quadros | fixos nos 24 quadros |
 
 Leitura: a subida é mais rápida que a descida (bom), mas a descida termina
-num degrau de 17 px num quadro de 62 ms (lontra) ou num platô de 2 quadros
-(raposa); nada além do corpo inteiro se move; a silhueta não alterna de lado
-entre os dois passos; e o quadro foi capturado pequeno demais para o salto.
+num degrau de 17–20 px num quadro de 62 ms, e o achatamento é um pico de um
+quadro (0,15 → 0,90 → 0,36) exatamente no contato, sem o "down" de 2–3 q
+depois dele; o estirão máximo está no ápice, onde o corpo está parado; nada
+além do corpo inteiro se move; a silhueta não alterna de lado entre os dois
+passos; e o quadro foi capturado pequeno demais para o salto.
 
 ---
 
@@ -351,22 +358,25 @@ semente fixa (`MotorDeVida(semente:)`, `dt = 1/24`).
   passagem, ombros contra, cabeça arrasta), F6 (as 4 chaves alternam lados),
   F1 (peso desce depois do contato, sobe depois da passagem).
 
-### R2 — Squash de 2–3 quadros, sem platô, sem cortar o quadro (alta)
+### R2 — Squash de 2–3 quadros depois do contato, estirão na decolagem, sem cortar o quadro (alta)
 
-- **O que mudar.** Trocar o platô de `_elastico` (0,9 por 24 % do passo) por
-  um pulso: pico **+0,7 no contato +1 q**, decaindo a zero em 3 q (fórmula de
-  partida: `0,7·exp(−((s−0,05)/0,06)²)`), estirão **−0,35** entre `s` 0,2 e
-  0,45 (subida) e −0,2 na queda; largura cresce no máximo **+10 %** (hoje
+- **O que mudar.** Trocar o pico de um quadro de `_elastico` no contato por
+  um pulso de 3 q que **começa no contato e tem o máximo 1 q depois** (+0,6),
+  decaindo a zero em mais 2 q (fórmula de partida:
+  `0,6·exp(−((s−0,08)/0,06)²)`); estirão **−0,35 logo após a decolagem** (`s`
+  0,15–0,35) e −0,2 na queda (`s` 0,7–0,9); **no ápice ≈ 0** (hoje −0,55, o
+  máximo, onde o corpo está parado); largura cresce no máximo **+10 %** (hoje
   +15 % num quadro). O corpo nunca sai da caixa de captura: aumentar
   `_tamanho` da captura para 300×260 ou reduzir `sobeNoPasso` de 7 para 5 u
   andando (12 → 9 correndo).
 - **Onde.** `motor_de_vida.dart:1232-1245` e `passoNa`
   (`novelinha_anim24_test.dart:62-69`); `novelinha_anim24_test.dart:37`
   (`_tamanho`).
-- **Aceite.** Na folha: nenhum par de quadros consecutivos com o mesmo topo
-  (Δtopo ≠ 0) exceto um no ápice; largura máxima ≤ 1,10× a mínima; topo ≥ 4
-  px e fundo ≤ H−4 px em todos os 24 quadros; a sequência de largura sobe e
-  desce em ≤ 3 q.
+- **Aceite.** Na folha: a largura máxima ocorre **1 q depois** do quadro de
+  topo mais baixo (não no mesmo) e é ≤ 1,10× a mínima; a largura fica acima
+  de 1,03× a mínima por 2–3 q, não 1; o quadro do ápice tem largura dentro de
+  ±2 % da mínima; |Δtopo| ≤ 14 px entre quadros consecutivos; topo ≥ 4 px e
+  fundo ≤ H−4 px em todos os 24 quadros.
 - **Fontes.** F3 (down = joelho dobra para absorver; passagem/up = ponto
   alto), F21 ("slam down in a couple frames"; espaçamento junto no ápice), F1
   (sem sobe-desce o corpo flutua — mas é *movimento*, não parada).
@@ -487,7 +497,8 @@ semente fixa (`MotorDeVida(semente:)`, `dt = 1/24`).
 - **Onde.** `motor_de_vida.dart:1511`, `1551-1553`, `_gestosDeCabeca`;
   `b4.js:51` e o atlas de rostos (`bicho-*.webp`, quadro `m·7+6`).
 - **Aceite.** Log: toda sacada > 0,35 tem `pisca > 0,5` dentro de ±3 q; na
-  série, nenhuma piscada com um único quadro de olho fechado.
+  série, toda piscada passa por ≥ 1 desenho de olho meio-fechado antes e
+  depois do fechado (3 desenhos no atlas, não 1).
 - **Fontes.** F19, F18, F20 (hold inicial animado = o olho vivo).
 
 ### R9 — Virada de cabeça em 8 q com antecipação contrária e arco para baixo (média)
@@ -611,8 +622,9 @@ semente fixa (`MotorDeVida(semente:)`, `dt = 1/24`).
 - **Não tocar 24 quadros a 16 fps** nem a 25,6 fps num render de 30 fps: os
   quadros se repetem em padrão 1-2-2-1 e o olho vê o solavanco. Capturar na
   taxa de exibição.
-- **Não manter squash em platô** (`s < 0,14 || s > 0,9`): peso é movimento
-  para baixo e para cima (F1), não uma pose parada no chão.
+- **Não concentrar o squash num único quadro no contato** nem pôr o estirão
+  máximo no ápice: o peso desce *depois* do contato e sobe *depois* da
+  passagem (F1); o estirão acompanha a velocidade, e no ápice ela é zero.
 - **Não decolar no mesmo quadro em que agacha** (`pula`, susto): sem 3–5 q de
   antecipação o salto lê como teleporte (F20, F21).
 - **Não espelhar o ciclo inteiro para o segundo passo** sem trocar o lado da

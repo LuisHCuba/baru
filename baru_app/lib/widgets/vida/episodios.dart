@@ -898,18 +898,21 @@ extension _Episodios on MotorDeVida {
         }
         // Batidas: as primeiras, de decolagem, são mais rápidas; depois
         // de três ou quatro ela plana um pouco (batida e planeio).
+        // Decolagem a 5 Hz, cruzeiro a 4 Hz (6 quadros por batida a 24
+        // fps: ainda lê como "rápido" sem virar borrão; a buraqueira real
+        // bate a ~6 Hz — laudo 34 R12).
         if (!_planando) {
           _faseAtividade +=
               dt /
               (_batidas < 2
-                  ? 0.26
+                  ? 0.20
                   : _passosDoEp == 1
                   ? 0.24
-                  : 0.36);
+                  : 0.25);
         }
         if (_faseAtividade.floor() != _faseAntes.floor()) {
           _batidas++;
-          if (_passosDoEp == 0 && _batidas >= 3 && _sorte.nextDouble() < 0.5) {
+          if (_passosDoEp == 0 && _batidas >= 4 && _sorte.nextDouble() < 0.5) {
             _planaAte = _t + _entre(0.8, 1.4);
           }
         }

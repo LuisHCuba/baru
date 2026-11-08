@@ -351,6 +351,8 @@ class OssosDoCorpo {
     this.altura = 140,
     this.ondula = 0,
     this.faseDaOnda = 0,
+    this.ondaVertical = 0,
+    this.ondaNaCauda = false,
     this.dente = Offset.zero,
     this.denteForca = 0,
   });
@@ -359,10 +361,19 @@ class OssosDoCorpo {
   final Offset dente;
   final double denteForca;
 
-  /// 0..1: nadando, o corpo ondula de lado numa onda que sobe do quadril
-  /// para a cabeça (é como o axolote e a lontra nadam).
+  /// 0..1: nadando, o corpo ondula de lado numa onda que viaja pelo corpo
+  /// (é como o axolote nada; a capivara e a tartaruga, bem menos).
   final double ondula;
   final double faseDaOnda;
+
+  /// 0..1: a onda **vertical** do dorso (a lontra nada assim: o dorso sobe
+  /// e desce, a onda viaja da cabeça para a cauda — laudo 31 R8).
+  final double ondaVertical;
+
+  /// A onda lateral cresce até a ponta: amplitude ≈ 0 atrás da cabeça e
+  /// máxima na base/cauda (o nado anguiliforme do axolote, laudo 34 R10).
+  /// Falso: máxima no meio do tronco.
+  final bool ondaNaCauda;
 
   /// -1..1: o tronco verga para +x (para onde ele vai), a base fica.
   final double verga;
@@ -393,6 +404,7 @@ class OssosDoCorpo {
       ladoEsquerdo < 0.002 &&
       ladoDireito < 0.002 &&
       ondula < 0.002 &&
+      ondaVertical < 0.002 &&
       denteForca.abs() < 0.002;
 
   /// O campo de deformação destes ossos.
@@ -413,24 +425,44 @@ class OssosDoCorpo {
     // Achata/estica com volume: o alto desce (ou sobe) proporcional à
     // altura; a cintura (meio de baixo) incha (ou afina) para os lados.
     final cintura = math.sin(math.pi * h.clamp(0.0, 1.0)) * (1.2 - h * 0.6);
-    y += achata * h * 14;
-    x *= 1 + achata * 0.11 * cintura;
+    // Squash & stretch ≤ 6 % da altura (laudo 34 R2): o alto desce até 7 u
+    // e sobe até 4,5 u num corpo de 120; a borracha de 19 % era balão.
+    final a = achata.clamp(-0.32, 0.5);
+    y += a * h * 14;
+    x *= 1 + a * 0.11 * cintura;
 
-    // Fôlego: o peito (centro em ~35% da altura) enche para fora.
-    final dyPeito = (h - 0.35) / 0.22;
+    // Fôlego: o peito e os ombros (centro em ~38% da altura) enchem para
+    // fora e sobem; legível (5 %) e no tronco, não nas asas (MOV-10).
+    final dyPeito = (h - 0.38) / 0.24;
     final peito = math.exp(-dyPeito * dyPeito);
-    x *= 1 + folego * 0.035 * peito;
-    y -= folego * 1.4 * peito;
+    x *= 1 + folego * 0.05 * peito;
+    y -= folego * 1.6 * peito;
 
-    // Quadril: a base vai para o lado do passo, o alto fica (1-h)².
+    // Quadril: a base vai para o lado do passo, o alto fica (1-h)². Curto
+    // (2,5): a 4 a base inteira escorregava de lado (MOV-04, axolote).
     final base = (1 - h).clamp(0.0, 1.0);
-    x += quadril * base * base * 4;
+    x += quadril * base * base * 2.5;
 
-    // A onda do nado: cada altura atrasada em relação à de baixo, então a
-    // ondulação sobe pelo corpo; a cabeça vai menos que o tronco.
+    // A onda do nado: cada altura atrasada em relação à de cima, então a
+    // ondulação viaja da cabeça para a cauda. No nado de enguia a amplitude
+    // é ≈ 0 atrás da cabeça e máxima na base (a cauda); no resto, máxima no
+    // meio do tronco e a cabeça vai menos.
     if (ondula > 0) {
-      final amplitude = 6 * ondula * (0.35 + 0.65 * (1 - (h - 0.5).abs()));
-      x += amplitude * math.sin(faseDaOnda - h * math.pi * 1.6);
+      final perfil = ondaNaCauda
+          ? 0.1 + 0.9 * base * base
+          : 0.35 + 0.65 * (1 - (h - 0.5).abs());
+      final amplitude = (ondaNaCauda ? 9 : 6) * ondula * perfil;
+      x += amplitude * math.sin(faseDaOnda + (1 - h) * math.pi * 1.4);
+    }
+    // A onda vertical do dorso (lontra): sobe e desce 4 u, viajando da
+    // cabeça para a base.
+    if (ondaVertical > 0) {
+      final perfil = 0.3 + 0.7 * math.sin(math.pi * h.clamp(0.0, 1.0));
+      y +=
+          4 *
+          ondaVertical *
+          perfil *
+          math.sin(faseDaOnda + (1 - h) * math.pi * 1.2);
     }
 
     // O dedo: o contorno perto dele afunda para o centro do corpo, num

@@ -45,6 +45,25 @@ class ZonasDoMundo {
 
 enum ZonaDoMundo { toca, margem, brinquedos, lagoa }
 
+/// O palco dos itens comprados, posto sobre a lagoa.
+///
+/// O desenho do cartão ([HabitatScene.design], 372×296) é escalado para
+/// caber no visível: antes era esticado até a largura da lagoa (3,4× numa
+/// tela de 1600) e a vitória-régia caía atrás do painel e os vaga-lumes no
+/// céu (CEN-16). A linha 248 do desenho cai na linha d'água do mundo.
+({Rect rect, double escala}) palcoDosItens(GeometriaDoMundo g) {
+  final k = g.x(1 - ZonasDoMundo.beira) / HabitatScene.design.width * 0.65;
+  return (
+    rect: Rect.fromLTWH(
+      g.x(ZonasDoMundo.beira) - 12,
+      g.linhaDagua - 248 * k,
+      HabitatScene.design.width * k,
+      HabitatScene.design.height * k,
+    ),
+    escala: k,
+  );
+}
+
 /// A geometria do mundo para uma tela.
 class GeometriaDoMundo {
   /// [baixo]: quanto do pé da tela o painel de baixo cobre. O mundo se
@@ -487,16 +506,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
           final baseDaCaixa = naAgua
               ? g.linhaDagua + (150 - PetView.linhaDaguaEm(150)) * g.escala
               : g.chao + 5 * g.escala;
-          final palcoK =
-              g.x(1 - ZonasDoMundo.beira) / HabitatScene.design.width;
-          final palco = Rect.fromLTWH(
-            g.x(ZonasDoMundo.beira) - 12,
-            g.linhaDagua +
-                118 * palcoK * 0.55 -
-                HabitatScene.design.height * palcoK,
-            HabitatScene.design.width * palcoK,
-            HabitatScene.design.height * palcoK,
-          );
+          final (rect: palco, escala: palcoK) = palcoDosItens(g);
           return GestureDetector(
             key: MundoDoBaru.mundoKey,
             behavior: HitTestBehavior.translucent,
@@ -563,6 +573,7 @@ class MundoDoBaruState extends State<MundoDoBaru>
                                       item,
                                       sx: palcoK,
                                       sy: palcoK,
+                                      luz: luz,
                                     ),
                                   ),
                                 ),

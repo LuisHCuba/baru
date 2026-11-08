@@ -256,8 +256,8 @@ class ShopItemDef {
 ///   céu e na água da frente (y > 240).
 const shopItems = [
   ShopItemDef('lily', 40, [
-    ShapePart(8, 252, 42, 15, 8, Cores.primaria),
-    ShapePart(54, 266, 28, 11, 6, AppColors.greenSoft),
+    ShapePart(8, 236, 42, 15, 8, Cores.primaria),
+    ShapePart(54, 250, 28, 11, 6, AppColors.greenSoft),
   ], colecao: Colecao.agua),
   ShopItemDef('bamboo', 70, [
     ShapePart(302, 98, 8, 82, 4, Cores.primaria),
@@ -273,9 +273,13 @@ const shopItems = [
     ShapePart(12, 203, 8, 20, 4, AppColors.woodDark),
     ShapePart(54, 203, 8, 20, 4, AppColors.woodDark),
   ], colecao: Colecao.agua),
+
+  /// A lanterna pende de um poste cravado na margem, não do céu: o balão,
+  /// o fio e o poste (CEN-01).
   ShopItemDef('lantern', 190, [
-    ShapePart(52, 30, 28, 36, 13, AppColors.orange),
-    ShapePart(64, 8, 3, 24, 2, Color(0x403E2F23)),
+    ShapePart(0, 150, 28, 36, 13, AppColors.orange),
+    ShapePart(12, 128, 3, 24, 2, Color(0x403E2F23)),
+    ShapePart(36, 124, 5, 120, 2, AppColors.woodDark),
   ], colecao: Colecao.noite),
   ShopItemDef('tree', 240, [
     ShapePart(36, 120, 11, 66, 5, AppColors.woodDark),
@@ -381,10 +385,10 @@ const shopItems = [
   /// Junco na beira: o mato que só cresce com o pé na água. É o item barato
   /// que faz a margem deixar de ser uma faixa de areia lisa.
   ShopItemDef('juncos', 90, [
-    ShapePart(106, 138, 6, 39, 3, Cores.primaria),
-    ShapePart(116, 130, 6, 47, 3, AppColors.greenSoft),
-    ShapePart(126, 146, 6, 31, 3, AppColors.greenHover),
-    ShapePart(113, 122, 9, 15, 4, AppColors.woodDark),
+    ShapePart(106, 198, 6, 39, 3, Cores.primaria),
+    ShapePart(116, 190, 6, 47, 3, AppColors.greenSoft),
+    ShapePart(126, 206, 6, 31, 3, AppColors.greenHover),
+    ShapePart(113, 182, 9, 15, 4, AppColors.woodDark),
   ], colecao: Colecao.agua),
 
   /// O que nasce na sombra. Combina de propósito com a árvore antiga — item
@@ -457,15 +461,15 @@ const shopItems = [
     ShapePart(279, 126, 9, 9, 4.5, AppColors.woodDark),
   ], colecao: Colecao.mata),
 
-  /// Vaga-lumes no ar, acima da cabeça do companheiro para não sumirem atrás
-  /// dele. Com o cenário de noite estrelada é o item que mais muda a cena
-  /// por folha gasta.
+  /// Vaga-lumes baixos, entre os juncos e a lâmina d'água — vaga-lume voa
+  /// perto do chão, não na altura das nuvens (CEN-16). Com o cenário de
+  /// noite estrelada é o item que mais muda a cena por folha gasta.
   ShopItemDef('vagalumes', 220, [
-    ShapePart(88, 72, 7, 7, 3.5, CoresDaLoja.vagalume),
-    ShapePart(140, 52, 6, 6, 3, CoresDaLoja.vagalumeForte),
-    ShapePart(196, 80, 7, 7, 3.5, CoresDaLoja.vagalume),
-    ShapePart(248, 58, 6, 6, 3, CoresDaLoja.vagalumeForte),
-    ShapePart(286, 88, 5, 5, 2.5, CoresDaLoja.vagalume),
+    ShapePart(88, 178, 7, 7, 3.5, CoresDaLoja.vagalume),
+    ShapePart(140, 158, 6, 6, 3, CoresDaLoja.vagalumeForte),
+    ShapePart(196, 186, 7, 7, 3.5, CoresDaLoja.vagalume),
+    ShapePart(248, 164, 6, 6, 3, CoresDaLoja.vagalumeForte),
+    ShapePart(286, 198, 5, 5, 2.5, CoresDaLoja.vagalume),
   ], colecao: Colecao.noite),
 
   /// Neve no ar. Espalhada em oito flocos de três tamanhos: floco do mesmo

@@ -166,10 +166,37 @@ class LuzDaCena {
     required this.brilho,
     required this.sombraAmbiente,
     required this.astroAlto,
-  });
+    this.astroX = 0.78,
+    Color? ceuMeio,
+    Color? grama,
+    Color? gramaFunda,
+  }) : _ceuMeio = ceuMeio,
+       _grama = grama,
+       _gramaFunda = gramaFunda;
 
   final Color ceuAlto;
   final Color ceuBaixo;
+  final Color? _ceuMeio;
+  final Color? _grama;
+  final Color? _gramaFunda;
+
+  /// A parada do meio do céu: o degradê tem três cores (zênite, meio,
+  /// horizonte), senão amanhecer e entardecer saem só um creme (CEN-07).
+  Color get ceuMeio => _ceuMeio ?? Color.lerp(ceuAlto, ceuBaixo, 0.5)!;
+
+  /// A grama do campo onde o bicho pisa, e a do pé do capim. Separadas da
+  /// colina porque a faixa do chão precisa ser mais clara que o pelo dos
+  /// bichos (CEN-19) e a colina, mais escura que o céu (CEN-09).
+  Color get grama =>
+      _grama ?? Color.lerp(colina, const Color(0xFF8DB06A), 0.55)!;
+  Color get gramaFunda =>
+      _gramaFunda ?? Color.lerp(grama, const Color(0xFF3F6B33), 0.35)!;
+
+  /// É noite: o céu está escuro de verdade (lua, estrelas, luzes acesas).
+  bool get noite => ceuAlto.computeLuminance() < 0.06;
+
+  /// Hora de acender lanterna, varal e fogueira: noite e entardecer.
+  bool get acendeLuzes => ceuAlto.computeLuminance() < 0.2;
   final Color astro;
   final Color haloAstro;
   final Color agua;
@@ -185,6 +212,11 @@ class LuzDaCena {
 
   /// 0 = astro no horizonte, 1 = a pino.
   final double astroAlto;
+
+  /// Onde o astro fica, em fração da largura da tela: o sol nasce do lado
+  /// da terra e se põe do lado da lagoa; a lua fica sobre a água, para o
+  /// luar se refletir nela (laudo 35, R1).
+  final double astroX;
 
   /// A luz que o cenário comprado impõe.
   ///
@@ -230,63 +262,85 @@ class LuzDaCena {
     }
   }
 
+  /// As quatro luzes do dia (laudo 35 e achados CEN-03/07/08/19).
+  ///
+  /// Amanhecer: zênite azulado, faixa rosa-dourada, sol baixo do lado da
+  /// terra, névoa sobre a lagoa. Dia: sol a pino, céu claro e frio no alto,
+  /// água azul-esverdeada. Entardecer: roxo no alto, laranja no meio, sol
+  /// encostado nas chapadas. Noite: azul profundo com a lua sobre a água.
   static LuzDaCena de(PeriodoDoDia p) {
     switch (p) {
       case PeriodoDoDia.amanhecer:
         return const LuzDaCena(
-          ceuAlto: Color(0xFFF6D9B0),
-          ceuBaixo: Color(0xFFF9E9CF),
-          astro: Color(0xFFFFC98A),
-          haloAstro: Color(0x55FFB870),
-          agua: Color(0xFFCFDCC4),
-          aguaFunda: Color(0xFFB5C8A8),
-          colina: Color(0xFFCBD6B4),
+          ceuAlto: Color(0xFF9FB7D3),
+          ceuMeio: Color(0xFFF2C7A6),
+          ceuBaixo: Color(0xFFFBE3C2),
+          astro: Color(0xFFFFD79A),
+          haloAstro: Color(0x88FFC27A),
+          agua: Color(0xFFCDC3C6),
+          aguaFunda: Color(0xFF8DA5B2),
+          colina: Color(0xFF9FAE9F),
           areia: Color(0xFFE8D5B4),
-          brilho: Color(0x66FFF3E0),
+          grama: Color(0xFFADC592),
+          gramaFunda: Color(0xFF7E9E68),
+          brilho: Color(0x88FFF3E0),
           sombraAmbiente: Color(0x0D3E2F23),
-          astroAlto: 0.22,
+          astroAlto: 0.16,
+          astroX: 0.15,
         );
       case PeriodoDoDia.dia:
         return const LuzDaCena(
-          ceuAlto: Color(0xFFF4E6CB),
-          ceuBaixo: Color(0xFFFAF1E3),
-          astro: Color(0xFFFFD79A),
-          haloAstro: Color(0x44EF8354),
-          agua: Color(0xFFC9DCC0),
-          aguaFunda: Color(0xFFAECBA3),
-          colina: Color(0xFFC5D8B6),
+          ceuAlto: Color(0xFF9CC4DC),
+          ceuMeio: Color(0xFFC4DCE8),
+          ceuBaixo: Color(0xFFE6EEEA),
+          astro: Color(0xFFFFD36A),
+          haloAstro: Color(0x8CFFD36A),
+          agua: Color(0xFFA9CFD2),
+          aguaFunda: Color(0xFF6FA3AD),
+          colina: Color(0xFF8FB08A),
           areia: Color(0xFFE9D6B6),
+          grama: Color(0xFFB0CE95),
+          gramaFunda: Color(0xFF7C9F66),
           brilho: Color(0x88FFFFFF),
           sombraAmbiente: Color(0x00000000),
-          astroAlto: 0.86,
+          astroAlto: 0.95,
+          astroX: 0.3,
         );
       case PeriodoDoDia.entardecer:
         return const LuzDaCena(
-          ceuAlto: Color(0xFFF3C9A0),
-          ceuBaixo: Color(0xFFF9DFC0),
-          astro: Color(0xFFFF9E5E),
-          haloAstro: Color(0x66EF8354),
-          agua: Color(0xFFC2CFAE),
-          aguaFunda: Color(0xFFA6B896),
-          colina: Color(0xFFB9C6A2),
-          areia: Color(0xFFE0C39C),
+          ceuAlto: Color(0xFF5C5A8C),
+          ceuMeio: Color(0xFFE98A5A),
+          ceuBaixo: Color(0xFFF6C27A),
+          astro: Color(0xFFFF7A3D),
+          haloAstro: Color(0x99FF9A52),
+          agua: Color(0xFFD9A078),
+          aguaFunda: Color(0xFF5E6E86),
+          colina: Color(0xFF8A6578),
+          areia: Color(0xFFE0B98E),
+          grama: Color(0xFFBABE81),
+          gramaFunda: Color(0xFF7A8A5C),
           brilho: Color(0x77FFD9A8),
           sombraAmbiente: Color(0x143E2F23),
-          astroAlto: 0.16,
+          astroAlto: 0.14,
+          astroX: 0.88,
         );
       case PeriodoDoDia.noite:
         return const LuzDaCena(
-          ceuAlto: Color(0xFF4A4763),
-          ceuBaixo: Color(0xFF7A7189),
+          ceuAlto: Color(0xFF1E2745),
+          ceuMeio: Color(0xFF2E3760),
+          ceuBaixo: Color(0xFF4A4F7A),
           astro: Color(0xFFE8E6F2),
-          haloAstro: Color(0x44CFD6F0),
-          agua: Color(0xFF5B6B63),
-          aguaFunda: Color(0xFF47554F),
-          colina: Color(0xFF5E6660),
-          areia: Color(0xFF8A7E6E),
+          haloAstro: Color(0x2EDDE6FF),
+          agua: Color(0xFF3B4A68),
+          aguaFunda: Color(0xFF182030),
+          colina: Color(0xFF222C44),
+          areia: Color(0xFF4A4A52),
+          grama: Color(0xFF33454A),
+          gramaFunda: Color(0xFF22302F),
           brilho: Color(0x55D6DCF5),
-          sombraAmbiente: Color(0x33232033),
-          astroAlto: 0.74,
+          sombraAmbiente: Color(0x1A1B2A4A),
+          astroAlto: 0.75,
+          astroX: 0.68,
         );
     }
   }
@@ -498,7 +552,9 @@ class _HabitatSceneState extends State<HabitatScene>
   void _premia(AppState app) {
     final xp = app.recebeCarinho();
     setState(() {
-      _textoDoPremio = xp > 0 ? '+$xp ${app.t.xpRotulo}' : app.frase(app.t.vinculoTeto);
+      _textoDoPremio = xp > 0
+          ? '+$xp ${app.t.xpRotulo}'
+          : app.frase(app.t.vinculoTeto);
     });
     _premio.forward(from: 0);
   }
@@ -507,21 +563,22 @@ class _HabitatSceneState extends State<HabitatScene>
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     // Cenário comprado ganha da hora do dia — é isso que se compra.
-    final luz = LuzDaCena.doCenario(app.cenarioAtivo?.id) ??
+    final luz =
+        LuzDaCena.doCenario(app.cenarioAtivo?.id) ??
         LuzDaCena.de(periodoDe(widget.agora ?? DateTime.now()));
     // O lugar vem da trilha; a luz, da hora e da loja. As duas se somam em
     // vez de disputar: o igarapé continua sendo igarapé às 22h.
     final cenario = CenarioDoHabitat.de(app.habitatAtivo.id);
     _sincronizaChegadas(app.objetosNaCena);
 
-    final possuidos =
-        itensDeCena.where((i) => app.estaEquipado(i.id)).toList();
+    final possuidos = itensDeCena.where((i) => app.estaEquipado(i.id)).toList();
 
     return Semantics(
       image: true,
       // Quem usa leitor de tela ouvia "Baru está radiante" — o sentimento
       // sem o fato. A cena é a mesma; a descrição dela tem de ser também.
-      label: widget.rotulo ??
+      label:
+          widget.rotulo ??
           '${app.frase(app.t.humorCap(app.falaDoHumor), app.falaDoHumor.valores)} '
               '${app.frase(app.t.humorSub(app.falaDoHumor), app.falaDoHumor.valores)}',
       child: RepaintBoundary(
@@ -544,17 +601,18 @@ class _HabitatSceneState extends State<HabitatScene>
               // pai e fica em 296, enquanto `widget.height` continuaria
               // dizendo 372 — céu, água e bicho sairiam do lugar na
               // miniatura e no PNG compartilhado.
-              final alturaReal =
-                  c.maxHeight.isFinite ? c.maxHeight : widget.height;
+              final alturaReal = c.maxHeight.isFinite
+                  ? c.maxHeight
+                  : widget.height;
               final sy = alturaReal / HabitatScene.design.height;
               // O bicho acompanha o menor dos dois: cresce com a cena e
               // encolhe em tela estreita, sem nunca encostar na borda.
-              final escalaDoPet =
-                  HabitatScene.presencaDoPet * math.min(sx, sy);
+              final escalaDoPet = HabitatScene.presencaDoPet * math.min(sx, sy);
               // O ovo e o recém-nascido no ninho não brincam.
               // Com "reduzir movimento" o bicho não anda nem persegue: a
               // castanha caída ficaria no chão para sempre.
-              final comBrinquedos = widget.brinquedos &&
+              final comBrinquedos =
+                  widget.brinquedos &&
                   widget.animado &&
                   !Movimento.reduzido(context) &&
                   app.estagioVisivel != EstagioDoBicho.inicio;
@@ -590,12 +648,10 @@ class _HabitatSceneState extends State<HabitatScene>
                       // A luz do período tinge o mundo, não o bicho: por
                       // cima de tudo, ela lavava o companheiro de laranja.
                       IgnorePointer(
-                        child: CustomPaint(
-                          painter: _LuzAmbiente(luz: luz),
-                        ),
+                        child: CustomPaint(painter: _LuzAmbiente(luz: luz)),
                       ),
                       for (final item in possuidos)
-                        _objeto(item, sx, sy, faseDosItens),
+                        _objeto(item, sx, sy, faseDosItens, luz),
                       // O companheiro ocupa o lugar da cena que combina com
                       // o que está fazendo: dentro d'água ao nadar, na
                       // margem ao pastar, na areia ao cochilar.
@@ -630,10 +686,7 @@ class _HabitatSceneState extends State<HabitatScene>
                             // volta pela escala não pode passar da borda.
                             width: (c.maxWidth - 2) / escalaDoPet,
                             areaDeAndar: widget.animado
-                                ? math.max(
-                                    0,
-                                    c.maxWidth / escalaDoPet / 2 - 74,
-                                  )
+                                ? math.max(0, c.maxWidth / escalaDoPet / 2 - 74)
                                 : 0,
                             sombra: true,
                             species: app.species,
@@ -650,7 +703,8 @@ class _HabitatSceneState extends State<HabitatScene>
                             roupas: app.roupasDoBicho,
                             roupaDeCabeca: app.roupaDeCabeca,
                             interesse: comBrinquedos ? _interesse : null,
-                            aoMudarDeLugar: comBrinquedos &&
+                            aoMudarDeLugar:
+                                comBrinquedos &&
                                     app.activity != Activity.nap &&
                                     acaoNoEstagio(
                                           app.species,
@@ -772,7 +826,13 @@ class _HabitatSceneState extends State<HabitatScene>
 
   /// Um objeto da cena, com a arte dele. Entra caindo com mola quando é
   /// comprado.
-  Widget _objeto(ShopItemDef item, double sx, double sy, double fase) {
+  Widget _objeto(
+    ShopItemDef item,
+    double sx,
+    double sy,
+    double fase,
+    LuzDaCena luz,
+  ) {
     final chegada = _chegadas[item.id];
     final t = chegada == null
         ? 1.0
@@ -787,6 +847,7 @@ class _HabitatSceneState extends State<HabitatScene>
             sy: sy,
             fase: widget.animado ? fase : 0,
             chegada: t,
+            luz: luz,
           ),
         ),
       ),
@@ -794,19 +855,33 @@ class _HabitatSceneState extends State<HabitatScene>
   }
 }
 
-const _doCeu = {'lantern', 'varal_de_luzes', 'nuvens', 'vagalumes', 'neve'};
+/// O que de fato pende do alto. A lanterna e os vaga-lumes saíram daqui: a
+/// lanterna agora tem poste (o fio termina nele) e os vaga-lumes voam entre
+/// os juncos, não no céu (CEN-01, CEN-16; laudo 35, R3).
+const _doCeu = {'varal_de_luzes', 'nuvens', 'neve'};
+
+/// Os itens que emitem luz: não tomam a sombra da hora e acendem à noite.
+const _emiteLuz = {'lantern', 'varal_de_luzes', 'fogueira', 'vagalumes'};
 
 /// Um item comprado, desenhado no "palco" de [HabitatScene.design] escalado
 /// por ([sx], [sy]). O mundo da home usa o mesmo desenho e o mesmo lugar
-/// relativo, num palco posto sobre a lagoa.
+/// relativo, num palco posto sobre a lagoa. Com [luz], o objeto toma a luz
+/// do período (o deque escurece à noite; a lanterna acende).
 CustomPainter pintorDeObjetoDaCena(
   ShopItemDef item, {
   required double sx,
   required double sy,
   double fase = 0,
   double chegada = 1,
-}) =>
-    _ObjetoPintado(item: item, sx: sx, sy: sy, fase: fase, chegada: chegada);
+  LuzDaCena? luz,
+}) => _ObjetoPintado(
+  item: item,
+  sx: sx,
+  sy: sy,
+  fase: fase,
+  chegada: chegada,
+  luz: luz,
+);
 
 class _ObjetoPintado extends CustomPainter {
   const _ObjetoPintado({
@@ -815,10 +890,12 @@ class _ObjetoPintado extends CustomPainter {
     required this.sy,
     required this.fase,
     required this.chegada,
+    this.luz,
   });
 
   final ShopItemDef item;
   final double sx, sy, fase, chegada;
+  final LuzDaCena? luz;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -839,7 +916,26 @@ class _ObjetoPintado extends CustomPainter {
       canvas.scale(c, c);
     }
     canvas.translate(-ancora.dx, -ancora.dy);
-    pintaItem(canvas, item.id, item.parts, fase: fase);
+    // A luz da hora sobre o objeto (CEN-06): a mesma regra das árvores do
+    // mundo. Quem emite luz fica de fora e brilha por conta própria.
+    final l = luz;
+    final sombreia = l != null && !_emiteLuz.contains(item.id);
+    if (sombreia) {
+      // `modulate` multiplica cor e alfa: o fator é opaco (branco puxado
+      // para o tom da hora), senão a camada inteira ganhava um véu.
+      final alfa = l.noite ? 0.45 : (l.acendeLuzes ? 0.25 : 0.08);
+      final tom = Color.lerp(l.ceuAlto, const Color(0xFF000000), 0.3)!;
+      canvas.saveLayer(
+        null,
+        Paint()
+          ..colorFilter = ColorFilter.mode(
+            Color.lerp(const Color(0xFFFFFFFF), tom, alfa)!,
+            BlendMode.modulate,
+          ),
+      );
+    }
+    pintaItem(canvas, item.id, item.parts, fase: fase, luz: luz);
+    if (sombreia) canvas.restore();
     canvas.restore();
   }
 
@@ -849,7 +945,8 @@ class _ObjetoPintado extends CustomPainter {
       old.sx != sx ||
       old.sy != sy ||
       old.fase != fase ||
-      old.chegada != chegada;
+      old.chegada != chegada ||
+      old.luz != luz;
 }
 
 /// A silhueta de uma colina, de duna a pico.
@@ -1008,9 +1105,12 @@ class _FundoDaCena extends CustomPainter {
     final margem = Path()
       ..moveTo(0, aguaTopo + 10 * faixa * sy)
       ..cubicTo(
-        w * 0.26, aguaTopo - 16 * faixa * sy,
-        w * 0.62, aguaTopo + 14 * faixa * sy,
-        w, aguaTopo - 10 * faixa * sy,
+        w * 0.26,
+        aguaTopo - 16 * faixa * sy,
+        w * 0.62,
+        aguaTopo + 14 * faixa * sy,
+        w,
+        aguaTopo - 10 * faixa * sy,
       )
       ..lineTo(w, 0)
       ..lineTo(0, 0)
@@ -1026,11 +1126,24 @@ class _FundoDaCena extends CustomPainter {
     canvas.restore();
 
     // --- brilhos que deslizam na superfície --------------------------------
-    _brilho(canvas, Offset(38 * sx + derivaPerto, h - 76 * sy), 62 * sx, luz.brilho);
-    _brilho(canvas, Offset(w - 102 * sx - derivaPerto, h - 44 * sy), 46 * sx,
-        luz.brilho.withValues(alpha: 0.6));
-    _brilho(canvas, Offset(w * 0.5 + derivaLonge, h - 24 * sy), 34 * sx,
-        luz.brilho.withValues(alpha: 0.4));
+    _brilho(
+      canvas,
+      Offset(38 * sx + derivaPerto, h - 76 * sy),
+      62 * sx,
+      luz.brilho,
+    );
+    _brilho(
+      canvas,
+      Offset(w - 102 * sx - derivaPerto, h - 44 * sy),
+      46 * sx,
+      luz.brilho.withValues(alpha: 0.6),
+    );
+    _brilho(
+      canvas,
+      Offset(w * 0.5 + derivaLonge, h - 24 * sy),
+      34 * sx,
+      luz.brilho.withValues(alpha: 0.4),
+    );
 
     _margemDaFrente(canvas, w, h, corDaAreia);
   }
@@ -1072,8 +1185,14 @@ class _FundoDaCena extends CustomPainter {
       final topo = h - 86 * sy;
       final margem = Path()
         ..moveTo(0, h - 70 * sy)
-        ..cubicTo(w * 0.22, topo - 4 * sy, w * 0.62, topo - 8 * sy, w,
-            h - 74 * sy)
+        ..cubicTo(
+          w * 0.22,
+          topo - 4 * sy,
+          w * 0.62,
+          topo - 8 * sy,
+          w,
+          h - 74 * sy,
+        )
         ..lineTo(w, h)
         ..lineTo(0, h)
         ..close();
@@ -1085,13 +1204,22 @@ class _FundoDaCena extends CustomPainter {
       canvas.drawPath(
         Path()
           ..moveTo(0, h - 70 * sy)
-          ..cubicTo(w * 0.22, topo - 4 * sy, w * 0.62, topo - 8 * sy, w,
-              h - 74 * sy),
+          ..cubicTo(
+            w * 0.22,
+            topo - 4 * sy,
+            w * 0.62,
+            topo - 8 * sy,
+            w,
+            h - 74 * sy,
+          ),
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3 * sy
-          ..color = Color.lerp(areia, Colors.white, 0.35)!
-              .withValues(alpha: 0.7 * chao),
+          ..color = Color.lerp(
+            areia,
+            Colors.white,
+            0.35,
+          )!.withValues(alpha: 0.7 * chao),
       );
     }
 
@@ -1125,8 +1253,11 @@ class _FundoDaCena extends CustomPainter {
           Paint()..color = cor.withValues(alpha: alfa),
         );
       }
-      canvas.drawCircle(Offset(x, y), 1.6 * sy,
-          Paint()..color = const Color(0xFFF2B33D).withValues(alpha: alfa));
+      canvas.drawCircle(
+        Offset(x, y),
+        1.6 * sy,
+        Paint()..color = const Color(0xFFF2B33D).withValues(alpha: alfa),
+      );
     }
 
     void pedraEm(double x, double y, double r, double alfa) {
@@ -1199,20 +1330,20 @@ class MiniaturaDoHabitat extends StatelessWidget {
   final DateTime? agora;
 
   Widget _pinta(double w) => SizedBox(
-        width: w,
-        height: altura,
-        child: CustomPaint(
-          painter: _FundoDaCena(
-            sx: w / HabitatScene.design.width,
-            sy: altura / HabitatScene.design.height,
-            luz: LuzDaCena.de(periodoDe(agora ?? DateTime.now())),
-            cenario: CenarioDoHabitat.de(habitatId),
-            // Miniatura não deriva: meia dúzia delas repintando junto com a
-            // cena grande seria trabalho de GPU por nada.
-            fase: 0.5,
-          ),
-        ),
-      );
+    width: w,
+    height: altura,
+    child: CustomPaint(
+      painter: _FundoDaCena(
+        sx: w / HabitatScene.design.width,
+        sy: altura / HabitatScene.design.height,
+        luz: LuzDaCena.de(periodoDe(agora ?? DateTime.now())),
+        cenario: CenarioDoHabitat.de(habitatId),
+        // Miniatura não deriva: meia dúzia delas repintando junto com a
+        // cena grande seria trabalho de GPU por nada.
+        fase: 0.5,
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -1241,7 +1372,10 @@ class _LuzAmbiente extends CustomPainter {
         ..shader = RadialGradient(
           center: const Alignment(0.72, -0.72),
           radius: 1.1,
-          colors: [luz.haloAstro.withValues(alpha: 0.22), const Color(0x00000000)],
+          colors: [
+            luz.haloAstro.withValues(alpha: 0.22),
+            const Color(0x00000000),
+          ],
         ).createShader(Offset.zero & size),
     );
   }

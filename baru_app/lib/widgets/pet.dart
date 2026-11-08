@@ -1749,7 +1749,8 @@ class BocaDaEspecie {
       largura: 26,
       hMax: 12,
       folgaNariz: 7.5,
-      temDentes: true,
+      // Sem dentes à mostra: o Baru do desenho nunca mostrou os incisivos.
+      temDentes: false,
     ),
     Species.otter => const BocaDaEspecie(
       origem: Offset(0, 19),
@@ -7040,6 +7041,10 @@ class _PetPainter extends CustomPainter {
   /// aberta: `3 + 4·abertura` a partir de 0,5 (laudo 31, R1), entrando
   /// suave entre 0,5 e 0,75 para não dar um salto.
   double get _queixoDesce {
+    // Nas capturas da série a boca vira uma camada à parte, composta sobre o
+    // corpo sem boca: o queixo não pode descer, senão a camada leva junto um
+    // pedaço do contorno da cabeça (o "fantasma" em volta da boca da Rio).
+    if (PetView.aoDesenharBoca != null) return 0;
     final a = _abertura;
     if (a <= 0.5) return 0;
     return ((a - 0.5) / 0.25).clamp(0.0, 1.0) * (3 + 4 * a);

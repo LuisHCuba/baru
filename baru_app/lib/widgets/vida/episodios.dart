@@ -784,6 +784,8 @@ extension _Episodios on MotorDeVida {
         _alvoDoOlhar = Offset(lado, 0.6);
         _cabecaDoEpisodio = Offset(lado * 0.16, 5);
         _boca = 0.25 + 0.3 * math.sin(_t * 16).abs();
+        // Mordiscando as penas: boca esticada, de lado, não um "a" redondo.
+        _largura = 0.2;
         _fechaOlhos = 0.5;
         if (_t + dt >= _epFim && _sorte.nextDouble() < 0.45) {
           _evento(EventoDaVida.sacode, espera: 10);
@@ -803,6 +805,9 @@ extension _Episodios on MotorDeVida {
         _cabecaDoEpisodio = Offset(0, -7 * e);
         _alvoDoOlhar = const Offset(0, -1);
         _boca = e > 0.4 ? 0.6 + 0.4 * math.sin(_t * 22).abs() : 0;
+        // Grito: mais alto que largo, com a língua (laudo 30, §3.3 e §3.5).
+        _largura = -0.3;
+        _lingua = 1;
         _achata.alvo = -0.35 * e;
       case Episodio.recolher:
         final dur = _epFim - _epInicio;
@@ -837,7 +842,11 @@ extension _Episodios on MotorDeVida {
         if (u < 1.9) {
           _sobeNaAgua.alvo = 16;
           _alvoDoOlhar = const Offset(0, -0.6);
-          if (u > 1.4) _boca = math.sin((u - 1.4) / 0.5 * math.pi);
+          if (u > 1.4) {
+            // A golfada de ar na superfície: um "o" curto, redondo.
+            _boca = math.sin((u - 1.4) / 0.5 * math.pi);
+            _largura = -0.6;
+          }
         }
       case Episodio.saltoNaAgua:
         break;

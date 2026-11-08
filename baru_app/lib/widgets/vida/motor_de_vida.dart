@@ -130,9 +130,71 @@ class InteresseDoBicho {
   final bool noAr;
 }
 
+/// Os sete formatos de boca da fala (laudo 30, §3.2): X repouso, A fechada
+/// apertada (p, b, m), B fresta (i, s, t, d...), C meio aberta (é, ê), D
+/// aberta (a), E redonda (ó, ô), F bico (u). É o conjunto do Rhubarb, o que a
+/// animação limitada usa há décadas: bastam seis ou sete desenhos distintos
+/// para a boca não "bater" a cada sílaba com um único desenho aberto.
+enum Visema { x, a, b, c, d, e, f }
+
+/// Os parâmetros contínuos de um formato de boca — os mesmos campos de
+/// [SaidaDaVida.boca], [SaidaDaVida.largura], [SaidaDaVida.lingua] e
+/// [SaidaDaVida.dentes].
+class FormaDaBoca {
+  const FormaDaBoca({
+    required this.abertura,
+    this.largura = 0,
+    this.lingua = 0,
+    this.dentes = 0,
+  });
+
+  /// 0..1: quanto a mandíbula desce.
+  final double abertura;
+
+  /// -1..1: franzida (u) a esticada (i).
+  final double largura;
+
+  /// 0..1: a língua no fundo do vão (só aparece com abertura > 0,45).
+  final double lingua;
+
+  /// 0..1: a linha de dentes no topo do vão (nas espécies que têm).
+  final double dentes;
+}
+
+/// A tabela do laudo 30 (§3.2), com dois ajustes anotados no relatório do
+/// lote: A leva `largura` +0,35, que é o que separa lábios apertados da boca
+/// do humor (a tabela dá os mesmos zeros a X e A e descreve A como "linha de
+/// 2,4 de espessura, 0,7w"); E abre 0,48 e não 0,50, para ficar abaixo de
+/// C + 10 % também depois do arredondamento para pixels.
+FormaDaBoca bocaDoVisema(Visema v) => switch (v) {
+  Visema.x => const FormaDaBoca(abertura: 0),
+  Visema.a => const FormaDaBoca(abertura: 0, largura: 0.35),
+  Visema.b => const FormaDaBoca(abertura: 0.15, largura: 0.6, dentes: 1),
+  Visema.c => const FormaDaBoca(abertura: 0.45, largura: 0.2),
+  Visema.d => const FormaDaBoca(abertura: 1, lingua: 1),
+  Visema.e => const FormaDaBoca(abertura: 0.48, largura: -0.5),
+  Visema.f => const FormaDaBoca(abertura: 0.3, largura: -1),
+};
+
 /// Os números de um quadro. Tudo em unidades do desenho do bicho (a caixa de
 /// 200 × 150 em que ele é pintado).
 class SaidaDaVida {
+  /// O quadro de repouso com a boca num dos sete formatos da fala.
+  SaidaDaVida.visema(
+    Visema v, {
+    double susto = 0,
+    double festa = 0,
+    double canto = 0,
+  }) : this(
+         boca: bocaDoVisema(v).abertura,
+         largura: bocaDoVisema(v).largura,
+         lingua: bocaDoVisema(v).lingua,
+         dentes: bocaDoVisema(v).dentes,
+         susto: susto,
+         festa: festa,
+         canto: canto,
+       );
+
   const SaidaDaVida({
     this.respiro = 0,
     this.boia = 0,
@@ -181,6 +243,11 @@ class SaidaDaVida {
     this.forcaDaAtividade = 1,
     this.cicloDaAtividade = 0,
     this.boca = 0,
+    this.largura = 0,
+    this.canto = 0,
+    this.lingua = 0,
+    this.dentes = 0,
+    this.semBoca = false,
     this.pescoco = 0,
     this.voando = false,
   });
@@ -188,8 +255,32 @@ class SaidaDaVida {
   /// No ar, batendo asa (a coruja): o desenho é o do voo.
   final bool voando;
 
-  /// 0..1: a boca ou o bico abertos sem comida (zurro, alisar as penas).
+  /// 0..1: a abertura da boca ou do bico sem comida (zurro, alisar as
+  /// penas, fala). É contínua: a mandíbula desce `hMax · boca` (laudo 30,
+  /// §3.1); o painter não a reduz mais a um bit.
   final double boca;
+
+  /// -1..1: a largura da boca por cima da abertura — franzida/redonda (-1,
+  /// o "u"), neutra (0), esticada (+1, o "i"). Nos bicos é ignorada.
+  final double largura;
+
+  /// -1..1: os cantos da boca para baixo ou para cima, somados ao que o
+  /// humor já dá (radiante +0,6, contente +0,3, saudade -0,4).
+  final double canto;
+
+  /// 0..1: a língua no fundo do vão. Só aparece com `boca > 0,45` e nas
+  /// espécies que a mostram (não na coruja).
+  final double lingua;
+
+  /// 0..1: a linha de dentes no topo do vão (gata, raposa, capivara com os
+  /// dois incisivos; o buldogue já tem os dentinhos de baixo).
+  final double dentes;
+
+  /// Não desenhar a boca — mas ainda exportar a âncora dela
+  /// (`PetView.aoDesenharBoca`). É a base da camada de boca da série: o
+  /// corpo é capturado uma vez sem boca, e a boca do visema entra por cima,
+  /// na âncora de cada quadro (laudo 30, §3.7).
+  final bool semBoca;
 
   /// -1..1: o pescoço da tartaruga recolhendo (-) ou esticando (+).
   final double pescoco;
@@ -488,6 +579,8 @@ class MotorDeVida {
   final _olhosSuaves = Mola(f: 2.5, zeta: 1);
   Offset _cabecaDoEpisodio = Offset.zero;
   double _boca = 0;
+  double _largura = 0;
+  double _lingua = 0;
   double _pescoco = 0;
   final _pescocoSuave = Mola(f: 2.2, zeta: 0.8);
   final _sobeNaAgua = Mola(f: 1.1, zeta: 0.8);
@@ -1072,6 +1165,8 @@ class MotorDeVida {
     _fechaOlhos = 0;
     _cabecaDoEpisodio = Offset.zero;
     _boca = 0;
+    _largura = 0;
+    _lingua = 0;
     _pescoco = 0;
     _sobeNaAgua.alvo = 0;
     _reverencia = 0;
@@ -1421,6 +1516,8 @@ class MotorDeVida {
       atividadeAtiva: !reduzido,
       corpoLivre: _desenhaLivre,
       boca: _boca,
+      largura: _largura,
+      lingua: _lingua,
       pescoco: _pescocoSuave.valor,
       cabecaNoChao: _cabecaNoChao.valor.clamp(0.0, 1.2),
       mastigando: _mastigando,

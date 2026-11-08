@@ -1787,11 +1787,13 @@ class BocaDaEspecie {
       folgaNariz: 4.5,
       temDentes: true,
     ),
+    // O nariz é a ponta do focinho (laudo 33 R5): fica no terço inferior
+    // da cara, em y 21, e a boca logo abaixo, pequena.
     Species.fox => const BocaDaEspecie(
-      origem: Offset(0, 19),
-      largura: 20,
-      hMax: 10,
-      folgaNariz: 5,
+      origem: Offset(0, 27),
+      largura: 16,
+      hMax: 9,
+      folgaNariz: 1.5,
       temDentes: true,
     ),
     // A folga é até o fim do filtro (27); o nariz mesmo acaba em 22,5. O
@@ -4449,12 +4451,23 @@ class _PetPainter extends CustomPainter {
       }
     }
 
-    _pata(canvas, const Offset(-19, 49), 16, 12, sombra, pose.pernas * amp);
-    _pata(canvas, const Offset(19, 49), 16, 12, sombra, -pose.pernas * amp);
+    // Coxas atrás do corpo: a gata sentada é mais larga no quadril que no
+    // peito. Sem elas o tronco era um barril de 80 × 70 (laudo 33 §3.2,
+    // MEL-13), que é corpo de urso, não de gata.
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawPath(
+        _bolha(
+          Rect.fromCenter(center: Offset(lado * 27, 45), width: 26, height: 22),
+        ),
+        _p(pelo),
+      );
+    }
 
+    // Corpo mais estreito em cima (peito) que embaixo (quadril), e mais
+    // alto que largo: gata sentada é uma coluna, não uma bola.
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(0, 20), width: 80, height: 70),
-      topo: 0.88,
+      Rect.fromCenter(center: const Offset(0, 20), width: 62, height: 76),
+      topo: 0.84,
     );
     canvas.drawPath(corpo, _p(pelo));
 
@@ -4462,12 +4475,31 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(corpo);
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 31), width: 54, height: 53),
+        Rect.fromCenter(center: const Offset(0, 32), width: 44, height: 52),
         topo: 0.9,
       ),
       _p(claro),
     );
+    // Listras do flanco, da mesma família do "M" e dos anéis da cauda: o
+    // tabby não é só da testa (MEL-18).
+    final listraDoFlanco = _traco(sombra.withValues(alpha: 0.55), 2.6);
+    for (final lado in [-1.0, 1.0]) {
+      for (final y in [4.0, 14.0, 24.0]) {
+        canvas.drawPath(
+          Path()
+            ..moveTo(lado * 33, y)
+            ..quadraticBezierTo(lado * 27, y + 2, lado * 23, y + 7),
+          listraDoFlanco,
+        );
+      }
+    }
     canvas.restore();
+
+    // Patas dianteiras **na frente** do corpo, apoiadas no chão (`_pes`):
+    // antes eram meias-luas escuras espiando atrás da barriga e nada tocava
+    // o chão (MEL-13). Na cor do pelo, com os dedinhos em sombra.
+    _pata(canvas, const Offset(-15, 54), 18, 12, pelo, pose.pernas * amp);
+    _pata(canvas, const Offset(15, 54), 18, 12, pelo, -pose.pernas * amp);
 
     // --- cabeça -----------------------------------------------------------
     canvas.save();
@@ -4480,15 +4512,24 @@ class _PetPainter extends CustomPainter {
     // Orelhas triangulares de ponta fina, com a concha por dentro. Antes da
     // cabeça: a base some sob o contorno. O humor as gira para os lados —
     // nunca para trás, que no gato é medo (laudo 08, R4).
+    // No máximo 0,35 rad para os lados: além disso é a unidade 2 da ficha
+    // de dor felina (laudo 33 §5, R9).
     final abre = _porHumor(
       (m) => switch (m) {
         Mood.radiant => -0.04,
         Mood.content => 0.0,
         Mood.neutral => 0.10,
-        Mood.sleepy => 0.30,
-        Mood.missingYou => 0.40,
+        Mood.sleepy => 0.28,
+        Mood.missingYou => 0.35,
       },
     );
+    // Estágio: o jovem tem orelha "grande demais" para a cabeça, o filhote
+    // tem orelha curta (MEL-15).
+    final alturaDaOrelha = switch (estagio) {
+      EstagioDoBicho.inicio || EstagioDoBicho.filhote => 0.85,
+      EstagioDoBicho.jovem => 1.22,
+      EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+    };
     for (final lado in [-1.0, 1.0]) {
       final treme = pose.orelha * 0.6 * lado;
       canvas.save();
@@ -4500,37 +4541,47 @@ class _PetPainter extends CustomPainter {
             (lado > 0 ? 0.1 : 0.0),
       );
       canvas.translate(-lado * 24, 16);
+      // A orelha cresce a partir da base (y −14), não do centro.
+      canvas.translate(0, -14);
+      canvas.scale(1, alturaDaOrelha);
+      canvas.translate(0, 14);
+      // Triângulo bem plantado no alto do crânio: base de x 13 a 36 e ponta
+      // em (28, −52), um pouco mais alta e mais para fora que antes — a
+      // orelha de gata sai do canto da cabeça, não do meio da testa.
       canvas.drawPath(
         Path()
-          ..moveTo(lado * 34, -14)
+          ..moveTo(lado * 36, -13)
           ..cubicTo(
-            lado * 40,
+            lado * 41,
             -32,
-            lado * (35 + treme * 6),
-            -46,
-            lado * (27 + treme * 8),
-            -50,
+            lado * (36 + treme * 6),
+            -48,
+            lado * (28 + treme * 8),
+            -52,
           )
-          ..cubicTo(lado * 20, -37, lado * 16, -28, lado * 14, -20)
-          ..cubicTo(lado * 20, -16, lado * 28, -13, lado * 34, -14)
+          ..cubicTo(lado * 20, -38, lado * 15, -28, lado * 13, -19)
+          ..cubicTo(lado * 20, -15, lado * 29, -12, lado * 36, -13)
           ..close(),
         _p(pelo),
       );
+      // Concha rosada: o marrom-alaranjado de antes lia como orelha suja
+      // (MEL-14). Rosa da pele misturado ao pelo, para continuar sendo
+      // *aquela* gata.
       canvas.drawPath(
         Path()
-          ..moveTo(lado * 30, -19)
+          ..moveTo(lado * 31, -18)
           ..cubicTo(
-            lado * 33,
+            lado * 34,
             -29,
-            lado * (31 + treme * 5),
-            -36,
-            lado * (25 + treme * 6),
+            lado * (32 + treme * 5),
             -38,
+            lado * (26 + treme * 6),
+            -41,
           )
-          ..cubicTo(lado * 21, -32, lado * 19, -26, lado * 18, -21)
-          ..cubicTo(lado * 22, -19, lado * 27, -18, lado * 30, -19)
+          ..cubicTo(lado * 21, -33, lado * 18.5, -26, lado * 18, -20)
+          ..cubicTo(lado * 22, -18, lado * 27, -17, lado * 31, -18)
           ..close(),
-        _p(Color.lerp(sombra, Cores.acento, 0.30)!),
+        _p(Color.lerp(const Color(0xFFD67F74), pelo, 0.35)!),
       );
       canvas.restore();
     }
@@ -4568,19 +4619,27 @@ class _PetPainter extends CustomPainter {
     canvas.restore();
     _rostoVira(canvas);
 
-    // Focinheira clara e larga.
-    canvas.drawPath(
-      _bolha(
-        Rect.fromCenter(center: const Offset(0, 15), width: 34, height: 20),
-        topo: 0.86,
-      ),
-      _p(claro),
-    );
+    // Focinho pequeno, em "W": as duas almofadas dos bigodes, uma de cada
+    // lado do nariz, e não uma focinheira larga de 34 (laudo 33 §3.2). É
+    // o volume que dá "gata" de perto — focinheira larga é de cão.
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawPath(
+        _bolha(
+          Rect.fromCenter(
+            center: Offset(lado * 7.5, 14),
+            width: 17,
+            height: 14,
+          ),
+          topo: 0.9,
+        ),
+        _p(claro),
+      );
+    }
 
-    _bigodes(canvas, const Offset(-19, 11));
-    _bigodes(canvas, const Offset(19, 11), lado: 1);
+    _bigodesDaGata(canvas);
 
-    // Nariz em coração invertido — a marca do felino.
+    // Nariz em coração invertido — a marca do felino. Tijolo, e não rosa
+    // de doce: o nariz da tabby laranja é `#A76D54` na foto (laudo 33 R10).
     canvas.drawPath(
       Path()
         ..moveTo(-4, 7.5)
@@ -4588,7 +4647,7 @@ class _PetPainter extends CustomPainter {
         ..cubicTo(4, 10.5, 1, 12.5, 0, 12.5)
         ..cubicTo(-1, 12.5, -4, 10.5, -4, 7.5)
         ..close(),
-      _p(const Color(0xFFD67F74)),
+      _p(const Color(0xFFB8775E)),
     );
 
     _boca(canvas);
@@ -4600,6 +4659,58 @@ class _PetPainter extends CustomPainter {
     _veste(canvas, 82, 69);
 
     canvas.restore();
+  }
+
+  /// Os bigodes da gata: quatro fios por lado, compridos o bastante para
+  /// **sair da cara** (ponta em x ≥ 53 numa cabeça de meia-largura 41 — o
+  /// bigode real chega à largura do corpo, laudo 33 R2). Claros nas
+  /// pelagens escuras e escuros nas claras, para contrastar ≥ 3 : 1 com o
+  /// pelo; em repouso caem 0,12 rad ("soltos e curvos" é bem-estar na
+  /// ficha de dor felina), mais na saudade e no sono, e vão para a frente
+  /// quando ela caça.
+  void _bigodesDaGata(Canvas canvas) {
+    final escuros = pelo.computeLuminance() > 0.30;
+    final cor = escuros
+        ? Color.lerp(Cores.tinta, pelo, 0.15)!.withValues(alpha: 0.80)
+        : const Color(0xFFF4EBDD).withValues(alpha: 0.85);
+    final t = _traco(cor, 1.3);
+    final respira = pose.respiro * pose.amplitude * 1.1;
+    final susto = pose.vida.susto.clamp(0.0, 1.0);
+    final cai = _porHumor(
+      (m) => switch (m) {
+        Mood.radiant => 0.08,
+        Mood.content => 0.12,
+        Mood.neutral => 0.14,
+        Mood.sleepy => 0.32,
+        Mood.missingYou => 0.32,
+      },
+    );
+    final frente = pose.brincando ? 0.35 : 0.0;
+    for (final lado in [-1.0, 1.0]) {
+      final o = Offset(lado * 12, 12);
+      canvas.save();
+      canvas.translate(o.dx, o.dy);
+      // Ângulo positivo = ponta para baixo. No susto recuam 0,2 rad.
+      canvas.rotate(lado * (cai - frente + 0.2 * susto));
+      for (var i = 0; i < 4; i++) {
+        final dy = (i - 1.5) * 3.0;
+        final comprimento = 34.0 + (i % 2) * 4;
+        canvas.drawPath(
+          Path()
+            ..moveTo(0, dy)
+            ..cubicTo(
+              lado * comprimento * 0.35,
+              dy - 1 - respira,
+              lado * comprimento * 0.7,
+              dy - 2 - respira * 1.3,
+              lado * comprimento,
+              dy - 4 + i * 1.5 - respira * 1.5,
+            ),
+          t,
+        );
+      }
+      canvas.restore();
+    }
   }
 
   // ======================================================================
@@ -4663,26 +4774,23 @@ class _PetPainter extends CustomPainter {
     canvas.drawCircle(Offset(pontaX - 3, pontaY - 3), 16, _p(_brancoDaRaposa));
     canvas.restore();
 
-    _pata(
-      canvas,
-      const Offset(-19, 49),
-      16,
-      12,
-      sombraForte,
-      pose.pernas * amp,
-    );
-    _pata(
-      canvas,
-      const Offset(19, 49),
-      16,
-      12,
-      sombraForte,
-      -pose.pernas * amp,
-    );
+    // Coxas atrás do corpo: é o que dá à raposa sentada a largura embaixo,
+    // sem engordar o peito (RAP-14).
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawPath(
+        _bolha(
+          Rect.fromCenter(center: Offset(lado * 27, 42), width: 30, height: 24),
+        ),
+        _p(pelo),
+      );
+    }
 
+    // Corpo mais leve que o da gata — a raposa é "muito mais leve de osso"
+    // que um cão (laudo 33 R5) — e com a base acima dos pés, para a perna
+    // aparecer.
     final corpo = _bolha(
-      Rect.fromCenter(center: const Offset(0, 20), width: 78, height: 70),
-      topo: 0.88,
+      Rect.fromCenter(center: const Offset(0, 16), width: 72, height: 62),
+      topo: 0.9,
     );
     canvas.drawPath(corpo, _p(pelo));
 
@@ -4691,14 +4799,47 @@ class _PetPainter extends CustomPainter {
     // O peito branco, em ponta para baixo: o babador da raposa.
     canvas.drawPath(
       Path()
-        ..moveTo(-24, -6)
-        ..quadraticBezierTo(0, 4, 24, -6)
-        ..quadraticBezierTo(20, 30, 0, 50)
-        ..quadraticBezierTo(-20, 30, -24, -6)
+        ..moveTo(-24, -8)
+        ..quadraticBezierTo(0, 2, 24, -8)
+        ..quadraticBezierTo(20, 28, 0, 46)
+        ..quadraticBezierTo(-20, 28, -24, -8)
         ..close(),
       _p(_brancoDaRaposa),
     );
     canvas.restore();
+
+    // Pernas da frente **depois** do corpo: duas meias escuras até o
+    // "joelho" e a pata — sem perna, a meia preta da raposa (o traço que
+    // a separa de um cão ruivo) não existia (laudo 33 R5, RAP-14). A perna
+    // acompanha a pata no passo.
+    for (final lado in [-1.0, 1.0]) {
+      final noAr = lado < 0 ? pose.vida.pataEsquerda : pose.vida.pataDireita;
+      final x =
+          lado * 17 +
+          pose.pernas * amp * -lado +
+          lado * 7 * pose.vida.reverencia +
+          noAr * 2;
+      canvas.drawPath(
+        _bolha(
+          Rect.fromCenter(
+            center: Offset(x, 45 - noAr * 7),
+            width: 12,
+            height: 18,
+          ),
+          topo: 0.6,
+        ),
+        _p(sombraForte),
+      );
+    }
+    _pata(
+      canvas,
+      const Offset(-17, 54),
+      17,
+      12,
+      sombraForte,
+      -pose.pernas * amp,
+    );
+    _pata(canvas, const Offset(17, 54), 17, 12, sombraForte, pose.pernas * amp);
 
     // --- cabeça -----------------------------------------------------------
     canvas.save();
@@ -4720,44 +4861,68 @@ class _PetPainter extends CustomPainter {
         Mood.missingYou => 0.48,
       },
     );
+    // Estágio: filhote de orelha curta, jovem de orelha "grande demais"
+    // (RAP-20).
+    final alturaDaOrelha = switch (estagio) {
+      EstagioDoBicho.inicio || EstagioDoBicho.filhote => 0.72,
+      EstagioDoBicho.jovem => 1.15,
+      EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+    };
     for (final lado in [-1.0, 1.0]) {
       final treme = pose.orelha * 0.6 * lado;
       final t = treme * 7;
+      final giro =
+          lado * (abre + 0.4 * sustoDaFaisca - 0.15 * festaDaFaisca) +
+          (lado > 0 ? 0.1 : 0.0);
       canvas.save();
       canvas.translate(lado * 26, -14);
       // Para trás no susto, em pé na festa; a direita 0,1 rad diferente
       // (laudo 31 R11).
-      canvas.rotate(
-        lado * (abre + 0.4 * sustoDaFaisca - 0.15 * festaDaFaisca) +
-            (lado > 0 ? 0.1 : 0.0),
-      );
+      canvas.rotate(giro);
       canvas.translate(-lado * 26, 14);
+      canvas.translate(0, -10);
+      canvas.scale(1, alturaDaOrelha);
+      canvas.translate(0, 10);
+      // Orelha grande (base 13..40, ponta em −52: 62 % da altura da
+      // cabeça), em pelo.
       canvas.drawPath(
         Path()
-          ..moveTo(lado * 38, -10)
-          ..cubicTo(lado * 46, -28, lado * (42 + t), -44, lado * (30 + t), -48)
-          ..cubicTo(lado * 22, -38, lado * 16, -26, lado * 14, -16)
-          ..cubicTo(lado * 22, -12, lado * 32, -10, lado * 38, -10)
+          ..moveTo(lado * 40, -9)
+          ..cubicTo(lado * 48, -28, lado * (43 + t), -46, lado * (31 + t), -52)
+          ..cubicTo(lado * 22, -40, lado * 15, -26, lado * 13, -15)
+          ..cubicTo(lado * 22, -11, lado * 33, -9, lado * 40, -9)
           ..close(),
         _p(pelo),
       );
+      // O **dorso** preto da orelha: uma faixa na borda de fora que cresce
+      // quando a orelha gira para o lado — a "orelha de avião" mostra a
+      // parte de trás. Antes o escuro era um lobo na face da frente, uma
+      // "boina solta" (laudo 33 R5, RAP-12).
+      final dorso = 5 + 10 * (giro.abs() / 0.5).clamp(0.0, 1.0);
       canvas.drawPath(
         Path()
-          ..moveTo(lado * 32, -16)
-          ..cubicTo(lado * 36, -26, lado * (33 + t), -34, lado * (27 + t), -37)
-          ..cubicTo(lado * 23, -30, lado * 20, -24, lado * 19, -19)
-          ..cubicTo(lado * 24, -16, lado * 29, -15, lado * 32, -16)
+          ..moveTo(lado * 40, -9)
+          ..cubicTo(lado * 48, -28, lado * (43 + t), -46, lado * (31 + t), -52)
+          ..cubicTo(
+            lado * (31 + t - dorso * 0.5),
+            -52 + dorso * 0.9,
+            lado * (40 - dorso),
+            -34,
+            lado * (40 - dorso),
+            -9,
+          )
+          ..close(),
+        _p(Color.lerp(sombraForte, Cores.tinta, 0.4)!),
+      );
+      // A concha clara, grande, chegando perto da ponta.
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 33, -14)
+          ..cubicTo(lado * 38, -27, lado * (35 + t), -38, lado * (29 + t), -44)
+          ..cubicTo(lado * 23, -34, lado * 19, -25, lado * 18, -17)
+          ..cubicTo(lado * 23, -14, lado * 29, -13, lado * 33, -14)
           ..close(),
         _p(claro),
-      );
-      canvas.drawPath(
-        Path()
-          ..moveTo(lado * 37, -27)
-          ..cubicTo(lado * 41, -38, lado * (38 + t), -45, lado * (30 + t), -47)
-          ..cubicTo(lado * 26, -42, lado * 23, -36, lado * 21, -31)
-          ..cubicTo(lado * 26, -28, lado * 33, -26, lado * 37, -27)
-          ..close(),
-        _p(sombraForte),
       );
       canvas.restore();
     }
@@ -4770,8 +4935,12 @@ class _PetPainter extends CustomPainter {
       _p(pelo),
     );
 
-    // A máscara branca: bochechas e queixo, subindo em V até o focinho.
-    // É o branco da cara que separa raposa de panda-vermelho e de gata.
+    // A máscara: bochechas **cinza-creme** (`#C4C0AE` na foto, laudo 33
+    // R5) de orelha a orelha, e o branco só no queixo, lábio e garganta,
+    // ligado ao babador. Branca de ponta a ponta a cara virava "panda"
+    // claro; é o cinza da bochecha mais o V do focinho que separa raposa de
+    // panda-vermelho e de gata.
+    final bochecha = Color.lerp(const Color(0xFFC5C1AD), pelo, 0.12)!;
     canvas.save();
     canvas.clipPath(
       _bolha(
@@ -4789,31 +4958,56 @@ class _PetPainter extends CustomPainter {
         ..lineTo(42, 40)
         ..lineTo(-42, 40)
         ..close(),
+      _p(bochecha),
+    );
+    canvas.drawPath(
+      _bolha(
+        Rect.fromCenter(center: const Offset(0, 33), width: 44, height: 22),
+      ),
       _p(_brancoDaRaposa),
     );
     canvas.restore();
     _rostoVira(canvas);
-    // Focinho em V, que afina para a ponta.
+    // Focinho fino, em V que desce e afina até a ponta: 30 de largura em
+    // cima, 10 na ponta, de y 4 a 32 (laudo 33 R5). O nariz é a ponta.
     canvas.drawPath(
       Path()
-        ..moveTo(-16, 6)
-        ..quadraticBezierTo(0, 2, 16, 6)
-        ..quadraticBezierTo(10, 22, 0, 28)
-        ..quadraticBezierTo(-10, 22, -16, 6)
+        ..moveTo(-15, 4)
+        ..quadraticBezierTo(0, 0, 15, 4)
+        ..quadraticBezierTo(9, 24, 5, 31)
+        ..quadraticBezierTo(0, 33.5, -5, 31)
+        ..quadraticBezierTo(-9, 24, -15, 4)
         ..close(),
       _p(_brancoDaRaposa),
     );
+    // A faixa escura do canto do olho ao nariz, da foto (laudo 33 R5).
+    final faixa = _traco(
+      Color.lerp(pelo, Cores.tinta, 0.35)!.withValues(alpha: 0.6),
+      3,
+    );
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(lado * 13, 1)
+          ..quadraticBezierTo(lado * 9, 8, lado * 5.5, 17),
+        faixa,
+      );
+    }
 
-    // Nariz escuro na ponta.
+    // Nariz na ponta do focinho, quase preto (`#232121` na foto).
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 9), width: 13, height: 10),
+        Rect.fromCenter(center: const Offset(0, 21), width: 12, height: 9),
         base: 1.1,
       ),
-      _p(Color.lerp(sombraForte, Cores.tinta, 0.45)!),
+      _p(Color.lerp(const Color(0xFF2A2322), sombraForte, 0.15)!),
     );
     canvas.drawOval(
-      Rect.fromCenter(center: const Offset(-2.4, 7.4), width: 5, height: 3),
+      Rect.fromCenter(
+        center: const Offset(-2.2, 19.5),
+        width: 4.5,
+        height: 2.6,
+      ),
       _p(luz.withValues(alpha: 0.45)),
     );
 
@@ -4910,10 +5104,12 @@ class _PetPainter extends CustomPainter {
   /// sendo *aquele* cão mais escuro — uma cor absoluta ficaria roxa no blue e
   /// preta no fulvo, e as duas leriam como buraco na cara.
   ///
-  /// 0,45 e não 0,55: na primeira tentativa a máscara ficava tão escura que
+  /// 0,52: na primeira tentativa (0,55) a máscara ficava tão escura que
   /// engolia nariz, boca e vinco — restavam dois olhos e dois dentes flutuando
-  /// num borrão marrom. Máscara é sombra na cara, não buraco nela.
-  Color get _tomDaMascara => Color.lerp(pelo, Cores.tinta, 0.45)!;
+  /// num borrão marrom. Com o nariz preto o nariz não some mais, e 0,45
+  /// deixava a máscara a menos de 1,6 : 1 do fulvo (BOL-A1). Máscara é
+  /// sombra na cara, não buraco nela.
+  Color get _tomDaMascara => Color.lerp(pelo, Cores.tinta, 0.52)!;
 
   /// O quanto a orelha tomba, de 0 (ereta) a 1 (deitada de lado).
   ///
@@ -4982,13 +5178,14 @@ class _PetPainter extends CustomPainter {
     // aquela primitiva é simétrica no eixo vertical e o que precisa acontecer
     // aqui é o contrário dela — largo em cima, estreito embaixo. Ombro em
     // ±53 na altura 10, cintura em ±30 na altura 54.
+    // Ombro em ±57 (laudo 33: "peito largo"; 1,19 × a largura do crânio).
     final tronco = Path()
       ..moveTo(0, -17)
-      ..cubicTo(30, -17, 52, -5, 53, 13)
-      ..cubicTo(54, 31, 43, 47, 30, 54)
+      ..cubicTo(31, -17, 56, -5, 57, 13)
+      ..cubicTo(58, 31, 44, 47, 30, 54)
       ..cubicTo(19, 61, -19, 61, -30, 54)
-      ..cubicTo(-43, 47, -54, 31, -53, 13)
-      ..cubicTo(-52, -5, -30, -17, 0, -17)
+      ..cubicTo(-44, 47, -58, 31, -57, 13)
+      ..cubicTo(-56, -5, -31, -17, 0, -17)
       ..close();
     canvas.drawPath(tronco, _p(pelo));
 
@@ -5019,7 +5216,7 @@ class _PetPainter extends CustomPainter {
     // outras é só o ventre mais claro, como nas oito espécies antigas.
     canvas.drawPath(
       _bolha(
-        Rect.fromCenter(center: const Offset(0, 30), width: 46, height: 58),
+        Rect.fromCenter(center: const Offset(0, 30), width: 50, height: 58),
         topo: 0.82,
       ),
       _p(pied ? _brancoDoPied : barriga),
@@ -5037,8 +5234,8 @@ class _PetPainter extends CustomPainter {
       _dobraDaPele(
         canvas,
         Path()
-          ..moveTo(lado * 30, -11)
-          ..cubicTo(lado * 44, -3, lado * 47, 8, lado * 44, 19),
+          ..moveTo(lado * 32, -11)
+          ..cubicTo(lado * 47, -3, lado * 50, 8, lado * 47, 19),
         forca: 0.7,
       );
     }
@@ -5057,12 +5254,16 @@ class _PetPainter extends CustomPainter {
     for (final lado in [-1.0, 1.0]) {
       final desloca = passo * 0.9 * lado;
       final x = lado * 31 + desloca;
+      // Curta, grossa e **torneada**: a borda de fora estufa mais que a de
+      // dentro (o músculo do antebraço), em vez de uma coluna reta.
       final perna = _bolha(
-        Rect.fromCenter(center: Offset(x, 39), width: 21, height: 42),
+        Rect.fromCenter(center: Offset(x, 39), width: 23, height: 42),
         // Topo quase reto: a perna sobe e some sob o peito. Com o topo
         // redondo ela virava uma bola encostada no corpo, e o bicho ficava
         // com duas almofadas em vez de duas pernas.
         topo: 0.34,
+        esq: lado < 0 ? 1.12 : 0.9,
+        dir: lado > 0 ? 1.12 : 0.9,
       );
       canvas.drawPath(perna, _p(Color.lerp(pelo, Cores.tinta, 0.13)!));
       // A meia branca do pied. Desenhada como parte da perna, e não pintando
@@ -5126,13 +5327,18 @@ class _PetPainter extends CustomPainter {
     // Orelhas antes da cabeça: a base some sob o contorno, como nas outras.
     // Susto: mais eretas e abertas (tomba −0,15, BOL-B6); festa: tremendo;
     // a direita um fio diferente (laudo 31 R11).
+    // O filhote de buldogue nasce de orelha dobrada: elas só "sobem" com
+    // as semanas. Mais tombadas no filhote, então.
+    final filhote =
+        estagio == EstagioDoBicho.inicio || estagio == EstagioDoBicho.filhote;
     for (final lado in [-1.0, 1.0]) {
       _orelhaDeMorcego(
         canvas,
         lado,
         (tomba -
                 0.15 * pose.vida.susto.clamp(0.0, 1.0) +
-                (lado > 0 ? 0.06 : 0.0))
+                (lado > 0 ? 0.06 : 0.0) +
+                (filhote ? 0.30 : 0.0))
             .clamp(0.0, 1.0),
       );
     }
@@ -5230,6 +5436,14 @@ class _PetPainter extends CustomPainter {
     canvas.rotate(lado * tomba * 0.95);
     canvas.scale(1, 1 - tomba * 0.20);
     canvas.translate(-lado * 27, 6);
+    // Estágio: a orelha do jovem é grande para a cabeça; a do filhote,
+    // curta (a partir da base, em y 0).
+    final alturaDaOrelha = switch (estagio) {
+      EstagioDoBicho.inicio || EstagioDoBicho.filhote => 0.85,
+      EstagioDoBicho.jovem => 1.12,
+      EstagioDoBicho.adulto || EstagioDoBicho.pleno => 1.0,
+    };
+    canvas.scale(1, alturaDaOrelha);
 
     // As medidas que fazem a orelha ler como "de morcego": base de 34 num
     // crânio de 96 — mais de um terço da cabeça de cada lado —, altura de 46,
@@ -5255,9 +5469,13 @@ class _PetPainter extends CustomPainter {
     // pavilhão de verdade ocupa. Uma fresta fina no meio lia como vinco, não
     // como ouvido.
     //
-    // Sai de `sombraForte`, e não de `sombra`: partindo do tom médio ela
-    // ficava mais **clara** que o pelo depois da mistura com o acento, e a
-    // orelha lia ao contrário — o miolo saltando à frente da borda.
+    // Nas pelagens claras a concha é **rosa-pele** (`#F6C9B9` na foto,
+    // laudo 33 R10, BOL-A1): a mistura com o acento saía marrom. Nas
+    // escuras (tigrado, blue, preto) continua saindo de `sombraForte`, que
+    // é o que mantém a orelha legível contra o pelo.
+    final concha = pelo.computeLuminance() > 0.2
+        ? Color.lerp(pelo, const Color(0xFFF6C9B9), 0.55)!
+        : Color.lerp(sombraForte, Cores.acento, 0.28)!;
     canvas.drawPath(
       Path()
         ..moveTo(lado * 41, -1)
@@ -5265,7 +5483,7 @@ class _PetPainter extends CustomPainter {
         ..cubicTo(lado * (31 + t), -43, lado * (22 + t), -43, lado * 19, -34)
         ..cubicTo(lado * 17, -23, lado * 17, -11, lado * 17, -1)
         ..close(),
-      _p(Color.lerp(sombraForte, Cores.acento, 0.28)!),
+      _p(concha),
     );
     canvas.restore();
   }
@@ -5461,7 +5679,9 @@ class _PetPainter extends CustomPainter {
         Rect.fromCenter(center: const Offset(0, 14), width: 27, height: 17),
         base: 1.12,
       ),
-      _p(Color.lerp(sombraForte, Cores.tinta, 0.62)!),
+      // Preto: o nariz do buldogue francês é preto em todas as pelagens
+      // (`#241A1A` na foto, laudo 33 R10, BOL-A1); marrom lia como fígado.
+      _p(Color.lerp(const Color(0xFF241A1A), sombraForte, 0.12)!),
     );
     // Narinas em vírgula, viradas para fora. Dois furos redondos e simétricos
     // leem como tomada elétrica.

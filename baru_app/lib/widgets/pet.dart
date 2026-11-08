@@ -357,7 +357,11 @@ class PetView extends StatefulWidget {
   /// da boca no espaço local da cabeça. É a âncora da camada de boca: a
   /// série desenha o corpo uma vez e troca só a boca, por cima, no lugar
   /// certo de cada quadro. Nulo fora das capturas.
-  static void Function(Float64List transformacao, Offset origem, double largura)?
+  static void Function(
+    Float64List transformacao,
+    Offset origem,
+    double largura,
+  )?
   aoDesenharBoca;
 
   /// Já saudou nesta abertura do app: a home remontada não festeja de novo.
@@ -1619,6 +1623,127 @@ class _AfagoVenceARolagem extends PanGestureRecognizer {
 /// motor de vida — um passo, uma batida de asa, uma braçada — fora do
 /// relógio: é assim que o site recebe as mesmas animações do app, quadro a
 /// quadro, sem um segundo desenho dos bichos (`test/animacoes_site_test.dart`).
+/// Onde fica a boca de cada espécie, no espaço da cabeça (depois de
+/// `_rostoVira`): a linha do lábio [origem]; a largura de referência
+/// [largura], a mesma dos arcos do humor; quanto a mandíbula desce com a boca
+/// toda aberta [hMax]; quanto há entre a linha do lábio e a base do nariz ou
+/// da focinheira [folgaNariz] — o topo do vão nunca sobe a menos de 2
+/// unidades do nariz; e se a espécie mostra dentes e língua. Nos bicos
+/// (coruja, pinguim) a origem e a largura são as do bico, para a âncora da
+/// camada de boca, e [hMax] é quanto a ponta da mandíbula de baixo desce.
+///
+/// Laudo 30, §1.2, §3.1 a §3.4. Diferenças em relação à tabela de lá, todas
+/// anotadas no relatório do lote: a capivara abre 12 e não 14, para o vão
+/// não passar da base da cabeça (RRect de 74 de altura; com 14 passava 2
+/// unidades mesmo com o queixo descendo); o buldogue abre 10, o número da
+/// §3.4 ("lábio inferior + dentinhos descem abertura·10"), e não os 12 da
+/// §3.2; gata e raposa ficam com a boca onde está (R4 pedia descer 1,5),
+/// porque a boca fechada de cada humor tem de continuar igual à de hoje.
+@immutable
+class BocaDaEspecie {
+  const BocaDaEspecie({
+    required this.origem,
+    required this.largura,
+    required this.hMax,
+    this.folgaNariz = 99,
+    this.labioSobe = 1,
+    this.temDentes = false,
+    this.temLingua = true,
+    this.larguraBase = 0,
+  });
+
+  /// O centro da linha do lábio, no espaço da cabeça.
+  final Offset origem;
+
+  /// A largura de referência (`w` dos arcos do humor).
+  final double largura;
+
+  /// Quanto a mandíbula desce com a boca toda aberta (unidades).
+  final double hMax;
+
+  /// Da linha do lábio até a base do nariz ou da focinheira (unidades). Sem
+  /// nariz desenhado (axolote), um número grande: não limita nada.
+  final double folgaNariz;
+
+  /// Quanto o lábio de cima sobe, no máximo, com a boca toda aberta
+  /// (unidades). Zero no buldogue: o beiço pendurado não sobe.
+  final double labioSobe;
+
+  /// Mostra linha de dentes no formato B (a capivara, os dois incisivos; o
+  /// buldogue, os dentinhos de baixo que já tem).
+  final bool temDentes;
+
+  /// Mostra a língua no fundo do vão a partir de 0,45 de abertura.
+  final bool temLingua;
+
+  /// Largura de partida somada à pedida: o axolote tem a boca larga.
+  final double larguraBase;
+
+  static BocaDaEspecie de(Species sp) => switch (sp) {
+    Species.capybara => const BocaDaEspecie(
+      origem: Offset(0, 27),
+      largura: 26,
+      hMax: 12,
+      folgaNariz: 7.5,
+      temDentes: true,
+    ),
+    Species.otter => const BocaDaEspecie(
+      origem: Offset(0, 19),
+      largura: 20,
+      hMax: 12,
+      folgaNariz: 6.5,
+    ),
+    Species.tortoise => const BocaDaEspecie(
+      origem: Offset(0, 16),
+      largura: 24,
+      hMax: 12,
+      folgaNariz: 7.5,
+    ),
+    Species.owl => const BocaDaEspecie(
+      origem: Offset(0, 13),
+      largura: 12,
+      hMax: 8,
+      temLingua: false,
+    ),
+    Species.axolotl => const BocaDaEspecie(
+      origem: Offset(0, 14),
+      largura: 22,
+      hMax: 14,
+      larguraBase: 0.3,
+    ),
+    Species.penguin => const BocaDaEspecie(
+      origem: Offset(0, 11),
+      largura: 12,
+      hMax: 10,
+    ),
+    Species.cat => const BocaDaEspecie(
+      origem: Offset(0, 17),
+      largura: 20,
+      hMax: 9,
+      folgaNariz: 4.5,
+      temDentes: true,
+    ),
+    Species.fox => const BocaDaEspecie(
+      origem: Offset(0, 19),
+      largura: 20,
+      hMax: 10,
+      folgaNariz: 5,
+      temDentes: true,
+    ),
+    // A folga é até o fim do filtro (27); o nariz mesmo acaba em 22,5. O
+    // beiço (o flew) não sobe quando a boca abre: o vão cresce só para
+    // baixo, entre os lobos.
+    Species.frenchie => const BocaDaEspecie(
+      origem: Offset(0, 30),
+      largura: 30,
+      hMax: 10,
+      folgaNariz: 3,
+      labioSobe: 0,
+      temDentes: true,
+    ),
+  };
+}
+
 @immutable
 class QuadroFixo {
   const QuadroFixo({
@@ -1628,6 +1753,18 @@ class QuadroFixo {
     this.ciclo = 0,
     this.vida = const SaidaDaVida(),
   });
+
+  /// Um dos sete formatos de boca da fala (laudo 30, §3.2) com o resto do
+  /// bicho em repouso: o quadro que a série captura por visema e humor.
+  QuadroFixo.visema(
+    Visema v, {
+    this.respiro = 0,
+    this.pisca = 0,
+    double susto = 0,
+    double festa = 0,
+  }) : acao = null,
+       ciclo = 0,
+       vida = SaidaDaVida.visema(v, susto: susto, festa: festa);
 
   /// -1 (vazio) a 1 (cheio), como em `_Pose.respiro`.
   final double respiro;
@@ -1950,6 +2087,59 @@ class _Pose {
   /// À toa ele troca o apoio de um pé para o outro. Em pixels.
   double get pesoNoPe =>
       acao == AcaoDoBicho.ocioso ? math.sin(_volta) * 2.2 * amplitude : 0;
+}
+
+/// A boca como uma curva: os cantos em (±[xCanto], [yCanto]), o lábio de
+/// cima passando por (0, [topo]) e um só parâmetro de forma, [bico] — 0 deixa
+/// os cantos redondos (uma elipse), 1 os afina em ponta (uma lente). O lábio
+/// de baixo é a mesma curva passando pelo fundo que [caminho] pedir; quando o
+/// fundo é o próprio topo, a boca está fechada e sobra só a linha.
+class _CurvaDaBoca {
+  const _CurvaDaBoca({
+    required this.xCanto,
+    required this.yCanto,
+    required this.topo,
+    required this.bico,
+  });
+
+  final double xCanto;
+  final double yCanto;
+  final double topo;
+  final double bico;
+
+  static _CurvaDaBoca lerp(_CurvaDaBoca a, _CurvaDaBoca b, double t) =>
+      _CurvaDaBoca(
+        xCanto: a.xCanto + (b.xCanto - a.xCanto) * t,
+        yCanto: a.yCanto + (b.yCanto - a.yCanto) * t,
+        topo: a.topo + (b.topo - a.topo) * t,
+        bico: a.bico + (b.bico - a.bico) * t,
+      );
+
+  /// A mesma curva com os cantos em outra altura.
+  _CurvaDaBoca cantosEm(double y) =>
+      _CurvaDaBoca(xCanto: xCanto, yCanto: y, topo: topo, bico: bico);
+
+  /// O lábio de cima, do canto esquerdo ao direito, [desce] unidades abaixo
+  /// do lugar dele. Um cúbico só, com os dois controles na mesma altura: o
+  /// meio cai exatamente em [topo].
+  Path labio(double cx, {double desce = 0}) {
+    final yc = yCanto + desce;
+    final yT = (4 * (topo + desce) - yc) / 3;
+    final xi = xCanto * (1 - bico);
+    return Path()
+      ..moveTo(cx - xCanto, yc)
+      ..cubicTo(cx - xi, yT, cx + xi, yT, cx + xCanto, yc);
+  }
+
+  /// O contorno fechado do vão: o lábio de cima até o canto direito e o de
+  /// baixo, por (0, [fundo]), de volta ao esquerdo.
+  Path caminho(double cx, double fundo) {
+    final yB = (4 * fundo - yCanto) / 3;
+    final xi = xCanto * (1 - bico);
+    return labio(cx)
+      ..cubicTo(cx + xi, yB, cx - xi, yB, cx - xCanto, yCanto)
+      ..close();
+  }
 }
 
 class _PetPainter extends CustomPainter {
@@ -2935,7 +3125,7 @@ class _PetPainter extends CustomPainter {
     canvas.drawPath(
       Path()..addRRect(
         RRect.fromRectAndCorners(
-          Rect.fromCenter(center: const Offset(0, 2), width: 94, height: 74),
+          Rect.fromLTRB(-47, -35, 47, 39 + _queixoDesce),
           topLeft: const Radius.circular(34),
           topRight: const Radius.circular(34),
           bottomLeft: const Radius.circular(26),
@@ -2951,7 +3141,7 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(
       Path()..addRRect(
         RRect.fromRectAndRadius(
-          Rect.fromCenter(center: const Offset(0, 2), width: 94, height: 74),
+          Rect.fromLTRB(-47, -35, 47, 39 + _queixoDesce),
           const Radius.circular(30),
         ),
       ),
@@ -2980,7 +3170,7 @@ class _PetPainter extends CustomPainter {
       _p(luz.withValues(alpha: 0.4)),
     );
 
-    _boca(canvas, const Offset(0, 27), 26);
+    _boca(canvas);
     if (feliz) {
       _bochecha(canvas, const Offset(-34, 18), const Offset(34, 18));
     }
@@ -3070,7 +3260,7 @@ class _PetPainter extends CustomPainter {
       _bolha(
         // Cabeça chata e larga, mais baixa que a da capivara.
         Rect.fromCenter(center: Offset.zero, width: 78, height: 62),
-        base: 1.02,
+        base: 1.02 + _queixoDesce / 31,
       ),
       _p(pelo),
     );
@@ -3102,7 +3292,7 @@ class _PetPainter extends CustomPainter {
       _p(luz.withValues(alpha: 0.45)),
     );
 
-    _boca(canvas, const Offset(0, 19), 20);
+    _boca(canvas);
     if (feliz) {
       _bochecha(canvas, const Offset(-30, 11), const Offset(30, 11));
     }
@@ -3260,7 +3450,7 @@ class _PetPainter extends CustomPainter {
     canvas.drawPath(
       _bolha(
         Rect.fromCenter(center: Offset.zero, width: 66, height: 60),
-        base: 1.04,
+        base: 1.04 + _queixoDesce / 30,
       ),
       _p(pelo),
     );
@@ -3283,7 +3473,7 @@ class _PetPainter extends CustomPainter {
     _rostoVira(canvas);
     _narina(canvas, const Offset(-6, 6));
     _narina(canvas, const Offset(6, 6));
-    _boca(canvas, const Offset(0, 16), 24);
+    _boca(canvas);
     // Sem bochecha rosada: réptil não cora, e sobre o verde a mancha rosa
     // ficava um adesivo colado.
 
@@ -3614,17 +3804,14 @@ class _PetPainter extends CustomPainter {
     _olho(canvas, const Offset(-19, 2), 9, coruja: true, sobrancelha: false);
     _olho(canvas, const Offset(19, 2), 9, coruja: true, sobrancelha: false);
 
-    // Bico claro, amarelado, entre os discos.
-    PetView.aoDesenharBoca?.call(canvas.getTransform(), const Offset(0, 13), 12);
-    canvas.drawPath(
-      Path()
-        ..moveTo(-6, 7)
-        ..lineTo(6, 7)
-        // O bico se alonga na mordida: bico não abre como boca, e sem
-        // nenhum sinal a coruja petiscava de cara parada.
-        ..lineTo(0, 19 + math.max(pose.mastiga, pose.vida.boca) * 3)
-        ..close(),
-      _p(const Color(0xFFD9C79A)),
+    // Bico claro, amarelado, entre os discos. A mandíbula de baixo gira na
+    // articulação (0..25°) com a abertura; a de cima fica (ver [_bico]).
+    _bico(
+      canvas,
+      cor: const Color(0xFFD9C79A),
+      base: 7,
+      ponta: 19,
+      anguloMax: 25,
     );
     _naBoca(canvas, const Offset(0, 16), 20);
 
@@ -3759,13 +3946,13 @@ class _PetPainter extends CustomPainter {
     canvas.drawPath(
       _bolha(
         Rect.fromCenter(center: const Offset(0, 0.7), width: 86, height: 73),
-        base: 1.04,
+        base: 1.04 + _queixoDesce / 36.5,
       ),
       _p(pelo),
     );
     _rostoVira(canvas);
 
-    _boca(canvas, const Offset(0, 14), 22);
+    _boca(canvas);
     if (feliz) _bochecha(canvas, const Offset(-30, 6), const Offset(30, 6));
 
     _olho(canvas, const Offset(-20, -6), 7.5);
@@ -3943,35 +4130,20 @@ class _PetPainter extends CustomPainter {
     _olho(canvas, const Offset(15, -3), 7);
 
     // Bico escuro e robusto, com a faixa clara perto da ponta do
-    // magalhães — o único traço reto do bicho.
+    // magalhães — o único traço reto do bicho. A mandíbula de baixo gira na
+    // articulação (0..30°) com a abertura (ver [_bico]); o remendo terracota
+    // dentro do bico fechado, que fazia as vezes de "aberto", saiu.
     final bico = Color.lerp(sombraForte, Cores.tinta, 0.55)!;
-    PetView.aoDesenharBoca?.call(canvas.getTransform(), const Offset(0, 11), 12);
-    canvas.drawPath(
-      Path()
-        ..moveTo(-6, 5)
-        ..lineTo(6, 5)
-        ..lineTo(0, 17)
-        ..close(),
-      _p(bico),
+    _bico(
+      canvas,
+      cor: bico,
+      base: 5,
+      ponta: 17,
+      anguloMax: 30,
+      faixa: Color.lerp(bico, Cores.superficie, 0.45)!,
+      faixaEm: 12,
+      lingua: true,
     );
-    canvas.drawLine(
-      const Offset(-2.6, 12),
-      const Offset(2.6, 12),
-      _traco(Color.lerp(bico, Cores.superficie, 0.45)!, 1.2),
-    );
-    if (pose.bocejo > 0.3 ||
-        pose.carinho > 0.4 ||
-        pose.mastiga > 0.30 ||
-        pose.vida.boca > 0.3) {
-      canvas.drawPath(
-        Path()
-          ..moveTo(-4.5, 11)
-          ..lineTo(4.5, 11)
-          ..lineTo(0, 18.5)
-          ..close(),
-        _p(Color.lerp(Cores.terracotaDaArte, Cores.tinta, 0.35)!),
-      );
-    }
     _naBoca(canvas, const Offset(0, 12), 18);
     _rostoVolta(canvas);
     _veste(canvas, 72, 60);
@@ -4117,6 +4289,7 @@ class _PetPainter extends CustomPainter {
 
     final cabeca = _bolha(
       Rect.fromCenter(center: const Offset(0.7, 0.7), width: 82, height: 69),
+      base: 1 + _queixoDesce / 34.5,
     );
     canvas.drawPath(cabeca, _p(pelo));
 
@@ -4170,7 +4343,7 @@ class _PetPainter extends CustomPainter {
       _p(const Color(0xFFD67F74)),
     );
 
-    _boca(canvas, const Offset(0, 17), 20);
+    _boca(canvas);
     if (feliz) _bochecha(canvas, const Offset(-30, 12), const Offset(30, 12));
 
     _olho(canvas, const Offset(-19, -6), 7.5);
@@ -4330,6 +4503,7 @@ class _PetPainter extends CustomPainter {
     canvas.drawPath(
       _bolha(
         Rect.fromCenter(center: const Offset(0, 3), width: 80, height: 66),
+        base: 1 + _queixoDesce / 33,
       ),
       _p(pelo),
     );
@@ -4340,6 +4514,7 @@ class _PetPainter extends CustomPainter {
     canvas.clipPath(
       _bolha(
         Rect.fromCenter(center: const Offset(0, 3), width: 80, height: 66),
+        base: 1 + _queixoDesce / 33,
       ),
     );
     _rostoVira(canvas);
@@ -4380,7 +4555,7 @@ class _PetPainter extends CustomPainter {
       _p(luz.withValues(alpha: 0.45)),
     );
 
-    _boca(canvas, const Offset(0, 19), 20);
+    _boca(canvas);
     if (feliz) _bochecha(canvas, const Offset(-30, 14), const Offset(30, 14));
 
     _olho(canvas, const Offset(-19, -4), 7.5);
@@ -4702,13 +4877,16 @@ class _PetPainter extends CustomPainter {
     // o contorno resultante tinha três calombos de cada lado — de longe lia
     // como cabeça inchada, não como papada. Papada é a **linha** da cabeça
     // descendo e abrindo, e linha só sai de um caminho só.
+    // A boca bem aberta desce o queixo (ver [_queixoDesce]): a papada
+    // alonga, o resto do contorno fica.
+    final q = _queixoDesce;
     final cabeca = Path()
       ..moveTo(0, -21)
       ..cubicTo(31, -21, 45, -13, 46, 5)
-      ..cubicTo(48, 20, 46, 30, 40, 36)
-      ..cubicTo(32, 44, 16, 46, 0, 46)
-      ..cubicTo(-16, 46, -32, 44, -40, 36)
-      ..cubicTo(-46, 30, -48, 20, -46, 6)
+      ..cubicTo(48, 20, 46, 30 + q * 0.3, 40, 36 + q * 0.6)
+      ..cubicTo(32, 44 + q * 0.9, 16, 46 + q, 0, 46 + q)
+      ..cubicTo(-16, 46 + q, -32, 44 + q * 0.9, -40, 36 + q * 0.6)
+      ..cubicTo(-46, 30 + q * 0.3, -48, 20, -46, 6)
       ..cubicTo(-44, -12, -25, -20, 0, -20)
       ..close();
 
@@ -5041,43 +5219,102 @@ class _PetPainter extends CustomPainter {
       _traco(sombra.withValues(alpha: 0.45), 1.8),
     );
 
-    // Tinta cheia na boca, não `sombraForte`: ver a nota em [_boca].
-    _boca(
-      canvas,
-      const Offset(0, 30),
-      30,
-      cor: Color.lerp(Cores.tinta, corDoFocinho, 0.18)!,
-    );
-    // Prognatismo: dois dentinhos de baixo aparecendo por cima do lábio. É o
-    // traço do padrão da raça que ninguém desenha e todo mundo reconhece —
-    // sem ele a cara achatada fica com um sorriso de gato.
-    //
-    // Desenhados **depois** de [_boca] de propósito: com a boca aberta eles
-    // caem sobre o vão escuro, que é onde os dentes de baixo de fato ficam.
-    //
-    // Recém-nascido e filhote não mostram: cachorro nasce sem dente, e os
-    // de leite só despontam pela terceira semana.
-    final temDentes = estagio.index >= EstagioDoBicho.jovem.index;
-    for (final lado in [
-      if (temDentes) ...[-1.0, 1.0],
-    ]) {
-      canvas.drawPath(
-        _bolha(
-          Rect.fromCenter(
-            center: Offset(lado * 4.4, 34),
-            width: 5.6,
-            height: 6,
-          ),
-          topo: 0.8,
-        ),
-        _p(Cores.superficie),
-      );
-    }
+    // Tinta cheia na boca, não `sombraForte`: ver a nota em [_boca]. A boca
+    // abre atrás do beiço: o vão escuro aparece entre os lobos, que não
+    // mudam, e os dentinhos de baixo descem com a mandíbula (laudo 30,
+    // §3.4) — [_boca] os desenha, para saírem junto na camada de boca.
+    _boca(canvas, cor: Color.lerp(Cores.tinta, corDoFocinho, 0.18)!);
 
     // A língua **depois** dos dentes: ela cai por fora do lábio, e é a
     // primeira coisa que fica na frente de tudo. Desenhada antes, os dois
     // dentinhos ficavam pousados em cima dela.
     _linguaDoBuldogue(canvas);
+  }
+
+  /// Um bico de frente (laudo 30, §3.3, R5). A mandíbula de cima é o
+  /// triângulo de sempre e não se move; a de baixo é uma peça própria que
+  /// gira na articulação, atrás da comissura, de 0 a [anguloMax] graus com a
+  /// abertura — na vista de frente a ponta dela desce
+  /// `hMax · sin θ / sin θmax`, a projeção do giro de uma alavanca que vai da
+  /// articulação, dentro da cabeça, à ponta do bico. Entre as duas aparece o
+  /// vão escuro, em cunha: mais largo no meio e fechando nas comissuras.
+  /// Bico não arredonda: com `largura` negativa (os formatos E e F) ele abre
+  /// como C.
+  ///
+  /// Fechado, o desenho é o de antes, pixel a pixel: a mandíbula de baixo e
+  /// o vão só entram com abertura maior que zero. [faixa] é a listra clara do
+  /// pinguim; [lingua], a língua pequena que só ele mostra no zurro.
+  void _bico(
+    Canvas canvas, {
+    required Color cor,
+    required double base,
+    required double ponta,
+    required double anguloMax,
+    Color? faixa,
+    double faixaEm = 0,
+    bool lingua = false,
+  }) {
+    final e = BocaDaEspecie.de(species);
+    PetView.aoDesenharBoca?.call(canvas.getTransform(), e.origem, e.largura);
+    final vida = pose.vida;
+    if (vida.semBoca) return;
+    var a = _abertura;
+    if (a > 0 && vida.largura < 0) a = math.max(a, 0.45);
+    if (a > 0) {
+      final rad = anguloMax * math.pi / 180;
+      final desce = e.hMax * math.sin(a * rad) / math.sin(rad);
+      // A face de fora da mandíbula de baixo, um tom diferente da de cima
+      // para as duas peças se lerem (mais escura no bico claro da coruja,
+      // mais clara no bico escuro do pinguim).
+      final sombreada = cor.computeLuminance() < 0.15
+          ? Color.lerp(cor, Cores.superficie, 0.12)!
+          : Color.lerp(cor, Cores.tinta, 0.14)!;
+      canvas.drawPath(
+        Path()
+          ..moveTo(-6, base)
+          ..lineTo(6, base)
+          ..lineTo(0, ponta + desce)
+          ..close(),
+        _p(sombreada),
+      );
+      // O vão, com a parede da mandíbula de baixo (1,3) em volta.
+      final vao = Path()
+        ..moveTo(-4.7, base)
+        ..lineTo(4.7, base)
+        ..lineTo(0, ponta + desce - 1.6)
+        ..close();
+      canvas.drawPath(vao, _p(Color.lerp(Cores.tinta, cor, 0.3)!));
+      if (lingua && e.temLingua && vida.lingua > 0 && a > 0.45) {
+        final mostra =
+            ((a - 0.45) / 0.1).clamp(0.0, 1.0) * vida.lingua.clamp(0.0, 1.0);
+        canvas.save();
+        canvas.clipPath(vao);
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(0, ponta + desce * 0.25),
+            width: 2.8,
+            height: 1.8,
+          ),
+          _p(_corDaLingua.withValues(alpha: mostra)),
+        );
+        canvas.restore();
+      }
+    }
+    canvas.drawPath(
+      Path()
+        ..moveTo(-6, base)
+        ..lineTo(6, base)
+        ..lineTo(0, ponta)
+        ..close(),
+      _p(cor),
+    );
+    if (faixa != null) {
+      canvas.drawLine(
+        Offset(-2.6, faixaEm),
+        Offset(2.6, faixaEm),
+        _traco(faixa, 1.2),
+      );
+    }
   }
 
   /// A língua de fora — só quando ele está de fato alegre.
@@ -5096,22 +5333,24 @@ class _PetPainter extends CustomPainter {
         : ((pose.gosto - 0.5) / 0.5).clamp(0.0, 1.0);
     // Balança de leve com a respiração. Língua parada é língua de plástico.
     final oscila = pose.respiro * pose.amplitude * 1.6;
+    // Pendurada no lábio de baixo: desce com a mandíbula quando a boca abre.
+    final desce = _abertura * BocaDaEspecie.de(species).hMax;
     canvas.drawPath(
       _bolha(
         Rect.fromCenter(
-          center: Offset(oscila, 35 + quanto * 4),
+          center: Offset(oscila, 35 + desce + quanto * 4),
           width: 19,
           height: 9 + quanto * 14,
         ),
         topo: 0.4,
       ),
-      _p(Color.lerp(Cores.acento, Cores.superficie, 0.28)!),
+      _p(_corDaLingua),
     );
     // O sulco do meio: sem ele a língua é uma gota rosa e pode ler como
     // qualquer outra coisa pendurada na boca.
     canvas.drawLine(
-      Offset(oscila, 35 + quanto * 2),
-      Offset(oscila, 35 + quanto * 11),
+      Offset(oscila, 35 + desce + quanto * 2),
+      Offset(oscila, 35 + desce + quanto * 11),
       _traco(Color.lerp(Cores.acento, Cores.tinta, 0.35)!, 1.3),
     );
   }
@@ -6070,45 +6309,255 @@ class _PetPainter extends CustomPainter {
     );
   }
 
-  /// Boca que muda com o humor — e abre quando fazem carinho ou ele mastiga.
+  /// A boca: em repouso, a linha do humor; abrindo, a mandíbula que desce.
   ///
-  /// A mastigada vem do laço da atividade, não mais de `pose.boia > 0`. Com
-  /// a boia, a boca ficava metade do tempo aberta e metade fechada num
-  /// período de quase cinco segundos: parecia um bicho de queixo caído, não
-  /// um bicho comendo.
+  /// Era binária — qualquer `boca > 0,3` virava a mesma meia-elipse de 9
+  /// unidades, sem largura, cavidade, língua nem dentes (laudo 30, §1.1) —
+  /// e é daí que vinha o "mouth flapping" da série: seis níveis de abertura
+  /// davam dois desenhos. Agora (laudo 30, §3.1, R2 a R4):
+  ///
+  /// - a **abertura** é contínua: o topo do vão fica na linha do lábio (sobe
+  ///   no máximo 1 unidade e nunca a menos de 2 do nariz ou da focinheira,
+  ///   [BocaDaEspecie.folgaNariz]) e a mandíbula desce `hMax · abertura`;
+  /// - a **largura** vem de `w·(0,44 + 0,16·abertura)`, esticada até +30 %
+  ///   com `largura` positiva; negativa, a boca arredonda e a largura passa a
+  ///   acompanhar a altura (o "o" e o "u" são quase círculos). O máximo é
+  ///   0,60·w: boca pequena, cara de bicho fofo (laudo 31, R1);
+  /// - o interior é cavidade (`lerp(tinta, pelo, 0,25)`), não terracota
+  ///   chapada; o contorno é o traço do lábio em volta inteira, inclusive no
+  ///   topo; a língua aparece a partir de 0,45 de abertura e a linha de
+  ///   dentes nas espécies que têm;
+  /// - os **cantos** somam o humor (radiante +0,6, contente +0,3, saudade
+  ///   −0,4) ao que o motor pedir.
+  ///
+  /// Em repouso (abertura, largura e canto zerados) o desenho é o mesmo de
+  /// antes, arco por arco, para a cara do app não mudar: o formato aberto
+  /// nasce dos cantos e da curva da boca do humor e chega à forma
+  /// paramétrica nos primeiros 30 % de abertura. Com `largura` sem abrir, os
+  /// lábios se apertam numa linha mais grossa (o A de p, b, m) ou franzem.
+  ///
   /// [cor] troca a tinta do traço. Existe por causa do buldogue: a boca dele
   /// cai sobre a focinheira e, nas pelagens escuras, `sombraForte` sobre pelo
   /// já escuro somem uma na outra — sobravam dois dentinhos brancos flutuando
   /// sem boca nenhuma em volta. Nas outras oito o padrão continua valendo.
-  void _boca(Canvas canvas, Offset o, double w, {Color? cor}) {
+  void _boca(Canvas canvas, {Color? cor}) {
+    final e = BocaDaEspecie.de(species);
+    final o = e.origem;
+    final w = e.largura;
     PetView.aoDesenharBoca?.call(canvas.getTransform(), o, w);
-    final t = _traco(cor ?? sombraForte, 1.9);
-    final mastigando = pose.mastiga > 0.30;
-    final aberta =
-        pose.bocejo > 0.3 ||
-        pose.carinho > 0.4 ||
-        mastigando ||
-        pose.vida.boca > 0.3;
+    final vida = pose.vida;
 
+    // A comida não é a boca: fica no corpo mesmo quando a camada de boca
+    // sai (`semBoca`).
     _naBoca(canvas, o, w);
+    if (vida.semBoca) return;
 
-    if (aberta) {
-      final r = Rect.fromCenter(
-        center: o + const Offset(0, 2),
-        width: w * 0.8,
-        height: 9,
-      );
-      canvas.drawArc(
-        r,
-        0,
-        math.pi,
-        true,
-        _p(Color.lerp(Cores.acento, Cores.tinta, 0.4)!),
-      );
-      canvas.drawArc(r, 0, math.pi, false, t);
+    final tinta = cor ?? sombraForte;
+    final a = _abertura;
+    if (a == 0 && vida.largura == 0 && vida.canto == 0) {
+      _bocaDoHumor(canvas, o, w, _traco(tinta, 1.9));
+      if (species == Species.frenchie) _dentinhosDoBuldogue(canvas, 0);
       return;
     }
 
+    // --- o alvo aberto ----------------------------------------------------
+    final larg = (vida.largura + e.larguraBase).clamp(-1.0, 1.0);
+    final k = Curves.easeInOut.transform((a / 0.3).clamp(0.0, 1.0));
+    final canto = (vida.canto + _cantoDoHumor * k).clamp(-1.0, 1.0);
+    final sobe = math.min(a * e.labioSobe, e.folgaNariz - 2).clamp(0.0, 1.0);
+    final vao = a * e.hMax + sobe;
+    final base = w * (0.44 + 0.16 * a);
+    // Arredondando, a largura vai da fórmula para 0,8 da altura — um
+    // círculo um pouco mais alto que largo — depressa (expoente 0,4): o E
+    // (largura -0,5) já tem de ler como "o" também no buldogue, de boca
+    // larga (w = 30), e no axolote, que parte de +0,3.
+    final larguraAberta = larg >= 0
+        ? base * (1 + 0.3 * larg)
+        : base + (vao * 0.8 - base) * math.pow(-larg, 0.4);
+    final aberta = _CurvaDaBoca(
+      xCanto: larguraAberta / 2,
+      yCanto: o.dy - canto * (1.5 + 0.25 * vao),
+      topo: o.dy - sobe,
+      bico: larg >= 0 ? 0.55 + 0.3 * larg : 0.55 * (1 + larg),
+    );
+
+    // --- o repouso: a boca do humor, apertada ou franzida pela largura ---
+    final t = (vida.largura.abs() / 0.35).clamp(0.0, 1.0);
+    final humor = _curvaDoHumor(o, w);
+    final apertada = _CurvaDaBoca(
+      xCanto: w * (0.35 + 0.15 * vida.largura.clamp(-1.0, 1.0)),
+      yCanto: o.dy - vida.canto * 1.5,
+      topo: o.dy,
+      bico: 0.6,
+    );
+    final fechada = _CurvaDaBoca.lerp(
+      humor.cantosEm(humor.yCanto - vida.canto * 1.5),
+      apertada,
+      t,
+    );
+
+    final curva = _CurvaDaBoca.lerp(fechada, aberta, k);
+    final fundo = curva.topo + vao;
+    final caminho = curva.caminho(o.dx, fundo);
+    // O traço primeiro e a cavidade por cima: o lábio fica com a metade de
+    // fora do traço e o vão fica inteiro. Com o traço por cima, a fresta do
+    // B (2 unidades) sumia dentro das 1,9 do contorno.
+    canvas.drawPath(caminho, _traco(tinta, 1.9 + 0.5 * t * (1 - k)));
+    if (vao > 0) {
+      canvas.drawPath(caminho, _p(Color.lerp(Cores.tinta, pelo, 0.25)!));
+      canvas.save();
+      canvas.clipPath(caminho);
+      if (e.temDentes && vida.dentes > 0 && species != Species.frenchie) {
+        _dentes(canvas, o.dx, curva, vida.dentes.clamp(0.0, 1.0));
+      }
+      if (e.temLingua && vida.lingua > 0 && a > 0.45 && !_linguaDeFora) {
+        final mostra =
+            ((a - 0.45) / 0.1).clamp(0.0, 1.0) * vida.lingua.clamp(0.0, 1.0);
+        final alta = vao * 0.32;
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(o.dx, fundo - alta * 0.45),
+            width: curva.xCanto,
+            height: alta,
+          ),
+          _p(_corDaLingua.withValues(alpha: mostra)),
+        );
+      }
+      canvas.restore();
+    }
+    if (species == Species.frenchie) _dentinhosDoBuldogue(canvas, a);
+  }
+
+  /// A cor da língua — a mesma que o buldogue já punha para fora.
+  static final _corDaLingua = Color.lerp(Cores.acento, Cores.superficie, 0.28)!;
+
+  /// 0..1: quanto a boca (ou o bico) está aberta — o maior entre o bocejo, o
+  /// carinho, a mastigada e o que o motor de vida pede (`vida.boca`).
+  ///
+  /// O carinho entra com zona morta: o controlador do toque para em 1 e fica
+  /// lá, onde `carinho` vale e^-2,2 ≈ 0,11. O limiar binário de antes (0,4)
+  /// escondia isso; com a abertura contínua, sem a zona morta a boca ficava
+  /// um fio aberta para sempre depois do primeiro toque
+  /// (`pet_vivo_test`: "depois do toque nada fica preso na pose").
+  double get _abertura {
+    final afago = ((pose.carinho - 0.12) / 0.88).clamp(0.0, 1.0) * 0.6;
+    return math
+        .max(
+          math.max(pose.bocejo, afago),
+          math.max(pose.mastiga, pose.vida.boca),
+        )
+        .clamp(0.0, 1.0);
+  }
+
+  /// O que o humor faz com os cantos da boca aberta (laudo 30, §3.1 e §3.5).
+  double get _cantoDoHumor => switch (mood) {
+    Mood.radiant => 0.6,
+    Mood.content => 0.3,
+    Mood.neutral => 0.0,
+    Mood.sleepy => 0.0,
+    Mood.missingYou => -0.4,
+  };
+
+  /// Quanto o queixo (a base da bolha da cabeça) desce com a boca bem
+  /// aberta: `3 + 4·abertura` a partir de 0,5 (laudo 31, R1), entrando
+  /// suave entre 0,5 e 0,75 para não dar um salto.
+  double get _queixoDesce {
+    final a = _abertura;
+    if (a <= 0.5) return 0;
+    return ((a - 0.5) / 0.25).clamp(0.0, 1.0) * (3 + 4 * a);
+  }
+
+  /// A língua está para fora (o buldogue alegre): a de dentro não entra, ou
+  /// o bicho ficava com duas.
+  bool get _linguaDeFora =>
+      species == Species.frenchie &&
+      (mood == Mood.radiant || pose.gosto >= 0.5);
+
+  /// A linha de dentes de cima, pendurada no lábio dentro do vão — o B da
+  /// fala ("ligeiramente aberta, dentes cerrados"). A capivara mostra os dois
+  /// incisivos; gata e raposa, a linha.
+  void _dentes(Canvas canvas, double cx, _CurvaDaBoca curva, double quanto) {
+    final cor = Cores.superficie.withValues(alpha: quanto);
+    if (species == Species.capybara) {
+      for (final lado in [-1.0, 1.0]) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(cx + lado * 1.7 - 1.5, curva.topo + 0.3, 3, 4),
+            const Radius.circular(0.8),
+          ),
+          _p(cor),
+        );
+      }
+      return;
+    }
+    canvas.drawPath(curva.labio(cx, desce: 1.0), _traco(cor, 1.2));
+  }
+
+  /// Prognatismo: dois dentinhos de baixo aparecendo por cima do lábio. É o
+  /// traço do padrão da raça que ninguém desenha e todo mundo reconhece —
+  /// sem ele a cara achatada fica com um sorriso de gato.
+  ///
+  /// Desenhados **depois** do vão de propósito: com a boca aberta eles caem
+  /// sobre o escuro, que é onde os dentes de baixo de fato ficam. São da
+  /// mandíbula: descem com ela — metade do que o lábio de baixo desce, para
+  /// continuarem apontando para dentro do vão em vez de sumirem sob o lábio.
+  ///
+  /// Recém-nascido e filhote não mostram: cachorro nasce sem dente, e os
+  /// de leite só despontam pela terceira semana.
+  void _dentinhosDoBuldogue(Canvas canvas, double abertura) {
+    if (estagio.index < EstagioDoBicho.jovem.index) return;
+    final y = 34 + abertura * BocaDaEspecie.de(species).hMax * 0.5;
+    for (final lado in [-1.0, 1.0]) {
+      canvas.drawPath(
+        _bolha(
+          Rect.fromCenter(center: Offset(lado * 4.4, y), width: 5.6, height: 6),
+          topo: 0.8,
+        ),
+        _p(Cores.superficie),
+      );
+    }
+  }
+
+  /// A boca do humor como curva paramétrica, para o formato aberto nascer
+  /// dela. São aproximações, com um cúbico só, dos arcos de [_bocaDoHumor]:
+  /// coincidem nos cantos e no meio e diferem por menos de meio pixel no
+  /// resto — por isso o repouso exato continua sendo desenhado pelos arcos.
+  _CurvaDaBoca _curvaDoHumor(Offset o, double w) => switch (mood) {
+    Mood.radiant => _CurvaDaBoca(
+      xCanto: w * 0.5 * math.cos(0.18),
+      yCanto: o.dy + w * 0.36 * math.sin(0.18),
+      topo: o.dy + w * 0.36,
+      bico: 0.05,
+    ),
+    Mood.content => _CurvaDaBoca(
+      xCanto: w * 0.4 * math.cos(0.3),
+      yCanto: o.dy + w * 0.25 * math.sin(0.3),
+      topo: o.dy + w * 0.25,
+      bico: 0.08,
+    ),
+    Mood.neutral => _CurvaDaBoca(
+      xCanto: w * 0.3,
+      yCanto: o.dy,
+      topo: o.dy,
+      bico: 0.6,
+    ),
+    Mood.sleepy => _CurvaDaBoca(
+      xCanto: w * 0.25 * math.cos(0.2),
+      yCanto: o.dy + 2 + 3 * math.sin(0.2),
+      topo: o.dy + 5,
+      bico: 0.05,
+    ),
+    Mood.missingYou => _CurvaDaBoca(
+      xCanto: w * 0.23 * math.cos(0.45),
+      yCanto: o.dy + 5 - w * 0.13 * math.sin(0.45),
+      topo: o.dy + 5 - w * 0.13,
+      bico: 0.12,
+    ),
+  };
+
+  /// Os cinco arcos de repouso, um por humor — os mesmos de sempre, traço
+  /// por traço (o X da fala é "a boca do humor atual").
+  void _bocaDoHumor(Canvas canvas, Offset o, double w, Paint t) {
     switch (mood) {
       case Mood.radiant:
         canvas.drawArc(

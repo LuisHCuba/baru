@@ -4594,8 +4594,8 @@ class _PetPainter extends CustomPainter {
     _boca(canvas);
     if (feliz) _bochecha(canvas, const Offset(-30, 12), const Offset(30, 12));
 
-    _olho(canvas, const Offset(-19, -6), 7.5, estilo: EstiloDoOlho.fenda);
-    _olho(canvas, const Offset(19, -6), 7.5, estilo: EstiloDoOlho.fenda);
+    _olho(canvas, const Offset(-19, -6), 7.5);
+    _olho(canvas, const Offset(19, -6), 7.5);
     _rostoVolta(canvas);
     _veste(canvas, 82, 69);
 
@@ -4820,8 +4820,8 @@ class _PetPainter extends CustomPainter {
     _boca(canvas);
     if (feliz) _bochecha(canvas, const Offset(-30, 14), const Offset(30, 14));
 
-    _olho(canvas, const Offset(-19, -4), 7.5, estilo: EstiloDoOlho.oval);
-    _olho(canvas, const Offset(19, -4), 7.5, estilo: EstiloDoOlho.oval);
+    _olho(canvas, const Offset(-19, -4), 7.5);
+    _olho(canvas, const Offset(19, -4), 7.5);
     _rostoVolta(canvas);
     _veste(canvas, 80, 66);
 

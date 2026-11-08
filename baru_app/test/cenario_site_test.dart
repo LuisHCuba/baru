@@ -32,18 +32,34 @@ const _pasta = 'build/cenario_site';
 const _tela = Size(1600, 900);
 const _densidade = 1.5;
 
-const _itens = ['juncos', 'lily', 'dock', 'lantern', 'rock', 'bamboo', 'cardume'];
+const _itens = [
+  'juncos',
+  'lily',
+  'dock',
+  'lantern',
+  'rock',
+  'bamboo',
+  'cardume',
+];
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Future<void> grava(WidgetTester tester, Widget w, String nome) async {
     final chave = GlobalKey();
-    await tester.pumpWidget(Directionality(
-      textDirection: TextDirection.ltr,
-      child: Center(child: RepaintBoundary(key: chave, child: SizedBox.fromSize(size: _tela, child: w))),
-    ));
-    final b = chave.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Center(
+          child: RepaintBoundary(
+            key: chave,
+            child: SizedBox.fromSize(size: _tela, child: w),
+          ),
+        ),
+      ),
+    );
+    final b =
+        chave.currentContext!.findRenderObject()! as RenderRepaintBoundary;
     await tester.runAsync(() async {
       final img = await b.toImage(pixelRatio: _densidade);
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
@@ -54,7 +70,9 @@ void main() {
     });
   }
 
-  testWidgets('o mundo do app nos quatro momentos', skip: !_ligado, (tester) async {
+  testWidgets('o mundo do app nos quatro momentos', skip: !_ligado, (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(2000, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -67,13 +85,8 @@ void main() {
     final tempo = ValueNotifier<double>(0);
     final cenario = CenarioDoHabitat.de('lagoa');
 
-    final palcoK = g.x(1 - ZonasDoMundo.beira) / HabitatScene.design.width;
-    final palco = Rect.fromLTWH(
-      g.x(ZonasDoMundo.beira) - 12 - camera,
-      g.linhaDagua + 118 * palcoK * 0.55 - HabitatScene.design.height * palcoK,
-      HabitatScene.design.width * palcoK,
-      HabitatScene.design.height * palcoK,
-    );
+    final (rect: palcoNoMundo, escala: palcoK) = palcoDosItens(g);
+    final palco = palcoNoMundo.shift(Offset(-camera, 0));
 
     const horas = {6: 'amanhecer', 12: 'dia', 18: 'entardecer', 22: 'noite'};
     for (final e in horas.entries) {
@@ -82,29 +95,61 @@ void main() {
       final itens = itensDeCena.where((i) => ids.contains(i.id)).toList();
       await grava(
         tester,
-        Stack(children: [
-          Positioned.fill(child: CustomPaint(painter: FundoDoMundo(g: g, luz: luz, cenario: cenario, camera: cam, tempo: tempo))),
-          for (final item in itens)
-            Positioned.fromRect(rect: palco, child: CustomPaint(painter: pintorDeObjetoDaCena(item, sx: palcoK, sy: palcoK))),
-        ]),
+        Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: FundoDoMundo(
+                  g: g,
+                  luz: luz,
+                  cenario: cenario,
+                  camera: cam,
+                  tempo: tempo,
+                ),
+              ),
+            ),
+            for (final item in itens)
+              Positioned.fromRect(
+                rect: palco,
+                child: CustomPaint(
+                  painter: pintorDeObjetoDaCena(
+                    item,
+                    sx: palcoK,
+                    sy: palcoK,
+                    luz: luz,
+                  ),
+                ),
+              ),
+          ],
+        ),
         'fundo-${e.value}',
       );
       await grava(
         tester,
-        CustomPaint(painter: FrenteDoMundo(g: g, luz: luz, cenario: cenario, camera: cam, tempo: tempo)),
+        CustomPaint(
+          painter: FrenteDoMundo(
+            g: g,
+            luz: luz,
+            cenario: cenario,
+            camera: cam,
+            tempo: tempo,
+          ),
+        ),
         'frente-${e.value}',
       );
     }
 
-    File('$_pasta/geometria.json').writeAsStringSync(jsonEncode({
-      'largura': _tela.width,
-      'altura': _tela.height,
-      'chao': g.chao / _tela.height,
-      'linhaDagua': g.linhaDagua / _tela.height,
-      'horizonte': g.horizonte / _tela.height,
-      'beira': (g.x(ZonasDoMundo.beira) - camera) / _tela.width,
-      'escala': g.escala,
-    }));
+    File('$_pasta/geometria.json').writeAsStringSync(
+      jsonEncode({
+        'largura': _tela.width,
+        'altura': _tela.height,
+        'chao': g.chao / _tela.height,
+        'linhaDagua': g.linhaDagua / _tela.height,
+        'horizonte': g.horizonte / _tela.height,
+        'beira': (g.x(ZonasDoMundo.beira) - camera) / _tela.width,
+        'escala': g.escala,
+      }),
+    );
     // Para quem lê: a escala do bicho no mundo (px por unidade).
     // (as peças soltas saem no teste seguinte)
     debugPrint('escala do mundo: ${g.escala}, camera: ${math.max(0, camera)}');
@@ -119,21 +164,42 @@ void main() {
     const palco = HabitatScene.design;
     for (final item in itensDeCena) {
       for (final hora in [12, 22]) {
-        if (hora == 22 && !['lantern', 'vagalumes', 'varal_de_luzes', 'casa_de_passaro'].contains(item.id)) continue;
+        if (hora == 22 &&
+            ![
+              'lantern',
+              'vagalumes',
+              'varal_de_luzes',
+              'casa_de_passaro',
+            ].contains(item.id)) {
+          continue;
+        }
         final chave = GlobalKey();
-        await tester.pumpWidget(Directionality(
-          textDirection: TextDirection.ltr,
-          child: Center(
-            child: RepaintBoundary(
-              key: chave,
-              child: SizedBox.fromSize(
-                size: palco,
-                child: CustomPaint(painter: pintorDeObjetoDaCena(item, sx: 1, sy: 1, fase: hora == 22 ? 0.5 : 0)),
+        await tester.pumpWidget(
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Center(
+              child: RepaintBoundary(
+                key: chave,
+                child: SizedBox.fromSize(
+                  size: palco,
+                  child: CustomPaint(
+                    painter: pintorDeObjetoDaCena(
+                      item,
+                      sx: 1,
+                      sy: 1,
+                      fase: hora == 22 ? 0.5 : 0,
+                      luz: LuzDaCena.de(
+                        hora == 22 ? PeriodoDoDia.noite : PeriodoDoDia.dia,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ));
-        final b = chave.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+        );
+        final b =
+            chave.currentContext!.findRenderObject()! as RenderRepaintBoundary;
         await tester.runAsync(() async {
           final img = await b.toImage(pixelRatio: 3);
           final png = await img.toByteData(format: ui.ImageByteFormat.png);

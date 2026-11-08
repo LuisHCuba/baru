@@ -19,6 +19,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import '../models.dart' show ShapePart;
+import 'habitat.dart' show LuzDaCena;
 
 /// A caixa do objeto na cena: a união das peças.
 Rect caixaDasPecas(List<ShapePart> pecas) {
@@ -58,6 +59,7 @@ void pintaItem(
   String id,
   List<ShapePart> pecas, {
   double fase = 0,
+  LuzDaCena? luz,
 }) {
   if (pecas.isEmpty) return;
   final arte = _artes[id];
@@ -65,7 +67,7 @@ void pintaItem(
     _pecasCruas(canvas, pecas);
     return;
   }
-  arte(_Pincel(canvas, pecas, fase));
+  arte(_Pincel(canvas, pecas, fase, luz));
 }
 
 typedef _Arte = void Function(_Pincel p);
@@ -109,12 +111,20 @@ void _pecasCruas(Canvas canvas, List<ShapePart> pecas) {
 
 /// O que toda arte usa: o canvas, as peças, a fase e os tons.
 class _Pincel {
-  _Pincel(this.c, this.pecas, this.fase) : caixa = caixaDasPecas(pecas);
+  _Pincel(this.c, this.pecas, this.fase, [this.luz])
+    : caixa = caixaDasPecas(pecas);
 
   final Canvas c;
   final List<ShapePart> pecas;
   final double fase;
   final Rect caixa;
+
+  /// A luz do período, quando a cena a passa. Sem ela (vitrine, ícone da
+  /// loja) as luzes ficam acesas, que é como o item se vende.
+  final LuzDaCena? luz;
+
+  /// Lanterna, varal e fogueira só acendem no entardecer e à noite (CEN-F1).
+  bool get aceso => luz?.acendeLuzes ?? true;
 
   ShapePart operator [](int i) => pecas[math.min(i, pecas.length - 1)];
 
@@ -336,6 +346,22 @@ void _deque(_Pincel p) {
     RRect.fromRectAndRadius(topo, const Radius.circular(3)),
     _contorno(madeira),
   );
+  // O reflexo da prancha na água, abaixo dos postes, partido em três faixas
+  // que deslizam em contrafase (CEN-03; laudo 35, §3.2).
+  final base = math.max(poste.y + poste.h, poste2.y + poste2.h) - 2;
+  for (var i = 0; i < 3; i++) {
+    final d = (p.onda(2, i * 0.33) - 0.5) * 4;
+    final faixa = Rect.fromLTWH(
+      topo.left + 4 + d + i * 2,
+      base + 2 + i * 5.0,
+      topo.width - 8 - i * 4,
+      3,
+    );
+    c.drawRRect(
+      RRect.fromRectAndRadius(faixa, const Radius.circular(1.5)),
+      p.cor(madeira.withValues(alpha: 0.28 - i * 0.07)),
+    );
+  }
 }
 
 void _barco(_Pincel p) {
@@ -885,30 +911,64 @@ void _casaDePassaro(_Pincel p) {
 
 void _lampiao(_Pincel p) {
   final c = p.c;
-  final corpo = p[0], fio = p[1];
-  final balanco = (p.onda(1.5) - 0.5) * 0.08;
-  final topo = Offset(fio.x + fio.w / 2, 0);
-  c.save();
-  c.translate(topo.dx, topo.dy);
-  c.rotate(balanco);
-  c.translate(-topo.dx, -topo.dy);
+  final corpo = p[0], fio = p[1], poste = p[2];
+  final aceso = p.aceso;
+  final r = Rect.fromLTWH(corpo.x, corpo.y, corpo.w, corpo.h);
+  final pr = Rect.fromLTWH(poste.x, poste.y, poste.w, poste.h);
+  final pe = Offset(pr.center.dx, pr.bottom);
+  final gancho = Offset(fio.x + fio.w / 2, fio.y);
+  final pulso = 0.85 + 0.15 * p.onda(5);
+  // A luz no chão e na água em volta do poste (laudo 35, §3.2): raio de
+  // três balões, quente, pulsando com a chama.
+  if (aceso) {
+    c.drawCircle(
+      pe,
+      r.width * 3,
+      p.brilho(pe, r.width * 3, Color.fromRGBO(255, 184, 102, 0.32 * pulso)),
+    );
+  }
+  p.sombra(pe.dx, pe.dy, poste.w * 5);
+  // O poste de madeira, cravado na margem, com o lado da luz à esquerda.
+  c.drawRRect(
+    RRect.fromRectAndRadius(pr, Radius.circular(poste.w / 2)),
+    Paint()
+      ..shader = Gradient.linear(pr.topLeft, pr.topRight, [
+        _claro(poste.c, 0.18),
+        _escuro(poste.c, 0.25),
+      ]),
+  );
+  // O braço que segura o fio, com a escora por baixo.
+  final braco = Offset(pr.center.dx, pr.top + 2);
+  final ponta = Offset(gancho.dx, pr.top + 2);
+  c.drawLine(braco, ponta, p.traco(_escuro(poste.c, 0.1), 3));
   c.drawLine(
-    topo,
-    Offset(topo.dx, corpo.y + 2),
+    Offset(ponta.dx + 2, ponta.dy + 1),
+    Offset(pr.center.dx, pr.top + 12),
+    p.traco(_escuro(poste.c, 0.1), 2),
+  );
+  // O balão balança preso ao gancho, não ao céu.
+  final balanco = (p.onda(1.5) - 0.5) * 0.08;
+  c.save();
+  c.translate(gancho.dx, gancho.dy);
+  c.rotate(balanco);
+  c.translate(-gancho.dx, -gancho.dy);
+  c.drawLine(
+    gancho,
+    Offset(gancho.dx, corpo.y + 2),
     p.traco(const Color(0x993E2F23), 1.2),
   );
-  final r = Rect.fromLTWH(corpo.x, corpo.y, corpo.w, corpo.h);
-  final pulso = 0.85 + 0.15 * p.onda(5);
-  c.drawCircle(
-    r.center,
-    r.width * 1.5,
-    p.brilho(
+  if (aceso) {
+    c.drawCircle(
       r.center,
       r.width * 1.5,
-      Color.fromRGBO(255, 190, 110, 0.45 * pulso),
-    ),
-  );
-  // Lanterna de papel: um balão com gomos.
+      p.brilho(
+        r.center,
+        r.width * 1.5,
+        Color.fromRGBO(255, 190, 110, 0.45 * pulso),
+      ),
+    );
+  }
+  // Lanterna de papel: um balão com gomos. Apagada, é só papel laranja.
   final balao = Rect.fromLTWH(r.left, r.top + 4, r.width, r.height - 8);
   c.drawOval(
     balao,
@@ -916,7 +976,9 @@ void _lampiao(_Pincel p) {
       ..shader = Gradient.radial(
         balao.center,
         balao.width * 0.7,
-        [const Color(0xFFFFD27A), corpo.c, _escuro(corpo.c, 0.15)],
+        aceso
+            ? [const Color(0xFFFFD27A), corpo.c, _escuro(corpo.c, 0.15)]
+            : [_claro(corpo.c, 0.1), corpo.c, _escuro(corpo.c, 0.25)],
         const [0, 0.6, 1],
       ),
   );
@@ -936,28 +998,19 @@ void _lampiao(_Pincel p) {
     );
   }
   const tampa = Color(0xFF5A4030);
-  c.drawRRect(
-    RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(r.center.dx, r.top + 4),
-        width: r.width * 0.5,
-        height: 5,
+  for (final y in [r.top + 4, r.bottom - 4]) {
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(r.center.dx, y),
+          width: r.width * 0.5,
+          height: 5,
+        ),
+        const Radius.circular(2),
       ),
-      const Radius.circular(2),
-    ),
-    p.cor(tampa),
-  );
-  c.drawRRect(
-    RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(r.center.dx, r.bottom - 4),
-        width: r.width * 0.5,
-        height: 5,
-      ),
-      const Radius.circular(2),
-    ),
-    p.cor(tampa),
-  );
+      p.cor(tampa),
+    );
+  }
   c.drawLine(
     Offset(r.center.dx, r.bottom - 2),
     Offset(r.center.dx, r.bottom + 5),
@@ -966,25 +1019,40 @@ void _lampiao(_Pincel p) {
   c.restore();
 }
 
+/// Vaga-lumes de verdade piscam: flash curto (0,4–0,8 s), intervalo de
+/// alguns segundos, subindo em "J" enquanto acesos (laudo 35, R3). O seno
+/// contínuo de antes lia como luzinha de árvore de Natal.
 void _vagalumes(_Pincel p) {
   final c = p.c;
+  // A fase dá uma volta em 14 s na cena; cada vaga-lume tem o seu ciclo.
+  final segundos = p.fase * 14;
   for (var i = 0; i < p.pecas.length; i++) {
     final q = p.pecas[i];
-    final pisca = p.onda(4, i * 0.37);
+    final ciclo = 2.6 + i * 0.9;
+    final u = ((segundos / ciclo) + i * 0.37) % 1.0;
+    const flash = 0.2;
+    final aceso = u < flash;
+    final k = aceso ? u / flash : 0.0;
+    final intensidade = aceso ? math.sin(k * math.pi) : 0.0;
     final voo = Offset(
-      math.sin((p.fase * 3 + i * 0.4) * 2 * math.pi) * 5,
-      math.cos((p.fase * 2 + i * 0.3) * 2 * math.pi) * 4,
+      math.sin((p.fase * 3 + i * 0.4) * 2 * math.pi) * 5 + k * k * 6,
+      math.cos((p.fase * 2 + i * 0.3) * 2 * math.pi) * 4 - k * 14,
     );
     final o = Offset(q.x + q.w / 2, q.y + q.h / 2) + voo;
+    if (!aceso) {
+      // Apagado: um pontinho quase invisível, para o olho achar de novo.
+      c.drawCircle(o, q.w * 0.22, p.cor(q.c.withValues(alpha: 0.18)));
+      continue;
+    }
     c.drawCircle(
       o,
-      q.w * 1.8,
-      p.brilho(o, q.w * 1.8, q.c.withValues(alpha: 0.35 + 0.45 * pisca)),
+      q.w * 2.2,
+      p.brilho(o, q.w * 2.2, q.c.withValues(alpha: 0.7 * intensidade)),
     );
     c.drawCircle(
       o,
-      q.w * 0.32,
-      p.cor(_claro(q.c, 0.5).withValues(alpha: 0.6 + 0.4 * pisca)),
+      q.w * 0.34,
+      p.cor(_claro(q.c, 0.5).withValues(alpha: 0.5 + 0.5 * intensidade)),
     );
   }
 }

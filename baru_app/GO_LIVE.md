@@ -1,8 +1,6 @@
 # Baru — Go-Live / quality gate
 
-“Goignate” não é um produto (busca no repo e no Notion não achou ferramenta/board). Este arquivo é o **Going Live / quality gate** do app.
-
-Espelho no Notion: [Baru — Go-Live / qualidade](https://app.notion.com/p/3c8c3598383a813fa57adfb328cabc6e)
+“Goignate” não é um produto (busca no repo não achou ferramenta/board). Este arquivo é o **Going Live / quality gate** do app.
 
 Fonte de verdade de UI: `../Baru App v2.dc.html`. Conceito: **habitat, não timer**.
 

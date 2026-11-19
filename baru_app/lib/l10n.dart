@@ -339,6 +339,8 @@ class T {
   String get authGoogle => s('authGoogle');
   String get authOuEmail => s('authOuEmail');
   String get authGoogleFalhou => s('authGoogleFalhou');
+  String get authApple => s('authApple');
+  String get authAppleFalhou => s('authAppleFalhou');
   String get authBootstrapLoading => s('authBootstrapLoading');
   String get syncFail => s('syncFail');
   String get syncSchemaFail => s('syncSchemaFail');
@@ -689,6 +691,8 @@ const _pt = <String, Object>{
   'testeFimVerificar': 'Já resolvi, verificar de novo',
   'authOuEmail': 'ou com e-mail',
   'authGoogleFalhou': 'Não foi possível abrir o Google agora.',
+  'authApple': 'Continuar com a Apple',
+  'authAppleFalhou': 'Não foi possível entrar com a Apple agora.',
   'authBootstrapLoading': 'Carregando seu habitat…',
   'syncFail': 'Não foi possível sincronizar ({q}). Seus dados ficam salvos neste aparelho.',
   'syncSchemaFail': 'O banco na nuvem está desatualizado: falta a tabela {t}. Seus dados ficam salvos neste aparelho.',
@@ -1281,6 +1285,8 @@ const _en = <String, Object>{
   'testeFimVerificar': 'Already sorted, check again',
   'authOuEmail': 'or with email',
   'authGoogleFalhou': 'Could not open Google right now.',
+  'authApple': 'Continue with Apple',
+  'authAppleFalhou': 'Could not sign in with Apple right now.',
   'authBootstrapLoading': 'Loading your habitat…',
   'syncFail': 'Could not sync ({q}). Your data stays saved on this device.',
   'syncSchemaFail': 'The cloud database is out of date: table {t} is missing. Your data stays saved on this device.',
@@ -1863,6 +1869,8 @@ const _es = <String, Object>{
   'testeFimVerificar': 'Ya lo resolví, verificar de nuevo',
   'authOuEmail': 'o con correo',
   'authGoogleFalhou': 'No se pudo abrir Google ahora.',
+  'authApple': 'Continuar con Apple',
+  'authAppleFalhou': 'No se pudo entrar con Apple ahora.',
   'authBootstrapLoading': 'Cargando tu hábitat…',
   'syncFail': 'No se pudo sincronizar ({q}). Tus datos quedan guardados en este dispositivo.',
   'syncSchemaFail': 'La base en la nube está desactualizada: falta la tabla {t}. Tus datos quedan guardados en este dispositivo.',
@@ -2447,6 +2455,8 @@ const _zh = <String, Object>{
   'testeFimVerificar': '已处理，重新检查',
   'authOuEmail': '或使用邮箱',
   'authGoogleFalhou': '暂时无法打开 Google。',
+  'authApple': '通过 Apple 继续',
+  'authAppleFalhou': '暂时无法通过 Apple 登录。',
   'authBootstrapLoading': '正在加载你的栖息地…',
   'syncFail': '同步失败（{q}）。你的数据已保存在本机。',
   'syncSchemaFail': '云端数据库版本过旧：缺少数据表 {t}。你的数据已保存在本机。',

@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -213,6 +217,35 @@ class BaruSupabase {
       authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
       queryParams: const {'prompt': 'select_account'},
     );
+  }
+
+  /// Entrar com a Apple. No iPhone, a folha nativa da Apple (sem sair do
+  /// app) e a sessão volta aqui mesmo; no Android e na web, a página da
+  /// Apple pelo Supabase, e a sessão volta pelo deep link como no Google.
+  Future<void> entraComApple() async {
+    _ensureAttached();
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      final cru = _nonceAleatorio();
+      final credencial = await SignInWithApple.getAppleIDCredential(
+        scopes: const [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+        nonce: sha256.convert(utf8.encode(cru)).toString(),
+      );
+      final token = credencial.identityToken;
+      if (token == null) throw const AuthException('A Apple não devolveu o token.');
+      await _client!.auth.signInWithIdToken(provider: OAuthProvider.apple, idToken: token, nonce: cru);
+      return;
+    }
+    await _client!.auth.signInWithOAuth(
+      OAuthProvider.apple,
+      redirectTo: kIsWeb ? null : 'tech.lhcx.baru://login-callback',
+      authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+    );
+  }
+
+  static String _nonceAleatorio([int tamanho = 32]) {
+    const letras = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final r = Random.secure();
+    return List.generate(tamanho, (_) => letras[r.nextInt(letras.length)]).join();
   }
 
   Future<AuthResponse> signUp({

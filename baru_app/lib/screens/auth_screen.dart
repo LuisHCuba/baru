@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -47,6 +49,10 @@ class AuthScreen extends StatefulWidget {
   static const chaveOutraConta = Key('auth-outra-conta');
   static const chaveEsqueci = Key('auth-esqueci');
   static const chaveGoogle = Key('auth-google');
+  static const chaveApple = Key('auth-apple');
+
+  /// Ligar quando o provedor Apple tiver Services ID e chave (OAuth).
+  static const mostraAppleForaDoIphone = false;
   static const chaveReenviar = Key('auth-reenviar');
 
   @override
@@ -374,6 +380,28 @@ class _AuthScreenState extends State<AuthScreen> {
 
   /// Onde entra o código de 8 dígitos do e-mail (cadastro ou senha).
   /// A sessão volta pelo deep link: aqui só se abre o navegador.
+  Future<void> _entrarComApple() async {
+    if (!BaruSupabase.instance.attached) {
+      setState(() => _error = t.authAttachFail);
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+      _recado = null;
+    });
+    try {
+      await BaruSupabase.instance.entraComApple();
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // Fechar a folha da Apple não é erro.
+      if (e.code != AuthorizationErrorCode.canceled && mounted) setState(() => _error = t.authAppleFalhou);
+    } catch (_) {
+      if (mounted) setState(() => _error = t.authAppleFalhou);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Future<void> _entrarComGoogle() async {
     if (!BaruSupabase.instance.attached) {
       setState(() => _error = t.authAttachFail);
@@ -396,6 +424,24 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _botaoGoogle() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      // A Apple pede o botão dela no mesmo destaque que os outros (diretriz 4.8).
+      // Android e web usam a página da Apple, que depende do Services ID e da
+      // chave no Supabase: o botão aparece lá quando [mostraAppleForaDoIphone].
+      if (AuthScreen.mostraAppleForaDoIphone || (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)) ...[
+      ElevatedButton.icon(
+        key: AuthScreen.chaveApple,
+        onPressed: _loading ? null : _entrarComApple,
+        icon: const Icon(Icons.apple, size: 22),
+        label: Text(t.authApple, style: nunito(size: 15.5, weight: FontWeight.w700, color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+        ),
+      ),
+      const SizedBox(height: Espaco.sm),
+      ],
       OutlinedButton.icon(
         key: AuthScreen.chaveGoogle,
         onPressed: _loading ? null : _entrarComGoogle,

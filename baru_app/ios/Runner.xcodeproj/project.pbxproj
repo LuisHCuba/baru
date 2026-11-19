@@ -11,6 +11,7 @@
 		14AA3D1F4A6F83C4B1A16587 /* AcaoDoEscudo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183862881EB206D053508BFB /* AcaoDoEscudo.swift */; };
 		169566D7D5D5C4ECD566FD16 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBF5C78F2413CEFB658C59B4 /* Foundation.framework */; };
 		1D97C275D3F3319ABE3DC49A /* LocalDaFamilia.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B656EA36AE80287381987DD /* LocalDaFamilia.swift */; };
+		2043A771A10A8FB97E5AA45C /* BaruRelatorio.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = EB520786698CD2005E3C9201 /* BaruRelatorio.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		20A2DAA58445F9ECC44E48DA /* EscudoDoBaru.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A75533FEB361E1F1D9A83F9 /* EscudoDoBaru.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
@@ -27,7 +28,6 @@
 		992942796218373178366D8F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBF5C78F2413CEFB658C59B4 /* Foundation.framework */; };
 		A40773FF00A238DF14A7AF25 /* BaruMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA29C752D25D867A4D8F1A17 /* BaruMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ADBB351430044CD601AAB8CD /* TelaCompartilhada.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40C723D79307A055DFE24949 /* TelaCompartilhada.swift */; };
-		BA89381C21B2CBA7D5E3152B /* BaruRelatorio.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EB520786698CD2005E3C9201 /* BaruRelatorio.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BF1347A75BC0457F112F95D4 /* RelatorioDoBaru.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08078961160C0EDAF690434 /* RelatorioDoBaru.swift */; };
 		C453DF3C2321DED9456E9372 /* bicho.png in Resources */ = {isa = PBXBuildFile; fileRef = E61C780B791799610E4ED373 /* bicho.png */; };
 		D3C8265269697C44BAA8025B /* TelaCompartilhada.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40C723D79307A055DFE24949 /* TelaCompartilhada.swift */; };
@@ -75,6 +75,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		83CC827613E59AB39CFEBDCA /* Embed ExtensionKit Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(EXTENSIONS_FOLDER_PATH)";
+			dstSubfolderSpec = 16;
+			files = (
+				2043A771A10A8FB97E5AA45C /* BaruRelatorio.appex in Embed ExtensionKit Extensions */,
+			);
+			name = "Embed ExtensionKit Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9705A1C41CF9048500538489 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -92,7 +103,6 @@
 			dstSubfolderSpec = 13;
 			files = (
 				A40773FF00A238DF14A7AF25 /* BaruMonitor.appex in Embed Foundation Extensions */,
-				BA89381C21B2CBA7D5E3152B /* BaruRelatorio.appex in Embed Foundation Extensions */,
 				3F00DE54056309D8AB26CC38 /* BaruEscudo.appex in Embed Foundation Extensions */,
 				688705016C1D57CAB78010A6 /* BaruEscudoAcao.appex in Embed Foundation Extensions */,
 			);
@@ -379,7 +389,7 @@
 			name = BaruRelatorio;
 			productName = BaruRelatorio;
 			productReference = EB520786698CD2005E3C9201 /* BaruRelatorio.appex */;
-			productType = "com.apple.product-type.app-extension";
+			productType = "com.apple.product-type.extensionkit-extension";
 		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
@@ -391,6 +401,7 @@
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				F4F0728C385C132CCABC9BAC /* Embed Foundation Extensions */,
+				83CC827613E59AB39CFEBDCA /* Embed ExtensionKit Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 			);
 			buildRules = (

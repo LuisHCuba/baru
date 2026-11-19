@@ -41,9 +41,13 @@ Decidido em 2026-11-18 com o Luis:
   - criança: meta de hoje, aviso de pausa/horário, autorização do Tempo de Uso (iOS) ou
     acesso ao uso e sobreposição (Android).
 - **Web**: aba Família em `meubaru.com/painel` (repositório `baru.lhcx`, `site/painel/familia.js`).
-- **iOS**: `TempoDeTelaPlugin` + extensão `BaruMonitor`. Meta por limiares; pausa e horários
-  sem tela como atividades do DeviceActivity (valem com o app fechado); filtro de conteúdo
-  adulto do ManagedSettings. Família Controls (Distribution) aprovado pela Apple (pedido GCCF4RXN4U).
+- **iOS**: `TempoDeTelaPlugin` + quatro extensões: `BaruMonitor` (DeviceActivityMonitor:
+  meta por limiares; pausa e horários sem tela valem com o app fechado), `BaruRelatorio`
+  (DeviceActivityReport: tempo por app na aba Tempo), `BaruEscudo` (ShieldConfiguration: a
+  tela de pausa com o bicho e os textos do Baru, não a tela padrão da Apple) e
+  `BaruEscudoAcao` (ShieldAction: o botão da tela de pausa). Filtro de conteúdo adulto do
+  ManagedSettings. Family Controls (Distribution) aprovado pela Apple (pedido GCCF4RXN4U);
+  os perfis App Store dos cinco bundle IDs (app + 4 extensões) são gerados com essa capacidade.
 - **Android**: serviço `GuardaDaFamilia` (primeiro plano, `specialUse`): cobre a tela durante
   pausa, horário sem tela ou meta estourada (com "pausar ao estourar"). Livres: o Baru, a tela
   inicial e o telefone. Volta sozinho depois de reiniciar (`GuardaNoBoot`). Com a chave do
@@ -74,12 +78,15 @@ Todo segredo mora no Infisical (LHCX_CENTRAL, prod). A função `familia-push` u
   Android Gradle Plugin 9, migração ainda não feita.
 
 ## Lojas
-- **Apple:** pedir *Family Controls (Distribution)* para o app e cada extensão
-  (prompt em `PROMPT_family_controls_apple.md`, fora do repositório). Desenvolvimento
-  e teste no aparelho funcionam sem aprovação. Screen Time **não funciona no simulador**:
-  o teste real é no iPhone.
-- **Google Play:** declarar o app como de controle parental / bem-estar digital,
-  política de Famílias se o público incluir crianças, e justificar `PACKAGE_USAGE_STATS`
+- **Apple:** Family Controls (Distribution) aprovado (GCCF4RXN4U). A Apple concede por
+  bundle ID: o app e as quatro extensões (`.monitor`, `.relatorio`, `.escudo`, `.escudoacao`)
+  precisam da capacidade; o export do TestFlight falha se faltar em algum. Screen Time e
+  push **não funcionam no simulador**: o teste real é no iPhone. Na revisão, justificar a
+  localização "sempre" (segurança da família, aviso visível, desligável pelo responsável).
+- **Google Play:** declarar o app como de controle parental / bem-estar digital. Público-alvo:
+  declarar 13+ (o app é instalado e configurado pelo responsável), e não "para crianças":
+  a política de Famílias restringe localização em segundo plano em apps feitos para
+  crianças — conferir a regra atual no Play Console antes de enviar; e justificar `PACKAGE_USAGE_STATS`
   e **localização em segundo plano** (`ACCESS_BACKGROUND_LOCATION`: formulário no Play Console,
   com vídeo curto mostrando o consentimento do responsável e o aviso fixo na criança).
 - **App Store:** justificar a localização "sempre" na revisão (segurança da família, aviso

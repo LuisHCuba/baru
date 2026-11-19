@@ -4,6 +4,11 @@ library;
 
 const textosDoLocal = <String, Map<String, String>>{
   'pt': {
+    'locDiscT': 'Localização da família',
+    'locDiscCorpo': 'O Baru coleta a localização deste celular para mostrar a quem cuida de você na família onde você está, avisar quando você chega ou sai de lugares combinados (como casa e escola) e enviar sua posição no SOS. A localização é coletada mesmo quando o app está fechado ou não está em uso. Ela fica guardada por até 7 dias, só para a família, e nunca é usada para anúncios.',
+    'locDiscPasso': 'Na próxima tela, permita a localização e escolha "Permitir o tempo todo" (ou "Sempre").',
+    'locDiscAceitar': 'Aceitar e continuar',
+    'locDiscNao': 'Agora não',
     'locTitulo': 'Localização',
     'locLigar': 'Ver onde {n} está',
     'locLigarBotao': 'Ligar localização',
@@ -74,6 +79,11 @@ const textosDoLocal = <String, Map<String, String>>{
     'avAutC': '{c} desligou a permissão de tempo de tela no celular.',
   },
   'en': {
+    'locDiscT': 'Family location',
+    'locDiscCorpo': 'Baru collects this phone\'s location to show the people who look after you in your family where you are, to tell them when you arrive at or leave saved places (like home and school), and to send your location with SOS. Location is collected even when the app is closed or not in use. It is kept for up to 7 days, for the family only, and is never used for ads.',
+    'locDiscPasso': 'On the next screen, allow location and choose "Allow all the time" (or "Always").',
+    'locDiscAceitar': 'Accept and continue',
+    'locDiscNao': 'Not now',
     'locTitulo': 'Location',
     'locLigar': 'See where {n} is',
     'locLigarBotao': 'Turn on location',
@@ -144,6 +154,11 @@ const textosDoLocal = <String, Map<String, String>>{
     'avAutC': '{c} turned off screen time permission on the phone.',
   },
   'es': {
+    'locDiscT': 'Ubicación de la familia',
+    'locDiscCorpo': 'Baru recopila la ubicación de este móvil para mostrar a quienes te cuidan en la familia dónde estás, avisarles cuando llegas o sales de lugares acordados (como casa y escuela) y enviar tu ubicación con el SOS. La ubicación se recopila incluso cuando la app está cerrada o no se está usando. Se guarda hasta 7 días, solo para la familia, y nunca se usa para anuncios.',
+    'locDiscPasso': 'En la siguiente pantalla, permite la ubicación y elige "Permitir todo el tiempo" (o "Siempre").',
+    'locDiscAceitar': 'Aceptar y continuar',
+    'locDiscNao': 'Ahora no',
     'locTitulo': 'Ubicación',
     'locLigar': 'Ver dónde está {n}',
     'locLigarBotao': 'Activar ubicación',
@@ -214,6 +229,11 @@ const textosDoLocal = <String, Map<String, String>>{
     'avAutC': '{c} desactivó el permiso de tiempo de pantalla.',
   },
   'zh': {
+    'locDiscT': '家庭位置',
+    'locDiscCorpo': 'Baru 会收集这部手机的位置，用于向家庭中照顾你的人显示你在哪里、在你到达或离开约定地点（如家和学校）时通知他们，并在 SOS 时发送你的位置。即使应用已关闭或未在使用，也会收集位置。位置最多保存 7 天，仅家庭可见，绝不用于广告。',
+    'locDiscPasso': '在下一个屏幕上，允许位置并选择“始终允许”。',
+    'locDiscAceitar': '接受并继续',
+    'locDiscNao': '暂不',
     'locTitulo': '位置',
     'locLigar': '查看 {n} 在哪里',
     'locLigarBotao': '开启位置',

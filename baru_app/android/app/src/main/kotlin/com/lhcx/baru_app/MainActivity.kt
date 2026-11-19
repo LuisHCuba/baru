@@ -489,19 +489,9 @@ class MainActivity : FlutterFragmentActivity() {
                     result.success(true)
                 }
 
-                // Filtro de sites (VPN só de DNS) da família.
-                "filtroPreparado" -> result.success(FiltroDeSites.preparado(this))
-                "filtroPede" -> result.success(FiltroDeSites.pede(this, 7701))
-                "filtroLiga" -> {
-                    FiltroDeSites.liga(this, call.argument<Boolean>("ligado") == true)
-                    result.success(FiltroDeSites.preparado(this))
-                }
-                "filtroRevogado" -> {
-                    val p = getSharedPreferences("baru_familia", MODE_PRIVATE)
-                    val v = p.getBoolean("filtroRevogado", false)
-                    p.edit().putBoolean("filtroRevogado", false).apply()
-                    result.success(v)
-                }
+                // Filtro de sites: no Android não há (a Google recusou VPN só para
+                // filtro); os métodos respondem "sem filtro" para versões antigas do Dart.
+                "filtroPreparado", "filtroPede", "filtroLiga", "filtroRevogado" -> result.success(false)
 
                 "trocaIcone" -> {
                     val alvo = call.argument<String>("especie").orEmpty()

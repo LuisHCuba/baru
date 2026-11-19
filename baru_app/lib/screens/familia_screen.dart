@@ -60,6 +60,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
   bool _filtroPronto = true;
   Map<String, MapaDaFamilia> _mapas = const {};
   PermissaoDeLocal _local = PermissaoDeLocal.negada;
+  bool _avisoDeLocalMostrado = false;
   String? _erro;
   bool _ocupado = false;
 
@@ -89,7 +90,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
           : true;
       final filtroPronto = !kIsWeb && defaultTargetPlatform == TargetPlatform.android && f.souCrianca &&
               (f.minhasRegras?.filtroSites ?? false)
-          ? await (widget.sondaFiltro ?? FamiliaSync.filtroPreparado)()
+          ? true // sem filtro de sites no Android (VpnService recusado pela Google)
           : true;
       // Localização: o mapa de cada família (responsável) e a permissão deste celular (criança).
       final mapas = <String, MapaDaFamilia>{};
@@ -110,6 +111,18 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
         _erro = null;
       });
       if (f.souCrianca) unawaited(FamiliaSync.instance.envia(AppScope.of(context)));
+      if (f.souCrianca && (f.minhasRegras?.localizacao ?? false) && !local.concedida &&
+          local != PermissaoDeLocal.desligada && !_avisoDeLocalMostrado) {
+        _avisoDeLocalMostrado = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          final app = AppScope.of(context);
+          if (!await mostraAvisoDeLocalizacao(context, app.t)) return;
+          await LocalNativo.pedir(sempre: true);
+          await FamiliaSync.instance.envia(app);
+          await _carrega();
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _erro = '$e');
     }
@@ -530,6 +543,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
               await LocalNativo.abrirAjustes();
               return;
             }
+            if (!await mostraAvisoDeLocalizacao(context, t)) return;
             final antes = _local;
             final depois = await LocalNativo.pedir(sempre: true);
             // Negado de vez (ou "sempre" já recusado): só pelos ajustes do sistema.
@@ -1344,4 +1358,39 @@ class _DialogoDoApelidoState extends State<_DialogoDoApelido> {
       ],
     );
   }
+}
+
+
+/// Aviso em destaque antes de pedir a localização (política de dados da Google
+/// e diretrizes da Apple): diz o que é coletado, para quê, e que a coleta
+/// continua com o app fechado. Só com "Aceitar" o app pede a permissão.
+Future<bool> mostraAvisoDeLocalizacao(BuildContext context, T t) async {
+  garanteTextosDaFamilia();
+  final ok = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => Dialog.fullscreen(
+      backgroundColor: Cores.canvas,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(Espaco.lg),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const Spacer(),
+            const Icon(Icons.location_on_rounded, size: 64, color: Cores.primariaEscura),
+            const SizedBox(height: Espaco.md),
+            Text(t.s('locDiscT'), textAlign: TextAlign.center, style: estilo(Tipo.titulo)),
+            const SizedBox(height: Espaco.md),
+            Text(t.s('locDiscCorpo'), style: estilo(Tipo.corpo)),
+            const SizedBox(height: Espaco.md),
+            Text(t.s('locDiscPasso'), style: estilo(Tipo.corpoForte)),
+            const Spacer(),
+            BotaoBaru(key: const Key('local-aviso-aceitar'), rotulo: t.s('locDiscAceitar'), aoTocar: () => Navigator.pop(ctx, true)),
+            const SizedBox(height: Espaco.xs),
+            TextButton(key: const Key('local-aviso-nao'), onPressed: () => Navigator.pop(ctx, false), child: Text(t.s('locDiscNao'))),
+          ]),
+        ),
+      ),
+    ),
+  );
+  return ok == true;
 }

@@ -41,9 +41,6 @@ class FamiliaSync {
   /// já no idioma da criança.
   static const _chaveGuardada = 'baru_familia_chave_aparelho';
 
-  /// Pedido de localização já feito nesta abertura (não insistir).
-  static bool _jaPediuLocal = false;
-
   /// Chave já conferida com o servidor nesta abertura do app.
   static String? _chaveConferida;
 
@@ -101,19 +98,6 @@ class FamiliaSync {
       'url': BaruEnv.supabaseUrl,
       'anon': BaruEnv.supabaseAnonKey,
     });
-  }
-
-  /// Filtro de sites (VPN só de DNS). Se a criança desligou a VPN, o
-  /// responsável fica sabendo como "permissão tirada".
-  Future<void> _filtroAndroid(bool ligado, FamiliaRepo repo) async {
-    try {
-      await _canal.invokeMethod('filtroLiga', {'ligado': ligado});
-      if (ligado && await _canal.invokeMethod<bool>('filtroRevogado') == true) {
-        await repo.avisarAutorizacao(ativa: false);
-      }
-    } catch (e) {
-      debugPrint('Baru: filtro de sites não respondeu — $e');
-    }
   }
 
   /// O Android já deixou ligar a VPN do filtro?
@@ -196,13 +180,9 @@ class FamiliaSync {
       anon: BaruEnv.supabaseAnonKey,
     );
     if (!regras.localizacao || chave == null) return;
-    var permissao = await LocalNativo.estado();
-    // Nunca perguntado: pergunta já (a tela Família explica o porquê).
-    if (permissao == PermissaoDeLocal.naoPedida ||
-        (permissao == PermissaoDeLocal.negada && defaultTargetPlatform == TargetPlatform.android && !_jaPediuLocal)) {
-      _jaPediuLocal = true;
-      permissao = await LocalNativo.pedir(sempre: true);
-    }
+    // O pedido de permissão só acontece na tela Família, depois do aviso em
+    // destaque (exigência da Google e da Apple): aqui só usa o que já foi dado.
+    final permissao = await LocalNativo.estado();
     if (!permissao.concedida) return;
     final p = await LocalNativo.agora();
     if (p == null) return;
@@ -295,7 +275,6 @@ class FamiliaSync {
         final chave = await _chaveDoAparelho(client);
         await _guardaAndroid(_regrasParaOGuarda(app, regras, chave: chave));
         await _localizacao(regras, repo, chave);
-        await _filtroAndroid(regras.filtroSites, repo);
         await _autorizacao(repo, app.usageAccess);
         if (!app.usageAccess) {
           await repo.registrarDia(plataforma: 'android', focos: app.completedToday);

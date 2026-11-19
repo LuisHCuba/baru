@@ -313,6 +313,29 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('localização ligada sem permissão: aviso em destaque antes de pedir', (tester) async {
+    final pedidos = <String>[];
+    LocalNativo.sonda = (metodo, [args]) async {
+      pedidos.add(metodo);
+      return metodo == 'estado' ? 'nao_pedida' : null;
+    };
+    await _abre(
+      tester,
+      MinhaFamilia.doMapa({
+        'souCrianca': true,
+        'minhasRegras': {'meta_min': 90, 'localizacao': true},
+        'familias': [
+          {'id': 'f1', 'nome': 'Casa', 'meuPapel': 'crianca', 'responsaveis': [{'email': 'mae@exemplo.com'}], 'criancas': [{'apelido': 'Nina'}]},
+        ],
+      }),
+    );
+    expect(find.text(textosDoLocal['pt']!['locDiscT']!), findsOneWidget);
+    expect(pedidos, isNot(contains('pedir')), reason: 'não pede antes do aviso');
+    await tester.tap(find.byKey(const Key('local-aviso-nao')));
+    await tester.pumpAndSettle();
+    expect(pedidos, isNot(contains('pedir')), reason: '"Agora não" não pede');
+  });
+
   testWidgets('no mapa, segurar marca um lugar com nome e raio', (tester) async {
     tester.view.physicalSize = const Size(1200, 3000);
     tester.view.devicePixelRatio = 2;

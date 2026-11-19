@@ -466,11 +466,5 @@ class GuardaNoBoot : BroadcastReceiver() {
             } catch (_: Exception) {
             }
         }
-        if (FiltroDeSites.deveriaEstarLigado(ctx)) {
-            try {
-                FiltroDeSites.liga(ctx, true)
-            } catch (_: Exception) {
-            }
-        }
     }
 }

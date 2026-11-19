@@ -222,16 +222,6 @@
             android:name=".AvisosDaFamilia"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-        <!-- Filtro de sites da família: VPN só de DNS (DNS família da
-             Cloudflare). Não declara rota: nenhum tráfego passa pelo app. -->
-        <service
-            android:name=".FiltroDeSites"
-            android:exported="false"
-            android:permission="android.permission.BIND_VPN_SERVICE">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-        </service>
         <receiver
             android:name=".GuardaNoBoot"
             android:exported="false">

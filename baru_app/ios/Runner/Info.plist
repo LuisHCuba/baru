@@ -28,6 +28,18 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>tech.lhcx.baru</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tech.lhcx.baru</string>
+				<string>baru</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>No modo família, o Baru mostra ao seu responsável onde você está e manda sua posição no SOS. Você sempre vê quando está ligado.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

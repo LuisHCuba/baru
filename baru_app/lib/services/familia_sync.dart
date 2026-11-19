@@ -79,6 +79,35 @@ class FamiliaSync {
     });
   }
 
+  /// Filtro de sites (VPN só de DNS). Se a criança desligou a VPN, o
+  /// responsável fica sabendo como "permissão tirada".
+  Future<void> _filtroAndroid(bool ligado, FamiliaRepo repo) async {
+    try {
+      await _canal.invokeMethod('filtroLiga', {'ligado': ligado});
+      if (ligado && await _canal.invokeMethod<bool>('filtroRevogado') == true) {
+        await repo.avisarAutorizacao(ativa: false);
+      }
+    } catch (e) {
+      debugPrint('Baru: filtro de sites não respondeu — $e');
+    }
+  }
+
+  /// O Android já deixou ligar a VPN do filtro?
+  static Future<bool> filtroPreparado() async {
+    try {
+      return await _canal.invokeMethod<bool>('filtroPreparado') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Abre o pedido do Android para permitir a VPN do filtro.
+  static Future<void> pedeFiltro() async {
+    try {
+      await _canal.invokeMethod('filtroPede');
+    } catch (_) {}
+  }
+
   Future<void> _guardaAndroid(String? json) async {
     try {
       await _canal.invokeMethod('familiaRegras', {'json': json});
@@ -105,6 +134,9 @@ class FamiliaSync {
       if (!minha.souCrianca) {
         if (defaultTargetPlatform == TargetPlatform.android) {
           await _guardaAndroid(null);
+          try {
+            await _canal.invokeMethod('filtroLiga', {'ligado': false});
+          } catch (_) {}
           (await SharedPreferences.getInstance()).remove(_chaveGuardada);
         }
         return;
@@ -115,6 +147,13 @@ class FamiliaSync {
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         var tela = await TempoDeTelaIos.estado();
         if (!tela.suportado) return;
+        // Para o push silencioso: o iPhone busca as regras sozinho.
+        await TempoDeTelaIos.guardaChave(
+          chave: await _chaveDoAparelho(client),
+          url: BaruEnv.supabaseUrl,
+          anon: BaruEnv.supabaseAnonKey,
+          sandbox: kDebugMode,
+        );
         await _autorizacao(repo, tela.autorizado);
         if (!tela.autorizado) return;
         // As regras do responsável valem neste aparelho.
@@ -137,6 +176,7 @@ class FamiliaSync {
         );
       } else if (defaultTargetPlatform == TargetPlatform.android) {
         await _guardaAndroid(_regrasParaOGuarda(app, regras, chave: await _chaveDoAparelho(client)));
+        await _filtroAndroid(regras.filtroSites, repo);
         await _autorizacao(repo, app.usageAccess);
         if (!app.usageAccess) {
           await repo.registrarDia(plataforma: 'android', focos: app.completedToday);

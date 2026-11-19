@@ -175,6 +175,8 @@ class GuardaDaFamilia : Service() {
         }
         sobeNaBarra()
         livres = appsLivres()
+        // Regras novas (ou a chave do aparelho) acabaram de chegar: consulta já.
+        ultimaBusca = 0L
         mao.removeCallbacks(volta)
         mao.post(volta)
         return START_STICKY
@@ -409,6 +411,12 @@ class GuardaNoBoot : BroadcastReceiver() {
         if (RegrasDaFamilia.le(ctx) != null) {
             try {
                 GuardaDaFamilia.liga(ctx)
+            } catch (_: Exception) {
+            }
+        }
+        if (FiltroDeSites.deveriaEstarLigado(ctx)) {
+            try {
+                FiltroDeSites.liga(ctx, true)
             } catch (_: Exception) {
             }
         }

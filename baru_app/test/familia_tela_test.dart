@@ -54,7 +54,7 @@ Future<_RepoFalso> _abre(WidgetTester tester, MinhaFamilia estado, {bool comCont
   final app = AppState();
   addTearDown(app.dispose);
   await tester.pumpWidget(MaterialApp(
-    home: Scaffold(body: AppScope(state: app, child: FamiliaScreen(repo: repo, comConta: comConta, sondaSobreposicao: () async => true))),
+    home: Scaffold(body: AppScope(state: app, child: FamiliaScreen(repo: repo, comConta: comConta, sondaSobreposicao: () async => true, sondaFiltro: () async => true))),
   ));
   await tester.pumpAndSettle();
   return repo;

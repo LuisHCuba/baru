@@ -147,16 +147,17 @@ void main() {
         onUserMessage: avisos.add,
       );
 
-      // O bônus do dia abaixo da meta, mais o que a virada colheu sozinha:
-      // a missão diária "abaixo da meta" ficou pronta e ninguém colheu
-      // ("prêmio pronto nunca se perde", _colheAsEsquecidas).
-      expect(aoAbrir.guardadasNaVirada, greaterThan(0));
-      expect(aoAbrir.leaves, 25 + AppState.underGoalBonus + aoAbrir.guardadasNaVirada);
+      // O bônus do dia abaixo da meta, mais o que a virada colheu sozinha
+      // ("prêmio pronto nunca se perde", _colheAsEsquecidas). Se a missão
+      // diária estava pronta depende da hora em que o teste roda, então a
+      // conta usa o que a virada de fato guardou.
+      final guardadas = aoAbrir.guardadasNaVirada;
+      expect(aoAbrir.leaves, 25 + AppState.underGoalBonus + guardadas);
       expect(avisos, isEmpty, reason: 'ainda não há árvore de widgets');
       aoAbrir.flushPendingNotices();
-      // Dois avisos no primeiro frame: o do bônus e o das folhas que a
-      // virada guardou.
-      expect(avisos.length, 2, reason: 'os avisos saem no primeiro frame');
+      // No primeiro frame: o aviso do bônus e, se a virada guardou folhas,
+      // o aviso delas.
+      expect(avisos.length, guardadas > 0 ? 2 : 1, reason: 'os avisos saem no primeiro frame');
       expect(avisos.where((a) => a.contains('${AppState.underGoalBonus}')), isNotEmpty);
     });
 

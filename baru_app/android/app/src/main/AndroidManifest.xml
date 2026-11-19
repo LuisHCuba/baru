@@ -210,6 +210,16 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Controle parental pedido pelo responsavel: aplicar no celular da crianca a pausa, os horarios sem tela e a meta diaria de tela que o responsavel definiu." />
         </service>
+        <!-- Filtro de sites da família: VPN só de DNS (DNS família da
+             Cloudflare). Não declara rota: nenhum tráfego passa pelo app. -->
+        <service
+            android:name=".FiltroDeSites"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
         <receiver
             android:name=".GuardaNoBoot"
             android:exported="false">

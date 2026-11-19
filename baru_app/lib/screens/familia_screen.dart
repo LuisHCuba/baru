@@ -22,7 +22,7 @@ import '../widgets/componentes.dart';
 /// - responsável: cada criança com o dia de hoje, as regras e os avisos;
 /// - criança: a família, a meta e a autorização de tempo de tela do aparelho.
 class FamiliaScreen extends StatefulWidget {
-  const FamiliaScreen({super.key, this.repo, this.comConta, this.sondaSobreposicao});
+  const FamiliaScreen({super.key, this.repo, this.comConta, this.sondaSobreposicao, this.sondaFiltro});
 
   /// Para o teste trocar o banco.
   final FamiliaRepo? repo;
@@ -34,6 +34,10 @@ class FamiliaScreen extends StatefulWidget {
   /// Para o teste: responde se o app pode aparecer sobre outros (Android).
   @visibleForTesting
   final Future<bool> Function()? sondaSobreposicao;
+
+  /// Para o teste: responde se a VPN do filtro já foi permitida (Android).
+  @visibleForTesting
+  final Future<bool> Function()? sondaFiltro;
 
   static const chaveCriar = Key('familia-criar');
   static const chaveEntrar = Key('familia-entrar');
@@ -47,6 +51,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
   MinhaFamilia? _familia;
   EstadoTempoDeTela _tela = EstadoTempoDeTela.indisponivel;
   bool _sobrepor = true;
+  bool _filtroPronto = true;
   String? _erro;
   bool _ocupado = false;
 
@@ -74,11 +79,16 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
       final sobrepor = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
           ? await (widget.sondaSobreposicao ?? OverlayService.instance.temPermissao)()
           : true;
+      final filtroPronto = !kIsWeb && defaultTargetPlatform == TargetPlatform.android && f.souCrianca &&
+              (f.minhasRegras?.filtroSites ?? false)
+          ? await (widget.sondaFiltro ?? FamiliaSync.filtroPreparado)()
+          : true;
       if (!mounted) return;
       setState(() {
         _familia = f;
         _tela = tela;
         _sobrepor = sobrepor;
+        _filtroPronto = filtroPronto;
         _erro = null;
       });
       if (f.souCrianca) unawaited(FamiliaSync.instance.envia(AppScope.of(context)));
@@ -482,6 +492,25 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
         const SizedBox(height: Espaco.xxs),
         if (!_tela.autorizado) Text(t.s('famAutorizarSub'), textAlign: TextAlign.center, style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
       ] else if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) ...[
+        if (!_filtroPronto) ...[
+          CartaoBaru(
+            onTap: () => _faz(() async {
+              await FamiliaSync.pedeFiltro();
+              await FamiliaSync.instance.envia(app);
+            }),
+            child: Row(children: [
+              const Icon(Icons.shield_outlined, color: Cores.alerta),
+              const SizedBox(width: Espaco.sm),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(t.s('famFiltroAtivar'), style: estilo(Tipo.corpoForte)),
+                  Text(t.s('famFiltroAtivarSub'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+                ]),
+              ),
+            ]),
+          ),
+          const SizedBox(height: Espaco.sm),
+        ],
         if (!_sobrepor) ...[
           CartaoBaru(
             onTap: () => _faz(OverlayService.instance.pedePermissao),

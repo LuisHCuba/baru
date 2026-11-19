@@ -107,6 +107,16 @@ class TempoDeTelaIos {
         'filtro': filtro,
       });
 
+  /// Chave do aparelho e endereço do banco: o iPhone busca as regras sozinho
+  /// quando chega o push silencioso da família.
+  static Future<EstadoTempoDeTela> guardaChave({
+    required String? chave,
+    required String url,
+    required String anon,
+    required bool sandbox,
+  }) =>
+      _chama('guardaChave', {'chave': chave, 'url': url, 'anon': anon, 'sandbox': sandbox});
+
   static Future<EstadoTempoDeTela> definirEscudo({required bool ativo}) =>
       _chama('definirEscudo', {'ativo': ativo});
 }

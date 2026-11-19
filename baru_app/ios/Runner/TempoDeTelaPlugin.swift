@@ -65,6 +65,14 @@ final class TempoDeTelaPlugin: NSObject, FlutterPlugin {
       } catch {
         result(FlutterError(code: "regras", message: Self.mensagem(error), details: nil))
       }
+    case "guardaChave":
+      RegrasRemotas.guarda(
+        chave: args["chave"] as? String,
+        url: args["url"] as? String,
+        anon: args["anon"] as? String,
+        sandbox: args["sandbox"] as? Bool ?? false
+      )
+      result(Self.estado())
     case "definirEscudo":
       TelaCompartilhada.escudoAoEstourar = args["ativo"] as? Bool ?? false
       if !TelaCompartilhada.escudoAoEstourar { TelaCompartilhada.tiraEscudo() }

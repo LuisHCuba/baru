@@ -10,6 +10,8 @@ void garanteTextosDaFamilia() => T.registra(textosDaFamilia);
 
 const textosDaFamilia = <String, Map<String, String>>{
   'pt': {
+    'famFiltroAtivar': 'Ativar o filtro de sites',
+    'famFiltroAtivarSub': 'O Android vai pedir para permitir uma VPN. Ela só troca o DNS por um que bloqueia sites adultos; nada do que a criança acessa passa pelo Baru.',
     'famGuardaTitulo': 'Hora de uma pausa',
     'famGuardaPausa': 'Seu responsável pausou a tela agora. Que tal ir brincar um pouco?',
     'famGuardaHorario': 'Agora é horário sem tela na sua família.',
@@ -120,6 +122,8 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'Agora é horário sem tela',
   },
   'en': {
+    'famFiltroAtivar': 'Turn on the website filter',
+    'famFiltroAtivarSub': 'Android will ask to allow a VPN. It only switches DNS to one that blocks adult sites; nothing the kid browses goes through Baru.',
     'famGuardaTitulo': 'Time for a break',
     'famGuardaPausa': 'Your parent paused the screen for now. How about playing a bit?',
     'famGuardaHorario': 'It\'s screen-free time in your family.',
@@ -230,6 +234,8 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'It\'s screen-free time now',
   },
   'es': {
+    'famFiltroAtivar': 'Activar el filtro de sitios',
+    'famFiltroAtivarSub': 'Android pedirá permitir una VPN. Solo cambia el DNS por uno que bloquea sitios para adultos; nada de lo que el niño visita pasa por Baru.',
     'famGuardaTitulo': 'Hora de una pausa',
     'famGuardaPausa': 'Tu responsable pausó la pantalla. ¿Qué tal jugar un poco?',
     'famGuardaHorario': 'Ahora es horario sin pantalla en tu familia.',
@@ -340,6 +346,8 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'Ahora es horario sin pantalla',
   },
   'zh': {
+    'famFiltroAtivar': '开启网站过滤',
+    'famFiltroAtivarSub': 'Android 会请求允许 VPN。它只把 DNS 换成屏蔽成人网站的 DNS；孩子浏览的内容不会经过 Baru。',
     'famGuardaTitulo': '休息一下吧',
     'famGuardaPausa': '家长暂停了屏幕。去玩一会儿吧？',
     'famGuardaHorario': '现在是你家的无屏幕时间。',

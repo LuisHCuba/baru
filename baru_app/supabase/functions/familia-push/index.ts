@@ -1,9 +1,14 @@
 import { jsonResponse, servico } from '../_shared/http.ts'
 
 /**
- * Push silencioso para o iPhone da criança quando o responsável muda uma regra
+ * Dois usos:
+ * 1. { crianca_id }: push silencioso para o iPhone da criança quando o responsável muda uma regra
  * (pausa, tempo extra, horários, meta). O iPhone acorda em segundo plano, busca
  * as regras com a chave do aparelho e aplica — sem a criança abrir o Baru.
+ *
+ * 2. { evento_id }: aviso visível (SOS, chegou, saiu, meta) para os iPhones
+ *    dos responsáveis — trigger baru_familia_avisa_responsavel. Só eventos de
+ *    até 90 s e uma vez cada (push_em).
  *
  * Quem chama: o trigger baru_familia_avisa_push (pg_net), logo depois de uma
  * regra mudar. Sem segredo compartilhado: a função só envia se as regras da
@@ -47,9 +52,104 @@ async function jwtDaApple(): Promise<string | null> {
   return token
 }
 
+/** Textos dos avisos ao responsável, no idioma do celular dele. */
+const AVISOS: Record<string, Record<string, [string, string]>> = {
+  pt: {
+    sos: ['SOS de {c}', '{c} pediu ajuda. Toque para ver onde está.'],
+    chegou: ['{c} chegou', '{c} chegou em {l}.'],
+    saiu_de: ['{c} saiu', '{c} saiu de {l}.'],
+    meta_75: ['Tempo de tela', '{c} usou 75% da meta de hoje.'],
+    meta_batida: ['Tempo de tela', '{c} chegou à meta de hoje.'],
+    meta_passou: ['Tempo de tela', '{c} passou bastante da meta de hoje.'],
+    autorizacao_revogada: ['Controle desligado', '{c} desligou a permissão de tempo de tela no celular.'],
+  },
+  en: {
+    sos: ['SOS from {c}', '{c} asked for help. Tap to see where.'],
+    chegou: ['{c} arrived', '{c} arrived at {l}.'],
+    saiu_de: ['{c} left', '{c} left {l}.'],
+    meta_75: ['Screen time', '{c} used 75% of today\'s goal.'],
+    meta_batida: ['Screen time', '{c} reached today\'s goal.'],
+    meta_passou: ['Screen time', '{c} went well over today\'s goal.'],
+    autorizacao_revogada: ['Controls off', '{c} turned off screen time permission on the phone.'],
+  },
+  es: {
+    sos: ['SOS de {c}', '{c} pidió ayuda. Toca para ver dónde está.'],
+    chegou: ['{c} llegó', '{c} llegó a {l}.'],
+    saiu_de: ['{c} salió', '{c} salió de {l}.'],
+    meta_75: ['Tiempo de pantalla', '{c} usó el 75% de la meta de hoy.'],
+    meta_batida: ['Tiempo de pantalla', '{c} llegó a la meta de hoy.'],
+    meta_passou: ['Tiempo de pantalla', '{c} pasó bastante la meta de hoy.'],
+    autorizacao_revogada: ['Control apagado', '{c} desactivó el permiso de tiempo de pantalla.'],
+  },
+  zh: {
+    sos: ['{c} 的求助', '{c} 发出了求助。点按查看位置。'],
+    chegou: ['{c} 已到达', '{c} 已到达 {l}。'],
+    saiu_de: ['{c} 已离开', '{c} 已离开 {l}。'],
+    meta_75: ['屏幕时间', '{c} 已用掉今天目标的 75%。'],
+    meta_batida: ['屏幕时间', '{c} 已达到今天的目标。'],
+    meta_passou: ['屏幕时间', '{c} 已远超今天的目标。'],
+    autorizacao_revogada: ['控制已关闭', '{c} 关闭了屏幕时间权限。'],
+  },
+}
+
+async function enviaApple(jwt: string, token: string, ambiente: string | null, corpo: unknown, tipo: 'background' | 'alert') {
+  const host = ambiente === 'sandbox' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com'
+  return await fetch(`https://${host}/3/device/${token}`, {
+    method: 'POST',
+    headers: {
+      authorization: `bearer ${jwt}`,
+      'apns-topic': Deno.env.get('APNS_TOPIC') ?? 'tech.lhcx.baru',
+      'apns-push-type': tipo,
+      'apns-priority': tipo === 'alert' ? '10' : '5',
+      'apns-expiration': String(Math.floor(Date.now() / 1000) + 3600),
+    },
+    body: JSON.stringify(corpo),
+  })
+}
+
+/** Aviso visível para os iPhones dos responsáveis (SOS, chegou, saiu, meta). */
+async function avisaResponsaveis(eventoId: number) {
+  const db = servico()
+  const { data: ev } = await db.from('baru_familia_eventos')
+    .select('id, familia_id, crianca_id, tipo, em, detalhe, push_em').eq('id', eventoId).maybeSingle()
+  if (!ev || ev.push_em || Date.now() - new Date(ev.em).getTime() > 90_000) return jsonResponse({ enviados: 0, motivo: 'evento velho ou já avisado' })
+  await db.from('baru_familia_eventos').update({ push_em: new Date().toISOString() }).eq('id', ev.id)
+  const jwt = await jwtDaApple()
+  if (!jwt) return jsonResponse({ enviados: 0, motivo: 'sem chave da Apple' })
+  const { data: crianca } = await db.from('baru_familia_membros').select('apelido')
+    .eq('familia_id', ev.familia_id).eq('user_id', ev.crianca_id).maybeSingle()
+  const { data: resp } = await db.from('baru_familia_membros').select('user_id')
+    .eq('familia_id', ev.familia_id).eq('papel', 'responsavel').is('saiu_em', null)
+  const ids = (resp ?? []).map((r: { user_id: string }) => r.user_id)
+  if (!ids.length) return jsonResponse({ enviados: 0 })
+  const { data: aparelhos } = await db.from('baru_familia_resp_aparelhos')
+    .select('chave_hash, push_token, push_ambiente, idioma').in('user_id', ids).eq('plataforma', 'ios').not('push_token', 'is', null)
+  let enviados = 0
+  for (const a of aparelhos ?? []) {
+    const t = (AVISOS[a.idioma] ?? AVISOS.pt)[ev.tipo]
+    if (!t) continue
+    const troca = (s: string) => s.replaceAll('{c}', crianca?.apelido ?? '—').replaceAll('{l}', ev.detalhe?.lugar ?? '')
+    const r = await enviaApple(jwt, a.push_token, a.push_ambiente, {
+      aps: { alert: { title: troca(t[0]), body: troca(t[1]) }, sound: ev.tipo === 'sos' ? 'default' : undefined,
+             'interruption-level': ev.tipo === 'sos' ? 'time-sensitive' : 'active', 'thread-id': `familia-${ev.crianca_id}` },
+      baru: 'aviso', tipo: ev.tipo, crianca_id: ev.crianca_id,
+    }, 'alert')
+    if (r.ok) enviados++
+    else {
+      const motivo = await r.text().catch(() => '')
+      if (r.status === 410 || motivo.includes('BadDeviceToken') || motivo.includes('Unregistered')) {
+        await db.from('baru_familia_resp_aparelhos').update({ push_token: null }).eq('chave_hash', a.chave_hash)
+      } else console.error('APNs aviso', r.status, motivo)
+    }
+  }
+  return jsonResponse({ enviados })
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return jsonResponse({ error: 'method' }, 405)
-  const { crianca_id } = await req.json().catch(() => ({}))
+  const corpoReq = await req.json().catch(() => ({}))
+  if (Number.isInteger(corpoReq.evento_id)) return await avisaResponsaveis(corpoReq.evento_id)
+  const { crianca_id } = corpoReq
   if (typeof crianca_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(crianca_id)) return jsonResponse({ error: 'crianca_id' }, 400)
 
   // Só logo depois de uma mudança de regra.
@@ -70,21 +170,9 @@ Deno.serve(async (req: Request) => {
     .not('push_token', 'is', null)
   if (error) return jsonResponse({ error: error.message }, 500)
 
-  const topico = Deno.env.get('APNS_TOPIC') ?? 'tech.lhcx.baru'
   let enviados = 0
   for (const a of aparelhos ?? []) {
-    const host = a.push_ambiente === 'sandbox' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com'
-    const r = await fetch(`https://${host}/3/device/${a.push_token}`, {
-      method: 'POST',
-      headers: {
-        authorization: `bearer ${jwt}`,
-        'apns-topic': topico,
-        'apns-push-type': 'background',
-        'apns-priority': '5',
-        'apns-expiration': String(Math.floor(Date.now() / 1000) + 3600),
-      },
-      body: JSON.stringify({ aps: { 'content-available': 1 }, baru: 'regras' }),
-    })
+    const r = await enviaApple(jwt, a.push_token, a.push_ambiente, { aps: { 'content-available': 1 }, baru: 'regras' }, 'background')
     if (r.ok) enviados++
     else {
       const motivo = await r.text().catch(() => '')

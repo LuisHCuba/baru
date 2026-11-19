@@ -18,6 +18,9 @@ final class TempoDeTelaPlugin: NSObject, FlutterPlugin {
   static func register(with registrar: FlutterPluginRegistrar) {
     let canal = FlutterMethodChannel(name: "baru/tempo_de_tela", binaryMessenger: registrar.messenger())
     registrar.addMethodCallDelegate(TempoDeTelaPlugin(), channel: canal)
+    if #available(iOS 16.0, *) {
+      registrar.register(RelatorioFabrica(), withId: "baru/relatorio")
+    }
   }
 
   func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {

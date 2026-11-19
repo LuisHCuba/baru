@@ -72,7 +72,8 @@ enum RegrasRemotas {
            !(s.applicationTokens.isEmpty && s.categoryTokens.isEmpty && s.webDomainTokens.isEmpty) {
           try? TempoDeTelaPlugin.agenda(metaMin: meta)
         }
-        fim(true)
+        // Localização: liga/desliga e responde ao "onde está agora?" antes de devolver o tempo ao iOS.
+        LocalDaFamilia.shared.aplicaRegras(r) { fim(true) }
       }
     }
   }

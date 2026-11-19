@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -34,6 +35,10 @@ class TempoScreen extends StatelessWidget {
                   acao: app.requestUsageAccessFromSettings,
                   cor: Cores.folha600,
                 )
+              // iPhone: o relatório real é desenhado pela extensão da Apple
+              // (BaruRelatorio), com o tempo de cada app de hoje.
+              : (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+                  ? _RelatorioDoIphone(app: app)
               : (resumo == null || resumo.vazio)
                   ? EstadoVazio(
                       icone: Icons.hourglass_empty_rounded,
@@ -47,6 +52,32 @@ class TempoScreen extends StatelessWidget {
   }
 }
 
+
+class _RelatorioDoIphone extends StatelessWidget {
+  const _RelatorioDoIphone({required this.app});
+
+  final AppState app;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = app.t;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Espaco.margemTela, 0, Espaco.margemTela, Espaco.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(t.telaPorApp.toUpperCase(), style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
+          const SizedBox(height: Espaco.sm),
+          const Expanded(
+            child: UiKitView(viewType: 'baru/relatorio', creationParamsCodec: StandardMessageCodec()),
+          ),
+          const SizedBox(height: Espaco.sm),
+          _ComoContamos(texto: t.telaComoContamos),
+        ],
+      ),
+    );
+  }
+}
 
 class _Detalhamento extends StatelessWidget {
   const _Detalhamento({required this.app, required this.resumo});

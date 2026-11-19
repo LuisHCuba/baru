@@ -8,19 +8,31 @@
 
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		14AA3D1F4A6F83C4B1A16587 /* AcaoDoEscudo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183862881EB206D053508BFB /* AcaoDoEscudo.swift */; };
+		169566D7D5D5C4ECD566FD16 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBF5C78F2413CEFB658C59B4 /* Foundation.framework */; };
+		1D97C275D3F3319ABE3DC49A /* LocalDaFamilia.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B656EA36AE80287381987DD /* LocalDaFamilia.swift */; };
+		20A2DAA58445F9ECC44E48DA /* EscudoDoBaru.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A75533FEB361E1F1D9A83F9 /* EscudoDoBaru.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		3D71A0A49E53844E61B63C14 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBF5C78F2413CEFB658C59B4 /* Foundation.framework */; };
+		3F00DE54056309D8AB26CC38 /* BaruEscudo.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 35491C55FB0A2D01C8338004 /* BaruEscudo.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		56F0541C67BE5FF5DB90B42B /* MonitorDoBaru.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39918F3C0C3E25422733BF9F /* MonitorDoBaru.swift */; };
+		688705016C1D57CAB78010A6 /* BaruEscudoAcao.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = ED3609EAADE77835833CD887 /* BaruEscudoAcao.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		814FE430C79104D44C174F30 /* TempoDeTelaPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235187104688AC09B81066F8 /* TempoDeTelaPlugin.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		992942796218373178366D8F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBF5C78F2413CEFB658C59B4 /* Foundation.framework */; };
 		A40773FF00A238DF14A7AF25 /* BaruMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA29C752D25D867A4D8F1A17 /* BaruMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ADBB351430044CD601AAB8CD /* TelaCompartilhada.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40C723D79307A055DFE24949 /* TelaCompartilhada.swift */; };
+		BA89381C21B2CBA7D5E3152B /* BaruRelatorio.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EB520786698CD2005E3C9201 /* BaruRelatorio.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BF1347A75BC0457F112F95D4 /* RelatorioDoBaru.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08078961160C0EDAF690434 /* RelatorioDoBaru.swift */; };
+		C453DF3C2321DED9456E9372 /* bicho.png in Resources */ = {isa = PBXBuildFile; fileRef = E61C780B791799610E4ED373 /* bicho.png */; };
 		D3C8265269697C44BAA8025B /* TelaCompartilhada.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40C723D79307A055DFE24949 /* TelaCompartilhada.swift */; };
 		DC0A936D0F745792994C7B31 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBF5C78F2413CEFB658C59B4 /* Foundation.framework */; };
+		DE6B6C25479681EE4ECAF1F8 /* RelatorioNativo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E212C00B901678E91F7D008 /* RelatorioNativo.swift */; };
 		EE073B32E916EE9ECC660974 /* RegrasRemotas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0577C9B7FF2CA3B07E17D859 /* RegrasRemotas.swift */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +43,27 @@
 			proxyType = 1;
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
+		};
+		51CE4EE137EA8786B01F5BB6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ED8C2553635D144C85FEF45B;
+			remoteInfo = BaruEscudoAcao;
+		};
+		6F8C3EE6F7385979598E4C2D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A1357D69E6CFD343FF9DF0C;
+			remoteInfo = BaruRelatorio;
+		};
+		8A76B98079F4731FB41FCCF1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D40A0FEAF4B936B4D3A24C37;
+			remoteInfo = BaruEscudo;
 		};
 		AD9E2B613234999D01E09F0D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -59,6 +92,9 @@
 			dstSubfolderSpec = 13;
 			files = (
 				A40773FF00A238DF14A7AF25 /* BaruMonitor.appex in Embed Foundation Extensions */,
+				BA89381C21B2CBA7D5E3152B /* BaruRelatorio.appex in Embed Foundation Extensions */,
+				3F00DE54056309D8AB26CC38 /* BaruEscudo.appex in Embed Foundation Extensions */,
+				688705016C1D57CAB78010A6 /* BaruEscudoAcao.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -68,11 +104,16 @@
 /* Begin PBXFileReference section */
 		02C1D6E03F2B571C4CC2B84E /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		0577C9B7FF2CA3B07E17D859 /* RegrasRemotas.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RegrasRemotas.swift; sourceTree = "<group>"; };
+		07E86FABE8C9C1198294968D /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0ECC102641B1F17A5B0F1158 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		183862881EB206D053508BFB /* AcaoDoEscudo.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AcaoDoEscudo.swift; sourceTree = "<group>"; };
 		235187104688AC09B81066F8 /* TempoDeTelaPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TempoDeTelaPlugin.swift; sourceTree = "<group>"; };
+		2A75533FEB361E1F1D9A83F9 /* EscudoDoBaru.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EscudoDoBaru.swift; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		35491C55FB0A2D01C8338004 /* BaruEscudo.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BaruEscudo.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		39918F3C0C3E25422733BF9F /* MonitorDoBaru.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MonitorDoBaru.swift; sourceTree = "<group>"; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		40C723D79307A055DFE24949 /* TelaCompartilhada.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TelaCompartilhada.swift; sourceTree = "<group>"; };
@@ -81,6 +122,8 @@
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
+		845EC0A780BBFAEC7C235D2A /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8E212C00B901678E91F7D008 /* RelatorioNativo.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RelatorioNativo.swift; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,12 +131,36 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9B656EA36AE80287381987DD /* LocalDaFamilia.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalDaFamilia.swift; sourceTree = "<group>"; };
+		AFD8D5ADE8B260194E74D4CC /* EscudoAcao.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = EscudoAcao.entitlements; sourceTree = "<group>"; };
+		C08078961160C0EDAF690434 /* RelatorioDoBaru.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RelatorioDoBaru.swift; sourceTree = "<group>"; };
 		C0F0E81F28002624C400F702 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CA29C752D25D867A4D8F1A17 /* BaruMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BaruMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D5E76C8EEEC37E9606F9DFF6 /* Relatorio.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Relatorio.entitlements; sourceTree = "<group>"; };
+		E33AAA05A98F5FB65325A3F1 /* Escudo.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Escudo.entitlements; sourceTree = "<group>"; };
+		E61C780B791799610E4ED373 /* bicho.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = bicho.png; sourceTree = "<group>"; };
+		EB520786698CD2005E3C9201 /* BaruRelatorio.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BaruRelatorio.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		ED3609EAADE77835833CD887 /* BaruEscudoAcao.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BaruEscudoAcao.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBF5C78F2413CEFB658C59B4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		6FAF5EF7B4DE99AA6F7FA5D3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				992942796218373178366D8F /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CFABFE7BA45B7B4694EA240 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D71A0A49E53844E61B63C14 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		97C146EB1CF9000F007C117D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -107,6 +174,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				DC0A936D0F745792994C7B31 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A77EE9E2BAC4939449523108 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				169566D7D5D5C4ECD566FD16 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -136,6 +211,17 @@
 			);
 			name = Compartilhado;
 			path = Compartilhado;
+			sourceTree = "<group>";
+		};
+		4C22B40BAD5DF90386F30DA5 /* Relatorio */ = {
+			isa = PBXGroup;
+			children = (
+				C08078961160C0EDAF690434 /* RelatorioDoBaru.swift */,
+				845EC0A780BBFAEC7C235D2A /* Info.plist */,
+				D5E76C8EEEC37E9606F9DFF6 /* Relatorio.entitlements */,
+			);
+			name = Relatorio;
+			path = Relatorio;
 			sourceTree = "<group>";
 		};
 		91DBC6228E8CD9DC23B8D923 /* Frameworks */ = {
@@ -168,6 +254,9 @@
 				3CAB761E37128FDE157B27B2 /* Compartilhado */,
 				B7239E9E8CE7A898741F004E /* Monitor */,
 				91DBC6228E8CD9DC23B8D923 /* Frameworks */,
+				4C22B40BAD5DF90386F30DA5 /* Relatorio */,
+				C468DBB75598DD59A7D5D6E5 /* Escudo */,
+				EBBC6802C287199A261FA24E /* EscudoAcao */,
 			);
 			sourceTree = "<group>";
 		};
@@ -177,6 +266,9 @@
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				CA29C752D25D867A4D8F1A17 /* BaruMonitor.appex */,
+				EB520786698CD2005E3C9201 /* BaruRelatorio.appex */,
+				35491C55FB0A2D01C8338004 /* BaruEscudo.appex */,
+				ED3609EAADE77835833CD887 /* BaruEscudoAcao.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -195,6 +287,8 @@
 				235187104688AC09B81066F8 /* TempoDeTelaPlugin.swift */,
 				02C1D6E03F2B571C4CC2B84E /* Runner.entitlements */,
 				0577C9B7FF2CA3B07E17D859 /* RegrasRemotas.swift */,
+				8E212C00B901678E91F7D008 /* RelatorioNativo.swift */,
+				9B656EA36AE80287381987DD /* LocalDaFamilia.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -208,6 +302,29 @@
 			);
 			name = Monitor;
 			path = Monitor;
+			sourceTree = "<group>";
+		};
+		C468DBB75598DD59A7D5D6E5 /* Escudo */ = {
+			isa = PBXGroup;
+			children = (
+				2A75533FEB361E1F1D9A83F9 /* EscudoDoBaru.swift */,
+				07E86FABE8C9C1198294968D /* Info.plist */,
+				E33AAA05A98F5FB65325A3F1 /* Escudo.entitlements */,
+				E61C780B791799610E4ED373 /* bicho.png */,
+			);
+			name = Escudo;
+			path = Escudo;
+			sourceTree = "<group>";
+		};
+		EBBC6802C287199A261FA24E /* EscudoAcao */ = {
+			isa = PBXGroup;
+			children = (
+				183862881EB206D053508BFB /* AcaoDoEscudo.swift */,
+				0ECC102641B1F17A5B0F1158 /* Info.plist */,
+				AFD8D5ADE8B260194E74D4CC /* EscudoAcao.entitlements */,
+			);
+			name = EscudoAcao;
+			path = EscudoAcao;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -247,6 +364,23 @@
 			productReference = CA29C752D25D867A4D8F1A17 /* BaruMonitor.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		7A1357D69E6CFD343FF9DF0C /* BaruRelatorio */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1F6AA1D4099B4822E0C642C4 /* Build configuration list for PBXNativeTarget "BaruRelatorio" */;
+			buildPhases = (
+				2AF3064700CDA87BDF7A5AB1 /* Sources */,
+				6FAF5EF7B4DE99AA6F7FA5D3 /* Frameworks */,
+				85134F95F9F216831FFB4DBD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BaruRelatorio;
+			productName = BaruRelatorio;
+			productReference = EB520786698CD2005E3C9201 /* BaruRelatorio.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -263,6 +397,9 @@
 			);
 			dependencies = (
 				5B28FB6B785CA9D896FEE4DA /* PBXTargetDependency */,
+				9ED9CA7F3AB2C247F0346696 /* PBXTargetDependency */,
+				A73CF2F57464602910305CCE /* PBXTargetDependency */,
+				342D869ECA6C2E0FA41AA5D1 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			packageProductDependencies = (
@@ -271,6 +408,40 @@
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
+		};
+		D40A0FEAF4B936B4D3A24C37 /* BaruEscudo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B78989DBB0B6DF61E8CCD2C5 /* Build configuration list for PBXNativeTarget "BaruEscudo" */;
+			buildPhases = (
+				23089C61595DD0389610D685 /* Sources */,
+				7CFABFE7BA45B7B4694EA240 /* Frameworks */,
+				01A8F072C015ADF431011D0E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BaruEscudo;
+			productName = BaruEscudo;
+			productReference = 35491C55FB0A2D01C8338004 /* BaruEscudo.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		ED8C2553635D144C85FEF45B /* BaruEscudoAcao */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D401FD17B638A50C377E5DCA /* Build configuration list for PBXNativeTarget "BaruEscudoAcao" */;
+			buildPhases = (
+				8B1015CAEFC1F4745F613E34 /* Sources */,
+				A77EE9E2BAC4939449523108 /* Frameworks */,
+				A295AAD47271A4C35B8E9BC9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BaruEscudoAcao;
+			productName = BaruEscudoAcao;
+			productReference = ED3609EAADE77835833CD887 /* BaruEscudoAcao.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -316,12 +487,30 @@
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				5104CFD379C22A220644B35B /* BaruMonitor */,
+				7A1357D69E6CFD343FF9DF0C /* BaruRelatorio */,
+				D40A0FEAF4B936B4D3A24C37 /* BaruEscudo */,
+				ED8C2553635D144C85FEF45B /* BaruEscudoAcao */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		01A8F072C015ADF431011D0E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C453DF3C2321DED9456E9372 /* bicho.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807F294A63A400263BE5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		85134F95F9F216831FFB4DBD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -336,6 +525,13 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A295AAD47271A4C35B8E9BC9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,11 +579,35 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		23089C61595DD0389610D685 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				20A2DAA58445F9ECC44E48DA /* EscudoDoBaru.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2AF3064700CDA87BDF7A5AB1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BF1347A75BC0457F112F95D4 /* RelatorioDoBaru.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807D294A63A400263BE5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8B1015CAEFC1F4745F613E34 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				14AA3D1F4A6F83C4B1A16587 /* AcaoDoEscudo.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -400,6 +620,8 @@
 				814FE430C79104D44C174F30 /* TempoDeTelaPlugin.swift in Sources */,
 				D3C8265269697C44BAA8025B /* TelaCompartilhada.swift in Sources */,
 				EE073B32E916EE9ECC660974 /* RegrasRemotas.swift in Sources */,
+				DE6B6C25479681EE4ECAF1F8 /* RelatorioNativo.swift in Sources */,
+				1D97C275D3F3319ABE3DC49A /* LocalDaFamilia.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -420,11 +642,29 @@
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
 		};
+		342D869ECA6C2E0FA41AA5D1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = BaruEscudoAcao;
+			target = ED8C2553635D144C85FEF45B /* BaruEscudoAcao */;
+			targetProxy = 51CE4EE137EA8786B01F5BB6 /* PBXContainerItemProxy */;
+		};
 		5B28FB6B785CA9D896FEE4DA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = BaruMonitor;
 			target = 5104CFD379C22A220644B35B /* BaruMonitor */;
 			targetProxy = AD9E2B613234999D01E09F0D /* PBXContainerItemProxy */;
+		};
+		9ED9CA7F3AB2C247F0346696 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = BaruRelatorio;
+			target = 7A1357D69E6CFD343FF9DF0C /* BaruRelatorio */;
+			targetProxy = 6F8C3EE6F7385979598E4C2D /* PBXContainerItemProxy */;
+		};
+		A73CF2F57464602910305CCE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = BaruEscudo;
+			target = D40A0FEAF4B936B4D3A24C37 /* BaruEscudo */;
+			targetProxy = 8A76B98079F4731FB41FCCF1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -448,6 +688,63 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		0B6DBEC0A29DB66AAD74BBB3 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = Relatorio/Relatorio.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Relatorio/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = tech.lhcx.baru.relatorio;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
+		0E2FCA4F3EFA7B89CD278B62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = Relatorio/Relatorio.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Relatorio/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = tech.lhcx.baru.relatorio;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "Baru Relatorio App Store";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		1F2ADCE6448CC98493C5E7CE /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
@@ -473,7 +770,37 @@
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		2117A218E3412B400C67C64A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = Escudo/Escudo.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Escudo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = tech.lhcx.baru.escudo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "Baru Escudo App Store";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -550,9 +877,36 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Profile;
+		};
+		2E1256E0EED9230C2013280E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = EscudoAcao/EscudoAcao.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EscudoAcao/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "tech.lhcx.baru.escudo-acao";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
 		};
 		331C8088294A63A400263BE5 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -626,9 +980,66 @@
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
+		};
+		58F7451A21F46B9EB3AA65B3 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = EscudoAcao/EscudoAcao.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EscudoAcao/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "tech.lhcx.baru.escudo-acao";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
+		78E2F9EDD2194AC287C82E22 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = EscudoAcao/EscudoAcao.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EscudoAcao/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "tech.lhcx.baru.escudo-acao";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "Baru Escudo Acao App Store";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
 		};
 		7AC2494D5D57DD07AACCC25B /* Profile */ = {
 			isa = XCBuildConfiguration;
@@ -652,10 +1063,36 @@
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Profile;
+		};
+		8F5863E41D38162FE3330C83 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = Escudo/Escudo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Escudo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = tech.lhcx.baru.escudo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
 		};
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -789,6 +1226,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -816,13 +1254,77 @@
 				PROVISIONING_PROFILE_SPECIFIER = "Baru App Store";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
+		B105B15017B8DEFB47D8BA91 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = Relatorio/Relatorio.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Relatorio/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = tech.lhcx.baru.relatorio;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E7DBB2BAA56B91574BAB8121 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = Escudo/Escudo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = PHV3N8AFK4;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Escudo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = tech.lhcx.baru.escudo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1F6AA1D4099B4822E0C642C4 /* Build configuration list for PBXNativeTarget "BaruRelatorio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0E2FCA4F3EFA7B89CD278B62 /* Release */,
+				B105B15017B8DEFB47D8BA91 /* Debug */,
+				0B6DBEC0A29DB66AAD74BBB3 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -859,6 +1361,26 @@
 				97C147061CF9000F007C117D /* Debug */,
 				97C147071CF9000F007C117D /* Release */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B78989DBB0B6DF61E8CCD2C5 /* Build configuration list for PBXNativeTarget "BaruEscudo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2117A218E3412B400C67C64A /* Release */,
+				8F5863E41D38162FE3330C83 /* Debug */,
+				E7DBB2BAA56B91574BAB8121 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D401FD17B638A50C377E5DCA /* Build configuration list for PBXNativeTarget "BaruEscudoAcao" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				78E2F9EDD2194AC287C82E22 /* Release */,
+				2E1256E0EED9230C2013280E /* Debug */,
+				58F7451A21F46B9EB3AA65B3 /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

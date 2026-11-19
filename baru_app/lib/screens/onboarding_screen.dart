@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n_familia.dart';
 import '../l10n_sobreposicao.dart';
 import '../models.dart';
 import '../data/quiz.dart';
@@ -217,6 +218,8 @@ class OnboardingScreen extends StatelessWidget {
                     color: AppColors.inkA(0.7),
                   ),
                 ),
+                const SizedBox(height: Espaco.xl),
+                _PerfilDeUso(app: app),
               ],
             ),
           ),
@@ -786,5 +789,55 @@ class _PersonalizarState extends State<_Personalizar> {
         ),
       ],
     );
+  }
+}
+
+
+/// "Para quem é este celular?": três caminhos no mesmo app. Escolher 'filho'
+/// ou 'responsavel' termina o começo na tela Família.
+class _PerfilDeUso extends StatelessWidget {
+  const _PerfilDeUso({required this.app});
+
+  final AppState app;
+
+  @override
+  Widget build(BuildContext context) {
+    garanteTextosDaFamilia();
+    final t = app.t;
+    Widget opcao(String id, IconData icone, String titulo, String sub) {
+      final sel = app.paraQuem == id;
+      return GestureDetector(
+        key: Key('perfil-$id'),
+        onTap: () => app.escolheParaQuem(id),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: Espaco.xs),
+          padding: const EdgeInsets.symmetric(horizontal: Espaco.md, vertical: Espaco.sm),
+          decoration: BoxDecoration(
+            color: sel ? AppColors.greenA(0.14) : AppColors.inkA(0.05),
+            borderRadius: BorderRadius.circular(18),
+            border: sel ? Border.all(color: AppColors.green, width: 2.5) : null,
+          ),
+          child: Row(children: [
+            AppIcon(icone, size: 22, color: sel ? AppColors.green : Cores.tinta700),
+            const SizedBox(width: Espaco.sm),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(titulo, style: nunito(size: 16, weight: FontWeight.w800)),
+                Text(sub, style: nunito(size: 13, height: 1.35, color: Cores.tinta700)),
+              ]),
+            ),
+            if (sel) const AppIcon(Icons.check_rounded, size: 18, color: AppColors.green),
+          ]),
+        ),
+      );
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text(t.s('onbPerfilT'), style: nunito(size: 17, weight: FontWeight.w800)),
+      const SizedBox(height: Espaco.xs),
+      opcao('eu', Icons.self_improvement_rounded, t.s('onbPerfilEu'), t.s('onbPerfilEuSub')),
+      opcao('filho', Icons.child_care_rounded, t.s('onbPerfilFilho'), t.s('onbPerfilFilhoSub')),
+      opcao('responsavel', Icons.family_restroom_rounded, t.s('onbPerfilResp'), t.s('onbPerfilRespSub')),
+    ]);
   }
 }

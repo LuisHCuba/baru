@@ -5,11 +5,22 @@
 library;
 
 import 'l10n.dart';
+import 'l10n_local.dart';
 
-void garanteTextosDaFamilia() => T.registra(textosDaFamilia);
+void garanteTextosDaFamilia() {
+  T.registra(textosDaFamilia);
+  T.registra(textosDoLocal);
+}
 
 const textosDaFamilia = <String, Map<String, String>>{
   'pt': {
+    'onbPerfilT': 'Para quem é este celular?',
+    'onbPerfilEu': 'Para mim',
+    'onbPerfilEuSub': 'Foco e tempo de tela com o meu bichinho.',
+    'onbPerfilFilho': 'Para o meu filho',
+    'onbPerfilFilhoSub': 'Este celular é de uma criança. Depois, digite o código que o responsável gerar.',
+    'onbPerfilResp': 'Sou responsável',
+    'onbPerfilRespSub': 'Quero acompanhar e cuidar do celular dos meus filhos.',
     'famFiltroAtivar': 'Ativar o filtro de sites',
     'famFiltroAtivarSub': 'O Android vai pedir para permitir uma VPN. Ela só troca o DNS por um que bloqueia sites adultos; nada do que a criança acessa passa pelo Baru.',
     'famGuardaTitulo': 'Hora de uma pausa',
@@ -83,6 +94,7 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemDados': 'Sem dados de hoje ainda',
     'famMetaBatida': 'Meta batida às {h}',
     'famFocos': '{n} focos hoje',
+    'famFoco1': '1 foco hoje',
     'famRegras': 'Regras',
     'famMeta': 'Meta diária',
     'famSemTela': 'Horário sem tela',
@@ -122,6 +134,13 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'Agora é horário sem tela',
   },
   'en': {
+    'onbPerfilT': 'Who is this phone for?',
+    'onbPerfilEu': 'For me',
+    'onbPerfilEuSub': 'Focus and screen time with my little companion.',
+    'onbPerfilFilho': 'For my child',
+    'onbPerfilFilhoSub': 'This phone belongs to a child. Next, enter the code the parent creates.',
+    'onbPerfilResp': 'I\'m a parent',
+    'onbPerfilRespSub': 'I want to follow and look after my kids\' phones.',
     'famFiltroAtivar': 'Turn on the website filter',
     'famFiltroAtivarSub': 'Android will ask to allow a VPN. It only switches DNS to one that blocks adult sites; nothing the kid browses goes through Baru.',
     'famGuardaTitulo': 'Time for a break',
@@ -195,6 +214,7 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemDados': 'No data for today yet',
     'famMetaBatida': 'Goal reached at {h}',
     'famFocos': '{n} focus sessions today',
+    'famFoco1': '1 focus session today',
     'famRegras': 'Rules',
     'famMeta': 'Daily goal',
     'famSemTela': 'Screen-free time',
@@ -234,6 +254,13 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'It\'s screen-free time now',
   },
   'es': {
+    'onbPerfilT': '¿Para quién es este móvil?',
+    'onbPerfilEu': 'Para mí',
+    'onbPerfilEuSub': 'Enfoque y tiempo de pantalla con mi compañero.',
+    'onbPerfilFilho': 'Para mi hijo',
+    'onbPerfilFilhoSub': 'Este móvil es de un niño. Luego, escribe el código que genere el responsable.',
+    'onbPerfilResp': 'Soy responsable',
+    'onbPerfilRespSub': 'Quiero acompañar y cuidar el móvil de mis hijos.',
     'famFiltroAtivar': 'Activar el filtro de sitios',
     'famFiltroAtivarSub': 'Android pedirá permitir una VPN. Solo cambia el DNS por uno que bloquea sitios para adultos; nada de lo que el niño visita pasa por Baru.',
     'famGuardaTitulo': 'Hora de una pausa',
@@ -307,6 +334,7 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemDados': 'Aún no hay datos de hoy',
     'famMetaBatida': 'Meta alcanzada a las {h}',
     'famFocos': '{n} focos hoy',
+    'famFoco1': '1 foco hoy',
     'famRegras': 'Reglas',
     'famMeta': 'Meta diaria',
     'famSemTela': 'Horario sin pantalla',
@@ -346,6 +374,13 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'Ahora es horario sin pantalla',
   },
   'zh': {
+    'onbPerfilT': '这部手机是给谁用的？',
+    'onbPerfilEu': '给我自己',
+    'onbPerfilEuSub': '和我的小伙伴一起专注、管理屏幕时间。',
+    'onbPerfilFilho': '给我的孩子',
+    'onbPerfilFilhoSub': '这是孩子的手机。接下来输入家长生成的代码。',
+    'onbPerfilResp': '我是家长',
+    'onbPerfilRespSub': '我想关注并照顾孩子的手机。',
     'famFiltroAtivar': '开启网站过滤',
     'famFiltroAtivarSub': 'Android 会请求允许 VPN。它只把 DNS 换成屏蔽成人网站的 DNS；孩子浏览的内容不会经过 Baru。',
     'famGuardaTitulo': '休息一下吧',
@@ -419,6 +454,7 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemDados': '今天还没有数据',
     'famMetaBatida': '{h} 达到目标',
     'famFocos': '今天专注 {n} 次',
+    'famFoco1': '今天专注 1 次',
     'famRegras': '规则',
     'famMeta': '每日目标',
     'famSemTela': '无屏幕时间',

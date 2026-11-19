@@ -19,6 +19,12 @@
          faz nada. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <!-- Localização da família: só no celular da criança, só com o responsável ligando
+         e com aviso fixo na barra enquanto estiver ligada. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
@@ -205,11 +211,17 @@
         <service
             android:name=".GuardaDaFamilia"
             android:exported="false"
-            android:foregroundServiceType="specialUse">
+            android:foregroundServiceType="specialUse|location">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Controle parental pedido pelo responsavel: aplicar no celular da crianca a pausa, os horarios sem tela e a meta diaria de tela que o responsavel definiu." />
         </service>
+        <!-- Celular do responsável: confere de 15 em 15 minutos os avisos da
+             família (SOS, chegou, saiu, meta) e mostra como notificação. -->
+        <service
+            android:name=".AvisosDaFamilia"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
         <!-- Filtro de sites da família: VPN só de DNS (DNS família da
              Cloudflare). Não declara rota: nenhum tráfego passa pelo app. -->
         <service

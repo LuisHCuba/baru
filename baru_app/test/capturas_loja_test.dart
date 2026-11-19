@@ -6,6 +6,8 @@ import 'dart:ui' as ui;
 
 import 'package:baru_app/app.dart';
 import 'package:baru_app/data/app_snapshot.dart';
+import 'package:baru_app/data/familia.dart';
+import 'package:baru_app/screens/familia_screen.dart';
 import 'package:baru_app/data/progressao.dart';
 import 'package:baru_app/data/tempo_de_tela.dart';
 import 'package:baru_app/models.dart';
@@ -154,6 +156,51 @@ Future<void> _salva(WidgetTester tester, String nome) async {
   });
 }
 
+/// Família de mentira para a captura: dois filhos, um dia bom e um quase no limite.
+class _FamiliaFalsa extends FamiliaRepo {
+  @override
+  Future<MinhaFamilia> minha() async {
+    final hoje = DateTime.now();
+    String d(int i) => hoje.subtract(Duration(days: i)).toIso8601String().substring(0, 10);
+    List<Map<String, Object>> semana(List<int> m) => [
+      for (var i = 0; i < m.length; i++) {'dia': d(m.length - 1 - i), 'minutos': m[i], 'meta_min': 90},
+    ];
+    final nomes = {'pt': ['Casa', 'Nina', 'Theo'], 'en': ['Home', 'Nina', 'Theo'], 'es': ['Casa', 'Nina', 'Teo']}[_lang] ?? ['Casa', 'Nina', 'Theo'];
+    return MinhaFamilia.doMapa({
+      'souCrianca': false,
+      'familias': [
+        {
+          'id': 'f1',
+          'nome': nomes[0],
+          'meuPapel': 'responsavel',
+          'responsaveis': [],
+          'criancas': [
+            {
+              'id': 'c1',
+              'apelido': nomes[1],
+              'plataforma': 'ios',
+              'regras': {'meta_min': 90, 'meta_fds_min': 120, 'horarios_sem_tela': [{'dias': [1, 2, 3, 4, 5], 'inicio': '21:00', 'fim': '07:00'}]},
+              'hoje': {'dia': d(0), 'minutos': 52, 'meta_min': 90, 'focos': 2, 'pausas': 0},
+              'semana': semana([70, 95, 60, 84, 72, 88, 52]),
+            },
+            {
+              'id': 'c2',
+              'apelido': nomes[2],
+              'plataforma': 'android',
+              'regras': {'meta_min': 60, 'filtro_sites': true},
+              'hoje': {'dia': d(0), 'minutos': 47, 'meta_min': 60, 'focos': 1, 'pausas': 0},
+              'semana': semana([58, 40, 66, 55, 49, 61, 47]),
+            },
+          ],
+          'eventos': [
+            {'em': hoje.subtract(const Duration(minutes: 20)).toIso8601String(), 'tipo': 'meta_75', 'crianca_id': 'c2'},
+          ],
+        },
+      ],
+    });
+  }
+}
+
 class _Caso {
   const _Caso(this.nome, this.tela, {this.sp = Species.capybara, this.ajusta});
   final String nome;
@@ -253,7 +300,15 @@ void main() {
     _Caso('08-sequencia', AppScreen.sequencia, ajusta: _historico),
     _Caso('09-ajustes', AppScreen.profile, ajusta: _historico),
     _Caso('10-folhas', AppScreen.folhas, ajusta: _historico),
+    _Caso('11-familia', AppScreen.familia, ajusta: _historico),
   ];
+
+  FamiliaScreen.deTeste = FamiliaScreen(
+    repo: _FamiliaFalsa(),
+    comConta: true,
+    sondaSobreposicao: () async => true,
+    sondaFiltro: () async => true,
+  );
 
   for (final c in casos) {
     testWidgets('captura ${c.nome}', skip: !_ligado, (tester) async {

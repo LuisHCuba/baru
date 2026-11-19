@@ -67,6 +67,7 @@ const TXT = {
     ['<em>9 companheiros</em> para conquistar.', 'Liberados na trilha, nunca com dinheiro.'],
     ['Um habitat que é <em>seu</em>.', 'Folhas viram itens que caem na cena.'],
     ['<em>Zero</em> punição.', 'Ele nunca morre. No pior dia, só sente sua falta.'],
+    ['Tempo de tela da <em>família</em>.', 'Metas, horários sem tela e pausa. Pelo celular ou pelo site.'],
   ],
   en: [
     ['Phone down. Watch it <em>grow</em>.', 'A little companion that lives on your focus sessions.'],
@@ -77,6 +78,7 @@ const TXT = {
     ['<em>9 companions</em> to unlock.', 'Earned along the path, never with money.'],
     ['A habitat that’s <em>yours</em>.', 'Leaves become items that drop into the scene.'],
     ['<em>Zero</em> punishment.', 'It never dies. On your worst day, it just misses you.'],
+    ['Screen time for the <em>family</em>.', 'Goals, screen-free hours and pause. From your phone or the web.'],
   ],
   es: [
     ['Suelta el móvil y verás cómo <em>crece</em>.', 'Un compañero que vive de tus sesiones de enfoque.'],
@@ -87,6 +89,7 @@ const TXT = {
     ['<em>9 compañeros</em> por conquistar.', 'Se desbloquean en el camino, nunca con dinero.'],
     ['Un hábitat que es <em>tuyo</em>.', 'Las hojas se vuelven objetos que caen en la escena.'],
     ['<em>Cero</em> castigos.', 'Nunca muere. En tu peor día, solo te extraña.'],
+    ['Tiempo de pantalla en <em>familia</em>.', 'Metas, horarios sin pantalla y pausa. Desde el móvil o la web.'],
   ],
 };
 const LOJA = {pt:['em breve na','Google Play'],en:['coming soon to','Google Play'],es:['muy pronto en','Google Play']};
@@ -124,10 +127,12 @@ const FUNDOS = [
   'linear-gradient(180deg,#3A3D63 0%,#5B5C86 100%)',
   'linear-gradient(180deg,#FFF6E8 0%,#F5E4CB 100%)',
   'linear-gradient(180deg,#FBE9DC 0%,#EFD3C1 100%)',
+  'linear-gradient(180deg,#EEF5E6 0%,#D8E8CB 100%)',
 ];
 
 function pecaTela() {
-  const W = 1080, H = 1920, p = document.getElementById('peca');
+  // h maior que 1920 = formato da App Store (6,9"): mesmo desenho, celular maior.
+  const W = 1080, H = +(q.get('h') || 1920), p = document.getElementById('peca');
   Object.assign(p.style, { width: px(W), height: px(H), background: FUNDOS[N - 1] });
   if (N === 6) p.classList.add('escuro');
   const [tit, sub] = TXT[LANG][N - 1];
@@ -146,6 +151,7 @@ function pecaTela() {
     6: () => Array.from({ length: 26 }, (_, i) => el('div', '', { position: 'absolute', left: px((i * 397) % 1080), top: px(560 + (i * 263) % 1300), width: px(4 + (i % 3) * 3), height: px(4 + (i % 3) * 3), borderRadius: '50%', background: '#FFF8EC', opacity: .25 + (i % 4) * .12 })),
     7: () => [folha(-70, 700, 200, 25), folha(900, 1450, 170, -20), el('div', 'sol', { left: '820px', top: '600px', width: '260px', height: '260px' })],
     8: () => [folha(920, 640, 150, -20, '#EF8354', .18), folha(-60, 1480, 200, 15)],
+    9: () => [el('div', 'sol', { left: '800px', top: '600px', width: '280px', height: '280px' }), folha(-60, 1300, 190, 20), folha(940, 1650, 120, -30)],
   }[N]();
   deco.forEach((d) => p.insertBefore(d, p.firstChild));
 
@@ -162,6 +168,7 @@ function pecaTela() {
     },
     7: () => { p.appendChild(celular('06-loja', 220, 640, 640, 0)); p.appendChild(bicho('penguin', 'radiante', 700, 1480, 380)); },
     8: () => { p.appendChild(celular('07-relatorio', 220, 640, 640, 0)); p.appendChild(bicho('capybara', 'saudade', -20, 1440, 430)); },
+    9: () => { p.appendChild(celular('11-familia', 220, 640, 640, 0)); p.appendChild(bicho('owl', 'radiante', 690, 1450, 400)); },
   };
   layouts[N]();
   // a legenda logo abaixo do título, medida depois que o título quebra
@@ -172,6 +179,17 @@ function pecaTela() {
     s.style.top = px(titulo.offsetTop + titulo.offsetHeight + 30);
     const sobra = s.offsetTop + s.offsetHeight + 56 - 640;
     if (sobra > 0) p.querySelectorAll('.cel,.bicho').forEach((e) => (e.style.top = px(parseFloat(e.style.top) + sobra)));
+    if (H > 1920) {
+      // Tela mais alta: o celular e os bichos crescem a partir do topo do celular.
+      const k = 1 + (H - 1920) / 1280 * 0.55, topo = Math.max(640, s.offsetTop + s.offsetHeight + 56);
+      p.querySelectorAll('.cel,.bicho').forEach((e) => {
+        const l = parseFloat(e.style.left), t = parseFloat(e.style.top), w = parseFloat(e.style.width);
+        e.style.left = px(540 + (l + w / 2 - 540) * k - w * k / 2);
+        e.style.top = px(topo + (t - topo) * k);
+        e.style.zoom = k;
+        e.style.left = px(parseFloat(e.style.left) / k); e.style.top = px(parseFloat(e.style.top) / k);
+      });
+    }
     window.__pronto = true;
   }));
 }

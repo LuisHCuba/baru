@@ -6,6 +6,8 @@ import '../l10n.dart';
 import '../l10n_sobreposicao.dart';
 import '../models.dart';
 import '../services/overlay_service.dart';
+import '../services/tempo_de_tela_ios.dart';
+import '../services/usage_service.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -42,6 +44,9 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
   /// O que o sistema respondeu por permissão. Vazio = ainda perguntando.
   Map<PermissaoDoBaru, bool> _estado = const {};
 
+  /// iPhone: o que o Tempo de Uso da Apple tem agora (apps escolhidos, pausa).
+  EstadoTempoDeTela _tela = EstadoTempoDeTela.indisponivel;
+
   @override
   void initState() {
     super.initState();
@@ -66,7 +71,13 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
     for (final p in Permissoes.daPlataforma()) {
       lidas[p] = await Permissoes.concedida(p);
     }
-    if (mounted) setState(() => _estado = lidas);
+    final tela = await TempoDeTelaIos.estado();
+    if (mounted) {
+      setState(() {
+        _estado = lidas;
+        _tela = tela;
+      });
+    }
   }
 
   Future<void> _pede(AppState app, PermissaoDoBaru p) async {
@@ -94,6 +105,7 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
     final t = app.t;
     final ehAndroid =
         !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    final ehIos = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
     final daPlataforma = Permissoes.daPlataforma();
     final concedidas = _estado.values.where((v) => v).length;
 
@@ -159,12 +171,30 @@ class _SobreposicaoScreenState extends State<SobreposicaoScreen>
                 ),
                 const SizedBox(height: Espaco.xs),
               ],
-              if (!ehAndroid) ...[
+              if (ehIos) ...[
+                const SizedBox(height: Espaco.sm),
+                _CartaoDoIphone(
+                  t: t,
+                  nomeDoPet: app.displayName,
+                  estado: _tela,
+                  aoEscolher: () async {
+                    final e = await TempoDeTelaIos.escolherApps();
+                    await UsageService.instance.sincronizaMetaIos(app.goal);
+                    if (mounted) setState(() => _tela = e);
+                  },
+                  aoPausar: (v) async {
+                    final e = await TempoDeTelaIos.definirEscudo(ativo: v);
+                    if (mounted) setState(() => _tela = e);
+                  },
+                ),
+              ] else if (!ehAndroid) ...[
                 const SizedBox(height: Espaco.xs),
                 _Nota(texto: t.sobreSoAndroid, cor: Cores.neutro),
               ],
-              const SizedBox(height: Espaco.xs),
-              _Nota(texto: t.sobreComo, cor: Cores.tinta700),
+              if (ehAndroid) ...[
+                const SizedBox(height: Espaco.xs),
+                _Nota(texto: t.sobreComo, cor: Cores.tinta700),
+              ],
 
               // --- o catálogo de apps ----------------------------------
               const SizedBox(height: Espaco.lg),
@@ -700,6 +730,60 @@ class _Nota extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+/// iPhone: no lugar da sobreposição, os apps que contam e a pausa da Apple.
+class _CartaoDoIphone extends StatelessWidget {
+  const _CartaoDoIphone({
+    required this.t,
+    required this.nomeDoPet,
+    required this.estado,
+    required this.aoEscolher,
+    required this.aoPausar,
+  });
+
+  final T t;
+  final String nomeDoPet;
+  final EstadoTempoDeTela estado;
+  final Future<void> Function() aoEscolher;
+  final Future<void> Function(bool) aoPausar;
+
+  @override
+  Widget build(BuildContext context) {
+    return CartaoBaru(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(t.s('sobIosT'), style: estilo(Tipo.subtitulo)),
+          const SizedBox(height: Espaco.xxs),
+          Text(t.fill(t.s('sobIosComo'), {'n': nomeDoPet}), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+          const SizedBox(height: Espaco.sm),
+          if (!estado.autorizado)
+            Text(t.s('sobIosAutorizar'), style: estilo(Tipo.corpoForte, color: Cores.alerta))
+          else ...[
+            Row(children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(t.s('sobIosApps'), style: estilo(Tipo.corpoForte)),
+                  Text(t.fill(t.s('sobIosAppsN'), {'n': estado.apps + estado.categorias + estado.sites}),
+                      style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+                ]),
+              ),
+              TextButton(onPressed: aoEscolher, child: Text(t.s('sobIosEscolher'))),
+            ]),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(t.s('sobIosPausar'), style: estilo(Tipo.corpoForte)),
+              subtitle: Text(t.s('sobIosPausarSub')),
+              value: estado.escudoAoEstourar,
+              onChanged: estado.modo == 'crianca' ? null : aoPausar,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

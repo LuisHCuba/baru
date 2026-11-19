@@ -28,6 +28,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>No modo família, o Baru mostra ao seu responsável onde você está e manda sua posição no SOS. Você sempre vê quando está ligado.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>No modo família, o Baru avisa seu responsável quando você chega ou sai de lugares combinados (casa, escola), mesmo com o app fechado. Você sempre vê quando está ligado.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>O Baru envia o relatório da noite e avisa quando sente sua falta.</string>
 	<key>UIApplicationSceneManifest</key>
@@ -57,6 +61,7 @@
 	<array>
 		<string>fetch</string>
 		<string>remote-notification</string>
+		<string>location</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

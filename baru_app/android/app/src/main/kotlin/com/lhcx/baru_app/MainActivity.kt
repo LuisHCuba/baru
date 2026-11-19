@@ -248,6 +248,77 @@ class MainActivity : FlutterFragmentActivity() {
         intent.removeExtra(EXTRA_ACAO_DA_BARRA)
     }
 
+    // ------------------------------------------------------------ localização da família
+
+    private var pedidoDeLocal: MethodChannel.Result? = null
+    private var querSempre = false
+
+    /**
+     * Canal "baru/local" (o mesmo nome no iPhone): permissão, posição agora
+     * (SOS e "estou aqui"), e os avisos no celular do responsável.
+     */
+    private fun ligaALocalizacao(flutterEngine: FlutterEngine) {
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "baru/local").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "estado" -> result.success(LocalDaFamilia.estado(this))
+                "pedir" -> {
+                    querSempre = call.argument<Boolean>("sempre") == true
+                    if (!LocalDaFamilia.temPermissao(this)) {
+                        pedidoDeLocal?.success(LocalDaFamilia.estado(this))
+                        pedidoDeLocal = result
+                        requestPermissions(arrayOf(
+                            android.Manifest.permission.ACCESS_FINE_LOCATION,
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                        ), 7801)
+                    } else if (querSempre && !LocalDaFamilia.temSempre(this) && android.os.Build.VERSION.SDK_INT >= 29) {
+                        pedidoDeLocal?.success(LocalDaFamilia.estado(this))
+                        pedidoDeLocal = result
+                        requestPermissions(arrayOf(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION), 7802)
+                    } else {
+                        result.success(LocalDaFamilia.estado(this))
+                    }
+                }
+                "agora" -> LocalDaFamilia.agora(this) { l ->
+                    result.success(l?.let {
+                        mapOf("lat" to it.latitude, "lng" to it.longitude, "precisao" to it.accuracy.toInt(),
+                            "bateria" to LocalDaFamilia.bateria(this))
+                    })
+                }
+                "configura" -> {
+                    // O guarda lê "localizacao" das regras; aqui só reacende a barra.
+                    if (RegrasDaFamilia.le(this) != null) GuardaDaFamilia.liga(this)
+                    result.success(true)
+                }
+                "avisos" -> {
+                    AvisosDaFamilia.configura(this, call.argument<String>("json"))
+                    if (call.argument<String>("json") != null) AvisosDaFamilia.confere(this)
+                    result.success(true)
+                }
+                "abrirAjustes" -> {
+                    startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        android.net.Uri.fromParts("package", packageName, null)))
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != 7801 && requestCode != 7802) return
+        val r = pedidoDeLocal ?: return
+        if (requestCode == 7801 && querSempre && LocalDaFamilia.temPermissao(this) &&
+            !LocalDaFamilia.temSempre(this) && android.os.Build.VERSION.SDK_INT >= 29) {
+            // Segundo passo: "permitir o tempo todo" (o Android pede em separado).
+            requestPermissions(arrayOf(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION), 7802)
+            return
+        }
+        pedidoDeLocal = null
+        r.success(LocalDaFamilia.estado(this))
+        if (RegrasDaFamilia.le(this) != null) GuardaDaFamilia.liga(this)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
@@ -256,6 +327,7 @@ class MainActivity : FlutterFragmentActivity() {
         // guardado.
         guardaAcaoDe(intent)
         ligaABarra(flutterEngine)
+        ligaALocalizacao(flutterEngine)
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,

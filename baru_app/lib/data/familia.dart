@@ -18,10 +18,12 @@ class RegrasDaFamilia {
     this.pausarAoEstourar = false,
     this.filtroSites = false,
     this.atualizadoEm,
+    this.localizacao = false,
+    this.localPedidoEm,
   });
 
   /// Quais avisos o responsável vê sobre esta criança.
-  static const avisosPadrao = {'meta_75': true, 'meta_batida': true, 'meta_passou': true, 'autorizacao': true, 'regras': false};
+  static const avisosPadrao = {'meta_75': true, 'meta_batida': true, 'meta_passou': true, 'autorizacao': true, 'regras': false, 'lugares': true};
 
   factory RegrasDaFamilia.doMapa(Map<dynamic, dynamic> m) => RegrasDaFamilia(
         metaMin: (m['meta_min'] as num?)?.toInt() ?? 120,
@@ -40,6 +42,8 @@ class RegrasDaFamilia {
         pausarAoEstourar: m['pausar_ao_estourar'] == true,
         filtroSites: m['filtro_sites'] == true,
         atualizadoEm: DateTime.tryParse('${m['atualizado_em']}'),
+        localizacao: m['localizacao'] == true,
+        localPedidoEm: DateTime.tryParse('${m['local_pedido_em']}'),
       );
 
   /// Meta dos dias de aula (segunda a sexta).
@@ -59,6 +63,11 @@ class RegrasDaFamilia {
   final bool pausarAoEstourar;
   final bool filtroSites;
   final DateTime? atualizadoEm;
+
+  /// O responsável ligou a localização desta criança (liga e desliga à parte,
+  /// em `FamiliaRepo.localizacao`, porque registra o consentimento).
+  final bool localizacao;
+  final DateTime? localPedidoEm;
 
   /// Meta de hoje: a do banco, ou calculada aqui quando ele não mandou.
   int metaDe(DateTime dia) =>
@@ -102,7 +111,103 @@ class RegrasDaFamilia {
         pausarAoEstourar: pausarAoEstourar ?? this.pausarAoEstourar,
         filtroSites: filtroSites ?? this.filtroSites,
         atualizadoEm: atualizadoEm,
+        localizacao: localizacao,
+        localPedidoEm: localPedidoEm,
       );
+}
+
+// ---------------------------------------------------------------- localização
+
+/// Lugar combinado (casa, escola…): um círculo. O banco decide chegou/saiu.
+@immutable
+class LugarDaFamilia {
+  const LugarDaFamilia({required this.id, required this.nome, required this.lat, required this.lng, this.raioM = 150});
+
+  factory LugarDaFamilia.doMapa(Map<dynamic, dynamic> m) => LugarDaFamilia(
+        id: '${m['id']}',
+        nome: '${m['nome']}',
+        lat: (m['lat'] as num).toDouble(),
+        lng: (m['lng'] as num).toDouble(),
+        raioM: (m['raio_m'] as num?)?.toInt() ?? 150,
+      );
+
+  final String id;
+  final String nome;
+  final double lat;
+  final double lng;
+  final int raioM;
+}
+
+@immutable
+class PosicaoDaCrianca {
+  const PosicaoDaCrianca({
+    required this.lat,
+    required this.lng,
+    required this.em,
+    this.precisaoM,
+    this.bateria,
+    this.motivo = 'periodico',
+    this.lugar,
+    this.lugarDesde,
+  });
+
+  factory PosicaoDaCrianca.doMapa(Map<dynamic, dynamic> m) => PosicaoDaCrianca(
+        lat: (m['lat'] as num).toDouble(),
+        lng: (m['lng'] as num).toDouble(),
+        em: DateTime.parse('${m['em']}').toLocal(),
+        precisaoM: (m['precisao_m'] as num?)?.toInt(),
+        bateria: (m['bateria'] as num?)?.toInt(),
+        motivo: '${m['motivo'] ?? 'periodico'}',
+        lugar: m['lugar'] as String?,
+        lugarDesde: DateTime.tryParse('${m['lugar_desde']}')?.toLocal(),
+      );
+
+  final double lat;
+  final double lng;
+  final DateTime em;
+  final int? precisaoM;
+  final int? bateria;
+
+  /// abriu, periodico, pedido, lugar ou sos.
+  final String motivo;
+  final String? lugar;
+  final DateTime? lugarDesde;
+}
+
+@immutable
+class CriancaNoMapa {
+  const CriancaNoMapa({required this.id, required this.apelido, this.plataforma, this.localizacao = false, this.pedidoEm, this.atual});
+
+  factory CriancaNoMapa.doMapa(Map<dynamic, dynamic> m) => CriancaNoMapa(
+        id: '${m['id']}',
+        apelido: (m['apelido'] as String?) ?? '—',
+        plataforma: m['plataforma'] as String?,
+        localizacao: m['localizacao'] == true,
+        pedidoEm: DateTime.tryParse('${m['pedidoEm']}')?.toLocal(),
+        atual: m['atual'] is Map ? PosicaoDaCrianca.doMapa(m['atual'] as Map) : null,
+      );
+
+  final String id;
+  final String apelido;
+  final String? plataforma;
+  final bool localizacao;
+  final DateTime? pedidoEm;
+  final PosicaoDaCrianca? atual;
+}
+
+@immutable
+class MapaDaFamilia {
+  const MapaDaFamilia({this.lugares = const [], this.criancas = const []});
+
+  factory MapaDaFamilia.doMapa(Map<dynamic, dynamic> m) => MapaDaFamilia(
+        lugares: ((m['lugares'] as List?) ?? const []).whereType<Map>().map(LugarDaFamilia.doMapa).toList(),
+        criancas: ((m['criancas'] as List?) ?? const []).whereType<Map>().map(CriancaNoMapa.doMapa).toList(),
+      );
+
+  static const vazio = MapaDaFamilia();
+
+  final List<LugarDaFamilia> lugares;
+  final List<CriancaNoMapa> criancas;
 }
 
 /// Faixa sem tela, por exemplo dias úteis das 21:00 às 07:00.
@@ -419,4 +524,46 @@ class FamiliaRepo {
 
   Future<void> avisarAutorizacao({required bool ativa}) =>
       _c.rpc('baru_familia_avisar_autorizacao', params: {'p_ativa': ativa});
+
+  // ------------------------------------------------ localização
+
+  /// Liga ou desliga a localização da criança (registra quem consentiu).
+  Future<RegrasDaFamilia> localizacao(String criancaId, {required bool ligada}) async {
+    final r = await _c.rpc('baru_familia_localizacao', params: {'p_crianca': criancaId, 'p_ligada': ligada});
+    return RegrasDaFamilia.doMapa(r as Map);
+  }
+
+  /// "Onde está agora?": o celular da criança manda uma posição nova.
+  Future<void> pedirLocal(String criancaId) => _c.rpc('baru_familia_pedir_local', params: {'p_crianca': criancaId});
+
+  Future<MapaDaFamilia> mapa(String familiaId) async {
+    final r = await _c.rpc('baru_familia_mapa', params: {'p_familia': familiaId});
+    return r is Map ? MapaDaFamilia.doMapa(r) : MapaDaFamilia.vazio;
+  }
+
+  Future<List<PosicaoDaCrianca>> rastro(String criancaId, {int horas = 24}) async {
+    final r = await _c.rpc('baru_familia_rastro', params: {'p_crianca': criancaId, 'p_horas': horas});
+    return ((r as List?) ?? const []).whereType<Map>().map(PosicaoDaCrianca.doMapa).toList();
+  }
+
+  Future<LugarDaFamilia> salvarLugar(String familiaId, {String? id, required String nome, required double lat, required double lng, int raioM = 150}) async {
+    final r = await _c.rpc('baru_familia_lugar_salvar', params: {
+      'p_familia': familiaId, 'p_id': id, 'p_nome': nome, 'p_lat': lat, 'p_lng': lng, 'p_raio': raioM,
+    });
+    return LugarDaFamilia.doMapa(r as Map);
+  }
+
+  Future<void> apagarLugar(String id) => _c.rpc('baru_familia_lugar_apagar', params: {'p_id': id});
+
+  /// Chave do celular do responsável, para receber avisos com o app fechado.
+  Future<String?> chaveDoResponsavel({String? antiga, String idioma = 'pt'}) async {
+    final r = await _c.rpc('baru_familia_chave_do_responsavel', params: {'p_chave_antiga': antiga, 'p_idioma': idioma});
+    return r is String && r.length == 64 ? r : null;
+  }
+
+  /// SOS e posições mandadas pelo app aberto, com a chave do aparelho.
+  Future<void> enviarPosicao({required String chave, required double lat, required double lng, int? precisaoM, int? bateria, String motivo = 'abriu'}) =>
+      _c.rpc('baru_familia_posicao', params: {
+        'p_chave': chave, 'p_lat': lat, 'p_lng': lng, 'p_precisao': precisaoM, 'p_bateria': bateria, 'p_motivo': motivo,
+      });
 }

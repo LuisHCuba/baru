@@ -15,8 +15,8 @@ catch { ({ chromium } = require(path.join(execSync('npm root -g').toString().tri
 const langs = process.argv.slice(2).length ? process.argv.slice(2) : ['pt', 'en', 'es'];
 const browser = await chromium.launch({ args: ['--font-render-hinting=none', '--allow-file-access-from-files'] });
 
-async function foto(query, w, h, destino, tipo = 'png') {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+async function foto(query, w, h, destino, tipo = 'png', escala = 1) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: escala });
   const page = await ctx.newPage();
   await page.goto(pathToFileURL(path.join(aqui, 'peca.html')).href + '?' + query);
   await page.waitForFunction(() => window.__pronto === true);
@@ -31,7 +31,9 @@ async function foto(query, w, h, destino, tipo = 'png') {
 
 for (const lang of langs) {
   const pasta = path.join(aqui, '..', 'loja', lang);
-  for (let n = 1; n <= 8; n++) await foto(`peca=tela&n=${n}&lang=${lang}`, 1080, 1920, path.join(pasta, `captura-${n}.png`));
+  for (let n = 1; n <= 9; n++) await foto(`peca=tela&n=${n}&lang=${lang}`, 1080, 1920, path.join(pasta, `captura-${n}.png`));
+  // App Store, iPhone 6,9": 1320 × 2868 (desenhado em 1080 de largura e ampliado).
+  for (let n = 1; n <= 9; n++) await foto(`peca=tela&n=${n}&lang=${lang}&h=2347`, 1080, 2347, path.join(pasta, 'appstore', `captura-${n}.png`), 'png', 1320 / 1080);
   await foto(`peca=destaque&lang=${lang}`, 1024, 500, path.join(pasta, 'destaque-1024x500.png'));
 }
 await foto('peca=og&lang=pt', 1200, 630, path.join(aqui, '..', 'loja', 'og-1200x630.png'));

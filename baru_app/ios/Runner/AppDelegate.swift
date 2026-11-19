@@ -9,6 +9,8 @@ import UIKit
   ) -> Bool {
     // Push silencioso da família (sem pedir permissão: não mostra nada).
     application.registerForRemoteNotifications()
+    // Localização da família: o iOS relança o Baru fechado numa mudança de lugar.
+    LocalDaFamilia.shared.retoma()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -17,6 +19,7 @@ import UIKit
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
     if #available(iOS 16.0, *) { RegrasRemotas.guardaToken(deviceToken) }
+    LocalDaFamilia.shared.guardaToken(deviceToken)
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
 
@@ -37,6 +40,9 @@ import UIKit
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "TempoDeTelaPlugin") {
       TempoDeTelaPlugin.register(with: registrar)
+    }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "LocalDaFamilia") {
+      LocalDaFamilia.register(with: registrar.messenger())
     }
   }
 }

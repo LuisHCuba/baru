@@ -22,6 +22,14 @@ import 'services/overlay_service.dart';
 /// Os textos deste módulo, no formato que [T.registra] espera.
 const textosDaSobreposicao = <String, Map<String, String>>{
   'pt': {
+    'sobIosT': 'No iPhone',
+    'sobIosComo': 'A Apple não deixa um app desenhar por cima de outro. No iPhone, quando a meta estoura, {n} avisa por notificação e, se você ligar abaixo, os apps escolhidos pausam com a tela da Apple até o dia seguinte.',
+    'sobIosApps': 'Apps que contam',
+    'sobIosAppsN': '{n} apps e categorias',
+    'sobIosEscolher': 'Escolher',
+    'sobIosPausar': 'Pausar os apps quando a meta estourar',
+    'sobIosPausarSub': 'Você ainda pode abrir pela tela de pausa, se precisar.',
+    'sobIosAutorizar': 'Primeiro, autorize o Tempo de Uso no cartão "Acesso ao uso" acima.',
     // --- a tela de permissões -------------------------------------------
     'sobPermT': 'Permissões',
     'sobPermSub':
@@ -100,6 +108,14 @@ const textosDaSobreposicao = <String, Map<String, String>>{
         'Responde e volta? A gente estava focando junto — o {app} espera.',
   },
   'en': {
+    'sobIosT': 'On iPhone',
+    'sobIosComo': 'Apple doesn\'t let an app draw over another. On iPhone, when the goal runs out, {n} lets you know with a notification and, if you turn it on below, the chosen apps pause with Apple\'s screen until the next day.',
+    'sobIosApps': 'Apps that count',
+    'sobIosAppsN': '{n} apps and categories',
+    'sobIosEscolher': 'Choose',
+    'sobIosPausar': 'Pause apps when the goal runs out',
+    'sobIosPausarSub': 'You can still open them from the pause screen if you need to.',
+    'sobIosAutorizar': 'First, allow Screen Time in the "Usage access" card above.',
     'sobPermT': 'Permissions',
     'sobPermSub':
         'What {n} needs to keep you company. You decide one at a time, and '
@@ -173,6 +189,14 @@ const textosDaSobreposicao = <String, Map<String, String>>{
         'Reply and come back? We were focusing together — {app} can wait.',
   },
   'es': {
+    'sobIosT': 'En iPhone',
+    'sobIosComo': 'Apple no deja que una app dibuje sobre otra. En iPhone, cuando se acaba la meta, {n} avisa con una notificación y, si lo activas abajo, las apps elegidas se pausan con la pantalla de Apple hasta el día siguiente.',
+    'sobIosApps': 'Apps que cuentan',
+    'sobIosAppsN': '{n} apps y categorías',
+    'sobIosEscolher': 'Elegir',
+    'sobIosPausar': 'Pausar las apps al acabarse la meta',
+    'sobIosPausarSub': 'Aún puedes abrirlas desde la pantalla de pausa si lo necesitas.',
+    'sobIosAutorizar': 'Primero, autoriza Tiempo de uso en la tarjeta "Acceso al uso" de arriba.',
     'sobPermT': 'Permisos',
     'sobPermSub':
         'Lo que {n} necesita para acompañarte. Decides uno por uno, y '
@@ -244,6 +268,14 @@ const textosDaSobreposicao = <String, Map<String, String>>{
             'esperar.',
   },
   'zh': {
+    'sobIosT': '在 iPhone 上',
+    'sobIosComo': '苹果不允许应用覆盖其他应用。在 iPhone 上，目标用完时 {n} 会发通知提醒；如果你在下面开启，所选应用会以苹果的暂停画面暂停到第二天。',
+    'sobIosApps': '计入的应用',
+    'sobIosAppsN': '{n} 个应用和类别',
+    'sobIosEscolher': '选择',
+    'sobIosPausar': '目标用完时暂停应用',
+    'sobIosPausarSub': '需要时仍可从暂停画面打开。',
+    'sobIosAutorizar': '请先在上方“使用情况访问权限”卡片中允许屏幕使用时间。',
     'sobPermT': '权限',
     'sobPermSub': '{n} 需要这些才能陪着你。一个一个来，之后也随时可以改。',
     'sobPermPasso': '第 {i} 项，共 {total} 项',

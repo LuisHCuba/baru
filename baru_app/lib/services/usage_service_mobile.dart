@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:usage_stats/usage_stats.dart';
 
 import '../data/tempo_de_tela.dart';
+import 'tempo_de_tela_ios.dart';
 
 /// Tempo de tela nativo: Usage Access real no Android; iOS honesto (sem API
 /// pública).
@@ -14,14 +15,24 @@ class UsageService {
 
   static const _contabilidade = ContabilidadeDeTela();
 
-  /// iOS não expõe tempo de tela total a apps de terceiros sem entitlement
-  /// Apple (Family Controls / DeviceActivity). Ver comentário em
-  /// [requestUsageAccess].
-  bool get platformSupportsUsage => Platform.isAndroid;
+  /// Android: UsageStats. iPhone (iOS 16+): Tempo de Uso da Apple (Family
+  /// Controls, entitlement aprovado) — o app não recebe minutos por app, só
+  /// os limiares da meta que a extensão BaruMonitor registra.
+  bool get platformSupportsUsage => Platform.isAndroid || Platform.isIOS;
 
   Future<bool> hasUsageAccess() async {
+    if (Platform.isIOS) return (await TempoDeTelaIos.estado()).autorizado;
     if (!Platform.isAndroid) return false;
     return await UsageStats.checkUsagePermission() ?? false;
+  }
+
+  /// iPhone: a meta do app vira o monitoramento do Tempo de Uso. Numa
+  /// família, quem manda é a meta do responsável (FamiliaSync), não esta.
+  Future<void> sincronizaMetaIos(int metaMin) async {
+    if (!Platform.isIOS) return;
+    final e = await TempoDeTelaIos.estado();
+    if (!e.autorizado || !e.temEscolha || e.modo == 'crianca') return;
+    if (e.metaMin != metaMin) await TempoDeTelaIos.definirMeta(metaMin);
   }
 
   /// Android: abre a tela nativa "Acesso ao uso" (PACKAGE_USAGE_STATS).
@@ -31,6 +42,23 @@ class UsageService {
     if (Platform.isAndroid) {
       await UsageStats.grantUsagePermission();
       return hasUsageAccess();
+    }
+    if (Platform.isIOS) {
+      // O pedido da Apple aparece dentro do app; depois, os apps que contam.
+      var e = await TempoDeTelaIos.estado();
+      if (!e.suportado) {
+        await openAppSettings();
+        return false;
+      }
+      if (!e.autorizado) {
+        try {
+          e = await TempoDeTelaIos.pedirAutorizacao();
+        } catch (_) {
+          return false;
+        }
+      }
+      if (e.autorizado && !e.temEscolha) e = await TempoDeTelaIos.escolherApps();
+      return e.autorizado;
     }
     await openAppSettings();
     return false;
@@ -46,6 +74,16 @@ class UsageService {
     Map<String, CategoriaDeApp> ajustes = const {},
     DateTime? agora,
   }) async {
+    if (Platform.isIOS) {
+      // Só o piso: o maior limiar da meta já atingido hoje nos apps escolhidos.
+      final e = await TempoDeTelaIos.estado();
+      if (!e.autorizado) return null;
+      final uso = Duration(minutes: e.minutosAoMenos);
+      return ResumoDeTela(
+        porApp: e.minutosAoMenos > 0 ? {'Tempo de Uso': uso} : const {},
+        porCategoria: {CategoriaDeApp.dispersivo: uso},
+      );
+    }
     if (!Platform.isAndroid || !await hasUsageAccess()) return null;
 
     final fim = agora ?? DateTime.now();

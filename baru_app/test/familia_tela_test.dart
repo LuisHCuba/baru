@@ -1,6 +1,10 @@
 import 'package:baru_app/data/familia.dart';
+import 'package:baru_app/l10n.dart';
 import 'package:baru_app/l10n_familia.dart';
+import 'package:baru_app/l10n_local.dart';
+import 'package:baru_app/screens/mapa_familia_screen.dart';
 import 'package:baru_app/screens/familia_screen.dart';
+import 'package:baru_app/services/localizacao.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,6 +43,29 @@ class _RepoFalso extends FamiliaRepo {
     return const RegrasDaFamilia();
   }
 
+  MapaDaFamilia mapaFalso = MapaDaFamilia.vazio;
+
+  @override
+  Future<MapaDaFamilia> mapa(String familiaId) async => mapaFalso;
+
+  @override
+  Future<List<PosicaoDaCrianca>> rastro(String criancaId, {int horas = 24}) async => const [];
+
+  @override
+  Future<RegrasDaFamilia> localizacao(String criancaId, {required bool ligada}) async {
+    chamadas.add('local:$criancaId:$ligada');
+    return RegrasDaFamilia(localizacao: ligada);
+  }
+
+  @override
+  Future<void> pedirLocal(String criancaId) async => chamadas.add('pedir:$criancaId');
+
+  @override
+  Future<LugarDaFamilia> salvarLugar(String familiaId, {String? id, required String nome, required double lat, required double lng, int raioM = 150}) async {
+    chamadas.add('lugar:$nome:$raioM');
+    return LugarDaFamilia(id: 'l1', nome: nome, lat: lat, lng: lng, raioM: raioM);
+  }
+
   @override
   Future<MinhaFamilia> entrar(String codigo, {required String plataforma}) async {
     chamadas.add('entrar:${codigo.toUpperCase()}');
@@ -61,7 +88,11 @@ Future<_RepoFalso> _abre(WidgetTester tester, MinhaFamilia estado, {bool comCont
 }
 
 void main() {
-  setUp(garanteTextosDaFamilia);
+  setUp(() {
+    garanteTextosDaFamilia();
+    LocalNativo.sonda = (metodo, [args]) async => metodo == 'estado' ? 'quando_usa' : null;
+  });
+  tearDown(() => LocalNativo.sonda = null);
 
   testWidgets('sem conta, pede para entrar', (tester) async {
     await _abre(tester, MinhaFamilia.vazia, comConta: false);
@@ -205,6 +236,108 @@ void main() {
     expect(find.text(textosDaFamilia['pt']!['famMetaUteis']!), findsOneWidget);
     expect(find.text(textosDaFamilia['pt']!['famAvisosT']!), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  MinhaFamilia comNina({bool local = false}) => MinhaFamilia.doMapa({
+        'souCrianca': false,
+        'familias': [
+          {
+            'id': 'f1', 'nome': 'Casa', 'meuPapel': 'responsavel', 'responsaveis': [],
+            'criancas': [
+              {'id': 'c1', 'apelido': 'Nina', 'regras': {'meta_min': 60, 'localizacao': local}, 'semana': []},
+            ],
+            'eventos': [
+              {'em': DateTime.now().toIso8601String(), 'tipo': 'chegou', 'crianca_id': 'c1', 'detalhe': {'lugar': 'Escola'}},
+              {'em': DateTime.now().toIso8601String(), 'tipo': 'sos', 'crianca_id': 'c1'},
+            ],
+          },
+        ],
+      });
+
+  testWidgets('ligar a localização pede o consentimento do responsável', (tester) async {
+    final repo = await _abre(tester, comNina());
+    expect(find.text('Ver onde Nina está'), findsOneWidget);
+    expect(find.text('Nina chegou em Escola'), findsOneWidget);
+    expect(find.text('Nina pediu ajuda (SOS)'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('local-c1')));
+    await tester.tap(find.byKey(const Key('local-c1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Ligar a localização de Nina?'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('local-consentir')));
+    await tester.pumpAndSettle();
+    expect(repo.chamadas, ['local:c1:true']);
+  });
+
+  testWidgets('com a localização ligada mostra onde está e pede posição nova', (tester) async {
+    final repo = _RepoFalso(comNina(local: true))
+      ..mapaFalso = MapaDaFamilia.doMapa({
+        'lugares': [],
+        'criancas': [
+          {'id': 'c1', 'apelido': 'Nina', 'localizacao': true,
+           'atual': {'lat': -23.5, 'lng': -46.6, 'em': DateTime.now().subtract(const Duration(minutes: 5)).toUtc().toIso8601String(), 'bateria': 80, 'lugar': 'Escola', 'motivo': 'periodico'}},
+        ],
+      });
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    final app = AppState();
+    addTearDown(app.dispose);
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: AppScope(state: app,
+        child: FamiliaScreen(repo: repo, comConta: true, sondaSobreposicao: () async => true, sondaFiltro: () async => true)))));
+    await tester.pumpAndSettle();
+    expect(find.text('Em Escola · há 5 min · bateria 80%'), findsOneWidget);
+    await tester.tap(find.text('Atualizar agora'));
+    await tester.pumpAndSettle();
+    expect(repo.chamadas, ['pedir:c1']);
+  });
+
+  testWidgets('criança com localização ligada vê o aviso, a permissão e o SOS', (tester) async {
+    await _abre(
+      tester,
+      MinhaFamilia.doMapa({
+        'souCrianca': true,
+        'minhasRegras': {'meta_min': 90, 'localizacao': true},
+        'familias': [
+          {'id': 'f1', 'nome': 'Casa', 'meuPapel': 'crianca', 'responsaveis': [{'email': 'mae@exemplo.com'}], 'criancas': [{'apelido': 'Nina'}]},
+        ],
+      }),
+    );
+    expect(find.text('Sua família vê onde você está'), findsOneWidget);
+    expect(find.text('Permitir "sempre"'), findsOneWidget);
+    expect(find.byKey(const Key('familia-sos')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('familia-sos')));
+    await tester.longPress(find.byKey(const Key('familia-sos')));
+    await tester.pumpAndSettle();
+    expect(find.text('Pedir ajuda?'), findsOneWidget);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('no mapa, segurar marca um lugar com nome e raio', (tester) async {
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    final repo = _RepoFalso(MinhaFamilia.vazia);
+    await tester.pumpWidget(MaterialApp(home: MapaFamiliaScreen(familiaId: 'f1', t: T('pt'), repo: repo, semMapa: true)));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text(textosDoLocal['pt']!['locSemLugares']!), findsOneWidget);
+  });
+
+  test('há quanto tempo, curto', () {
+    garanteTextosDaFamilia();
+    final t = T('pt');
+    final agora = DateTime(2026, 11, 19, 12);
+    expect(haQuanto(t, agora, agora: agora), 'agora mesmo');
+    expect(haQuanto(t, agora.subtract(const Duration(minutes: 7)), agora: agora), 'há 7 min');
+    expect(haQuanto(t, agora.subtract(const Duration(hours: 3)), agora: agora), 'há 3 h');
+    expect(haQuanto(t, agora.subtract(const Duration(days: 2)), agora: agora), 'há 2 d');
+  });
+
+  test('os textos da localização existem nos quatro idiomas', () {
+    final pt = textosDoLocal['pt']!.keys.toSet();
+    for (final l in ['en', 'es', 'zh']) {
+      expect(textosDoLocal[l]!.keys.toSet(), pt, reason: l);
+    }
   });
 
   test('os quatro idiomas têm as mesmas chaves', () {

@@ -192,4 +192,22 @@ void main() {
       expect(app.species, outra);
     });
   });
+
+  group('para quem é este celular', () {
+    testWidgets('a promessa mostra os três caminhos e tocar escolhe', (tester) async {
+      final app = await _abre(tester, passo: 1);
+      expect(find.text('Para quem é este celular?'), findsOneWidget);
+      expect(app.paraQuem, 'eu');
+      await tester.ensureVisible(find.byKey(const Key('perfil-filho')));
+      await tester.tap(find.byKey(const Key('perfil-filho')));
+      await tester.pump();
+      expect(app.paraQuem, 'filho');
+      await tester.ensureVisible(find.byKey(const Key('perfil-responsavel')));
+      await tester.tap(find.byKey(const Key('perfil-responsavel')));
+      await tester.pump();
+      expect(app.paraQuem, 'responsavel');
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
+

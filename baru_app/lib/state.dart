@@ -719,6 +719,17 @@ class AppState extends ChangeNotifier {
 
   List<AppScreen> get pilha => List.unmodifiable(_pilha);
   int onb = 0;
+
+  /// Para quem é este celular, escolhido no começo: 'eu', 'filho' (o celular
+  /// é de uma criança) ou 'responsavel'. Os dois últimos terminam o começo
+  /// na tela Família, já no caminho certo.
+  String paraQuem = 'eu';
+
+  void escolheParaQuem(String perfil) {
+    if (!const ['eu', 'filho', 'responsavel'].contains(perfil)) return;
+    paraQuem = perfil;
+    notifyListeners();
+  }
   String lang = 'pt';
   Species species = Species.capybara;
   String? q0;
@@ -1579,6 +1590,10 @@ class AppState extends ChangeNotifier {
   void nextOnb() {
     if (onb >= 5) {
       if (!companionshipStarted) startCompanionship();
+      if (paraQuem != 'eu') {
+        go(AppScreen.familia);
+        return;
+      }
       go(cobrancaNaLoja ? AppScreen.paywall : AppScreen.home);
       return;
     }
@@ -1659,6 +1674,7 @@ class AppState extends ChangeNotifier {
     }
 
     if (osUsage) {
+      await UsageService.instance.sincronizaMetaIos(goal);
       final resumo = await UsageService.instance.resumoDeHoje(
         ajustes: ajustesDeCategoria,
       );
@@ -2105,6 +2121,7 @@ class AppState extends ChangeNotifier {
     }
     _pendingOnbUsageAdvance = true;
     await UsageService.instance.requestUsageAccess();
+    if (defaultTargetPlatform == TargetPlatform.iOS) await syncPermissionsFromOs();
   }
 
   void skipUsage() {
@@ -2128,6 +2145,7 @@ class AppState extends ChangeNotifier {
     }
     _usageTogglePending = true;
     await UsageService.instance.requestUsageAccess();
+    if (defaultTargetPlatform == TargetPlatform.iOS) await syncPermissionsFromOs();
   }
 
   /// Primeiro dia real: habitat vazio, sem folhas herdadas do snapshot do design.

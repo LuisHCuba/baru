@@ -59,6 +59,9 @@ object RegrasDaFamilia {
         val botao: String,
         val notifTitulo: String,
         val notifCorpo: String,
+        val localizacao: Boolean = false,
+        val localPedidoMs: Long = 0L,
+        val notifCorpoLocal: String = "",
     )
 
     data class Horario(val dias: Set<Int>, val inicio: Int, val fim: Int)
@@ -95,6 +98,9 @@ object RegrasDaFamilia {
                 botao = o.optString("botao", "Abrir o Baru"),
                 notifTitulo = o.optString("notifTitulo", "Baru"),
                 notifCorpo = o.optString("notifCorpo"),
+                localizacao = o.optBoolean("localizacao", false),
+                localPedidoMs = o.optLong("localPedidoMs", 0L),
+                notifCorpoLocal = o.optString("notifCorpoLocal"),
             )
         } catch (e: Exception) {
             null
@@ -139,6 +145,9 @@ class GuardaDaFamilia : Service() {
         private const val PASSO_MS = 3_000L
         private const val USO_A_CADA_MS = 60_000L
         private const val REGRAS_A_CADA_MS = 120_000L
+        /** Com a localização ligada, o pedido "onde está agora?" chega em até 1 minuto. */
+        private const val REGRAS_COM_LOCAL_MS = 60_000L
+        private const val POSICAO_A_CADA_MS = 10 * 60_000L
 
         fun liga(ctx: Context) {
             ContextCompat.startForegroundService(ctx, Intent(ctx, GuardaDaFamilia::class.java).setAction(ACAO_LIGA))
@@ -156,6 +165,10 @@ class GuardaDaFamilia : Service() {
     private var ultimaBusca = 0L
     @Volatile private var buscando = false
     private var livres: Set<String> = emptySet()
+    private var ultimaPosicao = 0L
+    private var pedidoAtendido = 0L
+    @Volatile private var localizando = false
+    private var barraComLocal: Boolean? = null
 
     private val volta = object : Runnable {
         override fun run() {
@@ -198,16 +211,31 @@ class GuardaDaFamilia : Service() {
             this, 0, packageManager.getLaunchIntentForPackage(packageName),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        // Localização ligada: a criança sempre vê, na barra, que a família vê onde ela está.
+        val comLocal = r?.localizacao == true && LocalDaFamilia.temPermissao(this)
+        barraComLocal = comLocal
+        val corpo = if (r?.localizacao == true && !r.notifCorpoLocal.isNullOrEmpty()) r.notifCorpoLocal else r?.notifCorpo ?: ""
         val n: Notification = NotificationCompat.Builder(this, CANAL)
-            .setSmallIcon(applicationInfo.icon)
+            .setSmallIcon(R.drawable.ic_stat_baru)
             .setContentTitle(r?.notifTitulo ?: "Baru")
-            .setContentText(r?.notifCorpo ?: "")
+            .setContentText(corpo)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(corpo))
             .setOngoing(true)
             .setSilent(true)
             .setContentIntent(abre)
             .build()
         if (Build.VERSION.SDK_INT >= 34) {
-            startForeground(NOTIF_ID, n, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            val tipo = android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE or
+                (if (comLocal) android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+            try {
+                startForeground(NOTIF_ID, n, tipo)
+            } catch (_: Exception) {
+                // Sem a permissão "o tempo todo", o Android não deixa o tipo localização
+                // num serviço que voltou sozinho (depois de reiniciar): segue sem ele.
+                startForeground(NOTIF_ID, n, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            }
+        } else if (Build.VERSION.SDK_INT >= 29) {
+            startForeground(NOTIF_ID, n, if (comLocal) android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
         } else {
             startForeground(NOTIF_ID, n)
         }
@@ -227,10 +255,12 @@ class GuardaDaFamilia : Service() {
     private fun confere() {
         val r = RegrasDaFamilia.le(this) ?: run { tiraCapa(); return }
         val agora = System.currentTimeMillis()
-        if (agora - ultimaBusca > REGRAS_A_CADA_MS) {
+        if (agora - ultimaBusca > (if (r.localizacao) REGRAS_COM_LOCAL_MS else REGRAS_A_CADA_MS)) {
             ultimaBusca = agora
             buscaRegras()
         }
+        localiza(r, agora)
+        if (barraComLocal != (r.localizacao && LocalDaFamilia.temPermissao(this))) sobeNaBarra()
         if (agora - ultimoUso > USO_A_CADA_MS) {
             usoHojeMin = usoDeHoje()
             ultimoUso = agora
@@ -243,6 +273,20 @@ class GuardaDaFamilia : Service() {
         }
         val frente = appNaFrente()
         if (motivo != null && frente != null && frente !in livres) poeCapa(r, motivo) else tiraCapa()
+    }
+
+    /** Manda a posição de tempos em tempos e quando o responsável pede. */
+    private fun localiza(r: RegrasDaFamilia.Regras, agora: Long) {
+        if (!r.localizacao || localizando || !LocalDaFamilia.temPermissao(this)) return
+        val pedido = r.localPedidoMs > pedidoAtendido && agora - r.localPedidoMs < 10 * 60_000L
+        if (!pedido && agora - ultimaPosicao < POSICAO_A_CADA_MS) return
+        val base = try { JSONObject(RegrasDaFamilia.texto(this) ?: return) } catch (_: Exception) { return }
+        val chave = base.optString("chave"); val url = base.optString("url"); val anon = base.optString("anon")
+        if (chave.length != 64) return
+        localizando = true
+        ultimaPosicao = agora
+        if (pedido) pedidoAtendido = r.localPedidoMs
+        LocalDaFamilia.enviaPosicao(this, chave, url, anon, if (pedido) "pedido" else "periodico") { localizando = false }
     }
 
     /**
@@ -302,9 +346,17 @@ class GuardaDaFamilia : Service() {
         base.put("pausaAteMs", pausaMs)
         base.put("metaMin", r.optInt("meta_hoje", r.optInt("meta_min", 0)))
         base.put("pausarAoEstourar", r.optBoolean("pausar_ao_estourar", false))
+        base.put("localizacao", r.optBoolean("localizacao", false))
+        base.put("localPedidoMs", utcMs(r.optString("local_pedido_em", "")))
         RegrasDaFamilia.grava(this, base.toString())
         confere()
     }
+
+    private fun utcMs(s: String): Long = if (s.length < 19 || s == "null") 0L else try {
+        java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.parse(s.substring(0, 19))?.time ?: 0L
+    } catch (_: Exception) { 0L }
 
     private fun appNaFrente(): String? {
         val uso = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager

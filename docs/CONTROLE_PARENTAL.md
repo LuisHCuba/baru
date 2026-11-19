@@ -53,18 +53,25 @@ Decidido em 2026-11-18 com o Luis:
 Todo segredo mora no Infisical (LHCX_CENTRAL, prod). A função `familia-push` usa
 `APNS_KEY_P8` e `APNS_KEY_ID`, que chegam ao Supabase pela sincronização do Infisical.
 
-### Limites conhecidos
-- **iOS com o app fechado não recebe regras novas** (pausa dada agora, horário mudado): o
-  iPhone só aplica o que o responsável mudou quando o Baru abre. Resolver exige push (APNs):
-  chave .p8 da Apple + envio pelo Supabase. Os horários e a pausa já entregues ao sistema
-  valem com o app fechado.
-- **Filtro de sites no Android** não existe (exigiria VPN local). No iOS usa o filtro da Apple.
-- Screen Time não funciona no simulador: o teste real do iOS é no aparelho.
+### Localização (feita, 2026-11-19)
+- Banco: migration `20261119040000_baru_familia_local.sql`. Lugares (círculos), posição atual,
+  rastro de 7 dias (apagado sozinho), SOS, "onde está agora?" (`baru_familia_pedir_local`).
+  Chegou/saiu é decidido no banco a partir das posições (posição com precisão > 200 m não muda
+  o lugar). Ligar exige consentimento do responsável (registrado); desligar apaga o rastro.
+- Celular da criança: Android pelo guarda (posição a cada 10 min e sob pedido em até 1 min,
+  aviso fixo na barra, tipo de serviço `location`); iPhone por mudanças significativas de lugar
+  + push silencioso para o pedido, indicador azul. SOS no app (segurar o botão).
+- Avisos ao responsável: iPhone por push visível (Edge Function `familia-push`, `evento_id`);
+  Android por conferência de 15 em 15 min (`AvisosDaFamilia`, JobScheduler).
+- Mapa: app (`mapa_familia_screen.dart`, OpenStreetMap via flutter_map) e `/painel` (Leaflet).
+- Testado no emulador Android: pedido, abriu, chegou, saiu, SOS. iPhone: compila e roda no
+  simulador; o fluxo real (permissão "sempre", push) só no aparelho.
 
-## Próxima fase sugerida — localização (plano Baru Família)
-Lugares (casa/escola) com aviso de chegada e saída, "onde está agora?" sob pedido, botão SOS,
-histórico curto (7 dias). Consentimento do responsável, aviso permanente na criança (LGPD e
-ECA Digital), justificativa de localização em segundo plano nas duas lojas.
+### Limites conhecidos
+- Screen Time e push não funcionam no simulador: o teste real do iOS é no aparelho.
+- Android: o aviso ao responsável pode levar até 15 min (sem Firebase/FCM). iPhone é imediato.
+- Flutter: o Baru compila com o Flutter 3.44.9 (`~/.local/sdk/flutter-3.44`). O 3.50 exige
+  Android Gradle Plugin 9, migração ainda não feita.
 
 ## Lojas
 - **Apple:** pedir *Family Controls (Distribution)* para o app e cada extensão
@@ -73,4 +80,7 @@ ECA Digital), justificativa de localização em segundo plano nas duas lojas.
   o teste real é no iPhone.
 - **Google Play:** declarar o app como de controle parental / bem-estar digital,
   política de Famílias se o público incluir crianças, e justificar `PACKAGE_USAGE_STATS`
-  (e `BIND_ACCESSIBILITY_SERVICE` se a fase 6 usar).
+  e **localização em segundo plano** (`ACCESS_BACKGROUND_LOCATION`: formulário no Play Console,
+  com vídeo curto mostrando o consentimento do responsável e o aviso fixo na criança).
+- **App Store:** justificar a localização "sempre" na revisão (segurança da família, aviso
+  visível, desligável pelo responsável).

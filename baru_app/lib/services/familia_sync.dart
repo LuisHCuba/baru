@@ -9,6 +9,7 @@ import '../data/baru_env.dart';
 import '../data/familia.dart';
 import '../l10n_familia.dart';
 import '../state.dart';
+import 'localizacao.dart';
 import 'tempo_de_tela_ios.dart';
 
 /// No celular da criança: manda o dia para a família e aplica as regras que
@@ -73,6 +74,9 @@ class FamiliaSync {
       'botao': t.s('famGuardaBotao'),
       'notifTitulo': 'Baru',
       'notifCorpo': t.s('famGuardaNotif'),
+      'notifCorpoLocal': t.s('famGuardaNotifLocal'),
+      'localizacao': r.localizacao,
+      'localPedidoMs': r.localPedidoEm?.millisecondsSinceEpoch ?? 0,
       if (chave != null) 'chave': chave,
       'url': BaruEnv.supabaseUrl,
       'anon': BaruEnv.supabaseAnonKey,
@@ -116,6 +120,89 @@ class FamiliaSync {
     }
   }
 
+  static const _chaveDoResponsavel = 'baru_familia_chave_resp';
+
+  /// Celular do responsável: chave própria e textos, para os avisos (SOS,
+  /// chegou, saiu, meta) chegarem com o Baru fechado. iPhone: push da Apple;
+  /// Android: conferência de 15 em 15 minutos.
+  Future<void> _avisosDoResponsavel(AppState app, FamiliaRepo repo, bool souResponsavel) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!souResponsavel) {
+      if (prefs.getString(_chaveDoResponsavel) != null) {
+        await LocalNativo.avisos(null);
+        await prefs.remove(_chaveDoResponsavel);
+      }
+      return;
+    }
+    var chave = prefs.getString(_chaveDoResponsavel);
+    if (chave == null || chave.length != 64) {
+      try {
+        chave = await repo.chaveDoResponsavel(idioma: app.lang);
+      } catch (e) {
+        debugPrint('Baru: chave do responsável indisponível — $e');
+        return;
+      }
+      if (chave == null) return;
+      await prefs.setString(_chaveDoResponsavel, chave);
+    }
+    garanteTextosDaFamilia();
+    final t = app.t;
+    await LocalNativo.avisos(jsonEncode({
+      'chave': chave,
+      'url': BaruEnv.supabaseUrl,
+      'anon': BaruEnv.supabaseAnonKey,
+      'idioma': app.lang,
+      'sandbox': kDebugMode,
+      'canal': t.s('avCanal'),
+      'textos': {
+        'sos': [t.s('avSosT'), t.s('avSosC')],
+        'chegou': [t.s('avChegouT'), t.s('avChegouC')],
+        'saiu_de': [t.s('avSaiuT'), t.s('avSaiuC')],
+        'meta_75': [t.s('avMetaT'), t.s('avMeta75C')],
+        'meta_batida': [t.s('avMetaT'), t.s('avMetaBatidaC')],
+        'meta_passou': [t.s('avMetaT'), t.s('avMetaPassouC')],
+        'autorizacao_revogada': [t.s('avAutT'), t.s('avAutC')],
+      },
+    }));
+  }
+
+  /// Celular da criança: liga o envio com o app fechado e manda uma posição
+  /// ao abrir o app (se a localização estiver ligada e permitida).
+  Future<void> _localizacao(RegrasDaFamilia regras, FamiliaRepo repo, String? chave) async {
+    await LocalNativo.configura(
+      ligada: regras.localizacao,
+      chave: chave,
+      url: BaruEnv.supabaseUrl,
+      anon: BaruEnv.supabaseAnonKey,
+    );
+    if (!regras.localizacao || chave == null) return;
+    if (!(await LocalNativo.estado()).concedida) return;
+    final p = await LocalNativo.agora();
+    if (p == null) return;
+    await repo.enviarPosicao(chave: chave, lat: p.lat, lng: p.lng, precisaoM: p.precisaoM, bateria: p.bateria, motivo: 'abriu');
+  }
+
+  /// SOS da criança: posição agora, com aviso imediato para a família.
+  /// Devolve falso sem posição (localização desligada ou negada).
+  static Future<bool> sos() async {
+    try {
+      final client = Supabase.instance.client;
+      final chave = await _chaveDoAparelho(client);
+      if (chave == null) return false;
+      var permissao = await LocalNativo.estado();
+      if (!permissao.concedida) permissao = await LocalNativo.pedir(sempre: false);
+      if (!permissao.concedida) return false;
+      final p = await LocalNativo.agora();
+      if (p == null) return false;
+      await FamiliaRepo(client).enviarPosicao(
+          chave: chave, lat: p.lat, lng: p.lng, precisaoM: p.precisaoM, bateria: p.bateria, motivo: 'sos');
+      return true;
+    } catch (e) {
+      debugPrint('Baru: SOS falhou — $e');
+      return false;
+    }
+  }
+
   Future<void> envia(AppState app, {bool forcar = true}) async {
     if (kIsWeb || _rodando) return;
     final agora = DateTime.now();
@@ -131,6 +218,7 @@ class FamiliaSync {
     try {
       final repo = FamiliaRepo(client);
       final minha = await repo.minha();
+      await _avisosDoResponsavel(app, repo, minha.familias.any((f) => f.meuPapel == 'responsavel'));
       if (!minha.souCrianca) {
         if (defaultTargetPlatform == TargetPlatform.android) {
           await _guardaAndroid(null);
@@ -145,11 +233,13 @@ class FamiliaSync {
       final regras = minha.minhasRegras ?? const RegrasDaFamilia();
 
       if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final chave = await _chaveDoAparelho(client);
+        await _localizacao(regras, repo, chave);
         var tela = await TempoDeTelaIos.estado();
         if (!tela.suportado) return;
         // Para o push silencioso: o iPhone busca as regras sozinho.
         await TempoDeTelaIos.guardaChave(
-          chave: await _chaveDoAparelho(client),
+          chave: chave,
           url: BaruEnv.supabaseUrl,
           anon: BaruEnv.supabaseAnonKey,
           sandbox: kDebugMode,
@@ -175,7 +265,9 @@ class FamiliaSync {
           focos: app.completedToday,
         );
       } else if (defaultTargetPlatform == TargetPlatform.android) {
-        await _guardaAndroid(_regrasParaOGuarda(app, regras, chave: await _chaveDoAparelho(client)));
+        final chave = await _chaveDoAparelho(client);
+        await _guardaAndroid(_regrasParaOGuarda(app, regras, chave: chave));
+        await _localizacao(regras, repo, chave);
         await _filtroAndroid(regras.filtroSites, repo);
         await _autorizacao(repo, app.usageAccess);
         if (!app.usageAccess) {

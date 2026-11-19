@@ -16,6 +16,8 @@ class UsageService {
 
   Future<bool> requestUsageAccess() async => false;
 
+  Future<void> sincronizaMetaIos(int metaMin) async {}
+
   Future<ResumoDeTela?> resumoDeHoje({
     Map<String, CategoriaDeApp> ajustes = const {},
     DateTime? agora,

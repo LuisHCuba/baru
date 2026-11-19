@@ -264,7 +264,7 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
       case AppScreen.sobreposicao:
         return const SobreposicaoScreen();
       case AppScreen.familia:
-        return const FamiliaScreen();
+        return FamiliaScreen.deTeste ?? const FamiliaScreen();
       case AppScreen.folhas:
         return const FolhasScreen();
       case AppScreen.sequencia:

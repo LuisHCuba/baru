@@ -1,4 +1,7 @@
 import 'package:baru_app/data/familia.dart';
+import 'package:baru_app/cobranca.dart';
+import 'package:baru_app/models.dart';
+import 'package:baru_app/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -108,6 +111,50 @@ void main() {
       const escola = HorarioSemTela(dias: [1, 2, 3, 4, 5], inicio: '07:30', fim: '12:00');
       expect(escola.vale(DateTime(2026, 11, 17, 9)), isTrue);
       expect(escola.vale(DateTime(2026, 11, 17, 12)), isFalse);
+    });
+  });
+
+  group('para quem é este celular', () {
+    for (final caso in [('eu', AppScreen.home), ('filho', AppScreen.familia), ('responsavel', AppScreen.familia)]) {
+      test('${caso.$1} termina o começo em ${caso.$2.name}', () {
+        final s = AppState();
+        addTearDown(s.dispose);
+        s.onb = 5;
+        s.escolheParaQuem(caso.$1);
+        s.nextOnb();
+        expect(s.screen, cobrancaNaLoja && caso.$1 == 'eu' ? AppScreen.paywall : caso.$2);
+      });
+    }
+
+    test('valor desconhecido é ignorado', () {
+      final s = AppState();
+      addTearDown(s.dispose);
+      s.escolheParaQuem('vizinho');
+      expect(s.paraQuem, 'eu');
+    });
+  });
+
+  group('localização', () {
+    test('regras trazem a localização e o pedido', () {
+      final r = RegrasDaFamilia.doMapa({'meta_min': 60, 'localizacao': true, 'local_pedido_em': '2026-11-19T03:00:00+00:00'});
+      expect(r.localizacao, isTrue);
+      expect(r.localPedidoEm, DateTime.utc(2026, 11, 19, 3));
+      expect(RegrasDaFamilia.avisosPadrao['lugares'], isTrue);
+    });
+
+    test('mapa lê lugares e a posição atual', () {
+      final m = MapaDaFamilia.doMapa({
+        'lugares': [{'id': 'l1', 'nome': 'Escola', 'lat': -23.5, 'lng': -46.6, 'raio_m': 200}],
+        'criancas': [
+          {'id': 'c1', 'apelido': 'Nina', 'localizacao': true,
+           'atual': {'lat': -23.5, 'lng': -46.6, 'em': '2026-11-19T03:00:00+00:00', 'bateria': 50, 'lugar': 'Escola', 'motivo': 'sos'}},
+          {'id': 'c2', 'apelido': 'Theo', 'localizacao': false, 'atual': null},
+        ],
+      });
+      expect(m.lugares.single.raioM, 200);
+      expect(m.criancas.first.atual!.lugar, 'Escola');
+      expect(m.criancas.first.atual!.motivo, 'sos');
+      expect(m.criancas.last.atual, isNull);
     });
   });
 }

@@ -8,12 +8,14 @@ import '../data/familia.dart';
 import '../l10n.dart';
 import '../l10n_familia.dart';
 import '../services/familia_sync.dart';
+import '../services/localizacao.dart';
 import '../services/overlay_service.dart';
 import '../services/tempo_de_tela_ios.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/botao_baru.dart';
 import '../widgets/componentes.dart';
+import 'mapa_familia_screen.dart';
 
 /// Modo família (docs/CONTROLE_PARENTAL.md, fase 4).
 ///
@@ -39,6 +41,10 @@ class FamiliaScreen extends StatefulWidget {
   @visibleForTesting
   final Future<bool> Function()? sondaFiltro;
 
+  /// Só para as capturas da loja (test/capturas_loja_test.dart): a casca
+  /// abre esta tela em vez da real. Nulo no app.
+  static FamiliaScreen? deTeste;
+
   static const chaveCriar = Key('familia-criar');
   static const chaveEntrar = Key('familia-entrar');
 
@@ -52,6 +58,8 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
   EstadoTempoDeTela _tela = EstadoTempoDeTela.indisponivel;
   bool _sobrepor = true;
   bool _filtroPronto = true;
+  Map<String, MapaDaFamilia> _mapas = const {};
+  PermissaoDeLocal _local = PermissaoDeLocal.negada;
   String? _erro;
   bool _ocupado = false;
 
@@ -83,9 +91,19 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
               (f.minhasRegras?.filtroSites ?? false)
           ? await (widget.sondaFiltro ?? FamiliaSync.filtroPreparado)()
           : true;
+      // Localização: o mapa de cada família (responsável) e a permissão deste celular (criança).
+      final mapas = <String, MapaDaFamilia>{};
+      for (final fam in f.familias.where((x) => x.souResponsavel)) {
+        try {
+          mapas[fam.id] = await _repo.mapa(fam.id);
+        } catch (_) {}
+      }
+      final local = f.souCrianca ? await LocalNativo.estado() : PermissaoDeLocal.negada;
       if (!mounted) return;
       setState(() {
         _familia = f;
+        _mapas = mapas;
+        _local = local;
         _tela = tela;
         _sobrepor = sobrepor;
         _filtroPronto = filtroPronto;
@@ -171,6 +189,11 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
         const SizedBox(height: Espaco.xs),
         Text(t.s('famNenhumaCorpo'), style: estilo(Tipo.corpo, color: Cores.tinta700)),
         const SizedBox(height: Espaco.lg),
+        // Quem disse no começo que este celular é de uma criança vê primeiro o código.
+        if (AppScope.of(context).paraQuem == 'filho') ...[
+          _cartaoEntrar(t),
+          const SizedBox(height: Espaco.md),
+        ],
         CartaoBaru(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -198,8 +221,10 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
             ],
           ),
         ),
-        const SizedBox(height: Espaco.md),
-        _cartaoEntrar(t),
+        if (AppScope.of(context).paraQuem != 'filho') ...[
+          const SizedBox(height: Espaco.md),
+          _cartaoEntrar(t),
+        ],
       ];
 
   Widget _cartaoEntrar(T t) => CartaoBaru(
@@ -272,6 +297,13 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
               aoExtra: (n) => _faz(() => _repo.tempoExtra(c.id, n)),
               aoPausar: () => _escolhePausa(t, c),
               aoRetomar: () => _faz(() => _repo.pausar(c.id, null)),
+              local: _mapas[f.id]?.criancas.where((x) => x.id == c.id).firstOrNull,
+              aoLocal: (ligar) => _ligaLocal(t, c, ligar),
+              aoPedirLocal: () => _faz(() async {
+                await _repo.pedirLocal(c.id);
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.s('locPedido'))));
+              }),
+              aoVerMapa: () => _abreMapa(t, f, c.id),
             ),
             const SizedBox(height: Espaco.sm),
           ],
@@ -302,8 +334,67 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
     return out;
   }
 
+  /// Ligar pede o consentimento do responsável (LGPD/ECA): fica registrado no banco.
+  Future<void> _ligaLocal(T t, CriancaNaFamilia c, bool ligar) async {
+    final nome = c.apelido ?? t.s('famCriancaPadrao');
+    if (ligar) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(t.fill(t.s('locConsentT'), {'n': nome})),
+          content: Text(t.fill(t.s('locConsentCorpo'), {'n': nome}), style: estilo(Tipo.corpo)),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.s('locCancelar'))),
+            TextButton(key: const Key('local-consentir'), onPressed: () => Navigator.pop(ctx, true), child: Text(t.s('locConsentOk'))),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    await _faz(() => _repo.localizacao(c.id, ligada: ligar));
+  }
+
+  Future<void> _abreMapa(T t, Familia f, String? criancaId) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => MapaFamiliaScreen(familiaId: f.id, t: t, repo: _repo, focoCriancaId: criancaId),
+    ));
+    await _carrega();
+  }
+
+  /// SOS: segura o botão, confirma, e a posição vai para a família com aviso.
+  Future<void> _sos(T t) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.s('locSosT')),
+        content: Text(t.s('locSosCorpo'), style: estilo(Tipo.corpo)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.s('locCancelar'))),
+          FilledButton(
+            key: const Key('sos-enviar'),
+            style: FilledButton.styleFrom(backgroundColor: Cores.alerta),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t.s('locSosEnviar')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _ocupado = true);
+    final enviado = await FamiliaSync.sos();
+    if (!mounted) return;
+    setState(() => _ocupado = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: enviado ? Cores.folha700 : Cores.alerta,
+      content: Text(t.s(enviado ? 'locSosEnviado' : 'locSosFalhou')),
+    ));
+    await _carrega();
+  }
+
   /// O responsável escolhe, por criança, quais avisos quer ver.
   static const _avisoDoEvento = {
+    'chegou': 'lugares',
+    'saiu_de': 'lugares',
     'meta_75': 'meta_75',
     'meta_batida': 'meta_batida',
     'meta_passou': 'meta_passou',
@@ -414,10 +505,31 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
     final pausada = r.pausadaEm(agora);
     final ios = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
     return [
-      Text(t.fill(t.s('famCriancaT'), {'f': f.nome}), style: estilo(Tipo.titulo)),
+      // "Família Familia Cuba" não: se o nome já diz família, vai só o nome.
+      Text(RegExp(r'^(fam[ií]lia|family|家)', caseSensitive: false).hasMatch(f.nome.trim()) ? f.nome : t.fill(t.s('famCriancaT'), {'f': f.nome}),
+          style: estilo(Tipo.titulo)),
       const SizedBox(height: Espaco.xxs),
       Text(t.fill(t.s('famCriancaSub'), {'r': f.responsaveis.join(', ')}), style: estilo(Tipo.corpo, color: Cores.tinta700)),
       const SizedBox(height: Espaco.md),
+      if (r.localizacao) ...[
+        _CartaoDaLocalizacao(
+          t: t,
+          permissao: _local,
+          ocupado: _ocupado,
+          aoPermitir: () => _faz(() async {
+            if (_local == PermissaoDeLocal.desligada) {
+              await LocalNativo.abrirAjustes();
+              return;
+            }
+            final antes = _local;
+            final depois = await LocalNativo.pedir(sempre: true);
+            // Negado de vez (ou "sempre" já recusado): só pelos ajustes do sistema.
+            if (depois == antes) await LocalNativo.abrirAjustes();
+            await FamiliaSync.instance.envia(app);
+          }),
+        ),
+        const SizedBox(height: Espaco.sm),
+      ],
       if (pausada) ...[
         CartaoBaru(
           cor: Cores.alerta.withValues(alpha: 0.10),
@@ -540,6 +652,30 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
           ]),
         ),
       ],
+      const SizedBox(height: Espaco.lg),
+      Center(
+        child: Tooltip(
+          message: t.s('locSosSegure'),
+          child: GestureDetector(
+            key: const Key('familia-sos'),
+            onLongPress: _ocupado ? null : () => _sos(t),
+            child: Container(
+              width: 96,
+              height: 96,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Cores.alerta,
+                shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: Cores.alerta.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 6))],
+              ),
+              child: Text(t.s('locSosBotao'), style: estilo(Tipo.titulo, color: Colors.white)),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: Espaco.xs),
+      Text(t.s('locSosSegure'), textAlign: TextAlign.center, style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+      const SizedBox(height: Espaco.lg),
     ];
   }
 }
@@ -559,8 +695,16 @@ class _CartaoDaCrianca extends StatelessWidget {
     required this.aoPausar,
     required this.aoRetomar,
     this.ocupado = false,
+    this.local,
+    this.aoLocal,
+    this.aoPedirLocal,
+    this.aoVerMapa,
   });
 
+  final CriancaNoMapa? local;
+  final ValueChanged<bool>? aoLocal;
+  final VoidCallback? aoPedirLocal;
+  final VoidCallback? aoVerMapa;
   final CriancaNaFamilia crianca;
   final AppState app;
   final VoidCallback aoAbrir;
@@ -634,7 +778,7 @@ class _CartaoDaCrianca extends StatelessWidget {
               Text(t.fill(t.s('famMetaBatida'), {'h': TimeOfDay.fromDateTime(hoje!.metaBatidaEm!.toLocal()).format(context)}),
                   style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
             if ((hoje?.focos ?? 0) > 0)
-              Text(t.fill(t.s('famFocos'), {'n': hoje!.focos}), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+              Text(hoje!.focos == 1 ? t.s('famFoco1') : t.fill(t.s('famFocos'), {'n': hoje.focos}), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
           ]),
           const SizedBox(height: Espaco.sm),
           Text(t.s('famSemana'), style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
@@ -670,8 +814,86 @@ class _CartaoDaCrianca extends StatelessWidget {
                 onPressed: ocupado ? null : aoPausar,
               ),
           ]),
+          const Divider(height: Espaco.lg),
+          Row(children: [
+            Icon(Icons.location_on_rounded, color: c.regras.localizacao ? Cores.primariaEscura : Cores.tinta500),
+            const SizedBox(width: Espaco.xs),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(t.fill(t.s('locLigar'), {'n': c.apelido ?? t.s('famCriancaPadrao')}), style: estilo(Tipo.corpoForte)),
+                Text(
+                  !c.regras.localizacao
+                      ? t.s('locLigarSub')
+                      : local?.atual == null
+                          ? t.fill(t.s('locSemPosicao'), {'n': c.apelido ?? t.s('famCriancaPadrao')})
+                          : linhaDoLocal(t, local!.atual!),
+                  style: estilo(Tipo.corpoPequeno, color: local?.atual?.motivo == 'sos' ? Cores.alerta : Cores.tinta700),
+                ),
+              ]),
+            ),
+            Switch(
+              key: Key('local-${c.id}'),
+              value: c.regras.localizacao,
+              onChanged: ocupado || aoLocal == null ? null : aoLocal,
+            ),
+          ]),
+          if (c.regras.localizacao)
+            Wrap(spacing: Espaco.xs, runSpacing: Espaco.xs, children: [
+              ActionChip(
+                avatar: const Icon(Icons.my_location_rounded, size: 18),
+                label: Text(t.s('locAtualizar')),
+                onPressed: ocupado ? null : aoPedirLocal,
+              ),
+              ActionChip(
+                avatar: const Icon(Icons.map_outlined, size: 18),
+                label: Text(t.s('locVerMapa')),
+                onPressed: aoVerMapa,
+              ),
+            ]),
         ],
       ),
+    );
+  }
+}
+
+/// No celular da criança: a localização está ligada (sempre visível) e a permissão deste aparelho.
+class _CartaoDaLocalizacao extends StatelessWidget {
+  const _CartaoDaLocalizacao({required this.t, required this.permissao, required this.aoPermitir, this.ocupado = false});
+
+  final T t;
+  final PermissaoDeLocal permissao;
+  final VoidCallback aoPermitir;
+  final bool ocupado;
+
+  @override
+  Widget build(BuildContext context) {
+    final falta = permissao != PermissaoDeLocal.sempre;
+    final rotulo = switch (permissao) {
+      PermissaoDeLocal.desligada => t.s('locAbrirAjustes'),
+      PermissaoDeLocal.quandoUsa => t.s('locPermitirSempre'),
+      _ => t.s('locPermitir'),
+    };
+    return CartaoBaru(
+      cor: Cores.primariaA(0.08),
+      elevado: false,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.location_on_rounded, color: Cores.primariaEscura),
+          const SizedBox(width: Espaco.sm),
+          Expanded(child: Text(t.s('locCriancaOn'), style: estilo(Tipo.corpoForte))),
+        ]),
+        const SizedBox(height: Espaco.xxs),
+        Text(t.s('locCriancaOnSub'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+        if (falta) ...[
+          const SizedBox(height: Espaco.xs),
+          if (permissao == PermissaoDeLocal.desligada)
+            Text(t.s('locSistemaDesligado'), style: estilo(Tipo.corpoPequeno, color: Cores.alerta))
+          else if (permissao == PermissaoDeLocal.quandoUsa)
+            Text(t.s('locPermitirSempreSub'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+          const SizedBox(height: Espaco.xs),
+          BotaoBaru(key: const Key('local-permitir'), rotulo: rotulo, papel: PapelDoBotao.secundario, ativo: !ocupado, aoTocar: aoPermitir),
+        ],
+      ]),
     );
   }
 }
@@ -757,11 +979,18 @@ class _LinhaDeEvento extends StatelessWidget {
     'autorizacao_revogada': 'famEvAutorizacao',
     'tempo_extra': 'famEvTempoExtra',
     'pausa': 'famEvPausa',
+    'chegou': 'famEvChegou',
+    'saiu_de': 'famEvSaiuDe',
+    'sos': 'famEvSos',
   };
 
   @override
   Widget build(BuildContext context) {
-    final alerta = evento.tipo == 'meta_batida' || evento.tipo == 'meta_passou' || evento.tipo == 'autorizacao_revogada';
+    final alerta = evento.tipo == 'meta_batida' || evento.tipo == 'meta_passou' || evento.tipo == 'autorizacao_revogada' || evento.tipo == 'sos';
+    final chave = evento.tipo == 'localizacao'
+        ? (evento.detalhe?['ligada'] == true ? 'famEvLocalOn' : 'famEvLocalOff')
+        : _chaves[evento.tipo] ?? evento.tipo;
+    final lugar = '${evento.detalhe?['lugar'] ?? ''}';
     final quando = evento.em.toLocal();
     final hoje = DateUtils.isSameDay(quando, DateTime.now());
     final hora = TimeOfDay.fromDateTime(quando).format(context);
@@ -771,7 +1000,7 @@ class _LinhaDeEvento extends StatelessWidget {
         Icon(alerta ? Icons.notifications_active_rounded : Icons.circle, size: alerta ? 18 : 8,
             color: alerta ? Cores.alerta : Cores.tinta500),
         const SizedBox(width: Espaco.sm),
-        Expanded(child: Text(t.fill(t.s(_chaves[evento.tipo] ?? evento.tipo), {'n': nome}), style: estilo(Tipo.corpo))),
+        Expanded(child: Text(t.fill(t.s(chave), {'n': nome, 'l': lugar}), style: estilo(Tipo.corpo))),
         Text(hoje ? hora : '${quando.day}/${quando.month}', style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
       ]),
     );
@@ -946,6 +1175,7 @@ class _FolhaDeRegrasState extends State<_FolhaDeRegras> {
               ('meta_passou', 'famAvMetaPassou'),
               ('autorizacao', 'famAvAutorizacao'),
               ('regras', 'famAvRegras'),
+              ('lugares', 'famAvisoLugares'),
             ])
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,

@@ -55,6 +55,7 @@ extension RotaDaTela on AppScreen {
         AppScreen.sequencia ||
         AppScreen.conta ||
         AppScreen.sobreposicao ||
+        AppScreen.familia ||
         AppScreen.result =>
           TipoDeRota.detalhe,
         AppScreen.paywall => TipoDeRota.modal,
@@ -74,6 +75,7 @@ extension RotaDaTela on AppScreen {
         AppScreen.folhas => '/folhas',
         AppScreen.conta => '/conta',
         AppScreen.sobreposicao => '/sobreposicao',
+        AppScreen.familia => '/familia',
         AppScreen.sequencia => '/sequencia',
         AppScreen.result => '/resultado',
         AppScreen.paywall => '/assinatura',

@@ -19,6 +19,7 @@ enum AppScreen {
   sequencia,
   conta,
   sobreposicao,
+  familia,
 }
 
 /// As espécies do Baru.

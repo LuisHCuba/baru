@@ -198,6 +198,26 @@
         <service
             android:name=".OverlayDoBaru"
             android:exported="false" />
+        <!-- O guarda das regras da família, no celular da criança: só roda
+             quando o responsável colocou este aparelho numa família. Olha qual
+             app está na frente e cobre a tela durante a pausa, o horário sem
+             tela ou quando a meta do dia estoura. -->
+        <service
+            android:name=".GuardaDaFamilia"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Controle parental pedido pelo responsavel: aplicar no celular da crianca a pausa, os horarios sem tela e a meta diaria de tela que o responsavel definiu." />
+        </service>
+        <receiver
+            android:name=".GuardaNoBoot"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <!-- O vigia da sessao de foco.
              `specialUse` porque nenhum tipo da lista descreve o que ele faz:
              nao e midia, nao e localizacao, nao e chamada. O que ele faz e

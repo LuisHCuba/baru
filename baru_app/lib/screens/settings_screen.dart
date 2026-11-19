@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../cobranca.dart';
 import '../l10n.dart';
 import '../data/progressao.dart';
+import '../l10n_familia.dart';
 import '../l10n_trilha.dart';
 import '../models.dart';
 import '../state.dart';
@@ -27,11 +28,13 @@ class SettingsScreen extends StatelessWidget {
   static const chaveMeta = Key('ajustes-meta');
   static const chaveHorario = Key('ajustes-horario');
   static const chaveSexo = Key('ajustes-sexo');
+  static const chaveFamilia = Key('ajustes-familia');
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final t = app.t;
+    garanteTextosDaFamilia();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -144,6 +147,12 @@ class SettingsScreen extends StatelessWidget {
               icone: Icons.layers_outlined,
               rotulo: t.sobreT,
               aoTocar: () => app.go(AppScreen.sobreposicao),
+            ),
+            _Linha(
+              chave: chaveFamilia,
+              icone: Icons.family_restroom_rounded,
+              rotulo: t.s('famT'),
+              aoTocar: () => app.go(AppScreen.familia),
             ),
             _Linha(
               chave: null,

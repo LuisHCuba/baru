@@ -85,7 +85,11 @@ class MainActivity : FlutterFragmentActivity() {
         val nome = ESPECIES.firstOrNull { it.equals(especie, true) }
             ?: return false
         val pm = packageManager
-        val ligar = ComponentName(this, "$packageName.Icone${nome.replaceFirstChar { it.uppercase() }}")
+        // Os `activity-alias` moram no pacote do código (com.lhcx.baru_app),
+        // não no applicationId (tech.lhcx.baru): com `packageName` o
+        // componente não existia e a troca de ícone sempre falhava.
+        val base = MainActivity::class.java.`package`!!.name
+        val ligar = ComponentName(this, "$base.Icone${nome.replaceFirstChar { it.uppercase() }}")
 
         pm.setComponentEnabledSetting(
             ligar,
@@ -95,7 +99,7 @@ class MainActivity : FlutterFragmentActivity() {
         for (outra in ESPECIES) {
             if (outra == nome) continue
             pm.setComponentEnabledSetting(
-                ComponentName(this, "$packageName.Icone${outra.replaceFirstChar { it.uppercase() }}"),
+                ComponentName(this, "$base.Icone${outra.replaceFirstChar { it.uppercase() }}"),
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                 PackageManager.DONT_KILL_APP,
             )
@@ -403,6 +407,16 @@ class MainActivity : FlutterFragmentActivity() {
                 // `activity-alias`, um por especie, e por isso o novo e
                 // ligado **antes** de o antigo ser desligado — na ordem
                 // inversa o app some da gaveta no intervalo.
+                // Regras da família no celular da criança: grava e liga o
+                // guarda; sem regras (fora de uma família), desliga.
+                "familiaRegras" -> {
+                    val json = call.argument<String>("json")
+                    val tinha = RegrasDaFamilia.le(this) != null
+                    RegrasDaFamilia.grava(this, json)
+                    if (json != null) GuardaDaFamilia.liga(this) else if (tinha) GuardaDaFamilia.desliga(this)
+                    result.success(true)
+                }
+
                 "trocaIcone" -> {
                     val alvo = call.argument<String>("especie").orEmpty()
                     result.success(trocaIcone(alvo))

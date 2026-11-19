@@ -147,10 +147,17 @@ void main() {
         onUserMessage: avisos.add,
       );
 
-      expect(aoAbrir.leaves, 25 + AppState.underGoalBonus);
+      // O bônus do dia abaixo da meta, mais o que a virada colheu sozinha:
+      // a missão diária "abaixo da meta" ficou pronta e ninguém colheu
+      // ("prêmio pronto nunca se perde", _colheAsEsquecidas).
+      expect(aoAbrir.guardadasNaVirada, greaterThan(0));
+      expect(aoAbrir.leaves, 25 + AppState.underGoalBonus + aoAbrir.guardadasNaVirada);
       expect(avisos, isEmpty, reason: 'ainda não há árvore de widgets');
       aoAbrir.flushPendingNotices();
-      expect(avisos.length, 1, reason: 'o aviso sai no primeiro frame');
+      // Dois avisos no primeiro frame: o do bônus e o das folhas que a
+      // virada guardou.
+      expect(avisos.length, 2, reason: 'os avisos saem no primeiro frame');
+      expect(avisos.where((a) => a.contains('${AppState.underGoalBonus}')), isNotEmpty);
     });
 
     test('o aviso sai uma vez e some depois de mostrado', () {

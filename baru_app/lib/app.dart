@@ -16,6 +16,8 @@ import 'l10n_notificacao.dart';
 import 'models.dart';
 import 'navegacao.dart';
 import 'widgets/folha_restrita.dart';
+import 'screens/familia_screen.dart';
+import 'services/familia_sync.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/paywall_screen.dart';
@@ -113,6 +115,9 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
       // O primeiro avanço de calendário acontece no construtor do AppState,
       // antes de existir árvore para receber um SnackBar.
       state.flushPendingNotices();
+      // Abrir o app do zero também conta: no celular de uma criança, as
+      // regras da família precisam valer sem esperar a volta ao app.
+      unawaited(FamiliaSync.instance.envia(state, forcar: false));
     });
   }
 
@@ -178,6 +183,8 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
       state.syncPermissionsFromOs();
       // Voltar do background é o momento em que a rede costuma ter voltado.
       state.retryPendingSync();
+      // Celular de criança numa família: manda o dia e aplica as regras.
+      unawaited(FamiliaSync.instance.envia(state, forcar: false));
     }
     // Depois das duas pontas, porque as duas mudam a conta: sair fecha o
     // tempo dentro do Baru, e voltar reconcilia a fuga com o medidor de tela.
@@ -256,6 +263,8 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
         return const ContaScreen();
       case AppScreen.sobreposicao:
         return const SobreposicaoScreen();
+      case AppScreen.familia:
+        return const FamiliaScreen();
       case AppScreen.folhas:
         return const FolhasScreen();
       case AppScreen.sequencia:

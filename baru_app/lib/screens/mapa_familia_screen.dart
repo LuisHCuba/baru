@@ -156,12 +156,11 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
         onLongPress: (_, p) => _editaLugar(em: p),
       ),
       children: [
-        // CARTO (dados do OpenStreetMap): os servidores do próprio OSM recusam apps.
+        // OpenStreetMap, com o app identificado (exigência da política de uso).
         TileLayer(
-          urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-          subdomains: const ['a', 'b', 'c', 'd'],
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'tech.lhcx.baru',
-          maxZoom: 20,
+          maxZoom: 19,
         ),
         CircleLayer(circles: [
           for (final l in _dados.lugares)

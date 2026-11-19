@@ -1139,23 +1139,9 @@ class AppState extends ChangeNotifier {
   Future<void> _comecaAVigiarODescanso() async {
     // Na web não há sobreposição: o aviso de permissão não se aplica.
     if (kIsWeb) return;
-    // iPhone: a Apple não deixa aparecer por cima de outro app. Os apps
-    // escolhidos mostram a tela do Baru durante o foco (Tempo de Uso), e
-    // sair do Baru chama de volta por notificação.
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      final fim = sessionEndsAt;
-      if (fim == null) return;
-      final tela = await TempoDeTelaIos.focoComeca(
-        fim: fim,
-        titulo: t.fill(t.notifSessaoTitulo, {'n': displayName}),
-        corpo: t.vigiaFala,
-      );
-      // Sem aviso aqui: no iPhone não existe "aparecer sobre outros apps", e um
-      // aviso a cada foco parecia erro. Quem quiser o bloqueio escolhe os apps
-      // em Ajustes › Sobreposição; sem escolha, fica a notificação de volta.
-      if (!tela.suportado) return;
-      return;
-    }
+    // iPhone: não existe "aparecer sobre outros apps"; o descanso segue sem
+    // vigia e sem aviso (um aviso aqui parecia erro).
+    if (defaultTargetPlatform == TargetPlatform.iOS) return;
     if (!await OverlayService.instance.temPermissao()) {
       onUserMessage?.call(t.vigiaSemPermissao);
       return;
@@ -2552,6 +2538,23 @@ class AppState extends ChangeNotifier {
   Future<void> _comecaAVigiar() async {
     // Na web não há sobreposição: o aviso de permissão não se aplica.
     if (kIsWeb) return;
+    // iPhone: a Apple não deixa aparecer por cima de outro app. Os apps
+    // escolhidos mostram a tela do Baru durante o foco (Tempo de Uso), e
+    // sair do Baru chama de volta por notificação.
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final fim = sessionEndsAt;
+      if (fim == null) return;
+      final tela = await TempoDeTelaIos.focoComeca(
+        fim: fim,
+        titulo: t.fill(t.notifSessaoTitulo, {'n': displayName}),
+        corpo: t.vigiaFala,
+      );
+      // Sem aviso aqui: no iPhone não existe "aparecer sobre outros apps", e um
+      // aviso a cada foco parecia erro. Quem quiser o bloqueio escolhe os apps
+      // em Ajustes › Sobreposição; sem escolha, fica a notificação de volta.
+      if (!tela.suportado) return;
+      return;
+    }
     // Sem "desenhar sobre outros apps" o vigia sobe, vê que a pessoa saiu, e
     // não consegue aparecer — em silêncio. Silêncio aqui é indistinguível de
     // "o app não funciona", que foi exatamente o relato.

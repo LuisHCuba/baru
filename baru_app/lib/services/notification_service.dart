@@ -1210,7 +1210,7 @@ class BaruNotifications {
         visibility: NotificationVisibility.public,
         category: AndroidNotificationCategory.reminder,
       ),
-      iOS: const DarwinNotificationDetails(),
+      iOS: _iosComSom,
     );
   }
 
@@ -1344,3 +1344,14 @@ class BaruNotifications {
     );
   }
 }
+
+/// No iPhone, lembrete e aviso aparecem de verdade: faixa no topo, lista,
+/// som e contador no ícone — mesmo com o Baru aberto.
+const _iosComSom = DarwinNotificationDetails(
+  presentAlert: true,
+  presentBanner: true,
+  presentList: true,
+  presentSound: true,
+  presentBadge: true,
+  interruptionLevel: InterruptionLevel.active,
+);

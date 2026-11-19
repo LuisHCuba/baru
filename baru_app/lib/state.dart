@@ -1150,7 +1150,10 @@ class AppState extends ChangeNotifier {
         titulo: t.fill(t.notifSessaoTitulo, {'n': displayName}),
         corpo: t.vigiaFala,
       );
-      if (!tela.autorizado || !tela.temEscolha) onUserMessage?.call(t.s('focoIosEscolher'));
+      // Sem aviso aqui: no iPhone não existe "aparecer sobre outros apps", e um
+      // aviso a cada foco parecia erro. Quem quiser o bloqueio escolhe os apps
+      // em Ajustes › Sobreposição; sem escolha, fica a notificação de volta.
+      if (!tela.suportado) return;
       return;
     }
     if (!await OverlayService.instance.temPermissao()) {

@@ -22,6 +22,10 @@ class MonitorDoBaru: DeviceActivityMonitor {
 
   override func intervalDidEnd(for activity: DeviceActivityName) {
     super.intervalDidEnd(for: activity)
+    // A sessão de foco acabou (mesmo com o Baru fechado): os apps voltam.
+    if activity == TelaCompartilhada.atividadeFoco {
+      TelaCompartilhada.tiraFoco()
+    }
     if activity == TelaCompartilhada.atividade {
       TelaCompartilhada.tiraEscudo()
     }

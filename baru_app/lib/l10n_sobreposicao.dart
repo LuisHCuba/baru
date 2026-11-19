@@ -22,6 +22,7 @@ import 'services/overlay_service.dart';
 /// Os textos deste módulo, no formato que [T.registra] espera.
 const textosDaSobreposicao = <String, Map<String, String>>{
   'pt': {
+    'focoIosEscolher': 'Para o Baru bloquear os apps durante o foco, autorize o Tempo de Uso e escolha os apps em Ajustes › Sobreposição.',
     'sobIosT': 'No iPhone',
     'sobIosComo': 'A Apple não deixa um app desenhar por cima de outro. No iPhone, quando a meta estoura, {n} avisa por notificação e, se você ligar abaixo, os apps escolhidos pausam com a tela da Apple até o dia seguinte.',
     'sobIosApps': 'Apps que contam',
@@ -108,6 +109,7 @@ const textosDaSobreposicao = <String, Map<String, String>>{
         'Responde e volta? A gente estava focando junto — o {app} espera.',
   },
   'en': {
+    'focoIosEscolher': 'To let Baru block apps during focus, allow Screen Time and pick the apps in Settings › Overlay.',
     'sobIosT': 'On iPhone',
     'sobIosComo': 'Apple doesn\'t let an app draw over another. On iPhone, when the goal runs out, {n} lets you know with a notification and, if you turn it on below, the chosen apps pause with Apple\'s screen until the next day.',
     'sobIosApps': 'Apps that count',
@@ -189,6 +191,7 @@ const textosDaSobreposicao = <String, Map<String, String>>{
         'Reply and come back? We were focusing together — {app} can wait.',
   },
   'es': {
+    'focoIosEscolher': 'Para que Baru bloquee las apps durante el enfoque, permite el Tiempo en pantalla y elige las apps en Ajustes › Superposición.',
     'sobIosT': 'En iPhone',
     'sobIosComo': 'Apple no deja que una app dibuje sobre otra. En iPhone, cuando se acaba la meta, {n} avisa con una notificación y, si lo activas abajo, las apps elegidas se pausan con la pantalla de Apple hasta el día siguiente.',
     'sobIosApps': 'Apps que cuentan',
@@ -268,6 +271,7 @@ const textosDaSobreposicao = <String, Map<String, String>>{
             'esperar.',
   },
   'zh': {
+    'focoIosEscolher': '要让 Baru 在专注期间屏蔽应用，请允许屏幕使用时间，并在 设置 › 悬浮窗 中选择应用。',
     'sobIosT': '在 iPhone 上',
     'sobIosComo': '苹果不允许应用覆盖其他应用。在 iPhone 上，目标用完时 {n} 会发通知提醒；如果你在下面开启，所选应用会以苹果的暂停画面暂停到第二天。',
     'sobIosApps': '计入的应用',

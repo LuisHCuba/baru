@@ -17,6 +17,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'tempo_de_tela_ios.dart';
+
 /// O ícone do app na gaveta é o bicho da pessoa.
 ///
 /// O Android não deixa trocar o ícone de um app instalado. O que se troca é
@@ -187,6 +189,11 @@ class VigiaService {
     // memória nenhuma. Um `para()` que desiste porque "não estava
     // vigiando" deixaria a notificação fixa para sempre na barra. Parar
     // duas vezes não custa nada; parar de menos custa caro.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      // No iPhone o "vigia" é o escudo do Tempo de Uso + notificação.
+      await TempoDeTelaIos.focoPara();
+      return;
+    }
     if (!_armado || kIsWeb) return;
     _vigiando = false;
     try {

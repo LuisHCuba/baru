@@ -13,6 +13,7 @@ import UIKit
 import FamilyControls
 import DeviceActivity
 import ManagedSettings
+import UserNotifications
 
 final class TempoDeTelaPlugin: NSObject, FlutterPlugin {
   static func register(with registrar: FlutterPluginRegistrar) {
@@ -75,6 +76,13 @@ final class TempoDeTelaPlugin: NSObject, FlutterPlugin {
         anon: args["anon"] as? String,
         sandbox: args["sandbox"] as? Bool ?? false
       )
+      result(Self.estado())
+    case "focoComeca":
+      let fim = Date(timeIntervalSince1970: (args["fimMs"] as? Double ?? 0) / 1000)
+      FocoDoIphone.comeca(ate: fim, titulo: args["titulo"] as? String ?? "Baru", corpo: args["corpo"] as? String ?? "")
+      result(Self.estado())
+    case "focoPara":
+      FocoDoIphone.para()
       result(Self.estado())
     case "definirEscudo":
       TelaCompartilhada.escudoAoEstourar = args["ativo"] as? Bool ?? false
@@ -241,5 +249,72 @@ private struct SeletorDeApps: View {
           ToolbarItem(placement: .confirmationAction) { Button("Pronto") { aoTerminar(escolha) } }
         }
     }
+  }
+}
+
+
+/// A sessão de foco no iPhone, no lugar da sobreposição do Android (a Apple
+/// não deixa um app aparecer por cima de outro):
+/// - os apps escolhidos mostram a tela do Baru até o fim da sessão, mesmo com
+///   o Baru fechado (a extensão tira o escudo quando o intervalo acaba);
+/// - sair do Baru durante o foco chama de volta por notificação.
+@available(iOS 16.0, *)
+enum FocoDoIphone {
+  private static var titulo = "Baru"
+  private static var corpo = ""
+  private static var observadores: [NSObjectProtocol] = []
+  private static let idVolta = "baru.foco.volta"
+
+  static func comeca(ate fim: Date, titulo: String, corpo: String) {
+    self.titulo = titulo
+    self.corpo = corpo
+    guard fim > Date() else { return }
+    TelaCompartilhada.focoAte = fim
+    let s = TelaCompartilhada.selecao
+    if AuthorizationCenter.shared.authorizationStatus == .approved,
+       !(s.applicationTokens.isEmpty && s.categoryTokens.isEmpty && s.webDomainTokens.isEmpty) {
+      TelaCompartilhada.aplicaFoco()
+      // O sistema exige ao menos 15 min de intervalo; a sessão mais curta tem 25.
+      let cal = Calendar(identifier: .gregorian)
+      let campos: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
+      let inicio = cal.dateComponents(campos, from: Date())
+      let termino = cal.dateComponents(campos, from: max(fim, Date().addingTimeInterval(15 * 60)))
+      let centro = DeviceActivityCenter()
+      centro.stopMonitoring([TelaCompartilhada.atividadeFoco])
+      try? centro.startMonitoring(TelaCompartilhada.atividadeFoco,
+                                  during: DeviceActivitySchedule(intervalStart: inicio, intervalEnd: termino, repeats: false))
+    }
+    observa()
+  }
+
+  static func para() {
+    TelaCompartilhada.tiraFoco()
+    DeviceActivityCenter().stopMonitoring([TelaCompartilhada.atividadeFoco])
+    observadores.forEach { NotificationCenter.default.removeObserver($0) }
+    observadores.removeAll()
+    let c = UNUserNotificationCenter.current()
+    c.removePendingNotificationRequests(withIdentifiers: [idVolta])
+    c.removeDeliveredNotifications(withIdentifiers: [idVolta])
+  }
+
+  private static func observa() {
+    guard observadores.isEmpty else { return }
+    let nc = NotificationCenter.default
+    observadores.append(nc.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
+      guard TelaCompartilhada.focoAtivo() else { return }
+      let c = UNMutableNotificationContent()
+      c.title = titulo
+      c.body = corpo
+      c.sound = .default
+      c.threadIdentifier = "baru.foco"
+      if #available(iOS 15.0, *) { c.interruptionLevel = .timeSensitive }
+      UNUserNotificationCenter.current().add(UNNotificationRequest(
+        identifier: idVolta, content: c, trigger: UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)))
+    })
+    observadores.append(nc.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { _ in
+      let c = UNUserNotificationCenter.current()
+      c.removePendingNotificationRequests(withIdentifiers: [idVolta])
+      c.removeDeliveredNotifications(withIdentifiers: [idVolta])
+    })
   }
 }

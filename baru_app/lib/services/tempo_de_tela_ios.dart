@@ -117,6 +117,13 @@ class TempoDeTelaIos {
   }) =>
       _chama('guardaChave', {'chave': chave, 'url': url, 'anon': anon, 'sandbox': sandbox});
 
+  /// Sessão de foco: os apps escolhidos mostram a tela do Baru até [fim], e
+  /// sair do Baru chama de volta por notificação ([titulo], [corpo]).
+  static Future<EstadoTempoDeTela> focoComeca({required DateTime fim, required String titulo, required String corpo}) =>
+      _chama('focoComeca', {'fimMs': fim.millisecondsSinceEpoch.toDouble(), 'titulo': titulo, 'corpo': corpo});
+
+  static Future<EstadoTempoDeTela> focoPara() => _chama('focoPara');
+
   static Future<EstadoTempoDeTela> definirEscudo({required bool ativo}) =>
       _chama('definirEscudo', {'ativo': ativo});
 }

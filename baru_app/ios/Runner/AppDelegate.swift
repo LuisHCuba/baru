@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -7,6 +8,8 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Notificações aparecem também com o Baru aberto (flutter_local_notifications).
+    UNUserNotificationCenter.current().delegate = self
     // Push silencioso da família (sem pedir permissão: não mostra nada).
     application.registerForRemoteNotifications()
     // Localização da família: o iOS relança o Baru fechado numa mudança de lugar.

@@ -139,6 +139,36 @@ enum TelaCompartilhada {
     }
   }
 
+  // ------------------------------------------------ sessão de foco (no lugar da sobreposição do Android)
+
+  /// Durante o foco, os apps escolhidos mostram a tela do Baru. Loja própria:
+  /// acabar o foco não tira o escudo da meta nem a pausa da família.
+  static let lojaFoco = ManagedSettingsStore(named: ManagedSettingsStore.Name("baru.foco"))
+  static let atividadeFoco = DeviceActivityName("baru.foco")
+  private static let chaveFocoAte = "foco.ate"
+
+  static var focoAte: Date? {
+    get { defaults.object(forKey: chaveFocoAte) as? Date }
+    set { defaults.set(newValue, forKey: chaveFocoAte) }
+  }
+
+  static func focoAtivo(_ agora: Date = Date()) -> Bool {
+    guard let ate = focoAte else { return false }
+    return agora < ate
+  }
+
+  static func aplicaFoco() {
+    let s = selecao
+    lojaFoco.shield.applications = s.applicationTokens.isEmpty ? nil : s.applicationTokens
+    lojaFoco.shield.applicationCategories = s.categoryTokens.isEmpty ? nil : .specific(s.categoryTokens)
+    lojaFoco.shield.webDomains = s.webDomainTokens.isEmpty ? nil : s.webDomainTokens
+  }
+
+  static func tiraFoco() {
+    focoAte = nil
+    lojaFoco.clearAllSettings()
+  }
+
   static func filtroDeSites(_ ativo: Bool) {
     lojaFiltro.webContent.blockedByFilter = ativo ? .auto() : nil
   }

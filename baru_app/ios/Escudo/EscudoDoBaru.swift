@@ -8,10 +8,11 @@ import UIKit
 final class EscudoDoBaru: ShieldConfigurationDataSource {
   private func textos() -> (titulo: String, corpo: String, botao: String) {
     switch Locale.current.language.languageCode?.identifier ?? "pt" {
-    case "en": return ("Time for a break", "Your screen time is paused for now. How about doing something else for a bit?", "Close")
-    case "es": return ("Hora de una pausa", "Tu tiempo de pantalla está en pausa. ¿Qué tal hacer otra cosa un rato?", "Cerrar")
-    case "zh": return ("休息一下吧", "屏幕时间暂停中。去做点别的事吧？", "关闭")
-    default: return ("Hora de uma pausa", "A tela está em pausa agora. Que tal fazer outra coisa um pouco?", "Fechar")
+    // Um texto só serve à sessão de foco, à pausa da família e à meta estourada.
+    case "en": return ("Not now", "This app is paused for now. Your companion is waiting for you away from the screen.", "Close")
+    case "es": return ("Ahora no", "Esta app está en pausa ahora. Tu compañero te espera lejos de la pantalla.", "Cerrar")
+    case "zh": return ("现在不行", "这个应用暂时暂停了。你的小伙伴在屏幕外等你。", "关闭")
+    default: return ("Agora não", "Este app está pausado agora. Seu bicho te espera longe da tela.", "Fechar")
     }
   }
 

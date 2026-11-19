@@ -426,6 +426,15 @@ class BaruNotifications {
 
   Future<bool> hasPermission() async {
     if (kIsWeb) return false;
+    // No iPhone quem sabe é o próprio plugin (o permission_handler pode
+    // responder "negado" sem nunca ter perguntado).
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      try {
+        final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+        final o = await ios?.checkPermissions();
+        if (o != null) return o.isEnabled;
+      } catch (_) {}
+    }
     final status = await Permission.notification.status;
     return status.isGranted || status.isLimited;
   }
@@ -439,6 +448,14 @@ class BaruNotifications {
           AndroidFlutterLocalNotificationsPlugin>();
       final granted = await android?.requestNotificationsPermission();
       if (granted == true) return true;
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      try {
+        final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+        final ok = await ios?.requestPermissions(alert: true, badge: true, sound: true);
+        if (ok != null) return ok;
+      } catch (_) {}
     }
 
     final result = await Permission.notification.request();

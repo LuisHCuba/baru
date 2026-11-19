@@ -38,6 +38,7 @@ import 'services/som_service.dart';
 import 'services/vigia_service.dart';
 import 'services/widget_service.dart';
 import 'widgets/raiz.dart';
+import 'services/tempo_de_tela_ios.dart';
 import 'services/usage_service.dart';
 
 DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -1138,6 +1139,20 @@ class AppState extends ChangeNotifier {
   Future<void> _comecaAVigiarODescanso() async {
     // Na web não há sobreposição: o aviso de permissão não se aplica.
     if (kIsWeb) return;
+    // iPhone: a Apple não deixa aparecer por cima de outro app. Os apps
+    // escolhidos mostram a tela do Baru durante o foco (Tempo de Uso), e
+    // sair do Baru chama de volta por notificação.
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final fim = sessionEndsAt;
+      if (fim == null) return;
+      final tela = await TempoDeTelaIos.focoComeca(
+        fim: fim,
+        titulo: t.fill(t.notifSessaoTitulo, {'n': displayName}),
+        corpo: t.vigiaFala,
+      );
+      if (!tela.autorizado || !tela.temEscolha) onUserMessage?.call(t.s('focoIosEscolher'));
+      return;
+    }
     if (!await OverlayService.instance.temPermissao()) {
       onUserMessage?.call(t.vigiaSemPermissao);
       return;

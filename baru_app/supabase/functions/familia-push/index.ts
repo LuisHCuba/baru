@@ -10,7 +10,8 @@ import { jsonResponse, servico } from '../_shared/http.ts'
  * criança mudaram no último minuto e meio. O pior que alguém de fora consegue
  * é um push silencioso a mais, que só faz o iPhone reler as próprias regras.
  *
- * Segredos da função (o responsável cola no painel do Supabase):
+ * Segredos da função (fonte: Infisical LHCX_CENTRAL/prod; o Supabase recebe
+ * por sincronização do Infisical — nunca editar direto no painel):
  *   APNS_KEY_P8      conteúdo do AuthKey_XXXX.p8 (chave de push da Apple)
  *   APNS_KEY_ID      Key ID da chave (10 caracteres)
  * Opcionais: APNS_TEAM_ID (padrão PHV3N8AFK4), APNS_TOPIC (padrão tech.lhcx.baru).

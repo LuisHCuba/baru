@@ -49,6 +49,10 @@ Decidido em 2026-11-18 com o Luis:
   inicial e o telefone. Volta sozinho depois de reiniciar (`GuardaNoBoot`). Com a chave do
   aparelho, busca as regras a cada 2 min com o app fechado.
 
+### Segredos
+Todo segredo mora no Infisical (LHCX_CENTRAL, prod). A função `familia-push` usa
+`APNS_KEY_P8` e `APNS_KEY_ID`, que chegam ao Supabase pela sincronização do Infisical.
+
 ### Limites conhecidos
 - **iOS com o app fechado não recebe regras novas** (pausa dada agora, horário mudado): o
   iPhone só aplica o que o responsável mudou quando o Baru abre. Resolver exige push (APNs):

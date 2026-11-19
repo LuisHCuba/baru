@@ -52,7 +52,7 @@ class AuthScreen extends StatefulWidget {
   static const chaveApple = Key('auth-apple');
 
   /// Ligar quando o provedor Apple tiver Services ID e chave (OAuth).
-  static const mostraAppleForaDoIphone = false;
+  static const mostraAppleForaDoIphone = true;
   static const chaveReenviar = Key('auth-reenviar');
 
   @override

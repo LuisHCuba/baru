@@ -41,14 +41,34 @@ class FamiliaSync {
   /// já no idioma da criança.
   static const _chaveGuardada = 'baru_familia_chave_aparelho';
 
+  /// Pedido de localização já feito nesta abertura (não insistir).
+  static bool _jaPediuLocal = false;
+
+  /// Chave já conferida com o servidor nesta abertura do app.
+  static String? _chaveConferida;
+
   /// Chave própria deste aparelho, para o guarda do Android ler as regras
   /// sozinho. Pedida uma vez e guardada; sem a função no banco, fica nula.
   static Future<String?> _chaveDoAparelho(SupabaseClient client) async {
     final prefs = await SharedPreferences.getInstance();
     final salva = prefs.getString(_chaveGuardada);
-    if (salva != null && salva.length == 64) return salva;
+    if (salva != null && salva.length == 64) {
+      // A chave guardada pode ter morrido no servidor (a criança saiu e voltou
+      // à família, ou o aparelho foi trocado): sem conferir, o celular ficava
+      // mudo para sempre — sem regras com o app fechado e sem localização.
+      if (_chaveConferida == salva) return salva;
+      try {
+        final r = await client.rpc('baru_familia_regras_do_aparelho', params: {'p_chave': salva});
+        if (r != null) {
+          _chaveConferida = salva;
+          return salva;
+        }
+      } catch (_) {
+        return salva; // sem rede: fica com a que tem
+      }
+    }
     try {
-      final nova = await client.rpc('baru_familia_chave_do_aparelho');
+      final nova = await client.rpc('baru_familia_chave_do_aparelho', params: {'p_chave_antiga': salva});
       if (nova is String && nova.length == 64) {
         await prefs.setString(_chaveGuardada, nova);
         return nova;
@@ -176,7 +196,14 @@ class FamiliaSync {
       anon: BaruEnv.supabaseAnonKey,
     );
     if (!regras.localizacao || chave == null) return;
-    if (!(await LocalNativo.estado()).concedida) return;
+    var permissao = await LocalNativo.estado();
+    // Nunca perguntado: pergunta já (a tela Família explica o porquê).
+    if (permissao == PermissaoDeLocal.naoPedida ||
+        (permissao == PermissaoDeLocal.negada && defaultTargetPlatform == TargetPlatform.android && !_jaPediuLocal)) {
+      _jaPediuLocal = true;
+      permissao = await LocalNativo.pedir(sempre: true);
+    }
+    if (!permissao.concedida) return;
     final p = await LocalNativo.agora();
     if (p == null) return;
     await repo.enviarPosicao(chave: chave, lat: p.lat, lng: p.lng, precisaoM: p.precisaoM, bateria: p.bateria, motivo: 'abriu');

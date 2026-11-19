@@ -6,6 +6,7 @@ const textosDoLocal = <String, Map<String, String>>{
   'pt': {
     'locTitulo': 'Localização',
     'locLigar': 'Ver onde {n} está',
+    'locLigarBotao': 'Ligar localização',
     'locLigarSub': 'Mostra no mapa e avisa quando chega ou sai de lugares combinados.',
     'locConsentT': 'Ligar a localização de {n}?',
     'locConsentCorpo':
@@ -75,6 +76,7 @@ const textosDoLocal = <String, Map<String, String>>{
   'en': {
     'locTitulo': 'Location',
     'locLigar': 'See where {n} is',
+    'locLigarBotao': 'Turn on location',
     'locLigarSub': 'Shows it on the map and tells you when they arrive at or leave saved places.',
     'locConsentT': 'Turn on location for {n}?',
     'locConsentCorpo':
@@ -144,6 +146,7 @@ const textosDoLocal = <String, Map<String, String>>{
   'es': {
     'locTitulo': 'Ubicación',
     'locLigar': 'Ver dónde está {n}',
+    'locLigarBotao': 'Activar ubicación',
     'locLigarSub': 'Lo muestra en el mapa y avisa cuando llega o sale de lugares acordados.',
     'locConsentT': '¿Activar la ubicación de {n}?',
     'locConsentCorpo':
@@ -213,6 +216,7 @@ const textosDoLocal = <String, Map<String, String>>{
   'zh': {
     'locTitulo': '位置',
     'locLigar': '查看 {n} 在哪里',
+    'locLigarBotao': '开启位置',
     'locLigarSub': '在地图上显示，并在到达或离开约定地点时提醒你。',
     'locConsentT': '开启 {n} 的位置？',
     'locConsentCorpo': '作为家长，你允许 Baru 保存 {n} 手机的位置最多 7 天，仅家庭可见。开启期间，{n} 的手机上会一直显示提示。你可以随时关闭，关闭会删除历史记录。',

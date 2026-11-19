@@ -307,6 +307,15 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
             ),
             const SizedBox(height: Espaco.sm),
           ],
+        if (f.criancas.isNotEmpty) ...[
+          BotaoBaru(
+            key: const Key('familia-mapa'),
+            rotulo: t.s('locMapaT'),
+            papel: PapelDoBotao.secundario,
+            aoTocar: () => _abreMapa(t, f, null),
+          ),
+          const SizedBox(height: Espaco.sm),
+        ],
         if (_visiveis(f).isNotEmpty) ...[
           const SizedBox(height: Espaco.md),
           Text(t.s('famAvisos'), style: estilo(Tipo.subtitulo)),
@@ -831,12 +840,23 @@ class _CartaoDaCrianca extends StatelessWidget {
                 ),
               ]),
             ),
-            Switch(
-              key: Key('local-${c.id}'),
-              value: c.regras.localizacao,
-              onChanged: ocupado || aoLocal == null ? null : aoLocal,
-            ),
+            if (c.regras.localizacao)
+              Switch(
+                key: Key('local-${c.id}'),
+                value: true,
+                onChanged: ocupado || aoLocal == null ? null : aoLocal,
+              ),
           ]),
+          if (!c.regras.localizacao) ...[
+            const SizedBox(height: Espaco.xs),
+            BotaoBaru(
+              key: Key('local-${c.id}'),
+              rotulo: t.s('locLigarBotao'),
+              papel: PapelDoBotao.secundario,
+              ativo: !ocupado && aoLocal != null,
+              aoTocar: () => aoLocal?.call(true),
+            ),
+          ],
           if (c.regras.localizacao)
             Wrap(spacing: Espaco.xs, runSpacing: Espaco.xs, children: [
               ActionChip(

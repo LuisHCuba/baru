@@ -137,7 +137,7 @@ Regras de uso deste checklist:
 `.escudo-acao`)
 - Family Controls Distribution nos 5 bundle IDs; App Group nas que leem dados
   compartilhados.
-- Conta de teste: `revisao.apple@meubaru.com` (senha em
+- Conta de teste: e-mail em `/baru-ios/BARU_CONTA_REVISAO_APPLE_EMAIL` (senha em
   `/baru-ios/BARU_CONTA_REVISAO_APPLE_SENHA`), cortesia vitalícia, criança na
   "Família de revisão" com localização ligada.
 - Histórico: 1.0 recusado por Family Controls (contestado, binário estava

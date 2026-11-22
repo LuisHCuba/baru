@@ -7,6 +7,10 @@ void garanteTextosDasSkills() => T.registra(textosDasSkills);
 
 const textosDasSkills = <String, Map<String, String>>{
   'pt': {
+    'skMente': 'Mente',
+    'skCorpo': 'Corpo',
+    'skSalvarXp': 'Salvar  ·  +{x} XP em {s}',
+    'skKmCurto': 'Distância',
     'sdHoje': 'Hoje',
     'sdHabilidades': 'Habilidades',
     'sdBaru': 'Baru',
@@ -43,6 +47,10 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Dia dentro da meta',
   },
   'en': {
+    'skMente': 'Mind',
+    'skCorpo': 'Body',
+    'skSalvarXp': 'Save  ·  +{x} XP in {s}',
+    'skKmCurto': 'Distance',
     'sdHoje': 'Today',
     'sdHabilidades': 'Skills',
     'sdBaru': 'Baru',
@@ -79,6 +87,10 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Day within the goal',
   },
   'es': {
+    'skMente': 'Mente',
+    'skCorpo': 'Cuerpo',
+    'skSalvarXp': 'Guardar  ·  +{x} XP en {s}',
+    'skKmCurto': 'Distancia',
     'sdHoje': 'Hoy',
     'sdHabilidades': 'Habilidades',
     'sdBaru': 'Baru',
@@ -115,6 +127,10 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Día dentro de la meta',
   },
   'zh': {
+    'skMente': '头脑',
+    'skCorpo': '身体',
+    'skSalvarXp': '保存 · {s} +{x} XP',
+    'skKmCurto': '距离',
     'sdHoje': '今天',
     'sdHabilidades': '技能',
     'sdBaru': 'Baru',

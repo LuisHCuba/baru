@@ -349,14 +349,16 @@ class FundoDoMundo extends CustomPainter {
       );
     }
 
-    // A trilha de terra batida, da toca à margem.
+    // A trilha de terra batida, da toca à margem: afina nas pontas, sem
+    // borda reta (a ponta cortada lia como recorte de papel).
     final trilha = Path()
-      ..moveTo(g.x(0.06), g.chao + 10)
-      ..quadraticBezierTo(g.x(0.25), g.chao - 4, g.x(0.45), g.chao + 14)
-      ..quadraticBezierTo(g.x(0.58), g.chao + 22, g.x(0.66), g.chao + 12)
-      ..lineTo(g.x(0.66), g.chao + 30)
-      ..quadraticBezierTo(g.x(0.58), g.chao + 40, g.x(0.45), g.chao + 32)
-      ..quadraticBezierTo(g.x(0.25), g.chao + 16, g.x(0.06), g.chao + 28)
+      ..moveTo(g.x(0.075), g.chao + 18)
+      ..quadraticBezierTo(g.x(0.16), g.chao + 2, g.x(0.30), g.chao + 6)
+      ..quadraticBezierTo(g.x(0.45), g.chao + 10, g.x(0.58), g.chao + 20)
+      ..quadraticBezierTo(g.x(0.64), g.chao + 24, g.x(0.69), g.chao + 26)
+      ..quadraticBezierTo(g.x(0.64), g.chao + 34, g.x(0.56), g.chao + 34)
+      ..quadraticBezierTo(g.x(0.44), g.chao + 30, g.x(0.30), g.chao + 24)
+      ..quadraticBezierTo(g.x(0.16), g.chao + 22, g.x(0.075), g.chao + 18)
       ..close();
     canvas.drawPath(trilha, _p(areia.withValues(alpha: 0.55)));
 
@@ -374,6 +376,9 @@ class FundoDoMundo extends CustomPainter {
           toca.dx + 120 * e,
           toca.dy,
         )
+        // A base afunda na grama em curva, em vez de uma linha reta.
+        ..quadraticBezierTo(toca.dx + 60 * e, toca.dy + 14 * e, toca.dx, toca.dy + 12 * e)
+        ..quadraticBezierTo(toca.dx - 60 * e, toca.dy + 14 * e, toca.dx - 120 * e, toca.dy)
         ..close(),
       _p(Color.lerp(areia, const Color(0xFF8A6A48), 0.35)!),
     );
@@ -421,15 +426,25 @@ class FundoDoMundo extends CustomPainter {
     final agua = cenario.aguaCom(luz.agua);
     final funda = cenario.aguaFundaCom(luz.aguaFunda);
     final topoDaAgua = g.linhaDagua - 40 * e;
+    // Margem em curva e água que segue além da ponta do mundo: a borda reta
+    // e o fim seco da lagoa apareciam como recorte na beira da tela.
+    final alem = largura + 400;
     final lagoa = Path()
-      ..moveTo(beira - 40, h)
-      ..lineTo(beira - 30, g.chao + 30)
-      ..quadraticBezierTo(beira - 10, topoDaAgua + 8, beira + 50, topoDaAgua)
-      ..lineTo(largura, topoDaAgua - 6)
-      ..lineTo(largura, h)
+      ..moveTo(beira - 90, h + 20)
+      ..cubicTo(beira - 70, g.chao + 60, beira - 40, topoDaAgua + 30, beira + 30, topoDaAgua + 6)
+      ..quadraticBezierTo(beira + 90, topoDaAgua - 6, beira + 170, topoDaAgua - 2);
+    for (var x = beira + 170; x <= alem; x += 60) {
+      lagoa.lineTo(x, topoDaAgua - 4 + math.sin(x / 140) * 5);
+    }
+    lagoa
+      ..lineTo(alem, h + 20)
       ..close();
-    // A margem de areia em volta.
-    canvas.drawPath(lagoa.shift(const Offset(-10, -6)), _p(areia));
+    // A margem de areia em volta, mais larga perto da terra.
+    canvas.drawPath(lagoa.shift(Offset(-16 * e, -8 * e)), _p(areia));
+    canvas.drawPath(
+      lagoa.shift(Offset(-7 * e, -3 * e)),
+      _p(Color.lerp(areia, agua, 0.35)!),
+    );
     canvas.drawPath(
       lagoa,
       Paint()
@@ -439,7 +454,7 @@ class FundoDoMundo extends CustomPainter {
               end: Alignment.bottomCenter,
               colors: [agua, funda],
             ).createShader(
-              Rect.fromLTWH(beira, topoDaAgua, largura - beira, h - topoDaAgua),
+              Rect.fromLTWH(beira, topoDaAgua, alem - beira, h - topoDaAgua),
             ),
     );
     // Reflexos que andam devagar.

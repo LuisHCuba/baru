@@ -96,6 +96,12 @@ void main() {
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
+    // A folha abre em abas; o cartão do nível mora em Missões.
+    expect(find.byKey(const Key('seu-dia-aba-0')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('seu-dia-aba-1')));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
     expect(find.byKey(CartaoNivel.chave), findsOneWidget);
     await _fecha(tester);
   });

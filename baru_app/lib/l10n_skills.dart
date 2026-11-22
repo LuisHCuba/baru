@@ -7,6 +7,9 @@ void garanteTextosDasSkills() => T.registra(textosDasSkills);
 
 const textosDasSkills = <String, Map<String, String>>{
   'pt': {
+    'sdHoje': 'Hoje',
+    'sdHabilidades': 'Habilidades',
+    'sdBaru': 'Baru',
     'skSubiu': '{s} subiu para o nível {n}!',
     'skT': 'Habilidades do Baru',
     'skSaudavel': 'Saudável',
@@ -40,6 +43,9 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Dia dentro da meta',
   },
   'en': {
+    'sdHoje': 'Today',
+    'sdHabilidades': 'Skills',
+    'sdBaru': 'Baru',
     'skSubiu': '{s} reached level {n}!',
     'skT': "Baru's skills",
     'skSaudavel': 'Healthy',
@@ -73,6 +79,9 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Day within the goal',
   },
   'es': {
+    'sdHoje': 'Hoy',
+    'sdHabilidades': 'Habilidades',
+    'sdBaru': 'Baru',
     'skSubiu': '¡{s} subió al nivel {n}!',
     'skT': 'Habilidades de Baru',
     'skSaudavel': 'Saludable',
@@ -106,6 +115,9 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Día dentro de la meta',
   },
   'zh': {
+    'sdHoje': '今天',
+    'sdHabilidades': '技能',
+    'sdBaru': 'Baru',
     'skSubiu': '{s}升到了 {n} 级！',
     'skT': 'Baru的技能',
     'skSaudavel': '健康',

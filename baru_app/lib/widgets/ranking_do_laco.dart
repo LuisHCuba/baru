@@ -63,6 +63,8 @@ class _RankingDoLacoState extends State<RankingDoLaco> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
       backgroundColor: Cores.superficie,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => _FolhaDoRanking(t: t, laco: widget.laco, repo: _repo, inicial: r),

@@ -644,6 +644,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
             nome: _nomeDe(t, f, sos.criancaId),
             em: sos.em,
             aoTocar: () => _abreMapa(t, f, sos.criancaId),
+            aoFechar: () => _marcaSosVisto(sos),
           ),
           const SizedBox(height: Espaco.md),
         ],

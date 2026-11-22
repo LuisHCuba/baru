@@ -8,101 +8,178 @@ import '../state.dart';
 import '../theme.dart';
 import 'common.dart';
 
+/// O estado das skills, um só para a home inteira: o placar do topo e a aba
+/// Habilidades leem daqui, e qualquer registro atualiza os dois.
+final skillsAtuais = ValueNotifier<MinhasSkills?>(null);
+SkillsRepo? _repoGlobal;
+SkillsRepo get _repo => _repoGlobal ??= SkillsRepo();
+
+/// Para os testes: troca o repositório.
+@visibleForTesting
+set repoDasSkills(SkillsRepo r) => _repoGlobal = r;
+
+bool _carregando = false;
+
+/// Busca as skills (e dá o Saudável do dia quando cabe). Sem rede, fica como está.
+Future<void> carregaSkills(AppState app) async {
+  if (_carregando) return;
+  _carregando = true;
+  try {
+    var s = await _repo.minhas();
+    if (app.usageAccess && app.underGoal && DateTime.now().hour >= 21) s = await _repo.saudavelDeHoje();
+    skillsAtuais.value = s;
+  } catch (_) {
+    skillsAtuais.value ??= MinhasSkills.vazio;
+  } finally {
+    _carregando = false;
+  }
+}
+
+/// O botão "+": abre o registro de leitura, estudo ou exercício.
+Future<void> abreRegistroDeHabito(BuildContext context, AppState app) async {
+  garanteTextosDasSkills();
+  final t = app.t;
+  final antes = skillsAtuais.value ?? MinhasSkills.vazio;
+  final novo = await showModalBottomSheet<MinhasSkills>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: true,
+    backgroundColor: Cores.superficie,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (_) => _FolhaDeRegistro(t: t, repo: _repo, antes: antes),
+  );
+  if (novo == null) return;
+  skillsAtuais.value = novo;
+  if (!context.mounted) return;
+  for (final s in Skill.values) {
+    final n = novo.de(s).nivel;
+    if (n > antes.de(s).nivel) {
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          key: const Key('skills-subiu'),
+          icon: Icon(iconeDaSkill(s), size: 48, color: corDaSkill(s)),
+          title: Text(t.fill(t.s('skSubiu'), {'s': nomeDaSkill(t, s), 'n': n}), textAlign: TextAlign.center),
+          actions: [TextButton(onPressed: () => Navigator.of(c).pop(), child: const Text('OK'))],
+        ),
+      );
+      if (!context.mounted) return;
+    }
+  }
+}
+
+/// Botão "+" redondo e claro, para registrar.
+class BotaoRegistrar extends StatelessWidget {
+  const BotaoRegistrar({super.key, required this.app, this.tamanho = 44, this.contexto});
+  final AppState app;
+  final double tamanho;
+
+  /// De onde abrir a folha (o painel da home fica fora do Navigator).
+  final BuildContext? Function()? contexto;
+
+  @override
+  Widget build(BuildContext context) {
+    garanteTextosDasSkills();
+    return Semantics(
+      button: true,
+      label: app.t.s('skRegistrar'),
+      child: Material(
+        key: const Key('skills-mais'),
+        color: AppColors.green,
+        shape: const CircleBorder(),
+        elevation: 3,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () {
+            final c = contexto?.call() ?? context;
+            abreRegistroDeHabito(c, app);
+          },
+          child: SizedBox(
+            width: tamanho,
+            height: tamanho,
+            child: Icon(Icons.add_rounded, color: Colors.white, size: tamanho * 0.62),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// O nível de cada skill, para a barra de placar do topo da home.
+class NiveisDasSkills extends StatefulWidget {
+  const NiveisDasSkills({super.key, required this.app});
+  final AppState app;
+
+  @override
+  State<NiveisDasSkills> createState() => _NiveisDasSkillsState();
+}
+
+class _NiveisDasSkillsState extends State<NiveisDasSkills> {
+  @override
+  void initState() {
+    super.initState();
+    if (skillsAtuais.value == null) carregaSkills(widget.app);
+  }
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<MinhasSkills?>(
+        valueListenable: skillsAtuais,
+        builder: (context, sk, _) => Row(key: const Key('placar-skills'), mainAxisSize: MainAxisSize.min, children: [
+          for (final s in Skill.values) ...[
+            Icon(iconeDaSkill(s), size: 16, color: corDaSkill(s)),
+            const SizedBox(width: 2),
+            Text('${(sk ?? MinhasSkills.vazio).de(s).nivel}',
+                style: nunito(size: 14, weight: FontWeight.w800, tabular: true)),
+            if (s != Skill.forte) const SizedBox(width: 8),
+          ],
+        ]),
+      );
+}
+
 /// As três barras das skills (Saudável, Inteligente, Forte) e o botão Registrar.
 ///
 /// Saudável sobe sozinho: quando o tempo de tela está liberado e o dia de
 /// hoje (depois das 21h) ou o de ontem fechou dentro da meta, o app avisa o
 /// servidor, que dá 20 XP uma vez por dia.
 class SkillsDoBaru extends StatefulWidget {
-  const SkillsDoBaru({super.key, required this.app, this.repo});
+  const SkillsDoBaru({super.key, required this.app});
   final AppState app;
-  final SkillsRepo? repo;
 
   @override
   State<SkillsDoBaru> createState() => _SkillsDoBaruState();
 }
 
 class _SkillsDoBaruState extends State<SkillsDoBaru> {
-  MinhasSkills _skills = MinhasSkills.vazio;
-  bool _carregou = false;
-  late final SkillsRepo _repo = widget.repo ?? SkillsRepo();
-
   T get t => widget.app.t;
 
   @override
   void initState() {
     super.initState();
     garanteTextosDasSkills();
-    _carrega();
-  }
-
-  Future<void> _carrega() async {
-    try {
-      var s = await _repo.minhas();
-      if (_deveDarSaudavel()) s = await _repo.saudavelDeHoje();
-      if (mounted) setState(() => (_skills = s, _carregou = true));
-    } catch (_) {
-      if (mounted) setState(() => _carregou = true);
-    }
-  }
-
-  bool _deveDarSaudavel() {
-    final app = widget.app;
-    if (!app.usageAccess || !app.underGoal) return false;
-    return DateTime.now().hour >= 21;
-  }
-
-  Future<void> _registrar() async {
-    final novo = await showModalBottomSheet<MinhasSkills>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Cores.superficie,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => _FolhaDeRegistro(t: t, repo: _repo, antes: _skills),
-    );
-    if (novo == null || !mounted) return;
-    final antes = _skills;
-    setState(() => _skills = novo);
-    for (final s in Skill.values) {
-      final n = novo.de(s).nivel;
-      if (n > antes.de(s).nivel) _comemora(s, n);
-    }
-  }
-
-  void _comemora(Skill s, int nivel) {
-    showDialog<void>(
-      context: context,
-      builder: (c) => AlertDialog(
-        key: const Key('skills-subiu'),
-        icon: Icon(iconeDaSkill(s), size: 48, color: corDaSkill(s)),
-        title: Text(t.fill(t.s('skSubiu'), {'s': nomeDaSkill(t, s), 'n': nivel}), textAlign: TextAlign.center),
-        actions: [TextButton(onPressed: () => Navigator.of(c).pop(), child: const Text('OK'))],
-      ),
-    );
+    carregaSkills(widget.app);
   }
 
   @override
-  Widget build(BuildContext context) {
-    return SoftCard(
-      key: const Key('skills-do-baru'),
-      padding: const EdgeInsets.all(Espaco.md),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        for (final s in Skill.values) ...[
-          _BarraDaSkill(t: t, estado: _skills.de(s), carregando: !_carregou),
-          const SizedBox(height: Espaco.sm),
-        ],
-        Text(t.s('skComoSaudavel'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
-        const SizedBox(height: Espaco.sm),
-        BotaoBaru(
-          key: const Key('skills-registrar'),
-          rotulo: t.s('skRegistrar'),
-          icone: const Icon(Icons.add_rounded),
-          ativo: _carregou,
-          aoTocar: _registrar,
+  Widget build(BuildContext context) => ValueListenableBuilder<MinhasSkills?>(
+        valueListenable: skillsAtuais,
+        builder: (context, sk, _) => SoftCard(
+          key: const Key('skills-do-baru'),
+          padding: const EdgeInsets.all(Espaco.md),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Row(children: [
+              Expanded(child: Text(t.s('skT'), style: estilo(Tipo.subtitulo))),
+              BotaoRegistrar(app: widget.app, tamanho: 40),
+            ]),
+            const SizedBox(height: Espaco.sm),
+            for (final s in Skill.values) ...[
+              _BarraDaSkill(t: t, estado: (sk ?? MinhasSkills.vazio).de(s), carregando: sk == null),
+              const SizedBox(height: Espaco.sm),
+            ],
+            Text(t.s('skComoSaudavel'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+          ]),
         ),
-      ]),
-    );
-  }
+      );
 }
 
 String nomeDaSkill(T t, Skill s) => t.s(switch (s) {
@@ -114,7 +191,7 @@ String nomeDaSkill(T t, Skill s) => t.s(switch (s) {
 IconData iconeDaSkill(Skill s) => switch (s) {
       Skill.saudavel => Icons.favorite_rounded,
       Skill.inteligente => Icons.menu_book_rounded,
-      Skill.forte => Icons.fitness_center_rounded,
+      Skill.forte => Icons.directions_run_rounded,
     };
 
 Color corDaSkill(Skill s) => switch (s) {
@@ -243,7 +320,7 @@ class _FolhaDeRegistroState extends State<_FolhaDeRegistro> {
   Widget build(BuildContext context) {
     final recentes = _skills.registros.take(8).toList();
     return Padding(
-      padding: EdgeInsets.fromLTRB(Espaco.lg, Espaco.md, Espaco.lg, Espaco.lg + MediaQuery.viewInsetsOf(context).bottom),
+      padding: EdgeInsets.fromLTRB(Espaco.lg, 0, Espaco.lg, Espaco.lg + MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
           Text(t.s('skOQue'), style: estilo(Tipo.titulo)),

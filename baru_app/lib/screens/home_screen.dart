@@ -124,6 +124,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: _Indicador(app: app),
         ),
 
+        // --- no outro canto, sozinho: o nível do Baru ----------------------
+        Positioned(
+          top: pad.top + Espaco.sm,
+          left: Espaco.md,
+          child: _BolhaDoNivel(app: app, aoTocar: () => SeuDia.abre(context, aba: 1)),
+        ),
+
         // --- a reta final do teste, por cima do habitat --------------------
         // Abaixo do indicador: ele declara `minHeight: 44`, e é esse o vão.
         Positioned(
@@ -198,15 +205,21 @@ class _TituloDaFolha extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        key: chave,
-        padding: const EdgeInsets.only(bottom: Espaco.sm),
-        child: Text(texto, style: nunito(size: 20, weight: FontWeight.w800)),
-      );
+    key: chave,
+    padding: const EdgeInsets.only(bottom: Espaco.sm),
+    child: Text(texto, style: nunito(size: 20, weight: FontWeight.w800)),
+  );
 }
 
 /// Linha da personalização do bicho na folha do dia.
 class _LinhaDoBicho extends StatelessWidget {
-  const _LinhaDoBicho({required this.chave, required this.rotulo, required this.aoTocar, this.valor, this.amostra});
+  const _LinhaDoBicho({
+    required this.chave,
+    required this.rotulo,
+    required this.aoTocar,
+    this.valor,
+    this.amostra,
+  });
 
   final Key chave;
   final String rotulo;
@@ -216,29 +229,47 @@ class _LinhaDoBicho extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        key: chave,
-        onTap: aoTocar,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: Toque.minimo + 4),
-          child: Row(children: [
-            Expanded(child: Text(rotulo, style: estilo(Tipo.corpo))),
-            if (valor != null) Text(valor!, style: estilo(Tipo.corpo, color: Cores.tinta700)),
-            if (amostra != null)
-              Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(color: amostra, shape: BoxShape.circle, border: Border.all(color: Cores.tintaA(0.12))),
+    key: chave,
+    onTap: aoTocar,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: Toque.minimo + 4),
+      child: Row(
+        children: [
+          Expanded(child: Text(rotulo, style: estilo(Tipo.corpo))),
+          if (valor != null)
+            Text(valor!, style: estilo(Tipo.corpo, color: Cores.tinta700)),
+          if (amostra != null)
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: amostra,
+                shape: BoxShape.circle,
+                border: Border.all(color: Cores.tintaA(0.12)),
               ),
-            const SizedBox(width: Espaco.xxs),
-            const Icon(Icons.chevron_right_rounded, size: 18, color: Cores.tinta500),
-          ]),
-        ),
-      );
+            ),
+          const SizedBox(width: Espaco.xxs),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: Cores.tinta500,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// Atalho compacto no painel do Baru (abre a folha do dia).
 class _AtalhoDoBaru extends StatelessWidget {
-  const _AtalhoDoBaru({required this.chave, required this.icone, required this.rotulo, required this.aoTocar, this.detalhe, this.destaque = false});
+  const _AtalhoDoBaru({
+    required this.chave,
+    required this.icone,
+    required this.rotulo,
+    required this.aoTocar,
+    this.detalhe,
+    this.destaque = false,
+  });
 
   final Key chave;
   final IconData icone;
@@ -258,22 +289,43 @@ class _AtalhoDoBaru extends StatelessWidget {
         onTap: aoTocar,
         child: SizedBox(
           height: 44,
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icone, size: 18, color: Cores.primariaEscura),
-            const SizedBox(width: Espaco.xxs),
-            Flexible(child: Text(rotulo, maxLines: 1, overflow: TextOverflow.ellipsis, style: estilo(Tipo.corpoForte))),
-            if (detalhe != null) ...[
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icone, size: 18, color: Cores.primariaEscura),
               const SizedBox(width: Espaco.xxs),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: destaque ? Cores.mel400 : Cores.tinta.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(99),
+              Flexible(
+                child: Text(
+                  rotulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: estilo(Tipo.corpoForte),
                 ),
-                child: Text(detalhe!, style: estilo(Tipo.corpoPequeno, color: Cores.tinta).copyWith(fontWeight: FontWeight.w800)),
               ),
+              if (detalhe != null) ...[
+                const SizedBox(width: Espaco.xxs),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: destaque
+                        ? Cores.mel400
+                        : Cores.tinta.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    detalhe!,
+                    style: estilo(
+                      Tipo.corpoPequeno,
+                      color: Cores.tinta,
+                    ).copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
             ],
-          ]),
+          ),
         ),
       ),
     );
@@ -366,44 +418,62 @@ class AcessorioDaHome extends StatelessWidget {
             Espaco.xs,
           ),
           // Botão dividido: a ação e, colada nela, a escolha que a muda.
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Missões e trilha ficam na folha do dia, nesta mesma tela.
-          Row(children: [
-            Expanded(
-              child: _AtalhoDoBaru(
-                chave: const Key('atalho-missoes'),
-                icone: Icons.flag_rounded,
-                rotulo: '${app.t.tabs[2]} · ${app.t.tabs[1]}',
-                detalhe: app.missoesResgataveis > 0 ? '${app.missoesResgataveis}' : 'Nv ${app.nivel}',
-                destaque: app.missoesResgataveis > 0,
-                aoTocar: _abreSeuDia,
-              ),
-            ),
-          ]),
-          const SizedBox(height: Espaco.xs),
-          Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: BotaoBaru(rotulo: t.start, aoTocar: app.startSession),
+              // Missões e trilha ficam na folha do dia, nesta mesma tela.
+              Row(
+                children: [
+                  Expanded(
+                    child: _AtalhoDoBaru(
+                      chave: const Key('atalho-missoes'),
+                      icone: Icons.flag_rounded,
+                      rotulo: '${app.t.tabs[2]} · ${app.t.tabs[1]}',
+                      // O nível mora na bolha do canto de cima.
+                      detalhe: app.missoesResgataveis > 0
+                          ? '${app.missoesResgataveis}'
+                          : null,
+                      destaque: app.missoesResgataveis > 0,
+                      aoTocar: _abreSeuDia,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: Espaco.xs),
-              Semantics(
-                label: t.duracaoT,
-                child: BotaoBaru(
-                  key: duracaoKey,
-                  papel: PapelDoBotao.secundario,
-                  expande: false,
-                  icone: const Icon(Icons.timer_outlined, size: 18),
-                  rotulo: _rotuloDaDuracao(app, app.dur),
-                  aoTocar: () {
-                    final c = navegador.currentContext;
-                    if (c != null) _escolheDuracao(c, app);
-                  },
-                ),
+              const SizedBox(height: Espaco.xs),
+              Row(
+                children: [
+                  Expanded(
+                    child: BotaoBaru(
+                      rotulo: t.start,
+                      aoTocar: app.startSession,
+                    ),
+                  ),
+                  const SizedBox(width: Espaco.xs),
+                  Semantics(
+                    label: t.duracaoT,
+                    child: BotaoBaru(
+                      key: duracaoKey,
+                      papel: PapelDoBotao.secundario,
+                      expande: false,
+                      icone: const Icon(Icons.timer_outlined, size: 18),
+                      rotulo: _rotuloDaDuracao(app, app.dur),
+                      aoTocar: () {
+                        final c = navegador.currentContext;
+                        if (c != null) _escolheDuracao(c, app);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: Espaco.xs),
+                  // Registrar leitura, estudo ou exercício: perto do dedão.
+                  BotaoRegistrar(
+                    app: app,
+                    tamanho: BotaoBaru.alturaPadrao,
+                    contexto: () => navegador.currentContext,
+                  ),
+                ],
               ),
             ],
           ),
-          ]),
         ),
       ],
     );
@@ -534,12 +604,60 @@ class _Indicador extends StatelessWidget {
             aoTocar: () => app.go(AppScreen.folhas),
             glifo: const GlifoFolha(tamanho: 17),
             numero: ContadorAnimado(valor: app.leaves, estiloTexto: estilo),
-            padding: const EdgeInsets.fromLTRB(10, 0, 14, 0),
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+          ),
+          Container(
+            width: 1,
+            height: 18,
+            color: Cores.tinta.withValues(alpha: 0.12),
+          ),
+          Semantics(
+            button: true,
+            label: app.t.s('skT'),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => SeuDia.abre(context, aba: 2),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 44),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 14, 0),
+                  child: Center(widthFactor: 1, child: NiveisDasSkills(app: app)),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// O nível do Baru, numa bolha só dele no canto de cima. Toque: missões e trilha.
+class _BolhaDoNivel extends StatelessWidget {
+  const _BolhaDoNivel({required this.app, required this.aoTocar});
+  final AppState app;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        key: const Key('bolha-nivel'),
+        behavior: HitTestBehavior.opaque,
+        onTap: aoTocar,
+        child: Vidro(
+          padding: EdgeInsets.zero,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.star_rounded, size: 18, color: Cores.mel400),
+                const SizedBox(width: 4),
+                Text('Nv ${app.nivel}', style: nunito(size: 14, weight: FontWeight.w800, tabular: true)),
+              ]),
+            ),
+          ),
+        ),
+      );
 }
 
 /// Vidro fosco: o fundo do mundo aparece por trás, desfocado.
@@ -681,8 +799,9 @@ class SeuDia extends StatelessWidget {
 
   final AppState app;
 
-  static Future<void> abre(BuildContext context) {
+  static Future<void> abre(BuildContext context, {int? aba}) {
     final app = AppScope.of(context);
+    if (aba != null) _AbasDoSeuDia.ultima = aba;
     return app.comFolhaDaHome(
       () => showModalBottomSheet<void>(
         context: context,
@@ -759,286 +878,314 @@ class SeuDia extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(t.seuDia, style: nunito(size: 22, weight: FontWeight.w800)),
-        const SizedBox(height: Espaco.md),
-        const BarraDoCrescimento(),
-        const SizedBox(height: Espaco.md),
-        if (!primeira)
-          GestureDetector(
-            onTap: () => app.go(AppScreen.report),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Espaco.md,
-                vertical: Espaco.sm,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.greenA(0.12),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const AppIcon(
-                    Icons.insights,
-                    size: 16,
-                    color: AppColors.green,
-                  ),
-                  const SizedBox(width: Espaco.sm),
-                  Expanded(
-                    child: Text(
-                      t.reportReady,
-                      style: nunito(
-                        size: 13.5,
-                        weight: FontWeight.w700,
-                        color: AppColors.greenDeep,
-                      ),
-                    ),
-                  ),
-                  const Chevron(),
-                ],
-              ),
-            ),
-          ),
-        if (!primeira) const SizedBox(height: Espaco.sm),
-        if (!primeira)
-          SoftCard(
-            child: Column(
+        const SizedBox(height: Espaco.sm),
+        // Quatro abas em vez de um rolar sem fim: cada assunto no seu lugar.
+        _AbasDoSeuDia(
+          app: app,
+          abas: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      t.weekT.toUpperCase(),
-                      style: nunito(
-                        size: 11.5,
-                        weight: FontWeight.w600,
-                        letterSpacing: 0.8,
-                        color: Cores.tinta700,
-                      ),
-                    ),
-                    const Spacer(),
-                    Flexible(
-                      child: Text(
-                        app.streakText,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.right,
-                        style: nunito(
-                          size: 12.5,
-                          weight: FontWeight.w700,
-                          color: AppColors.green,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                const BarraDoCrescimento(),
                 const SizedBox(height: Espaco.md),
-                Row(
-                  children: [
-                    for (final (i, marca) in app.ultimos7Dias)
-                      Expanded(
-                        child: Column(
-                          children: [
-                            _dot(marca),
-                            const SizedBox(height: Espaco.xs),
-                            Text(
-                              t.days[i],
+                if (!primeira)
+                  GestureDetector(
+                    onTap: () => app.go(AppScreen.report),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Espaco.md,
+                        vertical: Espaco.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.greenA(0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          const AppIcon(
+                            Icons.insights,
+                            size: 16,
+                            color: AppColors.green,
+                          ),
+                          const SizedBox(width: Espaco.sm),
+                          Expanded(
+                            child: Text(
+                              t.reportReady,
                               style: nunito(
-                                size: 10.5,
+                                size: 13.5,
+                                weight: FontWeight.w700,
+                                color: AppColors.greenDeep,
+                              ),
+                            ),
+                          ),
+                          const Chevron(),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (!primeira) const SizedBox(height: Espaco.sm),
+                if (!primeira)
+                  SoftCard(
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              t.weekT.toUpperCase(),
+                              style: nunito(
+                                size: 11.5,
                                 weight: FontWeight.w600,
+                                letterSpacing: 0.8,
                                 color: Cores.tinta700,
+                              ),
+                            ),
+                            const Spacer(),
+                            Flexible(
+                              child: Text(
+                                app.streakText,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                                style: nunito(
+                                  size: 12.5,
+                                  weight: FontWeight.w700,
+                                  color: AppColors.green,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                  ],
-                ),
+                        const SizedBox(height: Espaco.md),
+                        Row(
+                          children: [
+                            for (final (i, marca) in app.ultimos7Dias)
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    _dot(marca),
+                                    const SizedBox(height: Espaco.xs),
+                                    Text(
+                                      t.days[i],
+                                      style: nunito(
+                                        size: 10.5,
+                                        weight: FontWeight.w600,
+                                        color: Cores.tinta700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: Espaco.sm),
+                // Sem o acesso ao uso não há número: o cartão não mostra "0min de
+                // 4h30", que é medição inventada (§8; simulador, alto 1).
+                if (!app.usageAccess)
+                  SemTempoDeTela(app: app)
+                else
+                  SoftCard(
+                    onTap: () => app.go(AppScreen.tempo),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                t.fill(t.usageOf, {
+                                  'u': app.fmt(app.usage),
+                                  'g': app.fmt(app.goal),
+                                }),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: nunito(
+                                  size: 14,
+                                  weight: FontWeight.w700,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Chevron(),
+                          ],
+                        ),
+                        const SizedBox(height: Espaco.xxs),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            app.usageShortLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: nunito(
+                              size: 13,
+                              weight: FontWeight.w600,
+                              color: Cores.tinta700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Espaco.sm),
+                        TrackFill(
+                          pct: usagePct,
+                          // Acima da meta é neutro, nunca alarme (laudo 03 §4.4).
+                          color: app.underGoal
+                              ? AppColors.green
+                              : Cores.tinta500,
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
-          ),
-        const SizedBox(height: Espaco.sm),
-        // Sem o acesso ao uso não há número: o cartão não mostra "0min de
-        // 4h30", que é medição inventada (§8; simulador, alto 1).
-        if (!app.usageAccess)
-          SemTempoDeTela(app: app)
-        else
-          SoftCard(
-            onTap: () => app.go(AppScreen.tempo),
-            child: Column(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        t.fill(t.usageOf, {
-                          'u': app.fmt(app.usage),
-                          'g': app.fmt(app.goal),
-                        }),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: nunito(
-                          size: 14,
-                          weight: FontWeight.w700,
-                          height: 1.35,
+                _TituloDaFolha(t.missoesT, chave: const Key('folha-missoes')),
+                const MissoesScreen(embutido: true),
+                const SizedBox(height: Espaco.md),
+                _TituloDaFolha(t.trilhaT, chave: const Key('folha-trilha')),
+                const TrilhaScreen(embutido: true),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [SkillsDoBaru(app: app)],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Personalizar o bicho é coisa do Baru, não dos Ajustes.
+                _TituloDaFolha(
+                  t.s('seuBaruT'),
+                  chave: const Key('folha-seu-baru'),
+                ),
+                SoftCard(
+                  padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
+                  child: Column(
+                    children: [
+                      _LinhaDoBicho(
+                        chave: const Key('bicho-especie'),
+                        rotulo: t.s('seuBaruAnimal'),
+                        valor: t.animalName(app.species.name),
+                        aoTocar: () => SettingsScreen.abreEspecie(context, app),
+                      ),
+                      Divider(height: 1, color: Cores.tintaA(0.07)),
+                      _LinhaDoBicho(
+                        chave: const Key('bicho-pelagem'),
+                        rotulo: t.coat,
+                        amostra: AppColors.pelagemDe(app.species, app.color),
+                        aoTocar: () =>
+                            SettingsScreen.abreAparencia(context, app),
+                      ),
+                      Divider(height: 1, color: Cores.tintaA(0.07)),
+                      _LinhaDoBicho(
+                        chave: const Key('bicho-sexo'),
+                        rotulo: t.setSexo,
+                        valor: SettingsScreen.rotuloDoSexo(t, app.sexo),
+                        aoTocar: () => SettingsScreen.abreSexo(context, app),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Espaco.md),
+                SoftCard(
+                  padding: const EdgeInsets.fromLTRB(
+                    Espaco.md,
+                    Espaco.md,
+                    Espaco.md,
+                    Espaco.md,
+                  ),
+                  onTap: () => app.go(AppScreen.shop),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: AppColors.greenA(0.12),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: next == null
+                            ? null
+                            : ItemSwatch(next, maxW: 38, maxH: 34),
+                      ),
+                      const SizedBox(width: Espaco.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              next == null
+                                  ? t.unlockDone
+                                  // Com as folhas já na mão, "faltam 0 folhas" era
+                                  // a frase errada: o certo é dizer que dá.
+                                  : app.leaves >= next.price
+                                  ? t.fill(t.s('unlockPronto'), {
+                                      'i': t.nomeDoItemDaLoja(next.id),
+                                    })
+                                  : t.fill(t.unlock, {
+                                      'x': (next.price - app.leaves).clamp(
+                                        0,
+                                        9999,
+                                      ),
+                                      // `nomeDoItemDaLoja` resolve por id e cai no
+                                      // catálogo antigo sozinho. O `nomeDoItem` de
+                                      // antes indexava por **posição** e devolvia o
+                                      // id cru para os 14 itens novos — a home
+                                      // diria "juncos" em vez de "Juncos da
+                                      // margem".
+                                      'i': t.nomeDoItemDaLoja(next.id),
+                                    }),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: nunito(
+                                size: 13.5,
+                                weight: FontWeight.w700,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: Espaco.xs),
+                            TrackFill(
+                              pct: unlockPct,
+                              height: 8,
+                              color: AppColors.green,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Chevron(),
-                  ],
-                ),
-                const SizedBox(height: Espaco.xxs),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    app.usageShortLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: nunito(
-                      size: 13,
-                      weight: FontWeight.w600,
-                      color: Cores.tinta700,
-                    ),
+                      const SizedBox(width: Espaco.xs),
+                      const Chevron(),
+                    ],
                   ),
                 ),
                 const SizedBox(height: Espaco.sm),
-                TrackFill(
-                  pct: usagePct,
-                  // Acima da meta é neutro, nunca alarme (laudo 03 §4.4).
-                  color: app.underGoal ? AppColors.green : Cores.tinta500,
+                // A foto saiu de cima do mundo: mora aqui, com o resto do dia.
+                SoftCard(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    app.openShare();
+                  },
+                  child: Row(
+                    children: [
+                      const AppIcon(
+                        Icons.photo_camera_outlined,
+                        size: 18,
+                        color: AppColors.green,
+                      ),
+                      const SizedBox(width: Espaco.sm),
+                      Expanded(
+                        child: Text(
+                          t.fotoDoBicho,
+                          style: nunito(size: 14, weight: FontWeight.w700),
+                        ),
+                      ),
+                      const Chevron(),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        const SizedBox(height: Espaco.sm),
-        // Missões e trilha moram aqui, na mesma tela do Baru: rolar a folha
-        // mostra tudo, sem abrir outra tela.
-        const SizedBox(height: Espaco.md),
-        _TituloDaFolha(t.missoesT, chave: const Key('folha-missoes')),
-        const MissoesScreen(embutido: true),
-        const SizedBox(height: Espaco.md),
-        _TituloDaFolha(t.trilhaT, chave: const Key('folha-trilha')),
-        const TrilhaScreen(embutido: true),
-        const SizedBox(height: Espaco.md),
-        _TituloDaFolha(t.s('skT'), chave: const Key('folha-skills')),
-        SkillsDoBaru(app: app),
-        const SizedBox(height: Espaco.md),
-        // Personalizar o bicho é coisa do Baru, não dos Ajustes.
-        _TituloDaFolha(t.s('seuBaruT'), chave: const Key('folha-seu-baru')),
-        SoftCard(
-          padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
-          child: Column(children: [
-            _LinhaDoBicho(
-              chave: const Key('bicho-especie'),
-              rotulo: t.s('seuBaruAnimal'),
-              valor: t.animalName(app.species.name),
-              aoTocar: () => SettingsScreen.abreEspecie(context, app),
-            ),
-            Divider(height: 1, color: Cores.tintaA(0.07)),
-            _LinhaDoBicho(
-              chave: const Key('bicho-pelagem'),
-              rotulo: t.coat,
-              amostra: AppColors.pelagemDe(app.species, app.color),
-              aoTocar: () => SettingsScreen.abreAparencia(context, app),
-            ),
-            Divider(height: 1, color: Cores.tintaA(0.07)),
-            _LinhaDoBicho(
-              chave: const Key('bicho-sexo'),
-              rotulo: t.setSexo,
-              valor: SettingsScreen.rotuloDoSexo(t, app.sexo),
-              aoTocar: () => SettingsScreen.abreSexo(context, app),
-            ),
-          ]),
-        ),
-        const SizedBox(height: Espaco.md),
-        SoftCard(
-          padding: const EdgeInsets.fromLTRB(
-            Espaco.md,
-            Espaco.md,
-            Espaco.md,
-            Espaco.md,
-          ),
-          onTap: () => app.go(AppScreen.shop),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: AppColors.greenA(0.12),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: next == null
-                    ? null
-                    : ItemSwatch(next, maxW: 38, maxH: 34),
-              ),
-              const SizedBox(width: Espaco.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      next == null
-                          ? t.unlockDone
-                          // Com as folhas já na mão, "faltam 0 folhas" era
-                          // a frase errada: o certo é dizer que dá.
-                          : app.leaves >= next.price
-                          ? t.fill(t.s('unlockPronto'), {
-                              'i': t.nomeDoItemDaLoja(next.id),
-                            })
-                          : t.fill(t.unlock, {
-                              'x': (next.price - app.leaves).clamp(0, 9999),
-                              // `nomeDoItemDaLoja` resolve por id e cai no
-                              // catálogo antigo sozinho. O `nomeDoItem` de
-                              // antes indexava por **posição** e devolvia o
-                              // id cru para os 14 itens novos — a home
-                              // diria "juncos" em vez de "Juncos da
-                              // margem".
-                              'i': t.nomeDoItemDaLoja(next.id),
-                            }),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: nunito(
-                        size: 13.5,
-                        weight: FontWeight.w700,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: Espaco.xs),
-                    TrackFill(
-                      pct: unlockPct,
-                      height: 8,
-                      color: AppColors.green,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: Espaco.xs),
-              const Chevron(),
-            ],
-          ),
-        ),
-        const SizedBox(height: Espaco.sm),
-        // A foto saiu de cima do mundo: mora aqui, com o resto do dia.
-        SoftCard(
-          onTap: () {
-            Navigator.of(context).pop();
-            app.openShare();
-          },
-          child: Row(
-            children: [
-              const AppIcon(
-                Icons.photo_camera_outlined,
-                size: 18,
-                color: AppColors.green,
-              ),
-              const SizedBox(width: Espaco.sm),
-              Expanded(
-                child: Text(
-                  t.fotoDoBicho,
-                  style: nunito(size: 14, weight: FontWeight.w700),
-                ),
-              ),
-              const Chevron(),
-            ],
-          ),
+          ],
         ),
       ],
     );
@@ -1097,6 +1244,106 @@ class SeuDia extends StatelessWidget {
 /// Fecha a folha quando um cartão dela leva para outra tela: deixá-la
 /// aberta por baixo fazia ela voltar no "voltar", e o painel da home ficava
 /// escondido enquanto isso (auditoria de dcf82c9, 4).
+/// As abas do Seu Dia: Hoje, Missões, Habilidades e Baru. A última aba
+/// aberta fica lembrada enquanto o app está aberto.
+class _AbasDoSeuDia extends StatefulWidget {
+  const _AbasDoSeuDia({required this.app, required this.abas});
+  final AppState app;
+  final List<Widget> abas;
+
+  static int ultima = 0;
+
+  @override
+  State<_AbasDoSeuDia> createState() => _AbasDoSeuDiaState();
+}
+
+class _AbasDoSeuDiaState extends State<_AbasDoSeuDia> {
+  int get _aba => _AbasDoSeuDia.ultima.clamp(0, widget.abas.length - 1);
+
+  @override
+  Widget build(BuildContext context) {
+    final t = widget.app.t;
+    final rotulos = [
+      t.s('sdHoje'),
+      t.missoesT,
+      t.s('sdHabilidades'),
+      t.s('sdBaru'),
+    ];
+    final icones = [
+      Icons.today_rounded,
+      Icons.flag_rounded,
+      Icons.bolt_rounded,
+      Icons.pets_rounded,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Cores.tintaA(0.06),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              for (var i = 0; i < widget.abas.length; i++)
+                Expanded(
+                  child: GestureDetector(
+                    key: Key('seu-dia-aba-$i'),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => setState(() => _AbasDoSeuDia.ultima = i),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: i == _aba
+                            ? Cores.superficie
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: i == _aba
+                            ? [
+                                BoxShadow(
+                                  color: Cores.tintaA(0.08),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            icones[i],
+                            size: 18,
+                            color: i == _aba ? AppColors.green : Cores.tinta500,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            rotulos[i],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: nunito(
+                              size: 11.5,
+                              weight: FontWeight.w700,
+                              color: i == _aba ? Cores.tinta : Cores.tinta500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Espaco.md),
+        widget.abas[_aba],
+      ],
+    );
+  }
+}
+
 class _FechaAoSair extends StatefulWidget {
   const _FechaAoSair({required this.app, required this.child});
 

@@ -18,6 +18,8 @@ import '../widgets/acesso.dart';
 import '../widgets/common.dart';
 import '../widgets/crescimento.dart';
 import '../widgets/mundo/mundo.dart';
+import '../widgets/skills_do_baru.dart';
+import '../l10n_skills.dart';
 
 /// A home é o mundo dele.
 ///
@@ -745,6 +747,7 @@ class SeuDia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     garanteTextosDosAjustes();
+    garanteTextosDasSkills();
     final t = app.t;
     final primeira = _primeira;
     final next = app.nextItem;
@@ -913,6 +916,9 @@ class SeuDia extends StatelessWidget {
         const SizedBox(height: Espaco.md),
         _TituloDaFolha(t.trilhaT, chave: const Key('folha-trilha')),
         const TrilhaScreen(embutido: true),
+        const SizedBox(height: Espaco.md),
+        _TituloDaFolha(t.s('skT'), chave: const Key('folha-skills')),
+        SkillsDoBaru(app: app),
         const SizedBox(height: Espaco.md),
         // Personalizar o bicho é coisa do Baru, não dos Ajustes.
         _TituloDaFolha(t.s('seuBaruT'), chave: const Key('folha-seu-baru')),

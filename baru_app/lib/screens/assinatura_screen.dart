@@ -87,6 +87,7 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
       _meusLacos = lacos;
       _laco = lacos.isEmpty ? null : lacos.first.id;
       if (!planos.containsKey(_escolhido)) _escolhido = planos.keys.firstOrNull ?? PlanoDaLoja.mensal;
+      _anual = _escolhido.ehAnual || !planos.containsKey(PlanoDaLoja.mensal);
       _carregando = false;
     });
   }
@@ -141,6 +142,68 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
     launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
+  /// No máximo três opções na tela: Individual, Família e Família+. O período
+  /// (mensal ou anual) é uma chave só, em cima.
+  bool _anual = true;
+
+  PlanoDaLoja _planoDe(int grupo) => switch (grupo) {
+        0 => _anual ? PlanoDaLoja.anual : PlanoDaLoja.mensal,
+        1 => _anual ? PlanoDaLoja.familiaAnual : PlanoDaLoja.familia,
+        _ => PlanoDaLoja.familiaMais, // Família+ só tem mensal.
+      };
+
+  bool get _temAnual => _planos.containsKey(PlanoDaLoja.anual) || _planos.containsKey(PlanoDaLoja.familiaAnual);
+
+  Widget _chaveDoPeriodo() {
+    if (!_temAnual) return const SizedBox.shrink();
+    return Center(
+      child: SegmentedButton<bool>(
+        key: const Key('plano-periodo'),
+        showSelectedIcon: false,
+        segments: [
+          ButtonSegment(value: false, label: Text(t.s('assPlanoMensal'))),
+          ButtonSegment(value: true, label: Text('${t.s('assPlanoAnual')}  -33%')),
+        ],
+        selected: {_anual},
+        onSelectionChanged: (v) => setState(() {
+          final grupo = _grupoDe(_escolhido);
+          _anual = v.first;
+          final novo = _planoDe(grupo);
+          if (_planos.containsKey(novo)) _escolhido = novo;
+        }),
+      ),
+    );
+  }
+
+  int _grupoDe(PlanoDaLoja p) => switch (p) {
+        PlanoDaLoja.mensal || PlanoDaLoja.anual => 0,
+        PlanoDaLoja.familia || PlanoDaLoja.familiaAnual => 1,
+        PlanoDaLoja.familiaMais => 2,
+      };
+
+  List<Widget> _opcoes() => [
+        for (var grupo = 0; grupo < 3; grupo++)
+          if (_planos[_planoDe(grupo)] case final pp?)
+            Padding(
+              padding: const EdgeInsets.only(bottom: Espaco.sm),
+              child: _CartaoDoPlano(
+                chave: Key('plano-${['individual', 'familia', 'familiaMais'][grupo]}'),
+                titulo: t.s(['assPlanoIndividual', 'assPlanoFamilia', 'assPlanoFamiliaMais'][grupo]),
+                preco: _planoDe(grupo).ehAnual ? t.fill(t.s('assPorAno'), {'p': pp.price}) : t.fill(t.s('assPorMes'), {'p': pp.price}),
+                nota: switch (grupo) {
+                  0 when _anual => t.fill(t.s('assPlanoAnualNota'), {'p': '${pp.currencySymbol} ${(pp.rawPrice / 12).toStringAsFixed(2).replaceAll('.', ',')}'}),
+                  0 => t.s('assPlanoMensalNota'),
+                  _ when _meusLacos.isEmpty => t.s('assFamiliaSemLaco'),
+                  1 => t.fill(t.s('assPlanoFamiliaNota'), {'l': _nomeDoLaco}),
+                  _ => t.fill(t.s('assPlanoFamiliaMaisNota'), {'l': _nomeDoLaco}),
+                },
+                escolhido: _grupoDe(_escolhido) == grupo,
+                ativo: grupo == 0 || _meusLacos.isNotEmpty,
+                aoTocar: () => setState(() => _escolhido = _planoDe(grupo)),
+              ),
+            ),
+      ];
+
   @override
   Widget build(BuildContext context) {
     final p = _produto;
@@ -181,34 +244,11 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
               const Center(child: Padding(padding: EdgeInsets.all(Espaco.sm), child: CircularProgressIndicator()))
             else if (_planos.isEmpty)
               Text(t.s('assIndisponivel'), style: estilo(Tipo.corpoPequeno, color: Cores.alerta))
-            else
-              for (final plano in PlanoDaLoja.values)
-                if (_planos[plano] case final pp?)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: Espaco.sm),
-                    child: _CartaoDoPlano(
-                      chave: Key('plano-${plano.name}'),
-                      titulo: t.s(switch (plano) {
-                        PlanoDaLoja.mensal => 'assPlanoMensal',
-                        PlanoDaLoja.anual => 'assPlanoAnual',
-                        PlanoDaLoja.familia => 'assPlanoFamilia',
-                        PlanoDaLoja.familiaAnual => 'assPlanoFamiliaAnual',
-                        PlanoDaLoja.familiaMais => 'assPlanoFamiliaMais',
-                      }),
-                      preco: plano.ehAnual ? t.fill(t.s('assPorAno'), {'p': pp.price}) : t.fill(t.s('assPorMes'), {'p': pp.price}),
-                      nota: switch (plano) {
-                        PlanoDaLoja.mensal => t.s('assPlanoMensalNota'),
-                        PlanoDaLoja.anual => t.fill(t.s('assPlanoAnualNota'), {'p': '${pp.currencySymbol} ${(pp.rawPrice / 12).toStringAsFixed(2).replaceAll('.', ',')}'}),
-                        _ when _meusLacos.isEmpty => t.s('assFamiliaSemLaco'),
-                        PlanoDaLoja.familia || PlanoDaLoja.familiaAnual => t.fill(t.s('assPlanoFamiliaNota'), {'l': _nomeDoLaco}),
-                        PlanoDaLoja.familiaMais => t.fill(t.s('assPlanoFamiliaMaisNota'), {'l': _nomeDoLaco}),
-                      },
-                      destaque: plano == PlanoDaLoja.anual,
-                      escolhido: plano == _escolhido,
-                      ativo: !plano.ehFamilia || _meusLacos.isNotEmpty,
-                      aoTocar: () => setState(() => _escolhido = plano),
-                    ),
-                  ),
+            else ...[
+              _chaveDoPeriodo(),
+              const SizedBox(height: Espaco.sm),
+              ..._opcoes(),
+            ],
             if (_escolhido.ehFamilia && _meusLacos.length > 1)
               Wrap(spacing: Espaco.xs, children: [
                 for (final l in _meusLacos)
@@ -266,7 +306,6 @@ class _CartaoDoPlano extends StatelessWidget {
     required this.nota,
     required this.escolhido,
     required this.aoTocar,
-    this.destaque = false,
     this.ativo = true,
   });
   final Key chave;
@@ -274,7 +313,6 @@ class _CartaoDoPlano extends StatelessWidget {
   final String preco;
   final String nota;
   final bool escolhido;
-  final bool destaque;
   final bool ativo;
   final VoidCallback aoTocar;
 
@@ -299,17 +337,7 @@ class _CartaoDoPlano extends StatelessWidget {
                 const SizedBox(width: Espaco.sm),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      Text(titulo, style: estilo(Tipo.subtitulo)),
-                      if (destaque) ...[
-                        const SizedBox(width: Espaco.xs),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: Cores.primariaEscura, borderRadius: BorderRadius.circular(6)),
-                          child: Text('-33%', style: estilo(Tipo.rotuloPequeno, color: Colors.white)),
-                        ),
-                      ],
-                    ]),
+                    Text(titulo, style: estilo(Tipo.subtitulo)),
                     Text(preco, style: estilo(Tipo.corpoForte)),
                     Text(nota, style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
                   ]),

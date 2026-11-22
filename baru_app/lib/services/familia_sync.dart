@@ -17,6 +17,9 @@ import 'tempo_de_tela_ios.dart';
 ///
 /// Silencioso por desenho: sem conta, sem rede ou fora de uma família, não
 /// faz nada. Nunca trava o app por causa do modo família.
+/// Guardado para o app abrir já na Família, sem esperar a rede.
+const chaveResponsavel = 'baru_familia_sou_responsavel';
+
 class FamiliaSync {
   FamiliaSync._();
   static final instance = FamiliaSync._();
@@ -232,7 +235,11 @@ class FamiliaSync {
     try {
       final repo = FamiliaRepo(client);
       final minha = await repo.minha();
-      await _avisosDoResponsavel(app, repo, minha.familias.any((f) => f.meuPapel == 'responsavel'));
+      final souResponsavel = minha.familias.any((f) => f.meuPapel == 'responsavel');
+      app.marcaResponsavel(souResponsavel);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(chaveResponsavel, souResponsavel);
+      await _avisosDoResponsavel(app, repo, souResponsavel);
       if (!minha.souCrianca) {
         if (defaultTargetPlatform == TargetPlatform.android) {
           await _guardaAndroid(null);

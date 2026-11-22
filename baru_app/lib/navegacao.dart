@@ -46,6 +46,7 @@ extension RotaDaTela on AppScreen {
         AppScreen.home ||
         AppScreen.trilha ||
         AppScreen.missoes ||
+        AppScreen.familia ||
         AppScreen.profile =>
           TipoDeRota.destino,
         AppScreen.report ||
@@ -55,7 +56,6 @@ extension RotaDaTela on AppScreen {
         AppScreen.sequencia ||
         AppScreen.conta ||
         AppScreen.sobreposicao ||
-        AppScreen.familia ||
         AppScreen.result =>
           TipoDeRota.detalhe,
         AppScreen.paywall => TipoDeRota.modal,

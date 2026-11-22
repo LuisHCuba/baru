@@ -375,13 +375,15 @@ class CabecalhoDeDetalhe extends StatelessWidget {
   const CabecalhoDeDetalhe({
     super.key,
     required this.titulo,
-    required this.aoVoltar,
+    this.aoVoltar,
     this.subtitulo,
   });
 
   final String titulo;
   final String? subtitulo;
-  final VoidCallback aoVoltar;
+
+  /// Nulo numa aba (não há para onde voltar): sem a seta.
+  final VoidCallback? aoVoltar;
 
   @override
   Widget build(BuildContext context) {
@@ -397,19 +399,20 @@ class CabecalhoDeDetalhe extends StatelessWidget {
         children: [
           Row(
             children: [
-              Semantics(
-                button: true,
-                label: 'voltar',
-                child: GestureDetector(
-                  onTap: aoVoltar,
-                  behavior: HitTestBehavior.opaque,
-                  child: const SizedBox(
-                    width: Toque.minimo,
-                    height: Toque.minimo,
-                    child: Icon(Icons.arrow_back_rounded, size: 22),
+              if (aoVoltar != null)
+                Semantics(
+                  button: true,
+                  label: 'voltar',
+                  child: GestureDetector(
+                    onTap: aoVoltar,
+                    behavior: HitTestBehavior.opaque,
+                    child: const SizedBox(
+                      width: Toque.minimo,
+                      height: Toque.minimo,
+                      child: Icon(Icons.arrow_back_rounded, size: 22),
+                    ),
                   ),
                 ),
-              ),
               Expanded(
                 child: Text(
                   titulo,
@@ -422,8 +425,8 @@ class CabecalhoDeDetalhe extends StatelessWidget {
           ),
           if (subtitulo != null)
             Padding(
-              padding: const EdgeInsets.only(
-                left: Toque.minimo,
+              padding: EdgeInsets.only(
+                left: aoVoltar == null ? 0 : Toque.minimo,
                 top: Espaco.xxs,
               ),
               child: Text(

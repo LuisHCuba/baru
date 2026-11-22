@@ -66,6 +66,9 @@ class TabGlyph {
 }
 
 /// O HTML só tinha um quadrado 19×19. Estes são os glifos reais das tabs.
+/// A aba Família (quinta aba; a primeira para o responsável).
+const glifoDaFamilia = TabGlyph(Icons.people_outline_rounded, Icons.people_rounded);
+
 const tabGlyphs = [
   TabGlyph(Icons.home_outlined, Icons.home_rounded),
   TabGlyph(Icons.route_outlined, Icons.route_rounded),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/app_snapshot.dart';
 import 'data/repositories.dart';
@@ -118,6 +119,13 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
       // Abrir o app do zero também conta: no celular de uma criança, as
       // regras da família precisam valer sem esperar a volta ao app.
       unawaited(FamiliaSync.instance.envia(state, forcar: false));
+      // O responsável abre na Família (o cache evita esperar a rede).
+      unawaited(SharedPreferences.getInstance().then((p) {
+        if (p.getBool(chaveResponsavel) == true) {
+          state.marcaResponsavel(true);
+          state.abreNaFamiliaSeResponsavel();
+        }
+      }));
     });
   }
 

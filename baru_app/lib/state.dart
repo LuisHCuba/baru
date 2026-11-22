@@ -726,6 +726,26 @@ class AppState extends ChangeNotifier {
   /// na tela Família, já no caminho certo.
   String paraQuem = 'eu';
 
+  /// Esta conta é responsável em alguma família. Com isso a Família vira a
+  /// primeira aba (e a tela de entrada): é o que um pai abre o app para ver.
+  bool responsavelNaFamilia = false;
+
+  void marcaResponsavel(bool sim) {
+    if (responsavelNaFamilia == sim) return;
+    responsavelNaFamilia = sim;
+    notifyListeners();
+  }
+
+  /// Abre na Família quem é responsável, se ainda estiver na tela de entrada.
+  void abreNaFamiliaSeResponsavel() {
+    if (responsavelNaFamilia && _pilha.length == 1 && screen == AppScreen.home) go(AppScreen.familia);
+  }
+
+  /// As abas, na ordem: o responsável começa pela Família.
+  List<AppScreen> get abas => responsavelNaFamilia || paraQuem == 'responsavel'
+      ? const [AppScreen.familia, AppScreen.home, AppScreen.trilha, AppScreen.missoes, AppScreen.profile]
+      : const [AppScreen.home, AppScreen.trilha, AppScreen.missoes, AppScreen.familia, AppScreen.profile];
+
   void escolheParaQuem(String perfil) {
     if (!const ['eu', 'filho', 'responsavel'].contains(perfil)) return;
     paraQuem = perfil;
@@ -1329,6 +1349,7 @@ class AppState extends ChangeNotifier {
       screen == AppScreen.home ||
       screen == AppScreen.trilha ||
       screen == AppScreen.missoes ||
+      screen == AppScreen.familia ||
       screen == AppScreen.profile;
 
   /// As respostas do quiz, por id de pergunta. **Id, não rótulo traduzido:**

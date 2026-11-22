@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n_familia.dart';
 import '../l10n_missoes.dart';
 import '../models.dart';
 import '../state.dart';
@@ -489,14 +490,25 @@ class BottomTabs extends StatelessWidget {
     // para onde a coisa vai, onde se gasta, e onde se ajusta. O relatório é
     // alcançado pelo cartão da home, e o detalhamento de tempo pelo cartão de
     // uso — nenhum deles é destino de primeiro nível.
-    final ids = [
-      AppScreen.home,
-      AppScreen.trilha,
-      AppScreen.missoes,
-      AppScreen.profile,
-    ];
+    // A Família é a quinta aba; para o responsável, a primeira (app.abas).
+    final ids = app.abas;
+    garanteTextosDaFamilia();
+    String rotulo(AppScreen s) => switch (s) {
+          AppScreen.home => app.t.tabs[0],
+          AppScreen.trilha => app.t.tabs[1],
+          AppScreen.missoes => app.t.tabs[2],
+          AppScreen.familia => app.t.s('famT'),
+          _ => app.t.tabs[3],
+        };
+    TabGlyph glifo(AppScreen s) => switch (s) {
+          AppScreen.home => tabGlyphs[0],
+          AppScreen.trilha => tabGlyphs[1],
+          AppScreen.missoes => tabGlyphs[2],
+          AppScreen.familia => glifoDaFamilia,
+          _ => tabGlyphs[3],
+        };
     final linha = Row(
-      children: List.generate(4, (i) {
+      children: List.generate(ids.length, (i) {
         final on = app.screen == ids[i];
         // O que está pronto para colher aparece na aba, de qualquer
         // tela: prêmio parado sem ninguém ver é prêmio perdido.
@@ -509,9 +521,9 @@ class BottomTabs extends StatelessWidget {
             button: true,
             selected: on,
             label: aColher > 0
-                ? '${app.t.tabs[i]}, '
+                ? '${rotulo(ids[i])}, '
                       '${app.t.fill(app.t.mqQuantasColher, {'n': aColher})}'
-                : app.t.tabs[i],
+                : rotulo(ids[i]),
             child: GestureDetector(
               onTap: () => app.go(ids[i]),
               behavior: HitTestBehavior.opaque,
@@ -525,7 +537,7 @@ class BottomTabs extends StatelessWidget {
                         clipBehavior: Clip.none,
                         children: [
                           AppIcon(
-                            on ? tabGlyphs[i].on : tabGlyphs[i].off,
+                            on ? glifo(ids[i]).on : glifo(ids[i]).off,
                             size: 22,
                             color: on ? AppColors.green : Cores.tinta500,
                           ),
@@ -566,7 +578,7 @@ class BottomTabs extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      app.t.tabs[i],
+                      rotulo(ids[i]),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: nunito(

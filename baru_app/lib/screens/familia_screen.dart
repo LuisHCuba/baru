@@ -166,7 +166,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CabecalhoDeDetalhe(titulo: t.s('famT'), subtitulo: t.s('famSub'), aoVoltar: app.voltar),
+        CabecalhoDeDetalhe(titulo: t.s('famT'), subtitulo: t.s('famSub')),
         Expanded(
           child: RefreshIndicator(
             onRefresh: _carrega,
@@ -781,65 +781,59 @@ class _CartaoDaCrianca extends StatelessWidget {
             Text(t.fill(t.s('famPausada'), {'h': TimeOfDay.fromDateTime(c.regras.pausaAte!.toLocal()).format(context)}),
                 style: estilo(Tipo.corpoForte, color: Cores.alerta)),
           ],
-          const SizedBox(height: Espaco.sm),
-          Text('${t.s('famHoje')}: $linhaUso', style: estilo(Tipo.corpoForte)),
+          const SizedBox(height: Espaco.md),
+          // Hoje: o número grande, a meta ao lado e a barra.
+          Text(t.s('famHoje'), style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
+          const SizedBox(height: Espaco.xxs),
+          Text(hoje == null ? t.s('famSemDados') : linhaUso,
+              key: Key('hoje-${c.id}'), style: estilo(hoje == null ? Tipo.corpo : Tipo.subtitulo)),
           const SizedBox(height: Espaco.xs),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: fracao,
-              minHeight: 10,
+              minHeight: 8,
               backgroundColor: Cores.trilho,
               color: passou ? Cores.alerta : Cores.folha600,
             ),
           ),
-          const SizedBox(height: Espaco.xs),
-          Wrap(spacing: Espaco.sm, children: [
-            if (c.regras.extraHojeMin > 0)
-              Text(t.fill(t.s('famExtraHoje'), {'n': app.fmt(c.regras.extraHojeMin)}), style: estilo(Tipo.corpoPequeno, color: Cores.folha700)),
-            if (hoje?.metaBatidaEm != null)
-              Text(t.fill(t.s('famMetaBatida'), {'h': TimeOfDay.fromDateTime(hoje!.metaBatidaEm!.toLocal()).format(context)}),
-                  style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
-            if ((hoje?.focos ?? 0) > 0)
-              Text(hoje!.focos == 1 ? t.s('famFoco1') : t.fill(t.s('famFocos'), {'n': hoje.focos}), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
-          ]),
+          if (c.regras.extraHojeMin > 0 || hoje?.metaBatidaEm != null || (hoje?.focos ?? 0) > 0) ...[
+            const SizedBox(height: Espaco.xxs),
+            Wrap(spacing: Espaco.sm, children: [
+              if (c.regras.extraHojeMin > 0)
+                Text(t.fill(t.s('famExtraHoje'), {'n': app.fmt(c.regras.extraHojeMin)}), style: estilo(Tipo.corpoPequeno, color: Cores.folha700)),
+              if (hoje?.metaBatidaEm != null)
+                Text(t.fill(t.s('famMetaBatida'), {'h': TimeOfDay.fromDateTime(hoje!.metaBatidaEm!.toLocal()).format(context)}),
+                    style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
+              if ((hoje?.focos ?? 0) > 0)
+                Text(hoje!.focos == 1 ? t.s('famFoco1') : t.fill(t.s('famFocos'), {'n': hoje.focos}), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+            ]),
+          ],
           const SizedBox(height: Espaco.sm),
-          Text(t.s('famSemana'), style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
-          const SizedBox(height: Espaco.xxs),
-          _Semana(dias: c.semana, regras: c.regras, t: t),
-          const SizedBox(height: Espaco.sm),
-          Wrap(spacing: Espaco.xs, runSpacing: Espaco.xs, children: [
-            ActionChip(
-              avatar: const Icon(Icons.add_rounded, size: 18),
-              label: Text(t.s('famMais15')),
-              onPressed: ocupado ? null : () => aoExtra(15),
-            ),
-            ActionChip(
-              avatar: const Icon(Icons.add_rounded, size: 18),
-              label: Text(t.s('famMais30')),
-              onPressed: ocupado ? null : () => aoExtra(30),
-            ),
-            if (c.regras.extraHojeMin > 0)
-              ActionChip(
-                label: Text(t.s('famTirarExtra')),
-                onPressed: ocupado ? null : () => aoExtra(-c.regras.extraHojeMin),
-              ),
-            if (pausada)
-              ActionChip(
-                avatar: const Icon(Icons.play_arrow_rounded, size: 18),
-                label: Text(t.s('famRetomar')),
-                onPressed: ocupado ? null : aoRetomar,
-              )
-            else
-              ActionChip(
-                avatar: const Icon(Icons.pause_rounded, size: 18),
-                label: Text(t.s('famPausarAgora')),
-                onPressed: ocupado ? null : aoPausar,
-              ),
-          ]),
-          const Divider(height: Espaco.lg),
+          // As três ações do dia, lado a lado e do mesmo tamanho.
           Row(children: [
-            Icon(Icons.location_on_rounded, color: c.regras.localizacao ? Cores.primariaEscura : Cores.tinta500),
+            Expanded(child: _AcaoDoDia(chave: 'mais15-${c.id}', icone: Icons.add_rounded, rotulo: '+15 min', aoTocar: ocupado ? null : () => aoExtra(15))),
+            const SizedBox(width: Espaco.xs),
+            Expanded(child: _AcaoDoDia(chave: 'mais30-${c.id}', icone: Icons.add_rounded, rotulo: '+30 min', aoTocar: ocupado ? null : () => aoExtra(30))),
+            const SizedBox(width: Espaco.xs),
+            Expanded(
+              child: pausada
+                  ? _AcaoDoDia(chave: 'retomar-${c.id}', icone: Icons.play_arrow_rounded, rotulo: t.s('famRetomarCurto'), forte: true, aoTocar: ocupado ? null : aoRetomar)
+                  : _AcaoDoDia(chave: 'pausar-${c.id}', icone: Icons.pause_rounded, rotulo: t.s('famPausarCurto'), aoTocar: ocupado ? null : aoPausar),
+            ),
+          ]),
+          if (c.regras.extraHojeMin > 0)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(onPressed: ocupado ? null : () => aoExtra(-c.regras.extraHojeMin), child: Text(t.s('famTirarExtra'))),
+            ),
+          const Divider(height: Espaco.lg),
+          // Onde está: a linha, o motivo quando falta e as duas ações.
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(Icons.location_on_rounded, size: 20, color: c.regras.localizacao ? Cores.primariaEscura : Cores.tinta500),
+            ),
             const SizedBox(width: Espaco.xs),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -879,20 +873,51 @@ class _CartaoDaCrianca extends StatelessWidget {
               aoTocar: () => aoLocal?.call(true),
             ),
           ],
-          if (c.regras.localizacao)
-            Wrap(spacing: Espaco.xs, runSpacing: Espaco.xs, children: [
-              ActionChip(
-                avatar: const Icon(Icons.my_location_rounded, size: 18),
-                label: Text(t.s('locAtualizar')),
-                onPressed: ocupado ? null : aoPedirLocal,
-              ),
-              ActionChip(
-                avatar: const Icon(Icons.map_outlined, size: 18),
-                label: Text(t.s('locVerMapa')),
-                onPressed: aoVerMapa,
-              ),
+          if (c.regras.localizacao) ...[
+            const SizedBox(height: Espaco.xs),
+            Row(children: [
+              Expanded(child: _AcaoDoDia(chave: 'atualizar-${c.id}', icone: Icons.my_location_rounded, rotulo: t.s('locAtualizar'), aoTocar: ocupado ? null : aoPedirLocal)),
+              const SizedBox(width: Espaco.xs),
+              Expanded(child: _AcaoDoDia(chave: 'mapa-${c.id}', icone: Icons.map_outlined, rotulo: t.s('locVerMapa'), aoTocar: aoVerMapa)),
             ]),
+          ],
+          const Divider(height: Espaco.lg),
+          Text(t.s('famSemana'), style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
+          const SizedBox(height: Espaco.xxs),
+          if (c.semana.any((d) => d.usoMin > 0))
+            _Semana(dias: c.semana, regras: c.regras, t: t)
+          else
+            Text(t.s('famSemanaVazia'), key: Key('semana-vazia-${c.id}'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
         ],
+      ),
+    );
+  }
+}
+
+/// Botão compacto das ações do cartão: todos do mesmo tamanho, numa linha.
+class _AcaoDoDia extends StatelessWidget {
+  const _AcaoDoDia({required this.chave, required this.icone, required this.rotulo, required this.aoTocar, this.forte = false});
+
+  final String chave;
+  final IconData icone;
+  final String rotulo;
+  final VoidCallback? aoTocar;
+  final bool forte;
+
+  @override
+  Widget build(BuildContext context) {
+    final cor = forte ? Cores.primariaEscura : Cores.tinta;
+    return OutlinedButton.icon(
+      key: Key(chave),
+      onPressed: aoTocar,
+      icon: Icon(icone, size: 18, color: aoTocar == null ? Cores.tinta500 : Cores.primariaEscura),
+      label: Text(rotulo, maxLines: 1, overflow: TextOverflow.ellipsis, style: estilo(Tipo.corpoPequeno, color: cor).copyWith(fontWeight: FontWeight.w700)),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 44),
+        padding: const EdgeInsets.symmetric(horizontal: Espaco.xs),
+        side: BorderSide(color: forte ? Cores.primariaEscura : Cores.trilho, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        backgroundColor: forte ? Cores.primariaA(0.08) : null,
       ),
     );
   }

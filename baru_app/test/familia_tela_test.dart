@@ -228,7 +228,7 @@ void main() {
         ],
       }),
     );
-    await tester.tap(find.text(textosDaFamilia['pt']!['famMais15']!));
+    await tester.tap(find.text('+15 min'));
     await tester.pumpAndSettle();
     expect(repo.chamadas, ['extra:c1:15']);
     await tester.tap(find.byIcon(Icons.tune_rounded));

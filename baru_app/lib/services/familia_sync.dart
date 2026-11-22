@@ -129,6 +129,9 @@ class FamiliaSync {
 
   static const _chaveDoResponsavel = 'baru_familia_chave_resp';
 
+  /// "Mostrar minha localização" ligado neste celular (adulto do laço).
+  static const chaveMeuLocal = 'baru_meu_local';
+
   /// Celular do responsável: chave própria e textos, para os avisos (SOS,
   /// chegou, saiu, meta) chegarem com o Baru fechado. iPhone: push da Apple;
   /// Android: conferência de 15 em 15 minutos.
@@ -162,6 +165,8 @@ class FamiliaSync {
       'sandbox': kDebugMode,
       'canal': t.s('avCanal'),
       'canalSos': t.s('avCanalSos'),
+      // Adulto que escolheu aparecer no mapa: o Android manda a posição com o app fechado.
+      'meuLocal': prefs.getBool(chaveMeuLocal) ?? false,
       'textos': {
         'sos': [t.s('avSosT'), t.s('avSosC')],
         'chegou': [t.s('avChegouT'), t.s('avChegouC')],

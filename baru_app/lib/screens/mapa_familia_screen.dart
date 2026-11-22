@@ -4,12 +4,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 import '../data/familia.dart';
 import '../l10n.dart';
 import '../l10n_familia.dart';
 import '../services/foto_de_perfil.dart';
+import '../services/familia_sync.dart';
 import '../services/localizacao.dart';
 import '../theme.dart';
 
@@ -88,7 +90,12 @@ class MapaFamiliaScreen extends StatefulWidget {
     this.topoDaFolha,
     this.aoGerenciar,
     this.aoGerenciarDependente,
+    this.aoMudarMeuLocal,
   });
+
+  /// Ligou ou desligou "mostrar minha localização": quem está fora reconfigura
+  /// o envio com o app fechado.
+  final ValueChanged<bool>? aoMudarMeuLocal;
 
   /// Administrador: gerenciar um dependente (id, nome).
   final void Function(String id, String nome)? aoGerenciarDependente;
@@ -224,6 +231,7 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
         _carregou = true;
       });
       if (centraliza) _centraliza();
+      unawaited(_sincronizaMeuLocal(d.eu?.ligada ?? false));
     } catch (e) {
       if (mounted) setState(() => _erro = '$e');
     }
@@ -457,6 +465,16 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
     }
   }
 
+  /// O servidor diz se eu apareço no mapa; o celular guarda para mandar a
+  /// posição com o app fechado (vale também para quem ligou em outra versão).
+  Future<void> _sincronizaMeuLocal(bool ligada) async {
+    if (widget.semMapa) return;
+    final prefs = await SharedPreferences.getInstance();
+    if ((prefs.getBool(FamiliaSync.chaveMeuLocal) ?? false) == ligada) return;
+    await prefs.setBool(FamiliaSync.chaveMeuLocal, ligada);
+    widget.aoMudarMeuLocal?.call(ligada);
+  }
+
   /// Leva o mapa até um ponto, sem abrir ninguém (responsáveis).
   void _vaiPara(PosicaoDaCrianca p) {
     if (widget.semMapa) return;
@@ -495,9 +513,14 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
         if (mounted) ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(t.s('locEuSemPermissao'))));
         return;
       }
+      // "O tempo todo": para a posição seguir indo com o Baru fechado.
+      if (perm != PermissaoDeLocal.sempre) await LocalNativo.pedir(sempre: true);
     }
     try {
       await widget.repo.meuLocal(ligada: ligar);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(FamiliaSync.chaveMeuLocal, ligar);
+      widget.aoMudarMeuLocal?.call(ligar);
       await _carrega();
       if (ligar) {
         await _mandaMinhaPosicao();

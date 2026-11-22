@@ -13,7 +13,9 @@
 export type IdPlano = 'monthly' | 'annual'
 
 export const PLANOS: Record<IdPlano, { nome: string; centavos: number; ciclo: 'MONTHLY' | 'YEARLY' }> = {
-  monthly: { nome: 'Mensal', centavos: 1290, ciclo: 'MONTHLY' },
+  // Uma assinatura só, R$ 14,90/mês (mesmo preço da Google Play e da App Store).
+  monthly: { nome: 'Mensal', centavos: 1490, ciclo: 'MONTHLY' },
+  // Fora de venda; fica só para reconhecer assinaturas anuais antigas.
   annual: { nome: 'Anual', centavos: 9990, ciclo: 'YEARLY' },
 }
 

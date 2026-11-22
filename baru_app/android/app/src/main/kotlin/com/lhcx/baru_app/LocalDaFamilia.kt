@@ -260,6 +260,31 @@ class AvisosDaFamilia : JobService() {
             }
         }
 
+
+        /**
+         * Adulto que escolheu aparecer no mapa: manda a posição com o Baru
+         * fechado. Precisa da localização "o tempo todo"; sem ela, não manda.
+         */
+        fun mandaMinhaPosicao(ctx: Context, fim: () -> Unit = {}) {
+            val prefs = ctx.getSharedPreferences(ARQUIVO, Context.MODE_PRIVATE)
+            val cfg = try { JSONObject(prefs.getString("cfg", null) ?: run { fim(); return }) } catch (_: Exception) { fim(); return }
+            val chave = cfg.optString("chave"); val url = cfg.optString("url"); val anon = cfg.optString("anon")
+            if (!cfg.optBoolean("meuLocal") || chave.length != 64 || !LocalDaFamilia.temSempre(ctx)) { fim(); return }
+            LocalDaFamilia.agora(ctx) { l ->
+                if (l == null) { fim(); return@agora }
+                val bat = LocalDaFamilia.bateria(ctx)
+                thread(name = "baru-meu-local") {
+                    try {
+                        LocalDaFamilia.rpc(url, anon, "baru_familia_resp_posicao", JSONObject()
+                            .put("p_chave", chave).put("p_lat", l.latitude).put("p_lng", l.longitude)
+                            .put("p_precisao", l.accuracy.toInt()).put("p_bateria", if (bat >= 0) bat else JSONObject.NULL))
+                    } finally {
+                        fim()
+                    }
+                }
+            }
+        }
+
         /** Confere agora (ao abrir o app) e mostra o que for novo. */
         fun confere(ctx: Context, fim: () -> Unit = {}) {
             val prefs = ctx.getSharedPreferences(ARQUIVO, Context.MODE_PRIVATE)
@@ -345,7 +370,11 @@ class AvisosDaFamilia : JobService() {
     }
 
     override fun onStartJob(params: JobParameters?): Boolean {
-        confere(this) { jobFinished(params, false) }
+        // Os avisos e, se a pessoa escolheu aparecer no mapa, a posição dela.
+        var faltam = 2
+        val fim = { synchronized(this) { if (--faltam == 0) jobFinished(params, false) } }
+        confere(this) { fim() }
+        mandaMinhaPosicao(this) { fim() }
         return true
     }
 

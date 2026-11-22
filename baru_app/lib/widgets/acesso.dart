@@ -3,6 +3,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../cobranca.dart';
 import '../l10n.dart';
+import '../l10n_assinatura.dart';
+import '../models.dart';
+import '../services/compra_loja.dart';
+import '../state.dart';
 import '../theme.dart';
 import 'componentes.dart';
 
@@ -17,10 +21,26 @@ import 'componentes.dart';
 /// de relógio local: data de aparelho se muda nos ajustes.
 
 /// Abre a página inicial do site. Não é um checkout: é a porta de entrada.
+/// Só na web: no celular as lojas exigem a assinatura pela própria loja.
 Future<void> abreOSite() => launchUrl(
   Uri.parse(siteDoBaru),
   mode: LaunchMode.externalApplication,
 );
+
+/// No celular, a assinatura da loja (Google Play / App Store); na web, o site.
+void _assinar(BuildContext context) {
+  if (CompraLoja.temLoja) {
+    AppScope.of(context).go(AppScreen.paywall);
+  } else {
+    abreOSite();
+  }
+}
+
+String _rotuloDeAssinar(T t) {
+  if (!CompraLoja.temLoja) return t.acessoSite;
+  garanteTextosDaAssinatura();
+  return t.s('assT');
+}
 
 /// Cartão de "Sua conta": estado do acesso em uma linha, com o caminho do site.
 class CartaoDoAcesso extends StatelessWidget {
@@ -63,7 +83,7 @@ class CartaoDoAcesso extends StatelessWidget {
         key: chave,
         cor: Cores.primariaA(0.10),
         elevado: false,
-        onTap: aoAbrirSite ?? abreOSite,
+        onTap: aoAbrirSite ?? () => _assinar(context),
         child: Row(
           children: [
             const Icon(
@@ -83,7 +103,7 @@ class CartaoDoAcesso extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    t.acessoSite,
+                    _rotuloDeAssinar(t),
                     style: estilo(
                       Tipo.corpoPequeno,
                       color: Cores.primariaEscura,
@@ -129,7 +149,7 @@ class FaixaDoTeste extends StatelessWidget {
         key: chave,
         padding: const EdgeInsets.only(bottom: Espaco.sm),
         child: GestureDetector(
-          onTap: aoAbrirSite ?? abreOSite,
+          onTap: aoAbrirSite ?? () => _assinar(context),
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: Espaco.md,

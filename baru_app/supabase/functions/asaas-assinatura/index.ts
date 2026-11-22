@@ -132,7 +132,8 @@ async function fimDoTeste(usuarioId: string): Promise<string | null> {
 
 async function assinar(atual: Assinatura | null, usuarioId: string, corpo: Record<string, unknown>): Promise<Response> {
   const idPlano = corpo.plano
-  if (idPlano !== 'monthly' && idPlano !== 'annual') return jsonResponse({ error: 'parametros_invalidos' }, 400)
+  // Uma assinatura só: a anual saiu de venda.
+  if (idPlano !== 'monthly') return jsonResponse({ error: 'parametros_invalidos', message: 'A assinatura é mensal, R$ 14,90.' }, 400)
   const forma = corpo.forma as Forma
   if (!FORMAS.has(forma)) return jsonResponse({ error: 'forma_invalida', message: 'Escolha Pix, cartão ou boleto.' }, 400)
   if (corpo.aceite !== true) {

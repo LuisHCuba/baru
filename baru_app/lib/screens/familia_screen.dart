@@ -293,6 +293,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
       aoAdicionar: _ocupado || !f.souAdmin ? null : () => _adicionar(t, f),
       aoGerenciar: f.souAdmin ? (id, nome, admin) => _gerenciar(t, f, id, nome, admin ? 'admin' : 'membro') : null,
       aoGerenciarDependente: f.souAdmin ? (id, nome) => _gerenciar(t, f, id, nome, 'dependente') : null,
+      aoMudarMeuLocal: (_) => unawaited(FamiliaSync.instance.envia(app)),
       avisosNoTopo: [
         if (!_notificacoes)
           Material(

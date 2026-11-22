@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../cobranca.dart';
 import '../l10n.dart';
 import '../data/progressao.dart';
+import '../l10n_ajustes.dart';
 import '../l10n_familia.dart';
 import '../l10n_trilha.dart';
 import '../models.dart';
@@ -10,7 +11,6 @@ import '../state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
-import '../widgets/legal_sheet.dart';
 import '../widgets/pet_profile.dart';
 
 /// Ajustes.
@@ -28,13 +28,17 @@ class SettingsScreen extends StatelessWidget {
   static const chaveMeta = Key('ajustes-meta');
   static const chaveHorario = Key('ajustes-horario');
   static const chaveSexo = Key('ajustes-sexo');
-  static const chaveFamilia = Key('ajustes-familia');
+  static const chaveConta = Key('ajustes-conta');
+
+  /// iPhone: a permissão é o Tempo de Uso, e não há "sobre outros apps".
+  static bool get noIphone => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final t = app.t;
     garanteTextosDaFamilia();
+    garanteTextosDosAjustes();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -47,18 +51,26 @@ class SettingsScreen extends StatelessWidget {
         Text(t.setT, style: estilo(Tipo.display)),
         const SizedBox(height: Espaco.md),
 
-        // --- companheiro ---------------------------------------------------
+        // --- conta (no topo, como nos Ajustes do sistema) --------------------
+        _Grupo(
+          children: [
+            _Linha(
+              chave: chaveConta,
+              icone: Icons.account_circle_outlined,
+              rotulo: app.emailDaConta.isNotEmpty ? app.emailDaConta : t.contaT,
+              valor: null,
+              detalhe: t.s('ajContaLinha'),
+              aoTocar: () => app.go(AppScreen.conta),
+            ),
+          ],
+        ),
+
+        // --- seu Baru: aparência do bicho ----------------------------------
+        _Secao(t.s('ajSecBaru')),
         const CompanionCard(completo: false),
         const SizedBox(height: Espaco.sm),
         _Grupo(
           children: [
-            _Linha(
-              chave: chaveSexo,
-              icone: Icons.wc_rounded,
-              rotulo: t.setSexo,
-              valor: _rotuloDoSexo(t, app.sexo),
-              aoTocar: () => _abreSexo(context, app),
-            ),
             _Linha(
               chave: null,
               icone: Icons.pets_rounded,
@@ -73,11 +85,18 @@ class SettingsScreen extends StatelessWidget {
               amostra: AppColors.pelagemDe(app.species, app.color),
               aoTocar: () => _abreAparencia(context, app),
             ),
+            _Linha(
+              chave: chaveSexo,
+              icone: Icons.wc_rounded,
+              rotulo: t.setSexo,
+              valor: _rotuloDoSexo(t, app.sexo),
+              aoTocar: () => _abreSexo(context, app),
+            ),
           ],
         ),
 
-        // --- meta ----------------------------------------------------------
-        const SizedBox(height: Espaco.md),
+        // --- foco e tempo de tela -------------------------------------------
+        _Secao(t.s('ajSecFoco')),
         _Grupo(
           children: [
             _Linha(
@@ -97,8 +116,8 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // --- notificações ---------------------------------------------------
-        const SizedBox(height: Espaco.md),
+        // --- avisos e sons ---------------------------------------------------
+        _Secao(t.s('ajSecAvisos')),
         _Grupo(
           children: [
             _Chave(
@@ -118,146 +137,50 @@ class SettingsScreen extends StatelessWidget {
                 aoTocar: () => _abreHorario(context, app),
               ),
             _Chave(
-              rotulo: t.setSom,
-              detalhe: t.setSomSub,
-              ligado: app.som,
-              aoTocar: app.toggleSom,
-            ),
-            _Chave(
               rotulo: t.setMissed,
               detalhe: t.setMissedSub,
               ligado: app.missed,
               aoTocar: app.toggleMissed,
             ),
+            _Chave(
+              rotulo: t.setSom,
+              detalhe: t.setSomSub,
+              ligado: app.som,
+              aoTocar: app.toggleSom,
+            ),
           ],
         ),
 
-        // --- permissão e idioma ---------------------------------------------
-        const SizedBox(height: Espaco.md),
+        // --- permissões do celular ------------------------------------------
+        _Secao(t.s('ajSecPermissoes')),
         _Grupo(
           children: [
             _Chave(
-              rotulo: t.permAllow,
+              rotulo: noIphone ? t.s('ajTempoDeUsoIos') : t.permAllow,
               detalhe: app.usageAccess ? t.setUsageOn : t.setUsageOff,
               ligado: app.usageAccess,
               aoTocar: app.toggleUsageAccess,
             ),
-            _Linha(
-              chave: null,
-              icone: Icons.layers_outlined,
-              rotulo: t.sobreT,
-              aoTocar: () => app.go(AppScreen.sobreposicao),
-            ),
-            _Linha(
-              chave: chaveFamilia,
-              icone: Icons.family_restroom_rounded,
-              rotulo: t.s('famT'),
-              aoTocar: () => app.go(AppScreen.familia),
-            ),
+            if (!noIphone)
+              _Linha(
+                chave: null,
+                icone: Icons.layers_outlined,
+                rotulo: t.sobreT,
+                aoTocar: () => app.go(AppScreen.sobreposicao),
+              ),
+          ],
+        ),
+
+        // --- geral -----------------------------------------------------------
+        _Secao(t.s('ajSecGeral')),
+        _Grupo(
+          children: [
             _Linha(
               chave: null,
               icone: Icons.language_rounded,
               rotulo: t.setLang,
               valor: langs.firstWhere((l) => l.id == app.lang).label,
               aoTocar: () => _abreIdioma(context, app),
-            ),
-          ],
-        ),
-
-        // --- conta e plano ---------------------------------------------------
-        const SizedBox(height: Espaco.md),
-        CartaoBaru(
-          cor: Cores.primariaA(0.10),
-          elevado: false,
-          onTap: () => app.go(AppScreen.conta),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Sem cobrança na loja o cartão é só a porta para "Sua conta".
-                    Text(
-                      !cobrancaNaLoja
-                          ? t.contaT
-                          : app.trial
-                          ? t.fill(t.planTrial, {'n': app.trialDaysLeft})
-                          : t.planNone,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: estilo(Tipo.subtitulo),
-                    ),
-                    const SizedBox(height: Espaco.xxs),
-                    Text(
-                      !cobrancaNaLoja
-                          ? t.contaSub
-                          : app.trial
-                          ? t.fill(t.planTrialSub, {
-                              'd': t.formatLongDate(app.paidPlanStart),
-                            })
-                          : t.planNoneSub,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: estilo(
-                        Tipo.corpoPequeno,
-                        color: Cores.tinta700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                t.setManage,
-                style: estilo(Tipo.rotulo, color: Cores.primariaEscura),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: Cores.primariaEscura,
-              ),
-            ],
-          ),
-        ),
-
-        // --- sobre ------------------------------------------------------------
-        const SizedBox(height: Espaco.md),
-        _Grupo(
-          children: [
-            if (cobrancaNaLoja)
-              _Linha(
-                chave: null,
-                icone: Icons.restore_rounded,
-                rotulo: t.setRestore,
-                aoTocar: app.restorePurchases,
-              ),
-            _Linha(
-              chave: null,
-              icone: Icons.shield_outlined,
-              rotulo: t.setPrivacy,
-              aoTocar: () => showLegalSheet(
-                context,
-                title: t.setPrivacy,
-                body: t.privacyBody,
-                close: t.shareDone,
-              ),
-            ),
-            _Linha(
-              chave: null,
-              icone: Icons.article_outlined,
-              rotulo: t.setTerms,
-              aoTocar: () => showLegalSheet(
-                context,
-                title: t.setTerms,
-                body: t.termsBody,
-                close: t.shareDone,
-              ),
-            ),
-            _Linha(
-              chave: null,
-              icone: Icons.replay_rounded,
-              rotulo: t.setReplay,
-              apagado: true,
-              aoTocar: app.restartOnboarding,
             ),
           ],
         ),
@@ -563,6 +486,20 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
+/// Título de uma seção dos Ajustes.
+class _Secao extends StatelessWidget {
+  const _Secao(this.titulo);
+
+  final String titulo;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(Espaco.xs, Espaco.lg, Espaco.xs, Espaco.xs),
+        child: Text(titulo.toUpperCase(),
+            style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700).copyWith(letterSpacing: 0.8)),
+      );
+}
+
 class _Grupo extends StatelessWidget {
   const _Grupo({required this.children});
 
@@ -591,9 +528,12 @@ class _Linha extends StatelessWidget {
     required this.rotulo,
     required this.aoTocar,
     this.valor,
+    this.detalhe,
     this.amostra,
-    this.apagado = false,
   });
+
+  /// Segunda linha, menor (ex.: o que há dentro de "Sua conta").
+  final String? detalhe;
 
   /// Uma cor no lugar do valor: a pelagem se mostra, não vira número.
   final Color? amostra;
@@ -605,11 +545,10 @@ class _Linha extends StatelessWidget {
   final String rotulo;
   final String? valor;
   final VoidCallback aoTocar;
-  final bool apagado;
 
   @override
   Widget build(BuildContext context) {
-    final cor = apagado ? Cores.tinta500 : Cores.tinta;
+    const cor = Cores.tinta;
     return Semantics(
       key: chave,
       button: true,
@@ -624,11 +563,19 @@ class _Linha extends StatelessWidget {
               Icon(icone, size: 19, color: cor),
               const SizedBox(width: Espaco.sm),
               Expanded(
-                child: Text(
-                  rotulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: estilo(Tipo.corpo, color: cor),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: detalhe == null ? 0 : Espaco.xs),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                    Text(
+                      rotulo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: estilo(Tipo.corpo, color: cor),
+                    ),
+                    if (detalhe != null)
+                      Text(detalhe!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+                  ]),
                 ),
               ),
               if (valor != null)

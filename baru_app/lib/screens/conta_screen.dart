@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../cobranca.dart';
+import '../l10n_ajustes.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/acesso.dart';
 import '../widgets/common.dart';
+import '../widgets/legal_sheet.dart';
 
 /// Sua conta.
 ///
@@ -21,6 +23,7 @@ class ContaScreen extends StatefulWidget {
 
   static const chaveEmail = Key('conta-email');
   static const chaveApagar = Key('conta-apagar');
+  static const chavePrivacidade = Key('conta-privacidade');
 
   @override
   State<ContaScreen> createState() => _ContaScreenState();
@@ -43,6 +46,7 @@ class _ContaScreenState extends State<ContaScreen> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final t = app.t;
+    garanteTextosDosAjustes();
     final temConta = app.canSignOut && app.emailDaConta.isNotEmpty;
 
     return Column(
@@ -221,6 +225,55 @@ class _ContaScreenState extends State<ContaScreen> {
                 ),
               ],
               const SizedBox(height: Espaco.md),
+              // Sobre o Baru: o que é da conta e do contrato fica aqui, não
+              // espalhado nos Ajustes.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(Espaco.xs, Espaco.sm, Espaco.xs, Espaco.xs),
+                child: Text(t.s('contaSecSobre').toUpperCase(),
+                    style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700).copyWith(letterSpacing: 0.8)),
+              ),
+              CartaoBaru(
+                padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
+                child: Column(
+                  children: [
+                    if (cobrancaNaLoja) ...[
+                      _Acao(
+                        icone: Icons.restore_rounded,
+                        rotulo: t.setRestore,
+                        ativo: !_ocupado,
+                        aoTocar: app.restorePurchases,
+                      ),
+                      Divider(height: 1, color: Cores.tintaA(0.07)),
+                    ],
+                    _Acao(
+                      key: ContaScreen.chavePrivacidade,
+                      icone: Icons.shield_outlined,
+                      rotulo: t.setPrivacy,
+                      ativo: true,
+                      aoTocar: () => showLegalSheet(context, title: t.setPrivacy, body: t.privacyBody, close: t.shareDone),
+                    ),
+                    Divider(height: 1, color: Cores.tintaA(0.07)),
+                    _Acao(
+                      icone: Icons.article_outlined,
+                      rotulo: t.setTerms,
+                      ativo: true,
+                      aoTocar: () => showLegalSheet(context, title: t.setTerms, body: t.termsBody, close: t.shareDone),
+                    ),
+                    Divider(height: 1, color: Cores.tintaA(0.07)),
+                    _Acao(
+                      icone: Icons.replay_rounded,
+                      rotulo: t.setReplay,
+                      ativo: true,
+                      aoTocar: app.restartOnboarding,
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(Espaco.xs, Espaco.lg, Espaco.xs, Espaco.xs),
+                child: Text(t.s('contaSecSair').toUpperCase(),
+                    style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700).copyWith(letterSpacing: 0.8)),
+              ),
               CartaoBaru(
                 padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
                 child: Column(

@@ -130,22 +130,22 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Permitir acesso ao uso'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Refazer a apresentação'),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    // Privacidade, termos e "refazer a apresentação" moram em Sua conta.
+    expect(find.text('Refazer a apresentação'), findsNothing);
   });
 
   testWidgets('ajustes abre privacidade', (tester) async {
     await pumpAt412(tester, AppScreen.profile);
     expect(find.byType(SettingsScreen), findsOneWidget);
+    // A conta fica no topo dos Ajustes; a privacidade, dentro dela.
+    await tester.tap(find.byKey(SettingsScreen.chaveConta));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.scrollUntilVisible(
       find.text('Política de privacidade'),
       120,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -90));
     // Pumps limitados, não `pumpAndSettle`: o companheiro respira em laço
     // infinito, então a árvore nunca fica quieta enquanto ele estiver em
     // cena. Com a tela de ajustes mais curta ele deixou de sair do viewport.

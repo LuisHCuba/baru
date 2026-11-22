@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../widgets/ranking_do_laco.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -368,6 +369,8 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
         ]);
       },
       acoesDaFolha: [
+        const SizedBox(height: Espaco.md),
+        RankingDoLaco(laco: f.id, t: t, aoAssinar: () => app.go(AppScreen.paywall)),
         if (avisos.isNotEmpty) ...[
           const SizedBox(height: Espaco.md),
           _TituloDaSecao(t.s('famSecAtividade')),

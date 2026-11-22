@@ -60,7 +60,25 @@ class _SkillsDoBaruState extends State<SkillsDoBaru> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => _FolhaDeRegistro(t: t, repo: _repo, antes: _skills),
     );
-    if (novo != null && mounted) setState(() => _skills = novo);
+    if (novo == null || !mounted) return;
+    final antes = _skills;
+    setState(() => _skills = novo);
+    for (final s in Skill.values) {
+      final n = novo.de(s).nivel;
+      if (n > antes.de(s).nivel) _comemora(s, n);
+    }
+  }
+
+  void _comemora(Skill s, int nivel) {
+    showDialog<void>(
+      context: context,
+      builder: (c) => AlertDialog(
+        key: const Key('skills-subiu'),
+        icon: Icon(iconeDaSkill(s), size: 48, color: corDaSkill(s)),
+        title: Text(t.fill(t.s('skSubiu'), {'s': nomeDaSkill(t, s), 'n': nivel}), textAlign: TextAlign.center),
+        actions: [TextButton(onPressed: () => Navigator.of(c).pop(), child: const Text('OK'))],
+      ),
+    );
   }
 
   @override

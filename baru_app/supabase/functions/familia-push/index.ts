@@ -10,6 +10,8 @@ import { jsonResponse, servico } from '../_shared/http.ts'
  *    dos responsáveis (iPhone pela Apple, Android pelo Firebase) — trigger baru_familia_avisa_responsavel. Só eventos de
  *    até 90 s e uma vez cada (push_em).
  *
+ * 3. { selos_semana }: vencedores do ranking semanal do laço para os adultos (baru_fecha_semana).
+ *
  * Quem chama: o trigger baru_familia_avisa_push (pg_net), logo depois de uma
  * regra mudar. Sem segredo compartilhado: a função só envia se as regras da
  * criança mudaram no último minuto e meio. O pior que alguém de fora consegue
@@ -206,10 +208,69 @@ async function avisaResponsaveis(eventoId: number) {
   return jsonResponse({ enviados })
 }
 
+/** Textos do aviso dos vencedores da semana: [título, nome das skills]. */
+const SELOS: Record<string, { t: string; skills: Record<string, string> }> = {
+  pt: { t: 'Ranking da semana no laço {l}', skills: { geral: 'Geral', inteligente: 'Inteligente', forte: 'Forte', saudavel: 'Saudável' } },
+  en: { t: 'Weekly ranking in {l}', skills: { geral: 'Overall', inteligente: 'Smart', forte: 'Strong', saudavel: 'Healthy' } },
+  es: { t: 'Ranking de la semana en {l}', skills: { geral: 'General', inteligente: 'Inteligente', forte: 'Fuerte', saudavel: 'Saludable' } },
+  zh: { t: '{l} 本周排行', skills: { geral: '总榜', inteligente: '聪明', forte: '强壮', saudavel: '健康' } },
+}
+
+/**
+ * { selos_semana }: avisa os adultos de cada laço quem venceu a semana. Chamado
+ * pelo baru_fecha_semana (pg_net). Só manda selos gravados na última hora e
+ * ainda não avisados (avisado_em), então repetir a chamada não repete o aviso.
+ */
+async function avisaSelos(semana: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(semana)) return jsonResponse({ error: 'semana' }, 400)
+  const db = servico()
+  const { data: selos } = await db.from('baru_selos_semanais')
+    .select('familia_id, skill, user_id').eq('semana', semana).is('avisado_em', null)
+    .gt('criado_em', new Date(Date.now() - 3_600_000).toISOString())
+  if (!selos?.length) return jsonResponse({ enviados: 0 })
+  await db.from('baru_selos_semanais').update({ avisado_em: new Date().toISOString() })
+    .eq('semana', semana).is('avisado_em', null)
+  const fcm = await acessoFcm()
+  const jwt = await jwtDaApple()
+  let enviados = 0
+  const familias = [...new Set(selos.map((s: { familia_id: string }) => s.familia_id))]
+  for (const f of familias) {
+    const { data: laco } = await db.from('baru_familias').select('nome').eq('id', f).maybeSingle()
+    const { data: membros } = await db.from('baru_familia_membros').select('user_id, apelido, papel')
+      .eq('familia_id', f).is('saiu_em', null)
+    const nome = (u: string) => (membros ?? []).find((m: { user_id: string }) => m.user_id === u)?.apelido ?? '—'
+    const doLaco = selos.filter((s: { familia_id: string }) => s.familia_id === f)
+    const adultos = (membros ?? []).filter((m: { papel: string }) => m.papel === 'responsavel').map((m: { user_id: string }) => m.user_id)
+    if (!adultos.length) continue
+    const { data: aparelhos } = await db.from('baru_familia_resp_aparelhos')
+      .select('push_token, push_ambiente, idioma, plataforma').in('user_id', adultos).not('push_token', 'is', null)
+    for (const a of aparelhos ?? []) {
+      const tx = SELOS[a.idioma] ?? SELOS.pt
+      const titulo = tx.t.replaceAll('{l}', laco?.nome ?? '')
+      const texto = ['geral', 'inteligente', 'forte', 'saudavel']
+        .map((k) => [k, doLaco.filter((s: { skill: string }) => s.skill === k).map((s: { user_id: string }) => nome(s.user_id))] as const)
+        .filter(([, nomes]) => nomes.length)
+        .map(([k, nomes]) => `${tx.skills[k]}: ${nomes.join(', ')}`).join(' · ')
+      if (a.plataforma === 'android' && fcm) {
+        const r = await enviaAndroid(fcm, a.push_token, { baru: 'selo', id: semana.replaceAll('-', ''), titulo, texto })
+        if (r.ok) enviados++
+      } else if (a.plataforma === 'ios' && jwt) {
+        const r = await enviaApple(jwt, a.push_token, a.push_ambiente, {
+          aps: { alert: { title: titulo, body: texto }, 'interruption-level': 'active', 'thread-id': `ranking-${f}` },
+          baru: 'selo',
+        }, 'alert')
+        if (r.ok) enviados++
+      }
+    }
+  }
+  return jsonResponse({ enviados })
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return jsonResponse({ error: 'method' }, 405)
   const corpoReq = await req.json().catch(() => ({}))
   if (Number.isInteger(corpoReq.evento_id)) return await avisaResponsaveis(corpoReq.evento_id)
+  if (typeof corpoReq.selos_semana === 'string') return await avisaSelos(corpoReq.selos_semana)
   const { crianca_id } = corpoReq
   if (typeof crianca_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(crianca_id)) return jsonResponse({ error: 'crianca_id' }, 400)
 

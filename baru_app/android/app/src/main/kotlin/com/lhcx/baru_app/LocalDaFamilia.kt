@@ -313,6 +313,31 @@ class AvisosDaFamilia : JobService() {
             }
         }
 
+        /** Vencedores do ranking semanal: o servidor já manda o texto no idioma do celular. */
+        fun mostraSelo(ctx: Context, dados: Map<String, String>) {
+            val titulo = dados["titulo"] ?: return
+            val texto = dados["texto"] ?: return
+            val prefs = ctx.getSharedPreferences(ARQUIVO, Context.MODE_PRIVATE)
+            val cfg = try { JSONObject(prefs.getString("cfg", null) ?: "{}") } catch (_: Exception) { JSONObject() }
+            val nm = ctx.getSystemService(NotificationManager::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                nm.createNotificationChannel(NotificationChannel(CANAL, cfg.optString("canal", "Família"),
+                    NotificationManager.IMPORTANCE_HIGH))
+            }
+            val abre = PendingIntent.getActivity(ctx, 1,
+                ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.putExtra("baru_rota", "/familia"),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            val n = NotificationCompat.Builder(ctx, CANAL)
+                .setSmallIcon(R.drawable.ic_stat_baru)
+                .setContentTitle(titulo)
+                .setContentText(texto)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(texto))
+                .setAutoCancel(true)
+                .setContentIntent(abre)
+                .build()
+            try { nm.notify(3000 + ((dados["id"]?.toLongOrNull() ?: 0L) % 1000).toInt(), n) } catch (_: SecurityException) {}
+        }
+
         internal fun mostra(ctx: Context, cfg: JSONObject, e: JSONObject) {
             val textos = cfg.optJSONObject("textos") ?: return
             val par = textos.optJSONArray(e.optString("tipo")) ?: return

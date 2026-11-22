@@ -10,7 +10,10 @@ import com.google.firebase.messaging.RemoteMessage
  */
 class PushDaFamilia : FirebaseMessagingService() {
     override fun onMessageReceived(m: RemoteMessage) {
-        if (m.data["baru"] == "aviso") AvisosDaFamilia.doPush(this, m.data)
+        when (m.data["baru"]) {
+            "aviso" -> AvisosDaFamilia.doPush(this, m.data)
+            "selo" -> AvisosDaFamilia.mostraSelo(this, m.data)
+        }
     }
 
     override fun onNewToken(token: String) {

@@ -486,6 +486,7 @@ class MainActivity : FlutterFragmentActivity() {
                     val tinha = RegrasDaFamilia.le(this) != null
                     RegrasDaFamilia.grava(this, json)
                     if (json != null) GuardaDaFamilia.liga(this) else if (tinha) GuardaDaFamilia.desliga(this)
+                    PosicaoDaFamilia.agenda(this, RegrasDaFamilia.le(this)?.localizacao == true)
                     result.success(true)
                 }
 

@@ -852,6 +852,14 @@ class _CartaoDaCrianca extends StatelessWidget {
                           : linhaDoLocal(t, local!.atual!),
                   style: estilo(Tipo.corpoPequeno, color: local?.atual?.motivo == 'sos' ? Cores.alerta : Cores.tinta700),
                 ),
+                // Por que falta posição (ou está velha): o responsável sabe o que fazer.
+                if (local == null ? null : diagnosticoDoLocal(t, local!) case final motivo?)
+                  Padding(
+                    padding: const EdgeInsets.only(top: Espaco.xxs),
+                    child: Text(motivo,
+                        key: Key('local-motivo-${c.id}'),
+                        style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
+                  ),
               ]),
             ),
             if (c.regras.localizacao)

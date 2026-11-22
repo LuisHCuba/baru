@@ -187,6 +187,8 @@ class GuardaDaFamilia : Service() {
             return START_NOT_STICKY
         }
         sobeNaBarra()
+        // Posição também com a tela apagada (o laço abaixo para no Doze).
+        PosicaoDaFamilia.agenda(this, RegrasDaFamilia.le(this)?.localizacao == true)
         livres = appsLivres()
         // Regras novas (ou a chave do aparelho) acabaram de chegar: consulta já.
         ultimaBusca = 0L

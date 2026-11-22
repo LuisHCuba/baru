@@ -29,6 +29,39 @@ String linhaDoLocal(T t, PosicaoDaCrianca p, {DateTime? agora}) => [
       if (p.bateria != null && p.bateria! >= 0) t.fill(t.s('locBateria'), {'n': p.bateria!}),
     ].join(' · ');
 
+/// Por que a posição da criança falta ou está velha, para o responsável saber
+/// o que fazer. Nulo quando está tudo certo (posição recente).
+///
+/// A ordem importa: primeiro o que impede de vez (celular não conectado,
+/// sem permissão), depois o que é passageiro (sem sinal, pedido a caminho).
+String? diagnosticoDoLocal(T t, CriancaNoMapa c, {DateTime? agora}) {
+  if (!c.localizacao) return null;
+  final hoje = agora ?? DateTime.now();
+  final n = {'n': c.apelido};
+  final ap = c.aparelho;
+  if (ap == null) return t.fill(t.s('locDiagSemAparelho'), n);
+  switch (ap.localEstado) {
+    case 'negada':
+    case 'nao_pedida':
+      return t.fill(t.s('locDiagNegada'), n);
+    case 'desligada':
+      return t.fill(t.s('locDiagDesligada'), n);
+    case 'quando_usa':
+      return t.fill(t.s('locDiagQuandoUsa'), n);
+  }
+  final ultima = c.atual?.em;
+  final pedido = c.pedidoEm;
+  if (pedido != null && hoje.difference(pedido).inMinutes < 10 && (ultima == null || ultima.isBefore(pedido))) {
+    return t.fill(t.s('locDiagAguardando'), {...n, 't': haQuanto(t, pedido, agora: hoje)});
+  }
+  if (ap.localEstado == null) return t.fill(t.s('locDiagVersao'), n);
+  final sinal = [ultima, ap.vistoEm].whereType<DateTime>().fold<DateTime?>(null, (a, b) => a == null || b.isAfter(a) ? b : a);
+  if (sinal == null || hoje.difference(sinal).inHours >= 3) {
+    return t.fill(t.s('locDiagSemSinal'), {...n, 't': sinal == null ? '' : haQuanto(t, sinal, agora: hoje)}).replaceAll('  ', ' ');
+  }
+  return null;
+}
+
 /// Mapa da família (só o responsável): onde cada criança está, os lugares
 /// combinados e o caminho das últimas 24 horas ou 7 dias.
 ///
@@ -260,6 +293,8 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
                     c.atual == null ? t.fill(t.s('locSemPosicao'), {'n': c.apelido}) : linhaDoLocal(t, c.atual!),
                     style: estilo(Tipo.corpoPequeno, color: c.atual?.motivo == 'sos' ? Cores.alerta : Cores.tinta700),
                   ),
+                  if (diagnosticoDoLocal(t, c) case final motivo?)
+                    Text(motivo, key: Key('mapa-motivo-${c.id}'), style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
                   if (c.id == _selecionada) ...[
                     const SizedBox(height: Espaco.xs),
                     Wrap(spacing: Espaco.xs, children: [

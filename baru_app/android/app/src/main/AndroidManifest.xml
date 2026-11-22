@@ -218,6 +218,11 @@
         </service>
         <!-- Celular do responsável: confere de 15 em 15 minutos os avisos da
              família (SOS, chegou, saiu, meta) e mostra como notificação. -->
+        <!-- Celular da criança: posição de 15 em 15 minutos, mesmo com a tela apagada. -->
+        <service
+            android:name=".PosicaoDaFamilia"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
         <service
             android:name=".AvisosDaFamilia"
             android:exported="false"

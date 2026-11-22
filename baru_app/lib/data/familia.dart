@@ -175,8 +175,29 @@ class PosicaoDaCrianca {
 }
 
 @immutable
+/// O celular da criança visto por último: permissão de localização e versão.
+@immutable
+class AparelhoDaCrianca {
+  const AparelhoDaCrianca({this.plataforma, this.vistoEm, this.localEstado, this.versao});
+
+  factory AparelhoDaCrianca.doMapa(Map<dynamic, dynamic> m) => AparelhoDaCrianca(
+        plataforma: m['plataforma'] as String?,
+        vistoEm: DateTime.tryParse('${m['visto_em']}')?.toLocal(),
+        localEstado: m['local_estado'] as String?,
+        versao: m['versao'] as String?,
+      );
+
+  final String? plataforma;
+  final DateTime? vistoEm;
+
+  /// "sempre", "quando_usa", "negada", "desligada", "nao_pedida" ou nulo
+  /// (versão do app anterior à 1.0.7, que ainda não contava).
+  final String? localEstado;
+  final String? versao;
+}
+
 class CriancaNoMapa {
-  const CriancaNoMapa({required this.id, required this.apelido, this.plataforma, this.localizacao = false, this.pedidoEm, this.atual});
+  const CriancaNoMapa({required this.id, required this.apelido, this.plataforma, this.localizacao = false, this.pedidoEm, this.atual, this.aparelho});
 
   factory CriancaNoMapa.doMapa(Map<dynamic, dynamic> m) => CriancaNoMapa(
         id: '${m['id']}',
@@ -185,6 +206,7 @@ class CriancaNoMapa {
         localizacao: m['localizacao'] == true,
         pedidoEm: DateTime.tryParse('${m['pedidoEm']}')?.toLocal(),
         atual: m['atual'] is Map ? PosicaoDaCrianca.doMapa(m['atual'] as Map) : null,
+        aparelho: m['aparelho'] is Map ? AparelhoDaCrianca.doMapa(m['aparelho'] as Map) : null,
       );
 
   final String id;
@@ -193,6 +215,7 @@ class CriancaNoMapa {
   final bool localizacao;
   final DateTime? pedidoEm;
   final PosicaoDaCrianca? atual;
+  final AparelhoDaCrianca? aparelho;
 }
 
 @immutable
@@ -534,6 +557,11 @@ class FamiliaRepo {
   }
 
   /// "Onde está agora?": o celular da criança manda uma posição nova.
+  /// Celular da criança conta ao servidor a permissão de localização e a
+  /// versão do app (o responsável vê o motivo quando não há posição).
+  Future<void> estadoDoAparelho({required String chave, required String local, String? versao}) =>
+      _c.rpc('baru_familia_aparelho_estado', params: {'p_chave': chave, 'p_local': local, 'p_versao': versao});
+
   Future<void> pedirLocal(String criancaId) => _c.rpc('baru_familia_pedir_local', params: {'p_crianca': criancaId});
 
   Future<MapaDaFamilia> mapa(String familiaId) async {

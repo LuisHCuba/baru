@@ -2,6 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Estado da permissão de localização neste celular.
+/// Versão do app mandada ao servidor (o responsável vê quando o celular da
+/// criança está com uma versão antiga). Igual ao `version` do pubspec.yaml.
+const versaoDoApp = '1.0.7+17';
+
 enum PermissaoDeLocal {
   /// Localização do sistema desligada.
   desligada,
@@ -15,6 +19,15 @@ enum PermissaoDeLocal {
   sempre;
 
   bool get concedida => this == quandoUsa || this == sempre;
+
+  /// Nome guardado no servidor (`baru_familia_aparelhos.local_estado`).
+  String get noServidor => switch (this) {
+        desligada => 'desligada',
+        naoPedida => 'nao_pedida',
+        negada => 'negada',
+        quandoUsa => 'quando_usa',
+        sempre => 'sempre',
+      };
 
   static PermissaoDeLocal de(String? s) => switch (s) {
         'desligada' => desligada,

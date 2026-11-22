@@ -179,11 +179,18 @@ class FamiliaSync {
       url: BaruEnv.supabaseUrl,
       anon: BaruEnv.supabaseAnonKey,
     );
-    if (!regras.localizacao || chave == null) return;
+    if (chave == null) return;
     // O pedido de permissão só acontece na tela Família, depois do aviso em
     // destaque (exigência da Google e da Apple): aqui só usa o que já foi dado.
     final permissao = await LocalNativo.estado();
-    if (!permissao.concedida) return;
+    // O responsável vê a permissão e a versão: sem isso, "sem posição" não
+    // tinha explicação no painel.
+    try {
+      await repo.estadoDoAparelho(chave: chave, local: permissao.noServidor, versao: versaoDoApp);
+    } catch (e) {
+      debugPrint('Baru: estado do aparelho não enviado — $e');
+    }
+    if (!regras.localizacao || !permissao.concedida) return;
     final p = await LocalNativo.agora();
     if (p == null) return;
     await repo.enviarPosicao(chave: chave, lat: p.lat, lng: p.lng, precisaoM: p.precisaoM, bateria: p.bateria, motivo: 'abriu');

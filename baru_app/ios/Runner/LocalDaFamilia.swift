@@ -3,6 +3,10 @@
 // Celular da criança, com a localização ligada pelo responsável:
 //   - mudanças significativas de lugar (a Apple acorda o app mesmo fechado,
 //     a cada ~500 m) mandam a posição;
+//   - uma cerca de ~200 m em volta da última posição enviada: ao sair dela,
+//     o iPhone acorda o Baru e manda a posição nova (pega deslocamentos
+//     curtos, que a mudança significativa ignora);
+//   - visitas (chegou e saiu de um lugar onde a criança parou) também mandam;
 //   - o push silencioso "regras" traz o pedido "onde está agora?" e o iPhone
 //     responde com uma posição nova (RegrasRemotas chama `atendePedido`);
 //   - a barra azul de localização fica visível: a criança sempre sabe.
@@ -26,6 +30,8 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
   private var aoMudarPermissao: [() -> Void] = []
   private var querSempre = false
   private var d: UserDefaults { UserDefaults(suiteName: "group.tech.lhcx.baru") ?? .standard }
+  private static let cerca = "baru.familia.cerca"
+  private static let raioDaCerca: CLLocationDistance = 200
 
   private override init() {
     super.init()
@@ -80,6 +86,40 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
     }
     chamaPermissao()
     if d.bool(forKey: "local.ligada") { retoma() }
+    contaEstado()
+  }
+
+  /// Conta ao servidor a permissão atual (o responsável vê o motivo quando
+  /// não há posição). Só no celular da criança, que tem a chave do aparelho.
+  func contaEstado() {
+    guard let chave = d.string(forKey: "familia.chave"), chave.count == 64,
+          let url = d.string(forKey: "familia.url"), let anon = d.string(forKey: "familia.anon"),
+          let alvo = URL(string: "\(url)/rest/v1/rpc/baru_familia_aparelho_estado") else { return }
+    var r = URLRequest(url: alvo, timeoutInterval: 20)
+    r.httpMethod = "POST"
+    r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    r.setValue(anon, forHTTPHeaderField: "apikey")
+    r.setValue("Bearer \(anon)", forHTTPHeaderField: "Authorization")
+    r.httpBody = try? JSONSerialization.data(withJSONObject: ["p_chave": chave, "p_local": estado])
+    let tarefa = tarefaDeFundo("estado")
+    URLSession.shared.dataTask(with: r) { _, _, _ in tarefa() }.resume()
+  }
+
+  /// Pede ao iOS alguns segundos a mais com o app em segundo plano, para a
+  /// posição chegar ao servidor antes de o sistema suspender o Baru.
+  private func tarefaDeFundo(_ nome: String) -> () -> Void {
+    var id = UIBackgroundTaskIdentifier.invalid
+    id = UIApplication.shared.beginBackgroundTask(withName: "baru.local.\(nome)") {
+      UIApplication.shared.endBackgroundTask(id)
+      id = .invalid
+    }
+    return {
+      DispatchQueue.main.async {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
+      }
+    }
   }
 
   // MARK: - posição
@@ -104,11 +144,41 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
     guard let l = locations.last else { return }
     if !pedidos.isEmpty { entrega(l); return }
-    // Mudança significativa (app em segundo plano ou fechado).
+    // Mudança significativa ou saída da cerca (app em segundo plano ou fechado).
     if d.bool(forKey: "local.ligada") {
       let ultima = d.double(forKey: "local.ultimaEnviada")
-      if Date().timeIntervalSince1970 - ultima > 240 { envia(l, motivo: "periodico") { _ in } }
+      if Date().timeIntervalSince1970 - ultima > 120 { envia(l, motivo: "periodico") { _ in } }
     }
+  }
+
+  /// Saiu da cerca em volta da última posição: pede uma posição nova.
+  func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
+    guard region.identifier == Self.cerca, d.bool(forKey: "local.ligada") else { return }
+    let fim = tarefaDeFundo("cerca")
+    agora { [weak self] l in
+      guard let self, let l else { fim(); return }
+      self.envia(l, motivo: "periodico") { _ in fim() }
+    }
+  }
+
+  /// Chegou ou saiu de um lugar onde ficou parada (visita do iOS).
+  func locationManager(_ manager: CLLocationManager, didVisit visit: CLVisit) {
+    guard d.bool(forKey: "local.ligada"), visit.horizontalAccuracy >= 0 else { return }
+    let l = CLLocation(coordinate: visit.coordinate, altitude: 0,
+                       horizontalAccuracy: visit.horizontalAccuracy, verticalAccuracy: -1, timestamp: Date())
+    let fim = tarefaDeFundo("visita")
+    envia(l, motivo: "lugar") { _ in fim() }
+  }
+
+  /// Uma cerca nova em volta de onde a criança está.
+  private func moveCerca(para l: CLLocation) {
+    guard gerente.authorizationStatus == .authorizedAlways,
+          CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else { return }
+    gerente.monitoredRegions.filter { $0.identifier == Self.cerca }.forEach { gerente.stopMonitoring(for: $0) }
+    let r = CLCircularRegion(center: l.coordinate, radius: Self.raioDaCerca, identifier: Self.cerca)
+    r.notifyOnExit = true
+    r.notifyOnEntry = false
+    gerente.startMonitoring(for: r)
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -138,8 +208,11 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
     r.setValue("Bearer \(anon)", forHTTPHeaderField: "Authorization")
     r.httpBody = try? JSONSerialization.data(withJSONObject: corpo)
     d.set(Date().timeIntervalSince1970, forKey: "local.ultimaEnviada")
+    if l.horizontalAccuracy >= 0 && l.horizontalAccuracy <= 500 { moveCerca(para: l) }
+    let tarefa = tarefaDeFundo("envia")
     URLSession.shared.dataTask(with: r) { _, resp, _ in
       fim((resp as? HTTPURLResponse)?.statusCode == 200)
+      tarefa()
     }.resume()
   }
 
@@ -156,6 +229,10 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
     }
     gerente.pausesLocationUpdatesAutomatically = true
     gerente.startMonitoringSignificantLocationChanges()
+    if s == .authorizedAlways {
+      gerente.startMonitoringVisits()
+      if let l = gerente.location { moveCerca(para: l) }
+    }
   }
 
   func configura(ligada: Bool) {
@@ -164,6 +241,8 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
       retoma()
     } else {
       gerente.stopMonitoringSignificantLocationChanges()
+      gerente.stopMonitoringVisits()
+      gerente.monitoredRegions.filter { $0.identifier == Self.cerca }.forEach { gerente.stopMonitoring(for: $0) }
       gerente.allowsBackgroundLocationUpdates = false
     }
   }
@@ -176,9 +255,10 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
           -pedido.timeIntervalSinceNow < 600,
           pedido.timeIntervalSince1970 > d.double(forKey: "local.pedidoAtendido") else { fim(); return }
     d.set(pedido.timeIntervalSince1970, forKey: "local.pedidoAtendido")
+    let tarefa = tarefaDeFundo("pedido")
     agora { [weak self] l in
-      guard let self, let l else { fim(); return }
-      self.envia(l, motivo: "pedido") { _ in fim() }
+      guard let self, let l else { fim(); tarefa(); return }
+      self.envia(l, motivo: "pedido") { _ in fim(); tarefa() }
     }
   }
 
@@ -253,6 +333,7 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
       if let url = args["url"] as? String { d.set(url, forKey: "familia.url") }
       if let anon = args["anon"] as? String { d.set(anon, forKey: "familia.anon") }
       configura(ligada: args["ligada"] as? Bool ?? false)
+      contaEstado()
       result(true)
     case "avisos":
       guardaAvisos(args["json"] as? String)

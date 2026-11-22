@@ -139,6 +139,49 @@ object LocalDaFamilia {
 }
 
 /**
+ * Celular da criança (Android): de 15 em 15 minutos, mesmo com a tela apagada
+ * e o celular "dormindo" (o laço do guarda para quando o Android entra em
+ * Doze), manda a posição e conta a permissão ao servidor.
+ *
+ * Precisa da permissão "o tempo todo": sem ela o Android não entrega posição
+ * com o Baru fechado, e o responsável vê esse motivo no painel.
+ */
+class PosicaoDaFamilia : JobService() {
+
+    companion object {
+        private const val JOB_ID = 1030
+
+        /** Agenda (ou cancela) conforme a localização está ligada para esta criança. */
+        fun agenda(ctx: Context, ligada: Boolean) {
+            val js = ctx.getSystemService(JobScheduler::class.java) ?: return
+            if (!ligada) { js.cancel(JOB_ID); return }
+            if (js.getPendingJob(JOB_ID) != null) return
+            js.schedule(JobInfo.Builder(JOB_ID, ComponentName(ctx, PosicaoDaFamilia::class.java))
+                .setPeriodic(15 * 60_000L)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setPersisted(true)
+                .build())
+        }
+    }
+
+    override fun onStartJob(params: JobParameters?): Boolean {
+        val base = try { JSONObject(RegrasDaFamilia.texto(this) ?: run { agenda(this, false); return false }) } catch (_: Exception) { return false }
+        if (!base.optBoolean("localizacao", false)) { agenda(this, false); return false }
+        val chave = base.optString("chave"); val url = base.optString("url"); val anon = base.optString("anon")
+        if (chave.length != 64 || url.isEmpty()) return false
+        val estado = LocalDaFamilia.estado(this)
+        thread(name = "baru-estado") {
+            LocalDaFamilia.rpc(url, anon, "baru_familia_aparelho_estado", JSONObject().put("p_chave", chave).put("p_local", estado))
+        }
+        if (estado != "sempre") { jobFinished(params, false); return true }
+        LocalDaFamilia.enviaPosicao(this, chave, url, anon, "periodico") { jobFinished(params, false) }
+        return true
+    }
+
+    override fun onStopJob(params: JobParameters?): Boolean = true
+}
+
+/**
  * Celular do responsável (Android): de 15 em 15 minutos, mesmo com o Baru
  * fechado, pergunta ao banco se há aviso novo e mostra como notificação.
  */

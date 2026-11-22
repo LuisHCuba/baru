@@ -15,6 +15,7 @@ import '../services/notification_service.dart';
 import '../services/localizacao.dart';
 import '../services/overlay_service.dart';
 import '../services/tempo_de_tela_ios.dart';
+import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/botao_baru.dart';
@@ -381,6 +382,22 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
                   onPressed: () => setState(() => _todaAtividade = !_todaAtividade),
                   child: Text(t.s(_todaAtividade ? 'famVerMenos' : 'famVerTodos')),
                 ),
+            ]),
+          ),
+        ],
+        // Mais de 6 pessoas: o plano família não cobre todo mundo; o Família+ cobre até 10.
+        if (f.souAdmin && f.criancas.length + f.responsaveis.length > 6) ...[
+          const SizedBox(height: Espaco.md),
+          CartaoBaru(
+            key: const Key('laco-familia-mais'),
+            cor: Cores.primariaA(0.10),
+            elevado: false,
+            onTap: () => app.go(AppScreen.paywall),
+            child: Row(children: [
+              const Icon(Icons.workspace_premium_outlined, color: Cores.primariaEscura),
+              const SizedBox(width: Espaco.sm),
+              Expanded(child: Text(t.s('lacoFamiliaMais'), style: estilo(Tipo.corpoPequeno))),
+              const Icon(Icons.chevron_right_rounded, color: Cores.primariaEscura),
             ]),
           ),
         ],

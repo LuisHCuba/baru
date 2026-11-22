@@ -7,6 +7,9 @@ void garanteTextosDaAssinatura() => T.registra(textosDaAssinatura);
 
 const textosDaAssinatura = <String, Map<String, String>>{
   'pt': {
+    'assPlanoFamiliaAnual': 'Família anual',
+    'assPlanoFamiliaMais': 'Família+',
+    'assPlanoFamiliaMaisNota': 'Premium para até 10 pessoas do laço {l}; só você paga',
     'assBotaoAno': 'Assinar por {p}/ano',
     'assPorAno': '{p} por ano',
     'assFamiliaSemLaco': 'Crie um laço na aba Laços para assinar o plano família',
@@ -38,6 +41,9 @@ const textosDaAssinatura = <String, Map<String, String>>{
     'assProcurando': 'Procurando assinaturas desta conta…',
   },
   'en': {
+    'assPlanoFamiliaAnual': 'Family yearly',
+    'assPlanoFamiliaMais': 'Family+',
+    'assPlanoFamiliaMaisNota': 'Premium for up to 10 people in {l}; only you pay',
     'assBotaoAno': 'Subscribe for {p}/year',
     'assPorAno': '{p} per year',
     'assFamiliaSemLaco': 'Create a bond in the Bonds tab to get the family plan',
@@ -69,6 +75,9 @@ const textosDaAssinatura = <String, Map<String, String>>{
     'assProcurando': 'Looking for subscriptions on this account…',
   },
   'es': {
+    'assPlanoFamiliaAnual': 'Familia anual',
+    'assPlanoFamiliaMais': 'Familia+',
+    'assPlanoFamiliaMaisNota': 'Premium para hasta 10 personas del lazo {l}; solo tú pagas',
     'assBotaoAno': 'Suscribirse por {p}/año',
     'assPorAno': '{p} al año',
     'assFamiliaSemLaco': 'Crea un lazo en la pestaña Lazos para suscribir el plan familia',
@@ -100,6 +109,9 @@ const textosDaAssinatura = <String, Map<String, String>>{
     'assProcurando': 'Buscando suscripciones de esta cuenta…',
   },
   'zh': {
+    'assPlanoFamiliaAnual': '家庭年付',
+    'assPlanoFamiliaMais': '家庭+',
+    'assPlanoFamiliaMaisNota': '纽带 {l} 中最多 10 人享受高级版；只需你付费',
     'assBotaoAno': '以 {p}/年 订阅',
     'assPorAno': '每年 {p}',
     'assFamiliaSemLaco': '在“纽带”标签中创建纽带后即可订阅家庭方案',

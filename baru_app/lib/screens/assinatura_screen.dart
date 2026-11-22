@@ -54,6 +54,8 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
   T get t => widget.t;
   ProductDetails? get _produto => _planos[_escolhido];
 
+  String get _nomeDoLaco => _meusLacos.isEmpty ? '' : _meusLacos.firstWhere((l) => l.id == _laco, orElse: () => _meusLacos.first).nome;
+
   @override
   void initState() {
     super.initState();
@@ -114,10 +116,10 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
   Future<void> _assinar() async {
     final p = _produto;
     if (p == null) return;
-    if (_escolhido == PlanoDaLoja.familia && _laco == null) return;
+    if (_escolhido.ehFamilia && _laco == null) return;
     setState(() => _ocupado = true);
     try {
-      await CompraLoja.instancia.assinar(p, laco: _escolhido == PlanoDaLoja.familia ? _laco : null);
+      await CompraLoja.instancia.assinar(p, laco: _escolhido.ehFamilia ? _laco : null);
     } catch (_) {
       if (!mounted) return;
       setState(() => _ocupado = false);
@@ -186,25 +188,28 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
                     padding: const EdgeInsets.only(bottom: Espaco.sm),
                     child: _CartaoDoPlano(
                       chave: Key('plano-${plano.name}'),
-                      titulo: t.s(switch (plano) { PlanoDaLoja.mensal => 'assPlanoMensal', PlanoDaLoja.anual => 'assPlanoAnual', PlanoDaLoja.familia => 'assPlanoFamilia' }),
-                      preco: switch (plano) {
-                        PlanoDaLoja.anual => t.fill(t.s('assPorAno'), {'p': pp.price}),
-                        _ => t.fill(t.s('assPorMes'), {'p': pp.price}),
-                      },
+                      titulo: t.s(switch (plano) {
+                        PlanoDaLoja.mensal => 'assPlanoMensal',
+                        PlanoDaLoja.anual => 'assPlanoAnual',
+                        PlanoDaLoja.familia => 'assPlanoFamilia',
+                        PlanoDaLoja.familiaAnual => 'assPlanoFamiliaAnual',
+                        PlanoDaLoja.familiaMais => 'assPlanoFamiliaMais',
+                      }),
+                      preco: plano.ehAnual ? t.fill(t.s('assPorAno'), {'p': pp.price}) : t.fill(t.s('assPorMes'), {'p': pp.price}),
                       nota: switch (plano) {
                         PlanoDaLoja.mensal => t.s('assPlanoMensalNota'),
                         PlanoDaLoja.anual => t.fill(t.s('assPlanoAnualNota'), {'p': '${pp.currencySymbol} ${(pp.rawPrice / 12).toStringAsFixed(2).replaceAll('.', ',')}'}),
-                        PlanoDaLoja.familia => _meusLacos.isEmpty
-                            ? t.s('assFamiliaSemLaco')
-                            : t.fill(t.s('assPlanoFamiliaNota'), {'l': _meusLacos.firstWhere((l) => l.id == _laco, orElse: () => _meusLacos.first).nome}),
+                        _ when _meusLacos.isEmpty => t.s('assFamiliaSemLaco'),
+                        PlanoDaLoja.familia || PlanoDaLoja.familiaAnual => t.fill(t.s('assPlanoFamiliaNota'), {'l': _nomeDoLaco}),
+                        PlanoDaLoja.familiaMais => t.fill(t.s('assPlanoFamiliaMaisNota'), {'l': _nomeDoLaco}),
                       },
                       destaque: plano == PlanoDaLoja.anual,
                       escolhido: plano == _escolhido,
-                      ativo: plano != PlanoDaLoja.familia || _meusLacos.isNotEmpty,
+                      ativo: !plano.ehFamilia || _meusLacos.isNotEmpty,
                       aoTocar: () => setState(() => _escolhido = plano),
                     ),
                   ),
-            if (_escolhido == PlanoDaLoja.familia && _meusLacos.length > 1)
+            if (_escolhido.ehFamilia && _meusLacos.length > 1)
               Wrap(spacing: Espaco.xs, children: [
                 for (final l in _meusLacos)
                   ChoiceChip(label: Text(l.nome), selected: l.id == _laco, onSelected: (_) => setState(() => _laco = l.id)),
@@ -216,8 +221,8 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
             else
               BotaoBaru(
                 key: AssinaturaScreen.chaveAssinar,
-                rotulo: p == null ? t.s('assT') : t.fill(t.s(_escolhido == PlanoDaLoja.anual ? 'assBotaoAno' : 'assBotao'), {'p': p.price}),
-                ativo: p != null && !_ocupado && (_escolhido != PlanoDaLoja.familia || _laco != null),
+                rotulo: p == null ? t.s('assT') : t.fill(t.s(_escolhido.ehAnual ? 'assBotaoAno' : 'assBotao'), {'p': p.price}),
+                ativo: p != null && !_ocupado && (!_escolhido.ehFamilia || _laco != null),
                 aoTocar: _assinar,
               ),
             if (_ocupado)

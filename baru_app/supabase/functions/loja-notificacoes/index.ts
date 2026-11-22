@@ -13,7 +13,7 @@ import { jsonResponse, servico } from '../_shared/http.ts'
  */
 
 const PACOTE = 'tech.lhcx.baru'
-const PRODUTOS = new Set(['baru_assinatura', 'baru_familia'])
+const PRODUTOS = new Set(['baru_assinatura', 'baru_familia', 'baru_familia_mais'])
 const API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PACOTE}`
 const VALIDOS = new Set(['SUBSCRIPTION_STATE_ACTIVE', 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD', 'SUBSCRIPTION_STATE_CANCELED'])
 

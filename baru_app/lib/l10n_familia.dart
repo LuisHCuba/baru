@@ -14,6 +14,7 @@ void garanteTextosDaFamilia() {
 
 const textosDaFamilia = <String, Map<String, String>>{
   'pt': {
+    'lacoFamiliaMais': 'Seu laço passou de 6 pessoas. O plano Família cobre até 6; o Família+ cobre até 10.',
     'nivelT': 'Nível no laço',
     'nivelAdmin': 'Administrador',
     'nivelAdminSub': 'Gerencia o laço e cuida dos dependentes',
@@ -164,6 +165,7 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'Agora é horário sem tela',
   },
   'en': {
+    'lacoFamiliaMais': 'Your bond has more than 6 people. Family covers up to 6; Family+ covers up to 10.',
     'nivelT': 'Level in the bond',
     'nivelAdmin': 'Admin',
     'nivelAdminSub': 'Manages the bond and looks after dependents',
@@ -314,6 +316,7 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'It\'s screen-free time now',
   },
   'es': {
+    'lacoFamiliaMais': 'Tu lazo tiene más de 6 personas. Familia cubre hasta 6; Familia+ cubre hasta 10.',
     'nivelT': 'Nivel en el lazo',
     'nivelAdmin': 'Administrador',
     'nivelAdminSub': 'Gestiona el lazo y cuida a los dependientes',
@@ -464,6 +467,7 @@ const textosDaFamilia = <String, Map<String, String>>{
     'famSemTelaAgora': 'Ahora es horario sin pantalla',
   },
   'zh': {
+    'lacoFamiliaMais': '你的纽带超过 6 人。家庭方案最多 6 人；家庭+ 最多 10 人。',
     'nivelT': '在纽带中的级别',
     'nivelAdmin': '管理员',
     'nivelAdminSub': '管理纽带并照顾被监护人',

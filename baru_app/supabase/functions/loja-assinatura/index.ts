@@ -8,7 +8,7 @@ import { comCors, jsonResponse, servico, usuarioDe } from '../_shared/http.ts'
  *
  * Produtos: baru_assinatura (individual: planos base mensal e anual) e
  * baru_familia (família: libera as primeiras 6 pessoas do laço `laco`, que o
- * comprador precisa administrar).
+ * comprador precisa administrar) e baru_familia_mais (Família+: até 10).
  *
  * A compra só vale para a conta que comprou: o app manda o id da conta como
  * obfuscatedAccountId, e a Google devolve o mesmo valor na conferência.
@@ -18,7 +18,8 @@ import { comCors, jsonResponse, servico, usuarioDe } from '../_shared/http.ts'
  */
 
 const PACOTE = 'tech.lhcx.baru'
-const PRODUTOS = new Set(['baru_assinatura', 'baru_familia'])
+const PRODUTOS = new Set(['baru_assinatura', 'baru_familia', 'baru_familia_mais'])
+const FAMILIA = new Set(['baru_familia', 'baru_familia_mais'])
 const API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PACOTE}`
 
 const b64url = (b: ArrayBuffer | Uint8Array | string) =>
@@ -83,7 +84,7 @@ Deno.serve(comCors(async (req: Request) => {
   }
   const laco = typeof corpo.laco === 'string' && /^[0-9a-f-]{36}$/i.test(corpo.laco) ? corpo.laco : null
   const db0 = servico()
-  if (produto === 'baru_familia') {
+  if (FAMILIA.has(produto)) {
     // Plano família: só o administrador do laço compra, e um laço tem um plano família só.
     if (!laco) return jsonResponse({ error: 'laco_obrigatorio', message: 'Escolha o laço que o plano família vai cobrir.' }, 400)
     const { data: eu } = await db0.from('baru_familia_membros').select('papel, admin')
@@ -92,7 +93,7 @@ Deno.serve(comCors(async (req: Request) => {
       return jsonResponse({ error: 'nao_admin', message: 'Só um administrador do laço assina o plano família.' }, 403)
     }
     const { data: outro } = await db0.from('baru_assinaturas_loja').select('user_id')
-      .eq('laco_id', laco).eq('produto', 'baru_familia').is('revogada_em', null).gt('expira_em', new Date().toISOString())
+      .eq('laco_id', laco).in('produto', [...FAMILIA]).is('revogada_em', null).gt('expira_em', new Date().toISOString())
       .neq('user_id', uid).maybeSingle()
     if (outro) return jsonResponse({ error: 'ja_coberto', message: 'Este laço já tem plano família.' }, 409)
   }
@@ -144,7 +145,7 @@ Deno.serve(comCors(async (req: Request) => {
     revogada_em: vale ? null : new Date().toISOString(),
     teste: c.testPurchase != null,
     plano_base: item.offerDetails?.basePlanId ?? null,
-    laco_id: produto === 'baru_familia' ? laco : null,
+    laco_id: FAMILIA.has(produto) ? laco : null,
     atualizado_em: new Date().toISOString(),
   })
   if (error) {

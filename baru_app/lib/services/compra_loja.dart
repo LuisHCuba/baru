@@ -23,6 +23,11 @@ class CompraLoja {
   /// Plano família (Google Play). No iPhone ainda não existe.
   static const produtoFamilia = 'baru_familia';
 
+  /// Família+ (até 10 pessoas).
+  static const produtoFamiliaMais = 'baru_familia_mais';
+
+  static bool ehFamilia(String id) => id == produtoFamilia || id == produtoFamiliaMais;
+
   /// Laço do plano família sendo comprado (vai junto para o servidor).
   String? _lacoPendente;
 
@@ -30,7 +35,7 @@ class CompraLoja {
   /// e família. No Android cada plano base vem como um ProductDetails próprio.
   Future<Map<PlanoDaLoja, ProductDetails>> planosDaLoja() async {
     if (!temLoja || !await _loja.isAvailable()) return const {};
-    final ids = defaultTargetPlatform == TargetPlatform.iOS ? {produto} : {produto, produtoFamilia};
+    final ids = defaultTargetPlatform == TargetPlatform.iOS ? {produto} : {produto, produtoFamilia, produtoFamiliaMais};
     final r = await _loja.queryProductDetails(ids);
     final out = <PlanoDaLoja, ProductDetails>{};
     for (final p in r.productDetails) {
@@ -48,6 +53,10 @@ class CompraLoja {
             out[PlanoDaLoja.anual] = p;
           case 'familia-mensal':
             out[PlanoDaLoja.familia] = p;
+          case 'familia-anual':
+            out[PlanoDaLoja.familiaAnual] = p;
+          case 'familia-mais-mensal':
+            out[PlanoDaLoja.familiaMais] = p;
         }
       } else if (p.id == produto) {
         out[PlanoDaLoja.mensal] = p;
@@ -117,7 +126,7 @@ class CompraLoja {
         'loja': loja,
         'produto': c.productID,
         'token': c.verificationData.serverVerificationData,
-        if (c.productID == produtoFamilia && _lacoPendente != null) 'laco': _lacoPendente,
+        if (ehFamilia(c.productID) && _lacoPendente != null) 'laco': _lacoPendente,
       });
       if (c.pendingCompletePurchase) await _loja.completePurchase(c);
       _avisos.add(const AvisoDaLoja(EtapaDaLoja.pronto));
@@ -135,7 +144,16 @@ class CompraLoja {
 }
 
 /// Os planos à venda: um preço só por plano em todo lugar.
-enum PlanoDaLoja { mensal, anual, familia }
+enum PlanoDaLoja {
+  mensal,
+  anual,
+  familia,
+  familiaAnual,
+  familiaMais;
+
+  bool get ehFamilia => this == familia || this == familiaAnual || this == familiaMais;
+  bool get ehAnual => this == anual || this == familiaAnual;
+}
 
 enum EtapaDaLoja { comprando, conferindo, pronto, cancelada, falhou, semConexao }
 

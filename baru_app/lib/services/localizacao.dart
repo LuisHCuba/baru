@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 /// Estado da permissão de localização neste celular.
 /// Versão do app mandada ao servidor (o responsável vê quando o celular da
 /// criança está com uma versão antiga). Igual ao `version` do pubspec.yaml.
-const versaoDoApp = '1.0.8+18';
+const versaoDoApp = '1.0.9+19';
 
 enum PermissaoDeLocal {
   /// Localização do sistema desligada.

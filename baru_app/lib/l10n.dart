@@ -1234,9 +1234,9 @@ const _pt = <String, Object>{
   'repFreezeMany':
       'Restam {n} congelamentos nesta semana. Se você faltar um dia, ele te espera.',
   'privacyBody':
-      'O Baru guarda no servidor só o mínimo para o seu progresso funcionar em qualquer aparelho: a sua conta, o seu companheiro, as sessões de foco e o total diário de tempo de tela, se você permitir. Quais apps você usou e por quanto tempo fica só no celular. O app nunca lê mensagens, conteúdo de tela ou o que você digita, e não tem anúncios. Política completa: meubaru.com/privacidade',
+      'O Baru guarda no servidor só o mínimo para o seu progresso funcionar em qualquer aparelho: a sua conta, o seu companheiro, as sessões de foco, os hábitos que você registrar e o total diário de tempo de tela, se você permitir. Quais apps você usou e por quanto tempo fica só no celular. Nos laços, as pessoas do mesmo laço veem só o que você escolher compartilhar (localização, foto) e os totais da semana no ranking. O app nunca lê mensagens, conteúdo de tela ou o que você digita, e não tem anúncios. Política completa: meubaru.com/privacidade',
   'termsBody':
-      'Você usa o Baru para sessões de foco e um habitat. Ele nunca morre, nunca perde progresso e nunca te culpa. Esta versão é gratuita. Trocar o idioma e a meta não apaga o habitat.',
+      'Você usa o Baru para sessões de foco, hábitos e um habitat. Ele nunca morre, nunca perde progresso e nunca te culpa. Depois do teste grátis, o acesso é por assinatura (individual, Família ou Família+), cobrada pela Google Play ou App Store e renovada automaticamente até você cancelar na loja. Trocar o idioma e a meta não apaga o habitat. Termos completos: meubaru.com/termos',
   'tabs': ['Habitat', 'Trilha', 'Missões', 'Ajustes'],
 };
 
@@ -1818,9 +1818,9 @@ const _en = <String, Object>{
   'repFreezeMany':
       '{n} freezes left this week. If you miss a day, it waits for you.',
   'privacyBody':
-      'Baru keeps only the minimum on the server so your progress works on any device: your account, your companion, your focus sessions and the daily screen-time total, if you allow it. Which apps you used and for how long stays on your phone. The app never reads messages, screen content or what you type, and has no ads. Full policy: meubaru.com/privacidade',
+      'Baru keeps only the minimum on the server so your progress works on any device: your account, your companion, focus sessions, the habits you log and the daily screen-time total, if you allow it. Which apps you used and for how long stays on your phone. In groups, people in the same group only see what you choose to share (location, photo) and the weekly totals in the ranking. The app never reads messages, screen content or what you type, and has no ads. Full policy: meubaru.com/privacidade',
   'termsBody':
-      'You use Baru for focus sessions and a habitat. It never dies, never loses progress, and never blames you. This version is free. Changing language or goal does not wipe the habitat.',
+      'You use Baru for focus sessions, habits and a habitat. It never dies, never loses progress and never blames you. After the free trial, access is by subscription (individual, Family or Family+), billed by Google Play or the App Store and renewed automatically until you cancel in the store. Changing the language or goal doesn\'t erase the habitat. Full terms: meubaru.com/termos',
   'tabs': ['Habitat', 'Path', 'Missions', 'Settings'],
 };
 
@@ -2404,9 +2404,9 @@ const _es = <String, Object>{
   'repFreezeMany':
       'Quedan {n} congelamientos esta semana. Si faltas un día, te espera.',
   'privacyBody':
-      'Baru guarda en el servidor solo lo mínimo para que tu progreso funcione en cualquier aparato: tu cuenta, tu compañero, las sesiones de enfoque y el total diario de tiempo de pantalla, si lo permites. Qué apps usaste y por cuánto tiempo queda solo en el teléfono. La app nunca lee mensajes, contenido de pantalla ni lo que escribes, y no tiene anuncios. Política completa: meubaru.com/privacidade',
+      'Baru guarda en el servidor solo lo mínimo para que tu progreso funcione en cualquier dispositivo: tu cuenta, tu compañero, las sesiones de foco, los hábitos que registres y el total diario de tiempo de pantalla, si lo permites. Qué apps usaste y por cuánto tiempo queda solo en el móvil. En los lazos, las personas del mismo lazo ven solo lo que elijas compartir (ubicación, foto) y los totales de la semana en el ranking. La app nunca lee mensajes, contenido de pantalla ni lo que escribes, y no tiene anuncios. Política completa: meubaru.com/privacidade',
   'termsBody':
-      'Usas Baru para sesiones de enfoque y un hábitat. Nunca muere, nunca pierde progreso y nunca te culpa. Esta versión es gratuita. Cambiar idioma o meta no borra el hábitat.',
+      'Usas Baru para sesiones de foco, hábitos y un hábitat. Nunca muere, nunca pierde progreso y nunca te culpa. Después de la prueba gratis, el acceso es por suscripción (individual, Familia o Familia+), cobrada por Google Play o App Store y renovada automáticamente hasta que la canceles en la tienda. Cambiar el idioma o la meta no borra el hábitat. Términos completos: meubaru.com/termos',
   'tabs': ['Hábitat', 'Camino', 'Misiones', 'Ajustes'],
 };
 
@@ -2952,8 +2952,8 @@ const _zh = <String, Object>{
   'streakOne': '1 天的根',
   'repFreezeMany': '本周还有 {n} 次冻结。如果你缺一天，它会等你。',
   'privacyBody':
-      'Baru 只在服务器上保存让进度在任何设备上可用的最少数据：你的账户、你的伙伴、专注时段，以及你允许时的每日屏幕总时长。你用了哪些应用、用了多久只留在手机上。应用从不读取消息、屏幕内容或你输入的文字，也没有广告。完整政策：meubaru.com/privacidade',
+      'Baru 只在服务器上保存让进度在任何设备上可用的最少数据：你的账户、你的伙伴、专注记录、你记录的习惯，以及（在你允许时）每日屏幕时间总数。你用过哪些应用、用了多久只留在手机上。在纽带中，同一纽带的人只能看到你选择分享的内容（位置、照片）以及排行中的每周总数。应用从不读取消息、屏幕内容或你输入的内容，也没有广告。完整政策：meubaru.com/privacidade',
   'termsBody':
-      '你用 Baru 做专注时段、照料栖息地。它不会死，不会丢掉进度，也不会责怪你。这个版本免费。改语言或目标不会清空栖息地。',
+      '你用 Baru 进行专注、记录习惯并照顾栖息地。它永远不会死去，不会丢失进度，也从不责怪你。免费试用结束后，需要订阅（个人、家庭或家庭+），由 Google Play 或 App Store 收费，并自动续订，直到你在商店中取消。更改语言或目标不会清除栖息地。完整条款：meubaru.com/termos',
   'tabs': ['栖息地', '路径', '任务', '设置'],
 };

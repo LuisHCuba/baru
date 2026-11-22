@@ -67,6 +67,10 @@ String? diagnosticoDoLocal(T t, CriancaNoMapa c, {DateTime? agora}) {
   return null;
 }
 
+/// Chave da ArcGIS Location Platform (mapa de satélite), vinda do Infisical
+/// no build: `--dart-define=ARCGIS_API_KEY=...`. Nunca no código.
+const _chaveArcgis = String.fromEnvironment('ARCGIS_API_KEY');
+
 /// Mapa da família (só o responsável): onde cada criança está, os lugares
 /// combinados e o caminho das últimas 24 horas ou 7 dias.
 ///
@@ -310,25 +314,36 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
         // Mapa limpo do OpenFreeMap; enquanto o estilo carrega (ou sem rede),
         // o OpenStreetMap simples segura a tela.
         if (_satelite) ...[
-          // Satélite (Esri World Imagery) com ruas e nomes por cima, como no Life360.
-          TileLayer(
-            urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            userAgentPackageName: 'tech.lhcx.baru',
-            maxNativeZoom: 19,
-            maxZoom: 20,
-          ),
-          TileLayer(
-            urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
-            userAgentPackageName: 'tech.lhcx.baru',
-            maxNativeZoom: 19,
-            maxZoom: 20,
-          ),
-          TileLayer(
-            urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-            userAgentPackageName: 'tech.lhcx.baru',
-            maxNativeZoom: 19,
-            maxZoom: 20,
-          ),
+          // Satélite com nomes por cima. Com a chave da ArcGIS (Location
+          // Platform, licença comercial), os serviços com token; sem ela
+          // (build sem a chave), o servidor público da Esri.
+          if (_chaveArcgis.isNotEmpty) ...[
+            TileLayer(
+              urlTemplate: 'https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=$_chaveArcgis',
+              userAgentPackageName: 'tech.lhcx.baru',
+              maxNativeZoom: 19,
+              maxZoom: 20,
+            ),
+            TileLayer(
+              urlTemplate: 'https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/imagery/labels/static/tile/{z}/{y}/{x}?token=$_chaveArcgis',
+              userAgentPackageName: 'tech.lhcx.baru',
+              maxNativeZoom: 19,
+              maxZoom: 20,
+            ),
+          ] else ...[
+            TileLayer(
+              urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              userAgentPackageName: 'tech.lhcx.baru',
+              maxNativeZoom: 19,
+              maxZoom: 20,
+            ),
+            TileLayer(
+              urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+              userAgentPackageName: 'tech.lhcx.baru',
+              maxNativeZoom: 19,
+              maxZoom: 20,
+            ),
+          ],
         ] else if (_estilo case final e?)
           VectorTileLayer(theme: e.theme, sprites: e.sprites, tileProviders: e.providers, maximumZoom: 19)
         else
@@ -419,7 +434,7 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
               ),
         ]),
         RichAttributionWidget(attributions: [
-          if (_satelite) const TextSourceAttribution('Esri, Maxar, Earthstar Geographics') else TextSourceAttribution(t.s('locAtribuicao')),
+          if (_satelite) const TextSourceAttribution('Powered by Esri · Esri, Maxar, Earthstar Geographics') else TextSourceAttribution(t.s('locAtribuicao')),
           if (!_satelite && _estilo != null) const TextSourceAttribution('OpenFreeMap'),
         ]),
       ],

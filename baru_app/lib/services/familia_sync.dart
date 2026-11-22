@@ -161,6 +161,7 @@ class FamiliaSync {
       'idioma': app.lang,
       'sandbox': kDebugMode,
       'canal': t.s('avCanal'),
+      'canalSos': t.s('avCanalSos'),
       'textos': {
         'sos': [t.s('avSosT'), t.s('avSosC')],
         'chegou': [t.s('avChegouT'), t.s('avChegouC')],

@@ -9,6 +9,9 @@ import '../l10n_missoes.dart';
 import '../data/crescimento.dart';
 import '../models.dart';
 import '../state.dart';
+import '../l10n_ajustes.dart';
+import 'missoes_screen.dart';
+import 'settings_screen.dart';
 import 'trilha_screen.dart';
 import '../theme.dart';
 import '../widgets/acesso.dart';
@@ -184,7 +187,54 @@ class _HomeScreenState extends State<HomeScreen> {
 /// O que fica preso em cima das abas na home: a alça do "Seu dia" e a ação
 /// da tela. Vive na mesma superfície das abas ([BottomTabs.acima]), para
 /// que o pé da tela seja um painel só, e não três camadas de botões.
-/// Atalho compacto no painel do Baru (Trilha, Missões).
+/// Título de seção dentro da folha do dia.
+class _TituloDaFolha extends StatelessWidget {
+  const _TituloDaFolha(this.texto, {required this.chave});
+
+  final String texto;
+  final Key chave;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        key: chave,
+        padding: const EdgeInsets.only(bottom: Espaco.sm),
+        child: Text(texto, style: nunito(size: 20, weight: FontWeight.w800)),
+      );
+}
+
+/// Linha da personalização do bicho na folha do dia.
+class _LinhaDoBicho extends StatelessWidget {
+  const _LinhaDoBicho({required this.chave, required this.rotulo, required this.aoTocar, this.valor, this.amostra});
+
+  final Key chave;
+  final String rotulo;
+  final String? valor;
+  final Color? amostra;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        key: chave,
+        onTap: aoTocar,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: Toque.minimo + 4),
+          child: Row(children: [
+            Expanded(child: Text(rotulo, style: estilo(Tipo.corpo))),
+            if (valor != null) Text(valor!, style: estilo(Tipo.corpo, color: Cores.tinta700)),
+            if (amostra != null)
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(color: amostra, shape: BoxShape.circle, border: Border.all(color: Cores.tintaA(0.12))),
+              ),
+            const SizedBox(width: Espaco.xxs),
+            const Icon(Icons.chevron_right_rounded, size: 18, color: Cores.tinta500),
+          ]),
+        ),
+      );
+}
+
+/// Atalho compacto no painel do Baru (abre a folha do dia).
 class _AtalhoDoBaru extends StatelessWidget {
   const _AtalhoDoBaru({required this.chave, required this.icone, required this.rotulo, required this.aoTocar, this.detalhe, this.destaque = false});
 
@@ -315,26 +365,16 @@ class AcessorioDaHome extends StatelessWidget {
           ),
           // Botão dividido: a ação e, colada nela, a escolha que a muda.
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Trilha e Missões moram aqui, na tela do Baru (não são mais abas).
+          // Missões e trilha ficam na folha do dia, nesta mesma tela.
           Row(children: [
-            Expanded(
-              child: _AtalhoDoBaru(
-                chave: const Key('atalho-trilha'),
-                icone: Icons.route_rounded,
-                rotulo: app.t.tabs[1],
-                detalhe: 'Nv ${app.nivel}',
-                aoTocar: () => app.go(AppScreen.trilha),
-              ),
-            ),
-            const SizedBox(width: Espaco.xs),
             Expanded(
               child: _AtalhoDoBaru(
                 chave: const Key('atalho-missoes'),
                 icone: Icons.flag_rounded,
-                rotulo: app.t.tabs[2],
-                detalhe: app.missoesResgataveis > 0 ? '${app.missoesResgataveis}' : null,
+                rotulo: '${app.t.tabs[2]} · ${app.t.tabs[1]}',
+                detalhe: app.missoesResgataveis > 0 ? '${app.missoesResgataveis}' : 'Nv ${app.nivel}',
                 destaque: app.missoesResgataveis > 0,
-                aoTocar: () => app.go(AppScreen.missoes),
+                aoTocar: _abreSeuDia,
               ),
             ),
           ]),
@@ -704,6 +744,7 @@ class SeuDia extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    garanteTextosDosAjustes();
     final t = app.t;
     final primeira = _primeira;
     final next = app.nextItem;
@@ -864,11 +905,43 @@ class SeuDia extends StatelessWidget {
             ),
           ),
         const SizedBox(height: Espaco.sm),
-        // Nível e XP de verdade, com a trilha a um toque.
-        CartaoNivel(app: app, compacto: true),
-        const SizedBox(height: Espaco.sm),
-        _ResumoDeMissoes(app: app),
-        const SizedBox(height: Espaco.sm),
+        // Missões e trilha moram aqui, na mesma tela do Baru: rolar a folha
+        // mostra tudo, sem abrir outra tela.
+        const SizedBox(height: Espaco.md),
+        _TituloDaFolha(t.missoesT, chave: const Key('folha-missoes')),
+        const MissoesScreen(embutido: true),
+        const SizedBox(height: Espaco.md),
+        _TituloDaFolha(t.trilhaT, chave: const Key('folha-trilha')),
+        const TrilhaScreen(embutido: true),
+        const SizedBox(height: Espaco.md),
+        // Personalizar o bicho é coisa do Baru, não dos Ajustes.
+        _TituloDaFolha(t.s('seuBaruT'), chave: const Key('folha-seu-baru')),
+        SoftCard(
+          padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
+          child: Column(children: [
+            _LinhaDoBicho(
+              chave: const Key('bicho-especie'),
+              rotulo: t.s('seuBaruAnimal'),
+              valor: t.animalName(app.species.name),
+              aoTocar: () => SettingsScreen.abreEspecie(context, app),
+            ),
+            Divider(height: 1, color: Cores.tintaA(0.07)),
+            _LinhaDoBicho(
+              chave: const Key('bicho-pelagem'),
+              rotulo: t.coat,
+              amostra: AppColors.pelagemDe(app.species, app.color),
+              aoTocar: () => SettingsScreen.abreAparencia(context, app),
+            ),
+            Divider(height: 1, color: Cores.tintaA(0.07)),
+            _LinhaDoBicho(
+              chave: const Key('bicho-sexo'),
+              rotulo: t.setSexo,
+              valor: SettingsScreen.rotuloDoSexo(t, app.sexo),
+              aoTocar: () => SettingsScreen.abreSexo(context, app),
+            ),
+          ]),
+        ),
+        const SizedBox(height: Espaco.md),
         SoftCard(
           padding: const EdgeInsets.fromLTRB(
             Espaco.md,
@@ -1012,70 +1085,6 @@ class SeuDia extends StatelessWidget {
           ),
         );
     }
-  }
-}
-
-/// As missões do dia em uma linha, com o que ainda dá para resgatar.
-///
-/// O cartão antigo mostrava duas quests com visto binário e um "+10" que nada
-/// creditava. Este aponta para a tela onde elas existem de verdade.
-class _ResumoDeMissoes extends StatelessWidget {
-  const _ResumoDeMissoes({required this.app});
-
-  final AppState app;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = app.t;
-    final diarias = app.missoesDiarias;
-    final feitas = diarias.where((m) => m.resgatada).length;
-    final aResgatar = app.missoesResgataveis;
-
-    return SoftCard(
-      onTap: () => app.go(AppScreen.missoes),
-      child: Row(
-        children: [
-          AppIcon(
-            aResgatar > 0 ? Icons.redeem_rounded : Icons.flag_outlined,
-            size: 18,
-            color: aResgatar > 0 ? Cores.mel700 : AppColors.green,
-          ),
-          const SizedBox(width: Espaco.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  t.missoesT,
-                  style: nunito(size: 14, weight: FontWeight.w700),
-                ),
-                const SizedBox(height: 6),
-                TrackFill(
-                  pct: diarias.isEmpty ? 0 : feitas / diarias.length,
-                  height: 8,
-                  color: AppColors.green,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: Espaco.sm),
-          if (aResgatar > 0)
-            Etiqueta(texto: t.missaoResgatar, cor: Cores.mel400, forte: true)
-          else
-            Text(
-              '$feitas/${diarias.length}',
-              style: nunito(
-                size: 13,
-                weight: FontWeight.w700,
-                color: Cores.tinta700,
-                tabular: true,
-              ),
-            ),
-          const SizedBox(width: 6),
-          const Chevron(),
-        ],
-      ),
-    );
   }
 }
 

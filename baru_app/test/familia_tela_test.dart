@@ -8,6 +8,7 @@ import 'package:baru_app/services/localizacao.dart';
 import 'package:baru_app/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Banco falso: devolve o que o teste mandar e anota as chamadas.
 class _RepoFalso extends FamiliaRepo {
@@ -43,10 +44,19 @@ class _RepoFalso extends FamiliaRepo {
     return const RegrasDaFamilia();
   }
 
-  MapaDaFamilia mapaFalso = MapaDaFamilia.vazio;
+  /// Quando o teste precisa de posições, ele define o mapa; senão, o mapa sai das crianças da família.
+  MapaDaFamilia? mapaFalso;
 
   @override
-  Future<MapaDaFamilia> mapa(String familiaId) async => mapaFalso;
+  Future<MapaDaFamilia> mapa(String familiaId) async => mapaFalso ?? _mapaDe(estado, familiaId);
+
+  MapaDaFamilia _mapaDe(MinhaFamilia m, String familiaId) {
+    final f = m.familias.where((x) => x.id == familiaId).firstOrNull;
+    return MapaDaFamilia(criancas: [
+      for (final c in f?.criancas ?? const <CriancaNaFamilia>[])
+        CriancaNoMapa(id: c.id, apelido: c.apelido ?? '—', plataforma: c.plataforma, localizacao: c.regras.localizacao),
+    ]);
+  }
 
   @override
   Future<List<PosicaoDaCrianca>> rastro(String criancaId, {int horas = 24}) async => const [];
@@ -73,7 +83,7 @@ class _RepoFalso extends FamiliaRepo {
   }
 }
 
-Future<_RepoFalso> _abre(WidgetTester tester, MinhaFamilia estado, {bool comConta = true}) async {
+Future<_RepoFalso> _abre(WidgetTester tester, MinhaFamilia estado, {bool comConta = true, bool notificacoes = true}) async {
   tester.view.physicalSize = const Size(1200, 3000);
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.reset);
@@ -81,7 +91,7 @@ Future<_RepoFalso> _abre(WidgetTester tester, MinhaFamilia estado, {bool comCont
   final app = AppState();
   addTearDown(app.dispose);
   await tester.pumpWidget(MaterialApp(
-    home: Scaffold(body: AppScope(state: app, child: FamiliaScreen(repo: repo, comConta: comConta, sondaSobreposicao: () async => true, sondaFiltro: () async => true))),
+    home: Scaffold(body: AppScope(state: app, child: FamiliaScreen(repo: repo, comConta: comConta, semMapa: true, sondaSobreposicao: () async => true, sondaFiltro: () async => true, sondaNotificacoes: () async => notificacoes))),
   ));
   await tester.pumpAndSettle();
   return repo;
@@ -89,6 +99,7 @@ Future<_RepoFalso> _abre(WidgetTester tester, MinhaFamilia estado, {bool comCont
 
 void main() {
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     garanteTextosDaFamilia();
     LocalNativo.sonda = (metodo, [args]) async => metodo == 'estado' ? 'quando_usa' : null;
   });
@@ -109,8 +120,10 @@ void main() {
     await tester.tap(find.byKey(FamiliaScreen.chaveCriar));
     await tester.pumpAndSettle();
     expect(repo.chamadas, ['criar:Casa Cuba']);
+    // Quem cria vira responsável: vê o mapa com o nome da família e ainda sem crianças.
     expect(find.text('Casa Cuba'), findsOneWidget);
-    expect(find.text(textosDaFamilia['pt']!['famSemCriancas']!), findsOneWidget);
+    expect(find.text(textosDaFamilia['pt']!['famSemCriancasCorpo']!), findsOneWidget);
+    expect(find.byKey(const Key('familia-gerar')), findsOneWidget);
   });
 
   testWidgets('o código digitado vai em maiúsculas', (tester) async {
@@ -120,6 +133,38 @@ void main() {
     await tester.tap(find.byKey(FamiliaScreen.chaveEntrar));
     await tester.pumpAndSettle();
     expect(repo.chamadas, ['entrar:AB2CD3']);
+  });
+
+  testWidgets('responsável com notificações desligadas vê o alerta no topo', (tester) async {
+    final familia = MinhaFamilia.doMapa({
+      'souCrianca': false,
+      'familias': [
+        {
+          'id': 'f1',
+          'nome': 'Casa',
+          'meuPapel': 'responsavel',
+          'responsaveis': [],
+          'criancas': [
+            {'id': 'c1', 'apelido': 'Nina', 'regras': {'meta_min': 60}, 'semana': []},
+          ],
+          'eventos': [],
+        },
+      ],
+    });
+    await _abre(tester, familia, notificacoes: false);
+    expect(find.byKey(const Key('familia-notif-desligadas')), findsOneWidget);
+    expect(find.text(textosDaFamilia['pt']!['famNotifOffBotao']!), findsOneWidget);
+  });
+
+  testWidgets('com notificações ligadas não há alerta', (tester) async {
+    final familia = MinhaFamilia.doMapa({
+      'souCrianca': false,
+      'familias': [
+        {'id': 'f1', 'nome': 'Casa', 'meuPapel': 'responsavel', 'responsaveis': [], 'criancas': [], 'eventos': []},
+      ],
+    });
+    await _abre(tester, familia);
+    expect(find.byKey(const Key('familia-notif-desligadas')), findsNothing);
   });
 
   testWidgets('responsável vê a criança, o uso de hoje e os avisos', (tester) async {
@@ -150,9 +195,13 @@ void main() {
         ],
       }),
     );
+    // Na folha, Nina aparece na lista e a atividade do dia vem logo abaixo.
     expect(find.text('Nina'), findsOneWidget);
-    expect(find.textContaining('45min de 1h'), findsOneWidget);
     expect(find.text('Nina usou 75% da meta'), findsOneWidget);
+    // Escolhendo a Nina, aparece o uso de hoje.
+    await tester.tap(find.text('Nina'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('45min de 1h'), findsOneWidget);
   });
 
   testWidgets('criança vê a meta da família', (tester) async {
@@ -181,10 +230,11 @@ void main() {
         ],
       }),
     );
-    await tester.tap(find.text(textosDaFamilia['pt']!['famAddCrianca']!).first);
+    await tester.tap(find.byTooltip(textosDaFamilia['pt']!['famAddCrianca']!));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('familia-apelido')), 'Nina');
-    await tester.tap(find.byKey(const Key('familia-gerar')));
+    // A folha do mapa também tem o botão "familia-gerar" por trás do diálogo: vale o do diálogo.
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.byKey(const Key('familia-gerar'))));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(repo.chamadas, ['convidar:f1:true:Nina']);
@@ -205,7 +255,7 @@ void main() {
         ],
       }),
     );
-    await tester.tap(find.text(textosDaFamilia['pt']!['famAddCrianca']!).first);
+    await tester.tap(find.byTooltip(textosDaFamilia['pt']!['famAddCrianca']!));
     await tester.pumpAndSettle();
     await tester.tap(find.text(textosDaFamilia['pt']!['famCancelar']!));
     await tester.pumpAndSettle();
@@ -228,10 +278,12 @@ void main() {
         ],
       }),
     );
+    await tester.tap(find.text('Nina'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('+15 min'));
     await tester.pumpAndSettle();
     expect(repo.chamadas, ['extra:c1:15']);
-    await tester.tap(find.byIcon(Icons.tune_rounded));
+    await tester.tap(find.byTooltip(textosDaFamilia['pt']!['famEditarRegras']!));
     await tester.pumpAndSettle();
     expect(find.text(textosDaFamilia['pt']!['famMetaUteis']!), findsOneWidget);
     expect(find.text(textosDaFamilia['pt']!['famAvisosT']!), findsOneWidget);
@@ -256,9 +308,11 @@ void main() {
 
   testWidgets('ligar a localização pede o consentimento do responsável', (tester) async {
     final repo = await _abre(tester, comNina());
-    expect(find.text('Ver onde Nina está'), findsOneWidget);
     expect(find.text('Nina chegou em Escola'), findsOneWidget);
     expect(find.text('Nina pediu ajuda (SOS)'), findsOneWidget);
+    await tester.tap(find.text('Nina'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ver onde Nina está'), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('local-c1')));
     await tester.tap(find.byKey(const Key('local-c1')));
     await tester.pumpAndSettle();
@@ -283,10 +337,15 @@ void main() {
     final app = AppState();
     addTearDown(app.dispose);
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: AppScope(state: app,
-        child: FamiliaScreen(repo: repo, comConta: true, sondaSobreposicao: () async => true, sondaFiltro: () async => true)))));
+        child: FamiliaScreen(repo: repo, comConta: true, semMapa: true, sondaSobreposicao: () async => true, sondaFiltro: () async => true)))));
     await tester.pumpAndSettle();
+    // Na lista da folha, a linha da Nina mostra onde ela está; o botão "Atualizar" fica nela.
+    // (O de cima do mapa tem a mesma dica, então o procura só dentro da folha.)
     expect(find.text('Em Escola · há 5 min · bateria 80%'), findsOneWidget);
-    await tester.tap(find.text('Atualizar agora'));
+    await tester.tap(find.descendant(
+      of: find.byType(DraggableScrollableSheet),
+      matching: find.byTooltip(textosDoLocal['pt']!['locAtualizar']!),
+    ));
     await tester.pumpAndSettle();
     expect(repo.chamadas, ['pedir:c1']);
   });

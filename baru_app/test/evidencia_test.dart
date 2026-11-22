@@ -800,6 +800,12 @@ void main() {
     await tester.pump(Tempo.componente);
     final semFolha = await _pixels(tester, const Key('captura-conta'));
 
+    // Apagar mora dentro de Privacidade: abre a folha e desce até o fim.
+    await tester.ensureVisible(find.byKey(ContaScreen.chavePrivacidade));
+    await tester.pump(Tempo.componente);
+    await tester.tap(find.byKey(ContaScreen.chavePrivacidade));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.ensureVisible(find.byKey(ContaScreen.chaveApagar));
     await tester.pump(Tempo.componente);
     await tester.tap(find.byKey(ContaScreen.chaveApagar));

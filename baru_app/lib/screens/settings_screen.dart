@@ -65,36 +65,6 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // --- seu Baru: aparência do bicho ----------------------------------
-        _Secao(t.s('ajSecBaru')),
-        const CompanionCard(completo: false),
-        const SizedBox(height: Espaco.sm),
-        _Grupo(
-          children: [
-            _Linha(
-              chave: null,
-              icone: Icons.pets_rounded,
-              rotulo: t.revealKicker,
-              valor: t.animalName(app.species.name),
-              aoTocar: () => _abreEspecie(context, app),
-            ),
-            _Linha(
-              chave: null,
-              icone: Icons.palette_outlined,
-              rotulo: t.coat,
-              amostra: AppColors.pelagemDe(app.species, app.color),
-              aoTocar: () => _abreAparencia(context, app),
-            ),
-            _Linha(
-              chave: chaveSexo,
-              icone: Icons.wc_rounded,
-              rotulo: t.setSexo,
-              valor: _rotuloDoSexo(t, app.sexo),
-              aoTocar: () => _abreSexo(context, app),
-            ),
-          ],
-        ),
-
         // --- foco e tempo de tela -------------------------------------------
         _Secao(t.s('ajSecFoco')),
         _Grupo(
@@ -116,8 +86,8 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // --- avisos e sons ---------------------------------------------------
-        _Secao(t.s('ajSecAvisos')),
+        // --- notificações: o que o Baru manda de volta ----------------------
+        _Secao(t.s('ajSecNotif')),
         _Grupo(
           children: [
             _Chave(
@@ -142,6 +112,13 @@ class SettingsScreen extends StatelessWidget {
               ligado: app.missed,
               aoTocar: app.toggleMissed,
             ),
+          ],
+        ),
+
+        // --- som -------------------------------------------------------------
+        _Secao(t.s('ajSecSom')),
+        _Grupo(
+          children: [
             _Chave(
               rotulo: t.setSom,
               detalhe: t.setSomSub,
@@ -191,7 +168,7 @@ class SettingsScreen extends StatelessWidget {
   static String _hhmm(int h, int m) =>
       '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
 
-  static String _rotuloDoSexo(T t, Sexo s) => switch (s) {
+  static String rotuloDoSexo(T t, Sexo s) => switch (s) {
     Sexo.naoDito => t.setSexoNao,
     Sexo.macho => t.setSexoM,
     Sexo.femea => t.setSexoF,
@@ -199,7 +176,8 @@ class SettingsScreen extends StatelessWidget {
 
   // --- folhas --------------------------------------------------------------
 
-  void _abreSexo(BuildContext context, AppState app) {
+  /// Sexo do companheiro. Público para a tela que o hospedar no futuro.
+  static void abreSexo(BuildContext context, AppState app) {
     final t = app.t;
     _folha(
       context,
@@ -208,7 +186,7 @@ class SettingsScreen extends StatelessWidget {
         children: [
           for (final s in Sexo.values)
             _Opcao(
-              rotulo: _rotuloDoSexo(t, s),
+              rotulo: rotuloDoSexo(t, s),
               marcada: app.sexo == s,
               aoTocar: () {
                 app.setSexo(s);
@@ -220,7 +198,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _abreIdioma(BuildContext context, AppState app) {
+  static void _abreIdioma(BuildContext context, AppState app) {
     _folha(
       context,
       app.t.setLang,
@@ -240,7 +218,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _abreDuracao(BuildContext context, AppState app) {
+  static void _abreDuracao(BuildContext context, AppState app) {
     _folha(
       context,
       app.t.setDuracao,
@@ -260,7 +238,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _abreEspecie(BuildContext context, AppState app) {
+  /// Espécie do Baru. Público para a tela que o hospedar no futuro.
+  static void abreEspecie(BuildContext context, AppState app) {
     // A frase "Abre no passo N" mora no catálogo da trilha; sem registrar,
     // `s()` devolveria a própria chave na tela.
     garanteTextosDaTrilha();
@@ -302,7 +281,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _abreAparencia(BuildContext context, AppState app) {
+  /// Pelagem do Baru. Público para a tela que o hospedar no futuro.
+  static void abreAparencia(BuildContext context, AppState app) {
     _folha(
       context,
       app.t.coat,
@@ -320,7 +300,7 @@ class SettingsScreen extends StatelessWidget {
   /// Chips cobriam 90/120/150/180 e mais nada: quem quisesse 75 ou 240 não
   /// tinha como pedir. Agora é um passo de 15 minutos entre 30 e 480, com os
   /// valores comuns como atalho.
-  void _abreMeta(BuildContext context, AppState app) {
+  static void _abreMeta(BuildContext context, AppState app) {
     final t = app.t;
     _folha(
       context,
@@ -396,7 +376,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   /// O relatório da noite chegava sempre às 21h, fixo no código.
-  void _abreHorario(BuildContext context, AppState app) {
+  static void _abreHorario(BuildContext context, AppState app) {
     final t = app.t;
     _folha(
       context,
@@ -440,7 +420,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _folha(
+  static void _folha(
     BuildContext context,
     String titulo,
     Widget Function(VoidCallback fechar) corpo,
@@ -529,14 +509,10 @@ class _Linha extends StatelessWidget {
     required this.aoTocar,
     this.valor,
     this.detalhe,
-    this.amostra,
   });
 
   /// Segunda linha, menor (ex.: o que há dentro de "Sua conta").
   final String? detalhe;
-
-  /// Uma cor no lugar do valor: a pelagem se mostra, não vira número.
-  final Color? amostra;
 
   /// Chave para o teste apontar a linha certa. Nula quando a linha não é
   /// alvo de nenhum teste.
@@ -582,16 +558,6 @@ class _Linha extends StatelessWidget {
                 Text(
                   valor!,
                   style: estilo(Tipo.rotulo, color: Cores.tinta700),
-                ),
-              if (amostra case final cor?)
-                Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: cor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Cores.tintaA(0.15), width: 1.5),
-                  ),
                 ),
               const SizedBox(width: Espaco.xxs),
               Icon(

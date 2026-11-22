@@ -227,6 +227,19 @@
             android:name=".AvisosDaFamilia"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <!-- Alarme do SOS: toca em loop até parar (no máximo 3 minutos). -->
+        <service
+            android:name=".AlarmeDoSos"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
+        <!-- Push do Firebase: o SOS chega na hora, mesmo com o Baru fechado. -->
+        <service
+            android:name=".PushDaFamilia"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
         <receiver
             android:name=".GuardaNoBoot"
             android:exported="false">

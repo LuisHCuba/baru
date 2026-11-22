@@ -2,6 +2,8 @@ package com.lhcx.baru_app
 
 import android.Manifest
 import android.app.NotificationChannel
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.job.JobInfo
@@ -191,18 +193,71 @@ class AvisosDaFamilia : JobService() {
         private const val JOB_ID = 1020
         private const val ARQUIVO = "baru_familia_avisos"
         private const val CANAL = "baru_familia_avisos"
+        private const val CANAL_SOS = "baru_familia_sos"
+        private val VIBRACAO_SOS = longArrayOf(0, 800, 300, 800, 300, 800, 300, 1500)
 
         /** Grava a chave do responsável e os textos, e agenda a conferência. `null` desliga. */
         fun configura(ctx: Context, json: String?) {
             ctx.getSharedPreferences(ARQUIVO, Context.MODE_PRIVATE).edit().putString("cfg", json).apply()
             val js = ctx.getSystemService(JobScheduler::class.java)
             if (json == null) { js.cancel(JOB_ID); return }
+            pedeToken(ctx)
             if (js.getPendingJob(JOB_ID) != null) return
             js.schedule(JobInfo.Builder(JOB_ID, ComponentName(ctx, AvisosDaFamilia::class.java))
                 .setPeriodic(15 * 60_000L)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPersisted(true)
                 .build())
+        }
+
+
+        /** Aviso que chegou pelo push do Firebase: mostra na hora e marca como visto. */
+        fun doPush(ctx: Context, dados: Map<String, String>) {
+            val prefs = ctx.getSharedPreferences(ARQUIVO, Context.MODE_PRIVATE)
+            val cfg = try { JSONObject(prefs.getString("cfg", null) ?: return) } catch (_: Exception) { return }
+            val id = dados["id"]?.toLongOrNull() ?: return
+            // Já mostrado (pela conferência periódica ou por um push repetido).
+            if (id <= prefs.getLong("ultimo", -1L)) return
+            val e = JSONObject()
+                .put("id", id)
+                .put("tipo", dados["tipo"] ?: return)
+                .put("crianca", dados["crianca"] ?: "—")
+                .put("detalhe", JSONObject().put("lugar", dados["lugar"] ?: ""))
+            if (e.optString("tipo") == "sos") alarme(ctx, cfg, e) else mostra(ctx, cfg, e)
+            prefs.edit().putLong("ultimo", id).apply()
+        }
+
+        /** SOS: o próprio Baru toca o alarme (ver [AlarmeDoSos]). */
+        private fun alarme(ctx: Context, cfg: JSONObject, e: JSONObject) {
+            val par = cfg.optJSONObject("textos")?.optJSONArray("sos") ?: return mostra(ctx, cfg, e)
+            val crianca = e.optString("crianca", "—")
+            AlarmeDoSos.toca(ctx, par.optString(0).replace("{c}", crianca), par.optString(1).replace("{c}", crianca),
+                cfg.optString("canalSos", "SOS"))
+        }
+
+        /** Manda o token do Firebase deste celular para o servidor, junto da chave do responsável. */
+        fun registraToken(ctx: Context, token: String?) {
+            val prefs = ctx.getSharedPreferences(ARQUIVO, Context.MODE_PRIVATE)
+            val cfg = try { JSONObject(prefs.getString("cfg", null) ?: return) } catch (_: Exception) { return }
+            val chave = cfg.optString("chave"); val url = cfg.optString("url"); val anon = cfg.optString("anon")
+            if (chave.length != 64 || token.isNullOrBlank()) return
+            thread(name = "baru-token") {
+                val r = LocalDaFamilia.rpc(url, anon, "baru_familia_resp_push_token", JSONObject()
+                    .put("p_chave", chave).put("p_token", token).put("p_plataforma", "android")
+                    .put("p_ambiente", "producao").put("p_idioma", cfg.optString("idioma", "pt")))
+                android.util.Log.i("BaruPush", "token registrado: $r")
+            }
+        }
+
+        private fun pedeToken(ctx: Context) {
+            try {
+                com.google.firebase.messaging.FirebaseMessaging.getInstance().token
+                    .addOnSuccessListener { registraToken(ctx, it) }
+                    .addOnFailureListener { android.util.Log.w("BaruPush", "sem token do Firebase: ${it.message}") }
+            } catch (e: Exception) {
+                android.util.Log.w("BaruPush", "Firebase indisponível: ${e.message}")
+                // Build sem google-services.json: segue só com a conferência periódica.
+            }
         }
 
         /** Confere agora (ao abrir o app) e mostra o que for novo. */
@@ -224,7 +279,7 @@ class AvisosDaFamilia : JobService() {
                         val id = e.optLong("id")
                         if (id > maior) maior = id
                         // Na primeira vez só marca até onde já foi: não despeja o dia inteiro.
-                        if (depois >= 0) mostra(ctx, cfg, e)
+                        if (depois >= 0) { if (e.optString("tipo") == "sos") alarme(ctx, cfg, e) else mostra(ctx, cfg, e) }
                     }
                     prefs.edit().putLong("ultimo", maxOf(maior, 0L)).apply()
                 } finally {
@@ -233,7 +288,7 @@ class AvisosDaFamilia : JobService() {
             }
         }
 
-        private fun mostra(ctx: Context, cfg: JSONObject, e: JSONObject) {
+        internal fun mostra(ctx: Context, cfg: JSONObject, e: JSONObject) {
             val textos = cfg.optJSONObject("textos") ?: return
             val par = textos.optJSONArray(e.optString("tipo")) ?: return
             val crianca = e.optString("crianca", "—")
@@ -244,11 +299,30 @@ class AvisosDaFamilia : JobService() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 nm.createNotificationChannel(NotificationChannel(CANAL, cfg.optString("canal", "Família"),
                     NotificationManager.IMPORTANCE_HIGH))
+                // SOS tem canal próprio: som de alarme (toca no modo vibrar e no
+                // volume do alarme) e vibração longa. Canal criado uma vez; o
+                // som do canal não muda depois de criado.
+                if (nm.getNotificationChannel(CANAL_SOS) == null) {
+                    val alarme = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                    nm.createNotificationChannel(NotificationChannel(CANAL_SOS, cfg.optString("canalSos", "SOS"),
+                        NotificationManager.IMPORTANCE_HIGH).apply {
+                        setSound(alarme, AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build())
+                        enableVibration(true)
+                        vibrationPattern = VIBRACAO_SOS
+                        enableLights(true)
+                        lightColor = android.graphics.Color.RED
+                        lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                    })
+                }
             }
             val abre = PendingIntent.getActivity(ctx, 0,
                 ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.putExtra("baru_rota", "/familia"),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            val n = NotificationCompat.Builder(ctx, CANAL)
+            val n = NotificationCompat.Builder(ctx, if (sos) CANAL_SOS else CANAL)
                 .setSmallIcon(R.drawable.ic_stat_baru)
                 .setContentTitle(troca(par.optString(0)))
                 .setContentText(troca(par.optString(1)))
@@ -256,7 +330,16 @@ class AvisosDaFamilia : JobService() {
                 .setCategory(if (sos) NotificationCompat.CATEGORY_ALARM else NotificationCompat.CATEGORY_STATUS)
                 .setAutoCancel(true)
                 .setContentIntent(abre)
+                .apply {
+                    if (sos) {
+                        setColor(android.graphics.Color.RED)
+                        setVibrate(VIBRACAO_SOS)
+                        setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    }
+                }
                 .build()
+            // SOS insiste: o som repete até alguém abrir ou dispensar o aviso.
+            if (sos) n.flags = n.flags or android.app.Notification.FLAG_INSISTENT
             try { nm.notify(2000 + (e.optLong("id") % 1000).toInt(), n) } catch (_: SecurityException) {}
         }
     }

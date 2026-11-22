@@ -15,9 +15,12 @@ import '../widgets/habitat.dart';
 /// Antes o app tinha "Habitat nível N", que era o número de itens dividido por
 /// três com outro nome — não havia progressão nenhuma, nem nada a alcançar.
 class TrilhaScreen extends StatelessWidget {
-  const TrilhaScreen({super.key, this.aoVoltar});
+  const TrilhaScreen({super.key, this.aoVoltar, this.embutido = false});
 
   final VoidCallback? aoVoltar;
+
+  /// Dentro da tela do Baru (folha "Seu dia"): sem título, sem rolagem própria.
+  final bool embutido;
 
   static const rota = '/trilha';
 
@@ -38,6 +41,30 @@ class TrilhaScreen extends StatelessWidget {
 
     final proximo = p.proximoMarco;
 
+    final passo = Text(
+          proximo == null
+              ? t.s('trilhaPassoFim')
+              : t.fill(t.s('trilhaPassoDe'), {
+                  'n': p.passoAtual,
+                  't': p.totalDePassos,
+                }),
+          style: estilo(Tipo.corpoForte, color: Cores.mel700),
+        );
+    if (embutido) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        passo,
+        const SizedBox(height: Espaco.sm),
+        CartaoNivel(app: app),
+        if (proximo != null) ...[
+          const SizedBox(height: Espaco.sm),
+          CartaoProximoPasso(app: app, marco: proximo),
+        ],
+        const SizedBox(height: Espaco.lg),
+        SeletorDeHabitat(app: app),
+        const SizedBox(height: Espaco.lg),
+        _Caminho(app: app, progresso: p),
+      ]);
+    }
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         Espaco.margemTela,

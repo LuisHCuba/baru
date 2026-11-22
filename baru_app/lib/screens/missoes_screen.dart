@@ -37,7 +37,10 @@ import '../widgets/toca.dart';
 /// exige a anatomia inteira visível —, mas o que exige decisão agora ocupa o
 /// tamanho de uma decisão, e o resto ocupa o tamanho de um lembrete.
 class MissoesScreen extends StatelessWidget {
-  const MissoesScreen({super.key});
+  const MissoesScreen({super.key, this.embutido = false});
+
+  /// Dentro da tela do Baru (folha "Seu dia"): sem título, sem rolagem própria.
+  final bool embutido;
 
   static const rota = '/missoes';
 
@@ -91,14 +94,7 @@ class MissoesScreen extends StatelessWidget {
             (!descanso.disponivel || descanso.resgatada) &&
             (retomada == null || retomada.resgatada);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        Espaco.margemTela,
-        Espaco.md,
-        Espaco.margemTela,
-        Espaco.xxl,
-      ),
-      children: [
+    final cabecalho = <Widget>[
         Row(
           children: [
             Semantics(
@@ -119,6 +115,8 @@ class MissoesScreen extends StatelessWidget {
           t.missoesSub,
           style: estilo(Tipo.corpo, color: Cores.tinta700),
         ),
+    ];
+    final corpo = <Widget>[
         if (tudoFeito) ...[
           const SizedBox(height: Espaco.sm),
           // Estado "vazio" nunca fica vazio: aponta a próxima ação útil.
@@ -218,7 +216,18 @@ class MissoesScreen extends StatelessWidget {
               CartaoDeMissao(app: app, missao: m, compacto: true),
           ],
         ),
-      ],
+    ];
+    if (embutido) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: corpo);
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        Espaco.margemTela,
+        Espaco.md,
+        Espaco.margemTela,
+        Espaco.xxl,
+      ),
+      children: [...cabecalho, ...corpo],
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:baru_app/data/app_snapshot.dart';
 import 'package:baru_app/design/motion.dart';
 import 'package:baru_app/models.dart';
 import 'package:baru_app/screens/settings_screen.dart';
+import 'package:baru_app/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -95,20 +96,18 @@ void main() {
 
   testWidgets('ajustes mostra perfil e permissão de uso', (tester) async {
     await pumpAt412(tester, AppScreen.profile);
-    expect(find.text('Você é uma capivara.'), findsOneWidget);
-    expect(find.text(T('pt').streakOne), findsWidgets);
+    // A raiz e a frase do Baru saíram dos Ajustes, junto com o cartão.
+    // Espécie, pelagem e sexo são personalização do bicho: saíram dos
+    // Ajustes. Nada da tela leva a eles.
+    expect(find.text(T('pt').revealKicker), findsNothing);
+    expect(find.text(T('pt').coat), findsNothing);
+    expect(find.text(T('pt').setSexo), findsNothing);
+    expect(find.text('Capivara'), findsNothing);
 
-    // A espécie agora é uma linha com o valor atual, não quatro botões
-    // sempre abertos: era esse empilhamento que fazia a tela ser uma
-    // rolagem sem fim.
-    expect(find.text('Capivara'), findsOneWidget);
-    expect(
-      find.text('Lontra'),
-      findsNothing,
-      reason: 'as outras espécies moram na folha, não na tela',
-    );
-
-    await tester.tap(find.text('Seu animal interior'));
+    // A folha da espécie continua funcionando, aberta pela API pública
+    // que outra tela usará no futuro.
+    final ctx = tester.element(find.byType(SettingsScreen));
+    SettingsScreen.abreEspecie(ctx, AppScope.of(ctx));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(
@@ -120,9 +119,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(
-      find.text('Lontra'),
-      findsOneWidget,
-      reason: 'escolhida, ela vira o valor da linha',
+      AppScope.of(ctx).species,
+      Species.otter,
+      reason: 'escolhida, ela vira a espécie do Baru',
     );
     await tester.scrollUntilVisible(
       find.text('Permitir acesso ao uso'),
@@ -142,7 +141,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     await tester.scrollUntilVisible(
-      find.text('Política de privacidade'),
+      find.text('Privacidade e seus dados'),
       120,
       scrollable: find.byType(Scrollable).first,
     );
@@ -150,7 +149,7 @@ void main() {
     // infinito, então a árvore nunca fica quieta enquanto ele estiver em
     // cena. Com a tela de ajustes mais curta ele deixou de sair do viewport.
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.text('Política de privacidade'));
+    await tester.tap(find.text('Privacidade e seus dados'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     expect(
@@ -174,8 +173,8 @@ void main() {
     // dia") é o que o leitor de tela anuncia.
     expect(find.bySemanticsLabel(T('pt').streakOne), findsWidgets);
     expect(find.text('Baru'), findsWidgets);
-    // Trilha e Missões viraram atalhos no painel do Baru.
-    expect(find.text('Missões'), findsOneWidget);
+    // Missões e Trilha viraram um atalho só no painel do Baru.
+    expect(find.text('Missões · Trilha'), findsOneWidget);
     // A home é o mundo dele: o foco fica sempre à vista, sem rolar.
     expect(find.text('Começar foco'), findsOneWidget);
     semantica.dispose();

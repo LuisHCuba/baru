@@ -415,3 +415,6 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # Chamada pelo banco (pg_net) com o segredo FAMILIA_PUSH_SEGREDO, não por um usuário.
 [functions.familia-push]
 verify_jwt = false
+
+[functions.loja-notificacoes]
+verify_jwt = false

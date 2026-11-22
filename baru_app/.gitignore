@@ -54,3 +54,6 @@ supabase/SEED_TEST_USER.local.md
 # Build do Gradle fora de /build (android/build, .cxx)
 android/build/
 **/.cxx/
+
+# Firebase: vem do Infisical na hora do build
+android/app/google-services.json

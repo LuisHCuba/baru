@@ -197,7 +197,7 @@ class AparelhoDaCrianca {
 }
 
 class CriancaNoMapa {
-  const CriancaNoMapa({required this.id, required this.apelido, this.plataforma, this.localizacao = false, this.pedidoEm, this.atual, this.aparelho});
+  const CriancaNoMapa({required this.id, required this.apelido, this.plataforma, this.localizacao = false, this.pedidoEm, this.atual, this.aparelho, this.foto});
 
   factory CriancaNoMapa.doMapa(Map<dynamic, dynamic> m) => CriancaNoMapa(
         id: '${m['id']}',
@@ -207,7 +207,11 @@ class CriancaNoMapa {
         pedidoEm: DateTime.tryParse('${m['pedidoEm']}')?.toLocal(),
         atual: m['atual'] is Map ? PosicaoDaCrianca.doMapa(m['atual'] as Map) : null,
         aparelho: m['aparelho'] is Map ? AparelhoDaCrianca.doMapa(m['aparelho'] as Map) : null,
+        foto: DateTime.tryParse('${m['foto']}'),
       );
+
+  /// Versão da foto de perfil (nula: sem foto).
+  final DateTime? foto;
 
   final String id;
   final String apelido;
@@ -220,17 +224,44 @@ class CriancaNoMapa {
 
 @immutable
 class MapaDaFamilia {
-  const MapaDaFamilia({this.lugares = const [], this.criancas = const []});
+  const MapaDaFamilia({this.lugares = const [], this.criancas = const [], this.responsaveis = const []});
 
   factory MapaDaFamilia.doMapa(Map<dynamic, dynamic> m) => MapaDaFamilia(
         lugares: ((m['lugares'] as List?) ?? const []).whereType<Map>().map(LugarDaFamilia.doMapa).toList(),
         criancas: ((m['criancas'] as List?) ?? const []).whereType<Map>().map(CriancaNoMapa.doMapa).toList(),
+        responsaveis: ((m['responsaveis'] as List?) ?? const []).whereType<Map>().map(ResponsavelNoMapa.doMapa).toList(),
       );
 
   static const vazio = MapaDaFamilia();
 
   final List<LugarDaFamilia> lugares;
   final List<CriancaNoMapa> criancas;
+  final List<ResponsavelNoMapa> responsaveis;
+
+  /// O responsável deste celular (nulo se o servidor ainda não manda).
+  ResponsavelNoMapa? get eu => responsaveis.where((r) => r.eu).firstOrNull;
+}
+
+/// Um responsável no mapa: aparece com posição só se escolheu mostrar.
+@immutable
+class ResponsavelNoMapa {
+  const ResponsavelNoMapa({required this.id, required this.apelido, this.eu = false, this.ligada = false, this.foto, this.atual});
+
+  factory ResponsavelNoMapa.doMapa(Map<dynamic, dynamic> m) => ResponsavelNoMapa(
+        id: '${m['id']}',
+        apelido: (m['apelido'] as String?)?.trim().isNotEmpty == true ? (m['apelido'] as String).trim() : '—',
+        eu: m['eu'] == true,
+        ligada: m['ligada'] == true,
+        foto: DateTime.tryParse('${m['foto']}'),
+        atual: m['atual'] is Map ? PosicaoDaCrianca.doMapa(m['atual'] as Map) : null,
+      );
+
+  final String id;
+  final String apelido;
+  final bool eu;
+  final bool ligada;
+  final DateTime? foto;
+  final PosicaoDaCrianca? atual;
 }
 
 /// Faixa sem tela, por exemplo dias úteis das 21:00 às 07:00.
@@ -324,6 +355,7 @@ class CriancaNaFamilia {
     this.regras = const RegrasDaFamilia(),
     this.hoje,
     this.semana = const [],
+    this.foto,
   });
 
   factory CriancaNaFamilia.doMapa(Map<dynamic, dynamic> m) {
@@ -339,8 +371,12 @@ class CriancaNaFamilia {
       regras: regras == null ? const RegrasDaFamilia() : RegrasDaFamilia.doMapa(regras),
       hoje: hoje == null ? null : DiaDaCrianca.doMapa(hoje),
       semana: ((m['semana'] as List?) ?? const []).whereType<Map>().map(DiaDaCrianca.doMapa).toList(),
+      foto: DateTime.tryParse('${m['foto']}'),
     );
   }
+
+  /// Versão da foto de perfil (nula: sem foto).
+  final DateTime? foto;
 
   final String id;
   final String? apelido;
@@ -563,6 +599,14 @@ class FamiliaRepo {
       _c.rpc('baru_familia_aparelho_estado', params: {'p_chave': chave, 'p_local': local, 'p_versao': versao});
 
   Future<void> pedirLocal(String criancaId) => _c.rpc('baru_familia_pedir_local', params: {'p_crianca': criancaId});
+
+  /// Responsável: mostrar (ou não) a própria localização para a família.
+  Future<void> meuLocal({required bool ligada}) =>
+      _c.rpc('baru_familia_meu_local', params: {'p_ligada': ligada});
+
+  /// Responsável: a posição deste celular (só grava com "mostrar" ligado).
+  Future<void> minhaPosicao({required double lat, required double lng, int? precisaoM, int? bateria}) =>
+      _c.rpc('baru_familia_minha_posicao', params: {'p_lat': lat, 'p_lng': lng, 'p_precisao': precisaoM, 'p_bateria': bateria});
 
   Future<MapaDaFamilia> mapa(String familiaId) async {
     final r = await _c.rpc('baru_familia_mapa', params: {'p_familia': familiaId});

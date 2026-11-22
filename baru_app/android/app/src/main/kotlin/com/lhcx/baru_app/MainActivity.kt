@@ -226,6 +226,12 @@ class MainActivity : FlutterFragmentActivity() {
         canal.invokeMethod("acaoDaBarra", acao)
     }
 
+    /** Abriu o Baru: o alarme do SOS já cumpriu o papel. */
+    override fun onResume() {
+        super.onResume()
+        AlarmeDoSos.para(this)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // `setIntent` para que uma consulta posterior ao intent da activity

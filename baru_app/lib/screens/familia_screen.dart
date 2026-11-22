@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/familia.dart';
 import '../l10n.dart';
 import '../l10n_familia.dart';
+import '../l10n_foto.dart';
 import '../services/familia_sync.dart';
+import '../services/foto_de_perfil.dart';
+import '../services/notification_service.dart';
 import '../services/localizacao.dart';
 import '../services/overlay_service.dart';
 import '../services/tempo_de_tela_ios.dart';
@@ -24,7 +28,11 @@ import 'mapa_familia_screen.dart';
 /// - responsável: cada criança com o dia de hoje, as regras e os avisos;
 /// - criança: a família, a meta e a autorização de tempo de tela do aparelho.
 class FamiliaScreen extends StatefulWidget {
-  const FamiliaScreen({super.key, this.repo, this.comConta, this.sondaSobreposicao, this.sondaFiltro});
+  const FamiliaScreen({super.key, this.repo, this.comConta, this.sondaSobreposicao, this.sondaFiltro, this.sondaNotificacoes, this.semMapa = false});
+
+  /// Para os testes: o mapa sem baixar quadrinhos.
+  @visibleForTesting
+  final bool semMapa;
 
   /// Para o teste trocar o banco.
   final FamiliaRepo? repo;
@@ -41,6 +49,10 @@ class FamiliaScreen extends StatefulWidget {
   @visibleForTesting
   final Future<bool> Function()? sondaFiltro;
 
+  /// Para o teste: responde se as notificações do Baru estão ligadas.
+  @visibleForTesting
+  final Future<bool> Function()? sondaNotificacoes;
+
   /// Só para as capturas da loja (test/capturas_loja_test.dart): a casca
   /// abre esta tela em vez da real. Nulo no app.
   static FamiliaScreen? deTeste;
@@ -52,7 +64,7 @@ class FamiliaScreen extends StatefulWidget {
   State<FamiliaScreen> createState() => _FamiliaScreenState();
 }
 
-class _FamiliaScreenState extends State<FamiliaScreen> {
+class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserver {
   late final FamiliaRepo _repo = widget.repo ?? FamiliaRepo();
   MinhaFamilia? _familia;
   EstadoTempoDeTela _tela = EstadoTempoDeTela.indisponivel;
@@ -63,6 +75,20 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
   bool _avisoDeLocalMostrado = false;
   String? _erro;
   bool _ocupado = false;
+  bool _todaAtividade = false;
+
+  /// Hora do último SOS que este celular marcou como visto.
+  DateTime? _sosVisto;
+  static const _chaveSosVisto = 'baru_familia_sos_visto';
+
+  /// Sobe a cada recarga: o mapa relê as posições.
+  int _recarga = 0;
+
+  /// Pede ao mapa para abrir uma pessoa (o aviso de SOS).
+  final _focoNoMapa = ValueNotifier<String?>(null);
+
+  /// Responsável com notificações desligadas não vê o SOS: aviso no topo.
+  bool _notificacoes = true;
 
   final _nome = TextEditingController();
   final _codigo = TextEditingController();
@@ -71,11 +97,39 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
   void initState() {
     super.initState();
     garanteTextosDaFamilia();
+    garanteTextosDaFoto();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(_carrega());
+  }
+
+  /// Voltou dos ajustes do celular: confere de novo as notificações.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (estado == AppLifecycleState.resumed) unawaited(_confereNotificacoes());
+  }
+
+  Future<void> _confereNotificacoes() async {
+    if (kIsWeb) return;
+    bool ligadas;
+    try {
+      ligadas = await (widget.sondaNotificacoes ?? BaruNotifications.instance.hasPermission)();
+    } catch (_) {
+      ligadas = true;
+    }
+    if (mounted && ligadas != _notificacoes) setState(() => _notificacoes = ligadas);
+  }
+
+  Future<void> _ligaNotificacoes() async {
+    final ok = await BaruNotifications.instance.ensurePermission();
+    // Negadas de vez: só pelos ajustes do sistema.
+    if (!ok) await LocalNativo.abrirAjustes();
+    await _confereNotificacoes();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _focoNoMapa.dispose();
     _nome.dispose();
     _codigo.dispose();
     super.dispose();
@@ -83,6 +137,8 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
 
   Future<void> _carrega() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      _sosVisto = DateTime.tryParse(prefs.getString(_chaveSosVisto) ?? '');
       final f = await _repo.minha();
       final tela = await TempoDeTelaIos.estado();
       final sobrepor = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
@@ -102,6 +158,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
       final local = f.souCrianca ? await LocalNativo.estado() : PermissaoDeLocal.negada;
       if (!mounted) return;
       setState(() {
+        _recarga++;
         _familia = f;
         _mapas = mapas;
         _local = local;
@@ -111,6 +168,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
         _erro = null;
       });
       if (f.souCrianca) unawaited(FamiliaSync.instance.envia(AppScope.of(context)));
+      if (f.souResponsavel) unawaited(_confereNotificacoes());
       if (f.souCrianca && (f.minhasRegras?.localizacao ?? false) && !local.concedida &&
           local != PermissaoDeLocal.desligada && !_avisoDeLocalMostrado) {
         _avisoDeLocalMostrado = true;
@@ -163,6 +221,12 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
     final t = app.t;
     final f = _familia;
 
+    // Responsável: a aba é o mapa. Tempo de tela e regras ficam em cada pessoa.
+    final principal = (widget.comConta ?? app.canSignOut) && f != null && !f.souCrianca
+        ? f.familias.where((x) => x.souResponsavel).firstOrNull
+        : null;
+    if (principal != null) return _mapaPrincipal(t, app, principal);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -189,6 +253,132 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
                   ..._semFamilia(t),
               ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+
+  // ------------------------------------------------------------ mapa (responsável)
+
+  Widget _mapaPrincipal(T t, AppState app, Familia f) {
+    final sos = _sosRecente(f);
+    final avisos = _visiveis(f);
+    return MapaFamiliaScreen(
+      key: ValueKey('mapa-${f.id}'),
+      familiaId: f.id,
+      t: t,
+      repo: _repo,
+      principal: true,
+      semMapa: widget.semMapa,
+      recarga: _recarga,
+      foco: _focoNoMapa,
+      titulo: f.nome,
+      aoAdicionar: _ocupado ? null : () => _convidar(t, f, crianca: true),
+      avisosNoTopo: [
+        if (!_notificacoes)
+          Material(
+            key: const Key('familia-notif-desligadas'),
+            color: Cores.alerta,
+            borderRadius: BorderRadius.circular(Raio.cartao),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(Raio.cartao),
+              onTap: _ligaNotificacoes,
+              child: Padding(
+                padding: const EdgeInsets.all(Espaco.sm),
+                child: Row(children: [
+                  const Icon(Icons.notifications_off_rounded, color: Colors.white),
+                  const SizedBox(width: Espaco.sm),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(t.s('famNotifOffT'), style: estilo(Tipo.corpoForte, color: Colors.white)),
+                      Text(t.s('famNotifOffBotao'), key: const Key('familia-notif-ligar'),
+                          style: estilo(Tipo.corpoPequeno, color: Colors.white.withValues(alpha: 0.9))),
+                    ]),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Colors.white),
+                ]),
+              ),
+            ),
+          ),
+        if (sos != null)
+          _AlertaDeSos(
+            t: t,
+            nome: _nomeDe(t, f, sos.criancaId),
+            em: sos.em,
+            aoTocar: () => _focoNoMapa.value = sos.criancaId,
+            aoFechar: () => _marcaSosVisto(sos),
+          ),
+      ],
+      detalheDaPessoa: (context, id) {
+        final c = f.criancas.where((x) => x.id == id).firstOrNull;
+        if (c == null) return const SizedBox.shrink();
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          _CartaoDaCrianca(
+            crianca: c,
+            app: app,
+            ocupado: _ocupado,
+            aoAbrir: () => _abreRegras(t, app, f, c),
+            aoExtra: (n) => _faz(() => _repo.tempoExtra(c.id, n)),
+            aoPausar: () => _escolhePausa(t, c),
+            aoRetomar: () => _faz(() => _repo.pausar(c.id, null)),
+            bateria: _mapas[f.id]?.criancas.where((x) => x.id == c.id).firstOrNull?.atual?.bateria,
+            aoTrocarFoto: () async {
+              if (await FotoDePerfil.escolhe(context, t, dono: c.id, temFoto: c.foto != null)) await _carrega();
+            },
+          ),
+          const SizedBox(height: Espaco.xs),
+          // Localização desta pessoa: ligar pede consentimento; desligar fica à mão.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: c.regras.localizacao
+                ? TextButton.icon(
+                    key: Key('local-${c.id}'),
+                    onPressed: _ocupado ? null : () => _ligaLocal(t, c, false),
+                    icon: const Icon(Icons.location_off_outlined, size: 18),
+                    label: Text(t.s('famLocalDesligar')),
+                  )
+                : TextButton.icon(
+                    key: Key('local-${c.id}'),
+                    onPressed: _ocupado ? null : () => _ligaLocal(t, c, true),
+                    icon: const Icon(Icons.location_on_outlined, size: 18),
+                    label: Text(t.fill(t.s('locLigar'), {'n': c.apelido ?? t.s('famCriancaPadrao')})),
+                  ),
+          ),
+        ]);
+      },
+      acoesDaFolha: [
+        if (avisos.isNotEmpty) ...[
+          const SizedBox(height: Espaco.md),
+          _TituloDaSecao(t.s('famSecAtividade')),
+          CartaoBaru(
+            padding: const EdgeInsets.symmetric(horizontal: Espaco.md, vertical: Espaco.xs),
+            child: Column(children: [
+              for (final e in avisos.take(_todaAtividade ? 30 : 5))
+                _LinhaDeEvento(evento: e, nome: _nomeDe(t, f, e.criancaId), t: t),
+              if (avisos.length > 5)
+                TextButton(
+                  key: const Key('familia-ver-tudo'),
+                  onPressed: () => setState(() => _todaAtividade = !_todaAtividade),
+                  child: Text(t.s(_todaAtividade ? 'famVerMenos' : 'famVerTodos')),
+                ),
+            ]),
+          ),
+        ],
+        const SizedBox(height: Espaco.md),
+        BotaoBaru(
+          key: const Key('familia-gerar'),
+          rotulo: t.s('famAddCrianca'),
+          papel: PapelDoBotao.secundario,
+          ativo: !_ocupado,
+          aoTocar: () => _convidar(t, f, crianca: true),
+        ),
+        Center(
+          child: TextButton.icon(
+            onPressed: _ocupado ? null : () => _convidar(t, f, crianca: false),
+            icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+            label: Text(t.s('famConvidarResp')),
           ),
         ),
       ],
@@ -278,7 +468,11 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
   List<Widget> _responsavel(T t, AppState app, MinhaFamilia m) {
     final out = <Widget>[];
     for (final f in m.familias.where((f) => f.souResponsavel)) {
+      final mapa = _mapas[f.id];
+      final avisos = _visiveis(f);
+      final sos = _sosRecente(f);
       out.addAll([
+        // 1. Quem é a família e o único botão de criar.
         Row(
           children: [
             Expanded(child: Text(f.nome, style: estilo(Tipo.titulo))),
@@ -289,7 +483,42 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
             ),
           ],
         ),
-        const SizedBox(height: Espaco.xs),
+        const SizedBox(height: Espaco.sm),
+        // Sem notificações o SOS chega calado na tela: isto vem antes de tudo.
+        if (!_notificacoes) ...[
+          CartaoBaru(
+            key: const Key('familia-notif-desligadas'),
+            cor: Cores.alerta.withValues(alpha: 0.12),
+            elevado: false,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(children: [
+                const Icon(Icons.notifications_off_rounded, color: Cores.alerta),
+                const SizedBox(width: Espaco.sm),
+                Expanded(child: Text(t.s('famNotifOffT'), style: estilo(Tipo.corpoForte, color: Cores.alerta))),
+              ]),
+              const SizedBox(height: Espaco.xxs),
+              Text(t.s('famNotifOffC'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+              const SizedBox(height: Espaco.sm),
+              BotaoBaru(
+                key: const Key('familia-notif-ligar'),
+                rotulo: t.s('famNotifOffBotao'),
+                papel: PapelDoBotao.destrutivo,
+                aoTocar: _ligaNotificacoes,
+              ),
+            ]),
+          ),
+          const SizedBox(height: Espaco.md),
+        ],
+        // 2. Urgente primeiro: um pedido de ajuda recente fica no topo, em vermelho.
+        if (sos != null) ...[
+          _AlertaDeSos(
+            t: t,
+            nome: _nomeDe(t, f, sos.criancaId),
+            em: sos.em,
+            aoTocar: () => _abreMapa(t, f, sos.criancaId),
+          ),
+          const SizedBox(height: Espaco.md),
+        ],
         if (f.criancas.isEmpty)
           CartaoBaru(
             child: EstadoVazio(
@@ -300,7 +529,42 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
               rotuloAcao: t.s('famGerarCodigo'),
             ),
           )
-        else
+        else ...[
+          // 3. Onde estão: uma linha por criança e o mapa a um toque.
+          _TituloDaSecao(t.s('famSecOnde')),
+          CartaoBaru(
+            padding: const EdgeInsets.fromLTRB(Espaco.md, Espaco.xs, Espaco.md, Espaco.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final c in f.criancas) ...[
+                  _LinhaDeOnde(
+                    t: t,
+                    crianca: c,
+                    local: mapa?.criancas.where((x) => x.id == c.id).firstOrNull,
+                    ocupado: _ocupado,
+                    aoLocal: (ligar) => _ligaLocal(t, c, ligar),
+                    aoPedirLocal: () => _faz(() async {
+                      await _repo.pedirLocal(c.id);
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.s('locPedido'))));
+                    }),
+                    aoVerMapa: () => _abreMapa(t, f, c.id),
+                  ),
+                  Divider(height: 1, color: Cores.tintaA(0.07)),
+                ],
+                const SizedBox(height: Espaco.sm),
+                BotaoBaru(
+                  key: const Key('familia-mapa'),
+                  rotulo: t.s('famAbrirMapa'),
+                  papel: PapelDoBotao.secundario,
+                  aoTocar: () => _abreMapa(t, f, null),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Espaco.lg),
+          // 4. Tempo de tela: um cartão por criança, com as ações do dia.
+          _TituloDaSecao(t.s('famSecTela')),
           for (final c in f.criancas) ...[
             _CartaoDaCrianca(
               crianca: c,
@@ -310,50 +574,60 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
               aoExtra: (n) => _faz(() => _repo.tempoExtra(c.id, n)),
               aoPausar: () => _escolhePausa(t, c),
               aoRetomar: () => _faz(() => _repo.pausar(c.id, null)),
-              local: _mapas[f.id]?.criancas.where((x) => x.id == c.id).firstOrNull,
-              aoLocal: (ligar) => _ligaLocal(t, c, ligar),
-              aoPedirLocal: () => _faz(() async {
-                await _repo.pedirLocal(c.id);
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.s('locPedido'))));
-              }),
-              aoVerMapa: () => _abreMapa(t, f, c.id),
+              bateria: mapa?.criancas.where((x) => x.id == c.id).firstOrNull?.atual?.bateria,
             ),
             const SizedBox(height: Espaco.sm),
           ],
-        if (f.criancas.isNotEmpty) ...[
-          BotaoBaru(
-            key: const Key('familia-mapa'),
-            rotulo: t.s('locMapaT'),
-            papel: PapelDoBotao.secundario,
-            aoTocar: () => _abreMapa(t, f, null),
-          ),
-          const SizedBox(height: Espaco.sm),
         ],
-        if (_visiveis(f).isNotEmpty) ...[
+        // 5. Atividade: o histórico, curto por padrão.
+        if (avisos.isNotEmpty) ...[
           const SizedBox(height: Espaco.md),
-          Text(t.s('famAvisos'), style: estilo(Tipo.subtitulo)),
-          const SizedBox(height: Espaco.xs),
+          _TituloDaSecao(t.s('famSecAtividade')),
           CartaoBaru(
             padding: const EdgeInsets.symmetric(horizontal: Espaco.md, vertical: Espaco.xs),
             child: Column(
               children: [
-                for (final e in _visiveis(f).take(12))
+                for (final e in avisos.take(_todaAtividade ? 30 : 5))
                   _LinhaDeEvento(evento: e, nome: _nomeDe(t, f, e.criancaId), t: t),
+                if (avisos.length > 5)
+                  TextButton(
+                    key: const Key('familia-ver-tudo'),
+                    onPressed: () => setState(() => _todaAtividade = !_todaAtividade),
+                    child: Text(t.s(_todaAtividade ? 'famVerMenos' : 'famVerTodos')),
+                  ),
               ],
             ),
           ),
         ],
-        const SizedBox(height: Espaco.md),
+        const SizedBox(height: Espaco.lg),
         Center(
-          child: TextButton(
+          child: TextButton.icon(
             onPressed: _ocupado ? null : () => _convidar(t, f, crianca: false),
-            child: Text(t.s('famConvidarResp')),
+            icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+            label: Text(t.s('famConvidarResp')),
           ),
         ),
         const SizedBox(height: Espaco.lg),
       ]);
     }
     return out;
+  }
+
+  /// O pedido de ajuda das últimas 12 horas que ainda não foi marcado como visto.
+  EventoDaFamilia? _sosRecente(Familia f) {
+    final limite = DateTime.now().subtract(const Duration(hours: 12));
+    for (final e in f.eventos) {
+      if (e.tipo != 'sos' || !e.em.toLocal().isAfter(limite)) continue;
+      if (_sosVisto != null && !e.em.isAfter(_sosVisto!)) return null;
+      return e;
+    }
+    return null;
+  }
+
+  Future<void> _marcaSosVisto(EventoDaFamilia e) async {
+    setState(() => _sosVisto = e.em);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_chaveSosVisto, e.em.toIso8601String());
   }
 
   /// Ligar pede o consentimento do responsável (LGPD/ECA): fica registrado no banco.
@@ -377,7 +651,8 @@ class _FamiliaScreenState extends State<FamiliaScreen> {
   }
 
   Future<void> _abreMapa(T t, Familia f, String? criancaId) async {
-    await Navigator.of(context).push(MaterialPageRoute<void>(
+    // Tela cheia, por cima das abas: o mapa não divide espaço.
+    await Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
       builder: (_) => MapaFamiliaScreen(familiaId: f.id, t: t, repo: _repo, focoCriancaId: criancaId),
     ));
     await _carrega();
@@ -718,16 +993,13 @@ class _CartaoDaCrianca extends StatelessWidget {
     required this.aoPausar,
     required this.aoRetomar,
     this.ocupado = false,
-    this.local,
-    this.aoLocal,
-    this.aoPedirLocal,
-    this.aoVerMapa,
+    this.bateria,
+    this.aoTrocarFoto,
   });
 
-  final CriancaNoMapa? local;
-  final ValueChanged<bool>? aoLocal;
-  final VoidCallback? aoPedirLocal;
-  final VoidCallback? aoVerMapa;
+  /// Responsável toca na foto da criança para trocar.
+  final VoidCallback? aoTrocarFoto;
+
   final CriancaNaFamilia crianca;
   final AppState app;
   final VoidCallback aoAbrir;
@@ -735,6 +1007,7 @@ class _CartaoDaCrianca extends StatelessWidget {
   final VoidCallback aoPausar;
   final VoidCallback aoRetomar;
   final bool ocupado;
+  final int? bateria;
 
   @override
   Widget build(BuildContext context) {
@@ -750,24 +1023,44 @@ class _CartaoDaCrianca extends StatelessWidget {
     final linhaUso = hoje == null
         ? t.s('famSemDados')
         : t.fill(t.s(hoje.usoExato ? 'famUsoExato' : 'famUsoAoMenos'), {'u': app.fmt(uso), 'm': app.fmt(meta)});
+    final detalhe = [
+      if (c.nomeDoBicho != null) c.nomeDoBicho!,
+      if (c.plataforma != null) c.plataforma == 'ios' ? 'iPhone' : 'Android',
+      if (bateria != null && bateria! >= 0) t.fill(t.s('locBateria'), {'n': bateria!}),
+    ].join(' · ');
     return CartaoBaru(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Quem: nome grande, aparelho embaixo, regras no canto.
           Row(children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Cores.primariaA(0.12),
-              child: const Icon(Icons.pets_rounded, size: 22, color: Cores.primariaEscura),
+            Semantics(
+              button: aoTrocarFoto != null,
+              label: t.s('fotoTrocar'),
+              child: GestureDetector(
+                key: Key('foto-${c.id}'),
+                onTap: aoTrocarFoto,
+                child: Stack(clipBehavior: Clip.none, children: [
+                  FotoOuLetra(dono: c.id, versao: c.foto, nome: c.apelido ?? t.s('famCriancaPadrao'), raio: 24,
+                      cor: Cores.primariaA(0.14), corDaLetra: Cores.primariaEscura),
+                  if (aoTrocarFoto != null)
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(color: Cores.primariaEscura, shape: BoxShape.circle),
+                        child: const Icon(Icons.photo_camera_rounded, size: 12, color: Colors.white),
+                      ),
+                    ),
+                ]),
+              ),
             ),
             const SizedBox(width: Espaco.sm),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(c.apelido ?? t.s('famCriancaPadrao'), style: estilo(Tipo.subtitulo)),
-                Text(
-                  [if (c.nomeDoBicho != null) c.nomeDoBicho!, if (c.plataforma != null) c.plataforma == 'ios' ? 'iPhone' : 'Android'].join(' · '),
-                  style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
-                ),
+                if (detalhe.isNotEmpty) Text(detalhe, style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
               ]),
             ),
             IconButton(
@@ -778,21 +1071,21 @@ class _CartaoDaCrianca extends StatelessWidget {
           ]),
           if (pausada) ...[
             const SizedBox(height: Espaco.xs),
-            Text(t.fill(t.s('famPausada'), {'h': TimeOfDay.fromDateTime(c.regras.pausaAte!.toLocal()).format(context)}),
-                style: estilo(Tipo.corpoForte, color: Cores.alerta)),
+            Etiqueta(
+              texto: t.fill(t.s('famPausada'), {'h': TimeOfDay.fromDateTime(c.regras.pausaAte!.toLocal()).format(context)}),
+              cor: Cores.alerta,
+              icone: Icons.pause_circle_filled_rounded,
+            ),
           ],
           const SizedBox(height: Espaco.md),
-          // Hoje: o número grande, a meta ao lado e a barra.
-          Text(t.s('famHoje'), style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
-          const SizedBox(height: Espaco.xxs),
-          Text(hoje == null ? t.s('famSemDados') : linhaUso,
-              key: Key('hoje-${c.id}'), style: estilo(hoje == null ? Tipo.corpo : Tipo.subtitulo)),
+          // Hoje: a frase do uso e a barra até a meta.
+          Text(linhaUso, key: Key('hoje-${c.id}'), style: estilo(hoje == null ? Tipo.corpo : Tipo.titulo)),
           const SizedBox(height: Espaco.xs),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: fracao,
-              minHeight: 8,
+              minHeight: 10,
               backgroundColor: Cores.trilho,
               color: passou ? Cores.alerta : Cores.folha600,
             ),
@@ -809,7 +1102,7 @@ class _CartaoDaCrianca extends StatelessWidget {
                 Text(hoje!.focos == 1 ? t.s('famFoco1') : t.fill(t.s('famFocos'), {'n': hoje.focos}), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
             ]),
           ],
-          const SizedBox(height: Espaco.sm),
+          const SizedBox(height: Espaco.md),
           // As três ações do dia, lado a lado e do mesmo tamanho.
           Row(children: [
             Expanded(child: _AcaoDoDia(chave: 'mais15-${c.id}', icone: Icons.add_rounded, rotulo: '+15 min', aoTocar: ocupado ? null : () => aoExtra(15))),
@@ -827,68 +1120,186 @@ class _CartaoDaCrianca extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: TextButton(onPressed: ocupado ? null : () => aoExtra(-c.regras.extraHojeMin), child: Text(t.s('famTirarExtra'))),
             ),
-          const Divider(height: Espaco.lg),
-          // Onde está: a linha, o motivo quando falta e as duas ações.
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Icon(Icons.location_on_rounded, size: 20, color: c.regras.localizacao ? Cores.primariaEscura : Cores.tinta500),
-            ),
-            const SizedBox(width: Espaco.xs),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(t.fill(t.s('locLigar'), {'n': c.apelido ?? t.s('famCriancaPadrao')}), style: estilo(Tipo.corpoForte)),
-                Text(
-                  !c.regras.localizacao
-                      ? t.s('locLigarSub')
-                      : local?.atual == null
-                          ? t.fill(t.s('locSemPosicao'), {'n': c.apelido ?? t.s('famCriancaPadrao')})
-                          : linhaDoLocal(t, local!.atual!),
-                  style: estilo(Tipo.corpoPequeno, color: local?.atual?.motivo == 'sos' ? Cores.alerta : Cores.tinta700),
-                ),
-                // Por que falta posição (ou está velha): o responsável sabe o que fazer.
-                if (local == null ? null : diagnosticoDoLocal(t, local!) case final motivo?)
-                  Padding(
-                    padding: const EdgeInsets.only(top: Espaco.xxs),
-                    child: Text(motivo,
-                        key: Key('local-motivo-${c.id}'),
-                        style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
-                  ),
-              ]),
-            ),
-            if (c.regras.localizacao)
-              Switch(
-                key: Key('local-${c.id}'),
-                value: true,
-                onChanged: ocupado || aoLocal == null ? null : aoLocal,
-              ),
-          ]),
-          if (!c.regras.localizacao) ...[
-            const SizedBox(height: Espaco.xs),
-            BotaoBaru(
-              key: Key('local-${c.id}'),
-              rotulo: t.s('locLigarBotao'),
-              papel: PapelDoBotao.secundario,
-              ativo: !ocupado && aoLocal != null,
-              aoTocar: () => aoLocal?.call(true),
-            ),
-          ],
-          if (c.regras.localizacao) ...[
-            const SizedBox(height: Espaco.xs),
-            Row(children: [
-              Expanded(child: _AcaoDoDia(chave: 'atualizar-${c.id}', icone: Icons.my_location_rounded, rotulo: t.s('locAtualizar'), aoTocar: ocupado ? null : aoPedirLocal)),
-              const SizedBox(width: Espaco.xs),
-              Expanded(child: _AcaoDoDia(chave: 'mapa-${c.id}', icone: Icons.map_outlined, rotulo: t.s('locVerMapa'), aoTocar: aoVerMapa)),
-            ]),
-          ],
-          const Divider(height: Espaco.lg),
-          Text(t.s('famSemana'), style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
-          const SizedBox(height: Espaco.xxs),
+          const SizedBox(height: Espaco.md),
+          Text(t.s('famSemana').toUpperCase(), style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
+          const SizedBox(height: Espaco.xs),
           if (c.semana.any((d) => d.usoMin > 0))
             _Semana(dias: c.semana, regras: c.regras, t: t)
           else
             Text(t.s('famSemanaVazia'), key: Key('semana-vazia-${c.id}'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
         ],
+      ),
+    );
+  }
+}
+
+/// Título de seção: pequeno, em caixa alta, igual em todo o app.
+class _TituloDaSecao extends StatelessWidget {
+  const _TituloDaSecao(this.texto);
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(Espaco.xs, 0, Espaco.xs, Espaco.xs),
+        child: Text(texto.toUpperCase(),
+            style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700).copyWith(letterSpacing: 0.8)),
+      );
+}
+
+/// Inicial do nome num círculo: cada criança se reconhece de longe.
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.nome, this.alerta = false});
+  final String nome;
+  final bool alerta;
+
+  @override
+  Widget build(BuildContext context) => CircleAvatar(
+        radius: 20,
+        backgroundColor: alerta ? Cores.alerta : Cores.primariaA(0.14),
+        child: Text(
+          nome.trim().isEmpty ? '?' : nome.trim().characters.first.toUpperCase(),
+          style: estilo(Tipo.subtitulo, color: alerta ? Colors.white : Cores.primariaEscura),
+        ),
+      );
+}
+
+/// Pedido de ajuda recente: vermelho, no topo, abre o mapa.
+class _AlertaDeSos extends StatelessWidget {
+  const _AlertaDeSos({required this.t, required this.nome, required this.em, required this.aoTocar, this.aoFechar});
+  final T t;
+
+  /// "Já vi": some até chegar um SOS novo.
+  final VoidCallback? aoFechar;
+  final String nome;
+  final DateTime em;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = TimeOfDay.fromDateTime(em.toLocal()).format(context);
+    return Material(
+      key: const Key('familia-alerta-sos'),
+      color: Cores.alerta,
+      borderRadius: BorderRadius.circular(Raio.cartao),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Raio.cartao),
+        onTap: aoTocar,
+        child: Padding(
+          padding: const EdgeInsets.all(Espaco.md),
+          child: Row(children: [
+            const Icon(Icons.sos_rounded, color: Colors.white, size: 30),
+            const SizedBox(width: Espaco.sm),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(t.fill(t.s('famSosAlerta'), {'n': nome, 'h': h}), style: estilo(Tipo.subtitulo, color: Colors.white)),
+                Text(t.fill(t.s('famSosAlertaSub'), {'n': nome}), style: estilo(Tipo.corpoPequeno, color: Colors.white.withValues(alpha: 0.9))),
+              ]),
+            ),
+            if (aoFechar != null)
+              TextButton(
+                key: const Key('familia-sos-visto'),
+                onPressed: aoFechar,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.white.withValues(alpha: 0.18),
+                  padding: const EdgeInsets.symmetric(horizontal: Espaco.sm),
+                  minimumSize: const Size(0, 36),
+                ),
+                child: Text(t.s('famSosVisto'), style: estilo(Tipo.corpoPequeno, color: Colors.white).copyWith(fontWeight: FontWeight.w700)),
+              )
+            else
+              const Icon(Icons.chevron_right_rounded, color: Colors.white),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Uma criança na seção "Onde estão": onde, há quanto tempo, e o que fazer
+/// quando falta posição.
+class _LinhaDeOnde extends StatelessWidget {
+  const _LinhaDeOnde({
+    required this.t,
+    required this.crianca,
+    required this.local,
+    required this.ocupado,
+    required this.aoLocal,
+    required this.aoPedirLocal,
+    required this.aoVerMapa,
+  });
+
+  final T t;
+  final CriancaNaFamilia crianca;
+  final CriancaNoMapa? local;
+  final bool ocupado;
+  final ValueChanged<bool> aoLocal;
+  final VoidCallback aoPedirLocal;
+  final VoidCallback aoVerMapa;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = crianca;
+    final nome = c.apelido ?? t.s('famCriancaPadrao');
+    final ligada = c.regras.localizacao;
+    final motivo = local == null ? null : diagnosticoDoLocal(t, local!);
+    final sos = local?.atual?.motivo == 'sos';
+    if (!ligada) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: Espaco.sm),
+        child: Row(children: [
+          _Avatar(nome: nome),
+          const SizedBox(width: Espaco.sm),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(t.fill(t.s('locLigar'), {'n': nome}), style: estilo(Tipo.corpoForte)),
+              Text(t.s('famLocalDesligada'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+            ]),
+          ),
+          TextButton(
+            key: Key('local-${c.id}'),
+            onPressed: ocupado ? null : () => aoLocal(true),
+            child: Text(t.s('locLigarBotao')),
+          ),
+        ]),
+      );
+    }
+    return InkWell(
+      onTap: aoVerMapa,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: Espaco.sm),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _Avatar(nome: nome, alerta: sos),
+          const SizedBox(width: Espaco.sm),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(nome, style: estilo(Tipo.corpoForte)),
+              Text(
+                local?.atual == null ? t.fill(t.s('locSemPosicao'), {'n': nome}) : linhaDoLocal(t, local!.atual!),
+                style: estilo(Tipo.corpoPequeno, color: sos ? Cores.alerta : Cores.tinta700),
+              ),
+              if (motivo != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: Espaco.xxs),
+                  child: Text(motivo, key: Key('local-motivo-${c.id}'), style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
+                ),
+              Row(children: [
+                TextButton.icon(
+                  key: Key('atualizar-${c.id}'),
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
+                  onPressed: ocupado ? null : aoPedirLocal,
+                  icon: const Icon(Icons.my_location_rounded, size: 16),
+                  label: Text(t.s('locAtualizar')),
+                ),
+              ]),
+            ]),
+          ),
+          Switch(
+            key: Key('local-${c.id}'),
+            value: true,
+            onChanged: ocupado ? null : aoLocal,
+          ),
+        ]),
       ),
     );
   }

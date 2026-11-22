@@ -40,6 +40,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Para tirar a sua foto de perfil, que aparece para a sua família no mapa.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Para escolher a sua foto de perfil, que aparece para a sua família no mapa.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>No modo família, o Baru mostra ao seu responsável onde você está e manda sua posição no SOS. Você sempre vê quando está ligado.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

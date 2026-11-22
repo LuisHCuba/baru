@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../cobranca.dart';
 import '../l10n_ajustes.dart';
+import '../l10n.dart';
 import '../l10n_assinatura.dart';
+import '../l10n_foto.dart';
+import '../services/foto_de_perfil.dart';
 import '../services/compra_loja.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/acesso.dart';
 import '../widgets/common.dart';
-import '../widgets/legal_sheet.dart';
 
 /// Sua conta.
 ///
@@ -36,6 +39,37 @@ class _ContaScreenState extends State<ContaScreen> {
   String? _aviso;
   bool _avisoEhErro = false;
   bool _ocupado = false;
+
+  /// Versão da minha foto de perfil (nula: sem foto).
+  DateTime? _minhaFoto;
+
+  String? get _meuId {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return null; // testes sem Supabase
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    garanteTextosDaFoto();
+    if (_meuId != null) {
+      FotoDePerfil.minhaVersao().then((v) {
+        if (mounted) setState(() => _minhaFoto = v);
+      }).catchError((Object _) {});
+    }
+  }
+
+  Future<void> _trocaFoto(T t) async {
+    final id = _meuId;
+    if (id == null) return;
+    if (await FotoDePerfil.escolhe(context, t, dono: id, temFoto: _minhaFoto != null)) {
+      final v = await FotoDePerfil.minhaVersao().catchError((Object _) => null);
+      if (mounted) setState(() => _minhaFoto = v);
+    }
+  }
 
   void _diz(String texto, {bool erro = false}) {
     if (!mounted) return;
@@ -81,7 +115,33 @@ class _ContaScreenState extends State<ContaScreen> {
               else ...[
                 CartaoBaru(
                   key: ContaScreen.chaveEmail,
-                  child: Column(
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  // Foto de perfil: é ela que aparece no mapa da família.
+                  if (_meuId != null) ...[
+                    Semantics(
+                      button: true,
+                      label: t.s('fotoTrocar'),
+                      child: GestureDetector(
+                        key: const Key('conta-foto'),
+                        onTap: () => _trocaFoto(t),
+                        child: Stack(clipBehavior: Clip.none, children: [
+                          FotoOuLetra(dono: _meuId!, versao: _minhaFoto, nome: app.displayName, raio: 30,
+                              cor: Cores.primariaA(0.14), corDaLetra: Cores.primariaEscura),
+                          Positioned(
+                            right: -2,
+                            bottom: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Cores.primariaEscura, shape: BoxShape.circle),
+                              child: const Icon(Icons.photo_camera_rounded, size: 14, color: Colors.white),
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
+                    const SizedBox(width: Espaco.md),
+                  ],
+                  Expanded(child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -113,7 +173,8 @@ class _ContaScreenState extends State<ContaScreen> {
                         ),
                       ],
                     ],
-                  ),
+                  )),
+                  ]),
                 ),
                 const SizedBox(height: Espaco.md),
                 CartaoBaru(
@@ -266,70 +327,115 @@ class _ContaScreenState extends State<ContaScreen> {
                     _Acao(
                       key: ContaScreen.chavePrivacidade,
                       icone: Icons.shield_outlined,
-                      rotulo: t.setPrivacy,
+                      rotulo: t.s('contaPrivDados'),
                       ativo: true,
-                      aoTocar: () => showLegalSheet(context, title: t.setPrivacy, body: t.privacyBody, close: t.shareDone),
+                      aoTocar: () => _abrePrivacidade(context, app),
                     ),
                     Divider(height: 1, color: Cores.tintaA(0.07)),
                     _Acao(
                       icone: Icons.article_outlined,
                       rotulo: t.setTerms,
                       ativo: true,
-                      aoTocar: () => showLegalSheet(context, title: t.setTerms, body: t.termsBody, close: t.shareDone),
-                    ),
-                    Divider(height: 1, color: Cores.tintaA(0.07)),
-                    _Acao(
-                      icone: Icons.replay_rounded,
-                      rotulo: t.setReplay,
-                      ativo: true,
-                      aoTocar: app.restartOnboarding,
+                      aoTocar: () => _abreTermos(context, app),
                     ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(Espaco.xs, Espaco.lg, Espaco.xs, Espaco.xs),
-                child: Text(t.s('contaSecSair').toUpperCase(),
-                    style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700).copyWith(letterSpacing: 0.8)),
-              ),
-              CartaoBaru(
-                padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
-                child: Column(
-                  children: [
-                    if (temConta) ...[
-                      _Acao(
-                        icone: Icons.logout_rounded,
-                        rotulo: t.authSignOut,
-                        apagado: true,
-                        ativo: !_ocupado,
-                        aoTocar: app.signOut,
-                      ),
-                      Divider(height: 1, color: Cores.tintaA(0.07)),
-                    ],
-                    // Apagar os próprios dados existe em qualquer app que
-                    // guarda dado de gente. Aqui não existia: "refazer o
-                    // onboarding" zerava a tela e deixava sessões, folhas e
-                    // progresso onde estavam.
-                    _Acao(
-                      key: ContaScreen.chaveApagar,
-                      icone: Icons.delete_outline_rounded,
-                      rotulo: t.contaApagar,
-                      perigo: true,
-                      ativo: !_ocupado,
-                      aoTocar: () => _confirmaApagar(context, app),
-                    ),
-                  ],
+              // Sair é uso normal e fica sozinho no fim. Apagar dados e refazer
+              // a apresentação moram dentro de Privacidade e Termos: ninguém
+              // deve tocar neles sem querer.
+              if (temConta) ...[
+                const SizedBox(height: Espaco.lg),
+                CartaoBaru(
+                  padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
+                  child: _Acao(
+                    icone: Icons.logout_rounded,
+                    rotulo: t.authSignOut,
+                    apagado: true,
+                    ativo: !_ocupado,
+                    aoTocar: app.signOut,
+                  ),
                 ),
-              ),
-              const SizedBox(height: Espaco.xs),
-              Text(
-                t.contaApagarSub,
-                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
-              ),
+              ],
             ],
           ),
         ),
       ],
+    );
+  }
+
+  /// Folha com o texto legal e, no fim, uma ação discreta.
+  Future<void> _folhaLegal(
+    BuildContext context, {
+    required String titulo,
+    required String corpo,
+    required String fechar,
+    required Widget discreto,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Cores.superficie,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Raio.folha)),
+      ),
+      builder: (folha) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(folha).size.height * 0.85),
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(Espaco.margemTela),
+            children: [
+              Text(titulo, style: estilo(Tipo.titulo)),
+              const SizedBox(height: Espaco.md),
+              Text(corpo, style: estilo(Tipo.corpo, color: Cores.tinta700)),
+              const SizedBox(height: Espaco.lg),
+              BotaoBaru(rotulo: fechar, aoTocar: () => Navigator.of(folha).pop()),
+              const SizedBox(height: Espaco.xl),
+              Divider(height: 1, color: Cores.tintaA(0.07)),
+              const SizedBox(height: Espaco.sm),
+              Center(child: discreto),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _abrePrivacidade(BuildContext context, AppState app) {
+    final t = app.t;
+    _folhaLegal(
+      context,
+      titulo: t.setPrivacy,
+      corpo: t.privacyBody,
+      fechar: t.shareDone,
+      discreto: TextButton(
+        key: ContaScreen.chaveApagar,
+        onPressed: _ocupado
+            ? null
+            : () {
+                Navigator.of(context).pop();
+                _confirmaApagar(context, app);
+              },
+        child: Text(t.contaApagar, style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
+      ),
+    );
+  }
+
+  void _abreTermos(BuildContext context, AppState app) {
+    final t = app.t;
+    _folhaLegal(
+      context,
+      titulo: t.setTerms,
+      corpo: t.termsBody,
+      fechar: t.shareDone,
+      discreto: TextButton(
+        onPressed: () {
+          Navigator.of(context).pop();
+          app.restartOnboarding();
+        },
+        child: Text(t.setReplay, style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+      ),
     );
   }
 
@@ -466,7 +572,6 @@ class _Acao extends StatelessWidget {
     required this.aoTocar,
     this.ativo = true,
     this.apagado = false,
-    this.perigo = false,
   });
 
   final IconData icone;
@@ -475,16 +580,9 @@ class _Acao extends StatelessWidget {
   final bool ativo;
   final bool apagado;
 
-  /// Vermelho, e nunca por engano: o que apaga tem de parecer que apaga.
-  final bool perigo;
-
   @override
   Widget build(BuildContext context) {
-    final cor = perigo
-        ? Cores.alerta
-        : apagado
-        ? Cores.tinta500
-        : Cores.tinta;
+    final cor = apagado ? Cores.tinta500 : Cores.tinta;
     return Semantics(
       button: true,
       enabled: ativo,

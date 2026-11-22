@@ -395,6 +395,15 @@ class BaruSupabase {
       return const ['sem_sessao'];
     }
     final falharam = <String>[];
+    // A foto de perfil (Storage): o registro dela some com a conta, o
+    // arquivo não. Sem foto, o "remove" só não acha nada.
+    try {
+      await client.storage.from('baru-fotos').remove(['$uid.jpg']);
+      await client.rpc('baru_foto_marca', params: {'p_dono': uid, 'p_removida': true});
+    } catch (e) {
+      debugPrint('Baru: nao apagou a foto — $e');
+      falharam.add('foto');
+    }
     for (final tabela in tabelasDoUsuario) {
       try {
         await client.from(tabela).delete().eq('user_id', uid);

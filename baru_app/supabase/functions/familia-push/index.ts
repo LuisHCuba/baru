@@ -6,8 +6,8 @@ import { jsonResponse, servico } from '../_shared/http.ts'
  * (pausa, tempo extra, horários, meta). O iPhone acorda em segundo plano, busca
  * as regras com a chave do aparelho e aplica — sem a criança abrir o Baru.
  *
- * 2. { evento_id }: aviso visível (SOS, chegou, saiu, meta) para os iPhones
- *    dos responsáveis — trigger baru_familia_avisa_responsavel. Só eventos de
+ * 2. { evento_id }: aviso visível (SOS, chegou, saiu, meta) para os celulares
+ *    dos responsáveis (iPhone pela Apple, Android pelo Firebase) — trigger baru_familia_avisa_responsavel. Só eventos de
  *    até 90 s e uma vez cada (push_em).
  *
  * Quem chama: o trigger baru_familia_avisa_push (pg_net), logo depois de uma
@@ -19,6 +19,7 @@ import { jsonResponse, servico } from '../_shared/http.ts'
  * por sincronização do Infisical — nunca editar direto no painel):
  *   APNS_KEY_P8      conteúdo do AuthKey_XXXX.p8 (chave de push da Apple)
  *   APNS_KEY_ID      Key ID da chave (10 caracteres)
+ *   GOOGLE_PLAY_SERVICE_ACCOUNT_JSON  conta de serviço com papel de admin do FCM (Android)
  * Opcionais: APNS_TEAM_ID (padrão PHV3N8AFK4), APNS_TOPIC (padrão tech.lhcx.baru).
  *
  * Sem os segredos da Apple, responde 200 sem enviar (não quebra o banco).
@@ -50,6 +51,48 @@ async function jwtDaApple(): Promise<string | null> {
   const token = `${cab}.${corpo}.${b64url(assinatura)}`
   jwtCache = { token, em: agora }
   return token
+}
+
+
+// ---------------------------------------------------------------- Android (FCM)
+
+let tokenGoogle: { valor: string; ate: number } | null = null
+
+/** Token OAuth da conta de serviço (mesma da Play, com papel de admin do FCM). */
+async function acessoFcm(): Promise<{ token: string; projeto: string } | null> {
+  const sa = JSON.parse(Deno.env.get('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON') ?? '{}')
+  if (!sa.client_email || !sa.private_key || !sa.project_id) return null
+  if (tokenGoogle && tokenGoogle.ate > Date.now() + 60_000) return { token: tokenGoogle.valor, projeto: sa.project_id }
+  const agora = Math.floor(Date.now() / 1000)
+  const cab = b64url(enc.encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })))
+  const corpo = b64url(enc.encode(JSON.stringify({
+    iss: sa.client_email, scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token', iat: agora, exp: agora + 3000,
+  })))
+  const der = Uint8Array.from(atob(String(sa.private_key).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')), (c) => c.charCodeAt(0))
+  const chave = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'])
+  const assinatura = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, enc.encode(`${cab}.${corpo}`))
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${cab}.${corpo}.${b64url(assinatura)}`,
+  })
+  const j = await r.json().catch(() => ({}))
+  if (!r.ok || !j.access_token) { console.error('token FCM', r.status); return null }
+  tokenGoogle = { valor: j.access_token, ate: Date.now() + (j.expires_in ?? 3000) * 1000 }
+  return { token: tokenGoogle.valor, projeto: sa.project_id }
+}
+
+/**
+ * Só dados, prioridade alta: o próprio Baru monta o aviso no idioma do
+ * responsável e, no SOS, toca o alarme insistente (canal próprio).
+ */
+async function enviaAndroid(acesso: { token: string; projeto: string }, tokenFcm: string, dados: Record<string, string>) {
+  return await fetch(`https://fcm.googleapis.com/v1/projects/${acesso.projeto}/messages:send`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${acesso.token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ message: { token: tokenFcm, data: dados, android: { priority: 'HIGH', ttl: '3600s' } } }),
+  })
 }
 
 /** Textos dos avisos ao responsável, no idioma do celular dele. */
@@ -114,22 +157,40 @@ async function avisaResponsaveis(eventoId: number) {
     .select('id, familia_id, crianca_id, tipo, em, detalhe, push_em').eq('id', eventoId).maybeSingle()
   if (!ev || ev.push_em || Date.now() - new Date(ev.em).getTime() > 90_000) return jsonResponse({ enviados: 0, motivo: 'evento velho ou já avisado' })
   await db.from('baru_familia_eventos').update({ push_em: new Date().toISOString() }).eq('id', ev.id)
-  const jwt = await jwtDaApple()
-  if (!jwt) return jsonResponse({ enviados: 0, motivo: 'sem chave da Apple' })
   const { data: crianca } = await db.from('baru_familia_membros').select('apelido')
     .eq('familia_id', ev.familia_id).eq('user_id', ev.crianca_id).maybeSingle()
   const { data: resp } = await db.from('baru_familia_membros').select('user_id')
     .eq('familia_id', ev.familia_id).eq('papel', 'responsavel').is('saiu_em', null)
   const ids = (resp ?? []).map((r: { user_id: string }) => r.user_id)
   if (!ids.length) return jsonResponse({ enviados: 0 })
-  const { data: aparelhos } = await db.from('baru_familia_resp_aparelhos')
-    .select('chave_hash, push_token, push_ambiente, idioma').in('user_id', ids).eq('plataforma', 'ios').not('push_token', 'is', null)
+  const { data: todos } = await db.from('baru_familia_resp_aparelhos')
+    .select('chave_hash, push_token, push_ambiente, idioma, plataforma').in('user_id', ids).not('push_token', 'is', null)
   let enviados = 0
-  for (const a of aparelhos ?? []) {
+
+  // Android: Firebase, só dados.
+  const androids = (todos ?? []).filter((a: { plataforma: string }) => a.plataforma === 'android')
+  const fcm = androids.length ? await acessoFcm() : null
+  for (const a of fcm ? androids : []) {
+    const r = await enviaAndroid(fcm!, a.push_token, {
+      baru: 'aviso', id: String(ev.id), tipo: ev.tipo, crianca: crianca?.apelido ?? '—', lugar: String(ev.detalhe?.lugar ?? ''),
+    })
+    if (r.ok) enviados++
+    else {
+      const motivo = await r.text().catch(() => '')
+      if (r.status === 404 || motivo.includes('UNREGISTERED')) {
+        await db.from('baru_familia_resp_aparelhos').update({ push_token: null }).eq('chave_hash', a.chave_hash)
+      } else console.error('FCM aviso', r.status, motivo)
+    }
+  }
+
+  // iPhone: APNs.
+  const aparelhos = (todos ?? []).filter((a: { plataforma: string }) => a.plataforma === 'ios')
+  const jwt = aparelhos.length ? await jwtDaApple() : null
+  for (const a of jwt ? aparelhos : []) {
     const t = (AVISOS[a.idioma] ?? AVISOS.pt)[ev.tipo]
     if (!t) continue
     const troca = (s: string) => s.replaceAll('{c}', crianca?.apelido ?? '—').replaceAll('{l}', ev.detalhe?.lugar ?? '')
-    const r = await enviaApple(jwt, a.push_token, a.push_ambiente, {
+    const r = await enviaApple(jwt!, a.push_token, a.push_ambiente, {
       aps: { alert: { title: troca(t[0]), body: troca(t[1]) }, sound: ev.tipo === 'sos' ? 'default' : undefined,
              'interruption-level': ev.tipo === 'sos' ? 'time-sensitive' : 'active', 'thread-id': `familia-${ev.crianca_id}` },
       baru: 'aviso', tipo: ev.tipo, crianca_id: ev.crianca_id,

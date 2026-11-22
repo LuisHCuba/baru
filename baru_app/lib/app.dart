@@ -17,6 +17,7 @@ import 'models.dart';
 import 'navegacao.dart';
 import 'widgets/folha_restrita.dart';
 import 'screens/familia_screen.dart';
+import 'services/compra_loja.dart';
 import 'services/familia_sync.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -118,6 +119,9 @@ class _BaruAppState extends State<BaruApp> with WidgetsBindingObserver {
       // Abrir o app do zero também conta: no celular de uma criança, as
       // regras da família precisam valer sem esperar a volta ao app.
       unawaited(FamiliaSync.instance.envia(state, forcar: false));
+      // Compras da loja que chegam a qualquer momento (renovação, compra
+      // que ficou pela metade) são conferidas no servidor.
+      CompraLoja.instancia.iniciar();
     });
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../l10n_assinatura.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -17,7 +18,11 @@ class TesteEncerradoScreen extends StatelessWidget {
     required this.aoAbrirSite,
     required this.aoVerificar,
     required this.aoSair,
+    this.noCelular = false,
   });
+
+  /// No celular o botão abre a assinatura da loja, não o site.
+  final bool noCelular;
 
   final String lang;
   final VoidCallback aoAbrirSite;
@@ -27,6 +32,7 @@ class TesteEncerradoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = T(lang);
+    garanteTextosDaAssinatura();
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: SafeArea(
@@ -57,7 +63,7 @@ class TesteEncerradoScreen extends StatelessWidget {
                 style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
               ),
               const SizedBox(height: Espaco.xl),
-              BotaoBaru(rotulo: t.testeFimSite, aoTocar: aoAbrirSite),
+              BotaoBaru(rotulo: noCelular ? t.s('assT') : t.testeFimSite, aoTocar: aoAbrirSite),
               const SizedBox(height: Espaco.sm),
               TextButton(
                 onPressed: aoVerificar,

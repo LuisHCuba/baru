@@ -1,205 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../models.dart';
+import '../data/supabase_gateway.dart';
 import '../state.dart';
-import '../theme.dart';
-import '../widgets/common.dart';
-import '../widgets/legal_sheet.dart';
-import '../widgets/pet.dart';
+import 'assinatura_screen.dart';
 
 class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
 
+  /// Assinatura pela loja do celular (uma só, mensal). Depois de confirmada,
+  /// o acesso é lido de novo do servidor.
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final t = app.t;
-    final annual = app.payPlan == PayPlan.annual;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Espaco.xl, Espaco.lg, Espaco.xl, Espaco.xxl),
-      child: Column(
-        children: [
-          // Uma saída à vista: sem ela, só o voltar do aparelho tirava a
-          // pessoa daqui, e paywall sem saída é cerco (simulador, médio 18).
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Semantics(
-              button: true,
-              label: t.back,
-              child: GestureDetector(
-                onTap: app.voltar,
-                behavior: HitTestBehavior.opaque,
-                child: const SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: AppIcon(Icons.close_rounded, size: 24),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: Espaco.sm),
-                PetView(
-                  species: app.species,
-                  mood: Mood.radiant,
-                  activity: Activity.nap,
-                  coat: app.color,
-                  estagio: app.estagioVisivel,
-                  roupas: app.roupasDoBicho,
-                  roupaDeCabeca: app.roupaDeCabeca,
-                ),
-                const SizedBox(height: Espaco.md),
-                Text(
-                  t.fill(t.payT, {'n': app.displayName}),
-                  textAlign: TextAlign.center,
-                  style: nunito(size: 28, weight: FontWeight.w800, height: 1.15, letterSpacing: -0.5),
-                ),
-                const SizedBox(height: Espaco.sm),
-                Text(
-                  t.payB,
-                  textAlign: TextAlign.center,
-                  style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
-                ),
-                const SizedBox(height: Espaco.md),
-              ],
-            ),
-            ),
-          ),
-          _plan(
-            title: t.payAnnual,
-            price: t.priceA,
-            note: t.payAnnualNote,
-            selected: annual,
-            badge: t.payBest,
-            onTap: () => app.pickPay(PayPlan.annual),
-          ),
-          const SizedBox(height: Espaco.sm),
-          _plan(
-            title: t.payMonthly,
-            price: t.priceM,
-            note: t.payMonthlyNote,
-            selected: !annual,
-            onTap: () => app.pickPay(PayPlan.monthly),
-          ),
-          const SizedBox(height: Espaco.md),
-          BotaoBaru(
-            rotulo: app.trial ? t.payCtaActive : t.payCta,
-            aoTocar: app.startTrial,
-            altura: 58,
-          ),
-          const SizedBox(height: Espaco.sm),
-          Text(
-            t.payRemind,
-            textAlign: TextAlign.center,
-            style: nunito(size: 12.5, weight: FontWeight.w600, height: 1.5, color: Cores.tinta700),
-          ),
-          const SizedBox(height: Espaco.sm),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 18,
-            runSpacing: 8,
-            children: [
-              _link(t.payRestore, app.restorePurchases),
-              _link(
-                t.payTerms,
-                () => showLegalSheet(
-                  context,
-                  title: t.setTerms,
-                  body: t.termsBody,
-                  close: t.shareDone,
-                ),
-              ),
-              _link(
-                t.payPrivacy,
-                () => showLegalSheet(
-                  context,
-                  title: t.setPrivacy,
-                  body: t.privacyBody,
-                  close: t.shareDone,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _link(String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Text(label, style: nunito(size: 12, color: Cores.tinta700)),
-    );
-  }
-
-  Widget _plan({
-    required String title,
-    required String price,
-    required String note,
-    required bool selected,
-    required VoidCallback onTap,
-    String? badge,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(Espaco.lg, Espaco.lg, Espaco.lg, Espaco.lg),
-            decoration: BoxDecoration(
-              color: selected ? AppColors.greenA(0.12) : AppColors.inkA(0.05),
-              borderRadius: BorderRadius.circular(22),
-              border: selected ? Border.all(color: AppColors.green, width: 2.5) : null,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    if (selected) ...[
-                      const AppIcon(Icons.check_circle_rounded, size: 18, color: AppColors.green),
-                      const SizedBox(width: Espaco.xs),
-                    ],
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: nunito(size: 18, weight: FontWeight.w800),
-                      ),
-                    ),
-                    Text(price, style: nunito(size: 20, weight: FontWeight.w800)),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(note, style: nunito(size: 13.5, color: Cores.tinta700)),
-              ],
-            ),
-          ),
-          if (badge != null)
-            Positioned(
-              top: -11,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: Espaco.sm, vertical: Espaco.xxs),
-                decoration: BoxDecoration(
-                  // Tinta, não mel: mel é só recompensa (ADR-027).
-                  color: Cores.tinta,
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: Text(
-                  badge.toUpperCase(),
-                  style: nunito(size: 10.5, weight: FontWeight.w800, height: 1.4, letterSpacing: 0.5, color: Cores.tintaClara),
-                ),
-              ),
-            ),
-        ],
-      ),
+    return AssinaturaScreen(
+      t: app.t,
+      aoVoltar: app.voltar,
+      aoLiberado: () {
+        BaruSupabase.instance.meuAcesso();
+        app.voltar();
+      },
     );
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../cobranca.dart';
 import '../l10n_ajustes.dart';
+import '../l10n_assinatura.dart';
+import '../services/compra_loja.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -24,6 +26,7 @@ class ContaScreen extends StatefulWidget {
   static const chaveEmail = Key('conta-email');
   static const chaveApagar = Key('conta-apagar');
   static const chavePrivacidade = Key('conta-privacidade');
+  static const chaveAssinatura = Key('conta-assinatura');
 
   @override
   State<ContaScreen> createState() => _ContaScreenState();
@@ -47,6 +50,7 @@ class _ContaScreenState extends State<ContaScreen> {
     final app = AppScope.of(context);
     final t = app.t;
     garanteTextosDosAjustes();
+    garanteTextosDaAssinatura();
     final temConta = app.canSignOut && app.emailDaConta.isNotEmpty;
 
     return Column(
@@ -225,6 +229,20 @@ class _ContaScreenState extends State<ContaScreen> {
                 ),
               ],
               const SizedBox(height: Espaco.md),
+              // A assinatura pela loja do celular (no site é pelo painel).
+              if (CompraLoja.temLoja) ...[
+                CartaoBaru(
+                  padding: const EdgeInsets.symmetric(horizontal: Espaco.md),
+                  child: _Acao(
+                    key: ContaScreen.chaveAssinatura,
+                    icone: Icons.workspace_premium_outlined,
+                    rotulo: t.s('assT'),
+                    ativo: true,
+                    aoTocar: () => app.go(AppScreen.paywall),
+                  ),
+                ),
+                const SizedBox(height: Espaco.xs),
+              ],
               // Sobre o Baru: o que é da conta e do contrato fica aqui, não
               // espalhado nos Ajustes.
               Padding(

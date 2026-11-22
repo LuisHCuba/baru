@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import 'screens/assinatura_screen.dart';
+import 'services/compra_loja.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -189,6 +192,21 @@ class AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
     if (estado == AppLifecycleState.resumed && _authenticated) _confereAcesso();
   }
 
+  final _navSemAcesso = GlobalKey<NavigatorState>();
+
+  void _abreAssinatura() {
+    _navSemAcesso.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AssinaturaScreen(
+        t: T(_lang),
+        aoVoltar: () => _navSemAcesso.currentState?.pop(),
+        aoLiberado: () {
+          _navSemAcesso.currentState?.pop();
+          _confereAcesso();
+        },
+      ),
+    ));
+  }
+
   Future<void> _confereAcesso() async {
     if (!BaruSupabase.instance.attached) return;
     final liberado = await BaruSupabase.instance.acessoLiberado();
@@ -305,16 +323,22 @@ class AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
 
     if (_semAcesso) {
       return MaterialApp(
+        navigatorKey: _navSemAcesso,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.data,
         locale: localeFor(_lang),
         home: AppFrame(
           child: TesteEncerradoScreen(
             lang: _lang,
-            aoAbrirSite: () => launchUrl(
-              Uri.parse(siteDoBaru),
-              mode: LaunchMode.externalApplication,
-            ),
+            // No celular a assinatura é pela loja (Google Play / App Store):
+            // as duas lojas proíbem mandar a pessoa pagar no site.
+            noCelular: CompraLoja.temLoja,
+            aoAbrirSite: CompraLoja.temLoja
+                ? _abreAssinatura
+                : () => launchUrl(
+                      Uri.parse(siteDoBaru),
+                      mode: LaunchMode.externalApplication,
+                    ),
             aoVerificar: _confereAcesso,
             aoSair: BaruSupabase.instance.signOut,
           ),

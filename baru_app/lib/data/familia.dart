@@ -417,6 +417,7 @@ class Familia {
     this.criancas = const [],
     this.apelidosDasCriancas = const [],
     this.eventos = const [],
+    this.tipo = 'familia',
   });
 
   factory Familia.doMapa(Map<dynamic, dynamic> m) {
@@ -434,8 +435,14 @@ class Familia {
       criancas: souResponsavel ? criancas.map(CriancaNaFamilia.doMapa).toList() : const [],
       apelidosDasCriancas: criancas.map((c) => '${c['apelido'] ?? ''}').toList(),
       eventos: ((m['eventos'] as List?) ?? const []).whereType<Map>().map(EventoDaFamilia.doMapa).toList(),
+      tipo: const {'familia', 'amigos', 'confianca'}.contains(m['tipo']) ? '${m['tipo']}' : 'familia',
     );
   }
+
+  /// Tipo do laço: 'familia' (crianças, regras, tempo de tela), 'amigos' ou
+  /// 'confianca' (só mapa, SOS e chegou/saiu).
+  final String tipo;
+  bool get ehFamilia => tipo == 'familia';
 
   final String id;
   final String nome;
@@ -506,7 +513,8 @@ class FamiliaRepo {
 
   // ------------------------------------------------ responsável
 
-  Future<String> criar(String nome) async => '${await _c.rpc('baru_familia_criar', params: {'p_nome': nome})}';
+  Future<String> criar(String nome, {String tipo = 'familia'}) async =>
+      '${await _c.rpc('baru_familia_criar', params: {'p_nome': nome, 'p_tipo': tipo})}';
 
   Future<ConviteDaFamilia> convidar(String familiaId, {bool crianca = true, String? apelido}) async {
     final r = await _c.rpc('baru_familia_convidar', params: {

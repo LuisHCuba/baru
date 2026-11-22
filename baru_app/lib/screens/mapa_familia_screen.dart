@@ -85,7 +85,11 @@ class MapaFamiliaScreen extends StatefulWidget {
     this.aoAdicionar,
     this.recarga = 0,
     this.foco,
+    this.topoDaFolha,
   });
+
+  /// No lugar do título da folha (o seletor de laços).
+  final Widget? topoDaFolha;
 
   /// Quem está fora pede para o mapa ir até uma pessoa (ex.: o aviso de SOS).
   final ValueNotifier<String?>? foco;
@@ -640,7 +644,7 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
                 if (!_carregou && _erro == null) const Padding(padding: EdgeInsets.all(Espaco.md), child: Center(child: CircularProgressIndicator())),
                 if (selecionada == null) ...[
                   // Todos: uma linha por pessoa.
-                  Text(widget.titulo ?? t.s('locMapaT'), style: estilo(Tipo.titulo)),
+                  widget.topoDaFolha ?? Text(widget.titulo ?? t.s('locMapaT'), style: estilo(Tipo.titulo)),
                   const SizedBox(height: Espaco.xs),
                   for (final c in pessoas)
                     _LinhaDaPessoa(

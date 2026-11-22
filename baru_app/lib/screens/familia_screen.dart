@@ -77,6 +77,10 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
   bool _ocupado = false;
   bool _todaAtividade = false;
 
+  /// Laço aberto no mapa (o último escolhido neste celular).
+  String? _lacoAtual;
+  static const _chaveLacoAtual = 'baru_laco_atual';
+
   /// Hora do último SOS que este celular marcou como visto.
   DateTime? _sosVisto;
   static const _chaveSosVisto = 'baru_familia_sos_visto';
@@ -139,6 +143,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
     try {
       final prefs = await SharedPreferences.getInstance();
       _sosVisto = DateTime.tryParse(prefs.getString(_chaveSosVisto) ?? '');
+      _lacoAtual ??= prefs.getString(_chaveLacoAtual);
       final f = await _repo.minha();
       final tela = await TempoDeTelaIos.estado();
       final sobrepor = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
@@ -222,10 +227,13 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
     final f = _familia;
 
     // Responsável: a aba é o mapa. Tempo de tela e regras ficam em cada pessoa.
-    final principal = (widget.comConta ?? app.canSignOut) && f != null && !f.souCrianca
-        ? f.familias.where((x) => x.souResponsavel).firstOrNull
-        : null;
-    if (principal != null) return _mapaPrincipal(t, app, principal);
+    final lacos = (widget.comConta ?? app.canSignOut) && f != null && !f.souCrianca
+        ? f.familias.where((x) => x.souResponsavel).toList()
+        : const <Familia>[];
+    if (lacos.isNotEmpty) {
+      final atual = lacos.where((x) => x.id == _lacoAtual).firstOrNull ?? lacos.first;
+      return _mapaPrincipal(t, app, atual, lacos);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -262,7 +270,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
 
   // ------------------------------------------------------------ mapa (responsável)
 
-  Widget _mapaPrincipal(T t, AppState app, Familia f) {
+  Widget _mapaPrincipal(T t, AppState app, Familia f, List<Familia> lacos) {
     final sos = _sosRecente(f);
     final avisos = _visiveis(f);
     return MapaFamiliaScreen(
@@ -275,7 +283,14 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
       recarga: _recarga,
       foco: _focoNoMapa,
       titulo: f.nome,
-      aoAdicionar: _ocupado ? null : () => _convidar(t, f, crianca: true),
+      topoDaFolha: _SeletorDeLacos(
+        t: t,
+        lacos: lacos,
+        atual: f.id,
+        aoEscolher: _escolheLaco,
+        aoCriar: _ocupado ? null : () => _novoLaco(t),
+      ),
+      aoAdicionar: _ocupado ? null : () => _convidar(t, f, crianca: f.ehFamilia),
       avisosNoTopo: [
         if (!_notificacoes)
           Material(
@@ -367,22 +382,50 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
           ),
         ],
         const SizedBox(height: Espaco.md),
-        BotaoBaru(
-          key: const Key('familia-gerar'),
-          rotulo: t.s('famAddCrianca'),
-          papel: PapelDoBotao.secundario,
-          ativo: !_ocupado,
-          aoTocar: () => _convidar(t, f, crianca: true),
-        ),
-        Center(
-          child: TextButton.icon(
-            onPressed: _ocupado ? null : () => _convidar(t, f, crianca: false),
-            icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
-            label: Text(t.s('famConvidarResp')),
+        if (f.ehFamilia) ...[
+          BotaoBaru(
+            key: const Key('familia-gerar'),
+            rotulo: t.s('famAddCrianca'),
+            papel: PapelDoBotao.secundario,
+            ativo: !_ocupado,
+            aoTocar: () => _convidar(t, f, crianca: true),
           ),
-        ),
+          Center(
+            child: TextButton.icon(
+              onPressed: _ocupado ? null : () => _convidar(t, f, crianca: false),
+              icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+              label: Text(t.s('famConvidarResp')),
+            ),
+          ),
+        ] else
+          BotaoBaru(
+            key: const Key('laco-convidar'),
+            rotulo: t.s('lacoConvidar'),
+            papel: PapelDoBotao.secundario,
+            ativo: !_ocupado,
+            aoTocar: () => _convidar(t, f, crianca: false),
+          ),
       ],
     );
+  }
+
+  Future<void> _escolheLaco(String id) async {
+    setState(() => _lacoAtual = id);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_chaveLacoAtual, id);
+  }
+
+  Future<void> _novoLaco(T t) async {
+    final r = await showDialog<({String nome, String tipo})>(
+      context: context,
+      builder: (_) => _DialogoNovoLaco(t: t),
+    );
+    if (r == null) return;
+    String? id;
+    await _faz(() async {
+      id = await _repo.criar(r.nome, tipo: r.tipo);
+    });
+    if (id != null && mounted) await _escolheLaco(id!);
   }
 
   // ------------------------------------------------------------ sem família
@@ -1129,6 +1172,117 @@ class _CartaoDaCrianca extends StatelessWidget {
             Text(t.s('famSemanaVazia'), key: Key('semana-vazia-${c.id}'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
         ],
       ),
+    );
+  }
+}
+
+/// Laços em fichas no topo da folha do mapa; a última cria um laço novo.
+class _SeletorDeLacos extends StatelessWidget {
+  const _SeletorDeLacos({required this.t, required this.lacos, required this.atual, required this.aoEscolher, this.aoCriar});
+  final T t;
+  final List<Familia> lacos;
+  final String atual;
+  final ValueChanged<String> aoEscolher;
+  final VoidCallback? aoCriar;
+
+  static IconData iconeDo(String tipo) => switch (tipo) {
+        'amigos' => Icons.groups_rounded,
+        'confianca' => Icons.verified_user_rounded,
+        _ => Icons.family_restroom_rounded,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: [
+        for (final l in lacos) ...[
+          ChoiceChip(
+            key: Key('laco-${l.id}'),
+            avatar: Icon(iconeDo(l.tipo), size: 18),
+            label: Text(l.nome, style: estilo(Tipo.corpoForte)),
+            selected: l.id == atual,
+            onSelected: (_) => aoEscolher(l.id),
+          ),
+          const SizedBox(width: Espaco.xs),
+        ],
+        ActionChip(
+          key: const Key('laco-novo'),
+          avatar: const Icon(Icons.add_rounded, size: 18),
+          label: Text(t.s('lacoNovo')),
+          onPressed: aoCriar,
+        ),
+      ]),
+    );
+  }
+}
+
+/// Nome e tipo do laço novo.
+class _DialogoNovoLaco extends StatefulWidget {
+  const _DialogoNovoLaco({required this.t});
+  final T t;
+
+  @override
+  State<_DialogoNovoLaco> createState() => _DialogoNovoLacoState();
+}
+
+class _DialogoNovoLacoState extends State<_DialogoNovoLaco> {
+  final _nome = TextEditingController();
+  String _tipo = 'amigos';
+
+  @override
+  void dispose() {
+    _nome.dispose();
+    super.dispose();
+  }
+
+  String _nomePadrao(T t) => switch (_tipo) {
+        'familia' => t.s('famNomePadrao'),
+        'confianca' => t.s('lacoNomeConfianca'),
+        _ => t.s('lacoNomeAmigos'),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final t = widget.t;
+    return AlertDialog(
+      title: Text(t.s('lacoNovo')),
+      content: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(t.s('lacoTipo'), style: estilo(Tipo.corpoForte)),
+          const SizedBox(height: Espaco.xs),
+          RadioGroup<String>(
+            groupValue: _tipo,
+            onChanged: (v) => setState(() => _tipo = v ?? _tipo),
+            child: Column(children: [
+              for (final tipo in const ['familia', 'amigos', 'confianca'])
+                RadioListTile<String>(
+                  key: Key('laco-tipo-$tipo'),
+                  contentPadding: EdgeInsets.zero,
+                  value: tipo,
+                  secondary: Icon(_SeletorDeLacos.iconeDo(tipo)),
+                  title: Text(t.s('lacoTipo_$tipo')),
+                  subtitle: Text(t.s('lacoTipo_${tipo}Sub'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+                ),
+            ]),
+          ),
+          const SizedBox(height: Espaco.sm),
+          TextField(
+            controller: _nome,
+            maxLength: 60,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(labelText: t.s('famNomeDaFamilia'), hintText: _nomePadrao(t), counterText: ''),
+          ),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(t.s('locCancelar'))),
+        TextButton(
+          key: const Key('laco-criar'),
+          onPressed: () => Navigator.pop(context, (nome: _nome.text.trim().isEmpty ? _nomePadrao(t) : _nome.text.trim(), tipo: _tipo)),
+          child: Text(t.s('famCriar')),
+        ),
+      ],
     );
   }
 }

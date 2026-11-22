@@ -21,7 +21,7 @@ class _RepoFalso extends FamiliaRepo {
   Future<MinhaFamilia> minha() async => estado;
 
   @override
-  Future<String> criar(String nome) async {
+  Future<String> criar(String nome, {String tipo = 'familia'}) async {
     chamadas.add('criar:$nome');
     estado = MinhaFamilia.doMapa({
       'souCrianca': false,

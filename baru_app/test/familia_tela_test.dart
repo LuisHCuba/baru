@@ -21,7 +21,7 @@ class _RepoFalso extends FamiliaRepo {
   Future<MinhaFamilia> minha() async => estado;
 
   @override
-  Future<String> criar(String nome, {String tipo = 'familia'}) async {
+  Future<String> criar(String nome) async {
     chamadas.add('criar:$nome');
     estado = MinhaFamilia.doMapa({
       'souCrianca': false,
@@ -232,6 +232,9 @@ void main() {
     );
     await tester.tap(find.byTooltip(textosDaFamilia['pt']!['famAddCrianca']!));
     await tester.pumpAndSettle();
+    // Adicionar pessoa: escolhe "Dependente".
+    await tester.tap(find.byKey(const Key('adicionar-dependente')));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('familia-apelido')), 'Nina');
     // A folha do mapa também tem o botão "familia-gerar" por trás do diálogo: vale o do diálogo.
     await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.byKey(const Key('familia-gerar'))));
@@ -256,6 +259,9 @@ void main() {
       }),
     );
     await tester.tap(find.byTooltip(textosDaFamilia['pt']!['famAddCrianca']!));
+    await tester.pumpAndSettle();
+    // Adicionar pessoa: escolhe "Dependente".
+    await tester.tap(find.byKey(const Key('adicionar-dependente')));
     await tester.pumpAndSettle();
     await tester.tap(find.text(textosDaFamilia['pt']!['famCancelar']!));
     await tester.pumpAndSettle();

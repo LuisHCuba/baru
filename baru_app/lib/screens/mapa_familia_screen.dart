@@ -86,7 +86,15 @@ class MapaFamiliaScreen extends StatefulWidget {
     this.recarga = 0,
     this.foco,
     this.topoDaFolha,
+    this.aoGerenciar,
+    this.aoGerenciarDependente,
   });
+
+  /// Administrador: gerenciar um dependente (id, nome).
+  final void Function(String id, String nome)? aoGerenciarDependente;
+
+  /// Administrador: gerenciar um adulto do laço (id, nome, é administrador).
+  final void Function(String id, String nome, bool admin)? aoGerenciar;
 
   /// No lugar do título da folha (o seletor de laços).
   final Widget? topoDaFolha;
@@ -653,10 +661,11 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
                       escolhida: false,
                       aoTocar: () => _seleciona(c),
                       aoAtualizar: c.localizacao ? () => _pede(c) : null,
+                      aoGerenciar: widget.aoGerenciarDependente == null ? null : () => widget.aoGerenciarDependente!(c.id, c.apelido),
                     ),
                   if (_dados.responsaveis.isNotEmpty) ...[
                     const SizedBox(height: Espaco.sm),
-                    Text(t.s('locResponsaveis').toUpperCase(),
+                    Text(t.s('lacoAdultos').toUpperCase(),
                         style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700).copyWith(letterSpacing: 0.8)),
                     for (final r in _dados.responsaveis)
                       _LinhaDoResponsavel(
@@ -664,6 +673,7 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
                         responsavel: r,
                         aoTocar: r.atual == null ? null : () => _vaiPara(r.atual!),
                         aoMostrar: r.eu ? _ligaMeuLocal : null,
+                        aoGerenciar: widget.aoGerenciar == null || r.eu ? null : () => widget.aoGerenciar!(r.id, r.apelido, r.admin),
                       ),
                   ],
                   if (_carregou && pessoas.isEmpty)
@@ -689,6 +699,9 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
                     escolhida: true,
                     aoTocar: _centraliza,
                     aoAtualizar: selecionada.localizacao ? () => _pede(selecionada) : null,
+                    aoGerenciar: widget.aoGerenciarDependente == null
+                        ? null
+                        : () => widget.aoGerenciarDependente!(selecionada.id, selecionada.apelido),
                   ),
                   if (widget.detalheDaPessoa != null) ...[
                     const SizedBox(height: Espaco.sm),
@@ -758,8 +771,9 @@ class _MapaFamiliaScreenState extends State<MapaFamiliaScreen> {
 
 /// Um responsável na folha do mapa. O deste celular tem o botão de mostrar.
 class _LinhaDoResponsavel extends StatelessWidget {
-  const _LinhaDoResponsavel({required this.t, required this.responsavel, this.aoTocar, this.aoMostrar});
+  const _LinhaDoResponsavel({required this.t, required this.responsavel, this.aoTocar, this.aoMostrar, this.aoGerenciar});
   final T t;
+  final VoidCallback? aoGerenciar;
   final ResponsavelNoMapa responsavel;
   final VoidCallback? aoTocar;
   final ValueChanged<bool>? aoMostrar;
@@ -783,16 +797,40 @@ class _LinhaDoResponsavel extends StatelessWidget {
           const SizedBox(width: Espaco.sm),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(nome, style: estilo(Tipo.subtitulo)),
+              Row(children: [
+                Flexible(child: Text(nome, style: estilo(Tipo.subtitulo), overflow: TextOverflow.ellipsis)),
+                const SizedBox(width: Espaco.xs),
+                _Nivel(texto: t.s(r.admin ? 'nivelAdmin' : 'nivelMembro')),
+              ]),
               Text(linha, style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
             ]),
           ),
+          if (aoGerenciar != null)
+            IconButton(
+              key: Key('gerenciar-${r.id}'),
+              tooltip: t.s('nivelGerenciar'),
+              onPressed: aoGerenciar,
+              icon: const Icon(Icons.manage_accounts_outlined),
+            ),
           if (aoMostrar != null)
             Switch(key: const Key('eu-mostrar'), value: r.ligada, onChanged: aoMostrar),
         ]),
       ),
     );
   }
+}
+
+/// Etiqueta pequena do nível da pessoa no laço.
+class _Nivel extends StatelessWidget {
+  const _Nivel({required this.texto});
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(color: Cores.tintaA(0.07), borderRadius: BorderRadius.circular(6)),
+        child: Text(texto, style: estilo(Tipo.rotuloPequeno, color: Cores.tinta700)),
+      );
 }
 
 /// Bolinha presa na borda do mapa, com uma setinha para onde a pessoa está.
@@ -870,7 +908,8 @@ class _BotaoRedondo extends StatelessWidget {
 
 /// Uma pessoa na folha do mapa: inicial, onde está, há quanto tempo, bateria.
 class _LinhaDaPessoa extends StatelessWidget {
-  const _LinhaDaPessoa({required this.t, required this.crianca, required this.escolhida, required this.aoTocar, this.aoAtualizar});
+  const _LinhaDaPessoa({required this.t, required this.crianca, required this.escolhida, required this.aoTocar, this.aoAtualizar, this.aoGerenciar});
+  final VoidCallback? aoGerenciar;
   final T t;
   final CriancaNoMapa crianca;
   final bool escolhida;
@@ -900,7 +939,11 @@ class _LinhaDaPessoa extends StatelessWidget {
             const SizedBox(width: Espaco.sm),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(c.apelido, style: estilo(Tipo.subtitulo)),
+                Row(children: [
+                  Flexible(child: Text(c.apelido, style: estilo(Tipo.subtitulo), overflow: TextOverflow.ellipsis)),
+                  const SizedBox(width: Espaco.xs),
+                  _Nivel(texto: t.s('nivelDependente')),
+                ]),
                 Text(
                   c.atual == null ? t.fill(t.s('locSemPosicao'), {'n': c.apelido}) : linhaDoLocal(t, c.atual!),
                   style: estilo(Tipo.corpoPequeno, color: sos ? Cores.alerta : Cores.tinta700),
@@ -909,6 +952,13 @@ class _LinhaDaPessoa extends StatelessWidget {
                   Text(motivo, key: Key('mapa-motivo-${c.id}'), style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
               ]),
             ),
+            if (aoGerenciar != null)
+              IconButton(
+                key: Key('gerenciar-${c.id}'),
+                tooltip: t.s('nivelGerenciar'),
+                onPressed: aoGerenciar,
+                icon: const Icon(Icons.manage_accounts_outlined),
+              ),
             IconButton(
               tooltip: t.s('locAtualizar'),
               onPressed: aoAtualizar,

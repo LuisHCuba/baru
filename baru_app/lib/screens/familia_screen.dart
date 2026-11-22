@@ -290,7 +290,9 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
         aoEscolher: _escolheLaco,
         aoCriar: _ocupado ? null : () => _novoLaco(t),
       ),
-      aoAdicionar: _ocupado ? null : () => _convidar(t, f, crianca: f.ehFamilia),
+      aoAdicionar: _ocupado || !f.souAdmin ? null : () => _adicionar(t, f),
+      aoGerenciar: f.souAdmin ? (id, nome, admin) => _gerenciar(t, f, id, nome, admin ? 'admin' : 'membro') : null,
+      aoGerenciarDependente: f.souAdmin ? (id, nome) => _gerenciar(t, f, id, nome, 'dependente') : null,
       avisosNoTopo: [
         if (!_notificacoes)
           Material(
@@ -382,31 +384,94 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
           ),
         ],
         const SizedBox(height: Espaco.md),
-        if (f.ehFamilia) ...[
+        if (f.souAdmin)
           BotaoBaru(
             key: const Key('familia-gerar'),
-            rotulo: t.s('famAddCrianca'),
+            rotulo: t.s('lacoAdicionar'),
             papel: PapelDoBotao.secundario,
             ativo: !_ocupado,
-            aoTocar: () => _convidar(t, f, crianca: true),
-          ),
-          Center(
-            child: TextButton.icon(
-              onPressed: _ocupado ? null : () => _convidar(t, f, crianca: false),
-              icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
-              label: Text(t.s('famConvidarResp')),
-            ),
-          ),
-        ] else
-          BotaoBaru(
-            key: const Key('laco-convidar'),
-            rotulo: t.s('lacoConvidar'),
-            papel: PapelDoBotao.secundario,
-            ativo: !_ocupado,
-            aoTocar: () => _convidar(t, f, crianca: false),
+            aoTocar: () => _adicionar(t, f),
           ),
       ],
     );
+  }
+
+  /// Adicionar alguém: adulto (entra como membro) ou dependente.
+  Future<void> _adicionar(T t, Familia f) async {
+    final escolha = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Cores.canvas,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(title: Text(t.s('lacoAdicionar'), style: estilo(Tipo.subtitulo))),
+          ListTile(
+            key: const Key('adicionar-adulto'),
+            leading: const Icon(Icons.person_outline_rounded),
+            title: Text(t.s('nivelMembro')),
+            subtitle: Text(t.s('nivelMembroSub')),
+            onTap: () => Navigator.pop(ctx, false),
+          ),
+          ListTile(
+            key: const Key('adicionar-dependente'),
+            leading: const Icon(Icons.child_care_rounded),
+            title: Text(t.s('nivelDependente')),
+            subtitle: Text(t.s('nivelDependenteSub')),
+            onTap: () => Navigator.pop(ctx, true),
+          ),
+        ]),
+      ),
+    );
+    if (escolha == null) return;
+    await _convidar(t, f, crianca: escolha);
+  }
+
+  /// Administrador: muda o nível de alguém ou tira do laço.
+  Future<void> _gerenciar(T t, Familia f, String id, String nome, String nivelAtual) async {
+    final r = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Cores.canvas,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: Espaco.sm),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            ListTile(title: Text(nome, style: estilo(Tipo.titulo)), subtitle: Text(t.s('nivelT'))),
+            for (final n in const ['admin', 'membro', 'dependente'])
+              ListTile(
+                key: Key('nivel-$n'),
+                leading: Icon(n == nivelAtual ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                    color: n == nivelAtual ? Cores.primariaEscura : Cores.tinta500),
+                title: Text(t.s(switch (n) { 'admin' => 'nivelAdmin', 'membro' => 'nivelMembro', _ => 'nivelDependente' })),
+                subtitle: Text(t.s(switch (n) { 'admin' => 'nivelAdminSub', 'membro' => 'nivelMembroSub', _ => 'nivelDependenteSub' })),
+                onTap: () => Navigator.pop(ctx, n),
+              ),
+            const Divider(),
+            ListTile(
+              key: const Key('nivel-tirar'),
+              leading: const Icon(Icons.person_remove_outlined, color: Cores.alerta),
+              title: Text(t.s('famRemover'), style: const TextStyle(color: Cores.alerta)),
+              onTap: () => Navigator.pop(ctx, 'tirar'),
+            ),
+          ]),
+        ),
+      ),
+    );
+    if (r == null || r == nivelAtual || !mounted) return;
+    if (r == 'tirar') {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          content: Text(t.fill(t.s('famRemoverConfirma'), {'n': nome})),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.s('locCancelar'))),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t.s('famRemover'), style: const TextStyle(color: Cores.alerta))),
+          ],
+        ),
+      );
+      if (ok == true) await _faz(() => _repo.remover(f.id, id));
+      return;
+    }
+    await _faz(() => _repo.nivel(f.id, id, r));
   }
 
   Future<void> _escolheLaco(String id) async {
@@ -416,18 +481,17 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
   }
 
   Future<void> _novoLaco(T t) async {
-    final r = await showDialog<({String nome, String tipo})>(
+    final nome = await showDialog<String>(
       context: context,
       builder: (_) => _DialogoNovoLaco(t: t),
     );
-    if (r == null) return;
+    if (nome == null) return;
     String? id;
     await _faz(() async {
-      id = await _repo.criar(r.nome, tipo: r.tipo);
+      id = await _repo.criar(nome);
     });
     if (id != null && mounted) await _escolheLaco(id!);
   }
-
   // ------------------------------------------------------------ sem família
 
   List<Widget> _semFamilia(T t) => [
@@ -1185,12 +1249,6 @@ class _SeletorDeLacos extends StatelessWidget {
   final ValueChanged<String> aoEscolher;
   final VoidCallback? aoCriar;
 
-  static IconData iconeDo(String tipo) => switch (tipo) {
-        'amigos' => Icons.groups_rounded,
-        'confianca' => Icons.verified_user_rounded,
-        _ => Icons.family_restroom_rounded,
-      };
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -1199,7 +1257,7 @@ class _SeletorDeLacos extends StatelessWidget {
         for (final l in lacos) ...[
           ChoiceChip(
             key: Key('laco-${l.id}'),
-            avatar: Icon(iconeDo(l.tipo), size: 18),
+            avatar: const Icon(Icons.groups_rounded, size: 18),
             label: Text(l.nome, style: estilo(Tipo.corpoForte)),
             selected: l.id == atual,
             onSelected: (_) => aoEscolher(l.id),
@@ -1217,7 +1275,7 @@ class _SeletorDeLacos extends StatelessWidget {
   }
 }
 
-/// Nome e tipo do laço novo.
+/// Nome do laço novo (o laço funciona igual para todos; o nome é livre).
 class _DialogoNovoLaco extends StatefulWidget {
   const _DialogoNovoLaco({required this.t});
   final T t;
@@ -1228,7 +1286,6 @@ class _DialogoNovoLaco extends StatefulWidget {
 
 class _DialogoNovoLacoState extends State<_DialogoNovoLaco> {
   final _nome = TextEditingController();
-  String _tipo = 'amigos';
 
   @override
   void dispose() {
@@ -1236,52 +1293,29 @@ class _DialogoNovoLacoState extends State<_DialogoNovoLaco> {
     super.dispose();
   }
 
-  String _nomePadrao(T t) => switch (_tipo) {
-        'familia' => t.s('famNomePadrao'),
-        'confianca' => t.s('lacoNomeConfianca'),
-        _ => t.s('lacoNomeAmigos'),
-      };
+  void _cria() {
+    final n = _nome.text.trim();
+    if (n.isEmpty) return;
+    Navigator.pop(context, n);
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = widget.t;
     return AlertDialog(
       title: Text(t.s('lacoNovo')),
-      content: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text(t.s('lacoTipo'), style: estilo(Tipo.corpoForte)),
-          const SizedBox(height: Espaco.xs),
-          RadioGroup<String>(
-            groupValue: _tipo,
-            onChanged: (v) => setState(() => _tipo = v ?? _tipo),
-            child: Column(children: [
-              for (final tipo in const ['familia', 'amigos', 'confianca'])
-                RadioListTile<String>(
-                  key: Key('laco-tipo-$tipo'),
-                  contentPadding: EdgeInsets.zero,
-                  value: tipo,
-                  secondary: Icon(_SeletorDeLacos.iconeDo(tipo)),
-                  title: Text(t.s('lacoTipo_$tipo')),
-                  subtitle: Text(t.s('lacoTipo_${tipo}Sub'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
-                ),
-            ]),
-          ),
-          const SizedBox(height: Espaco.sm),
-          TextField(
-            controller: _nome,
-            maxLength: 60,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(labelText: t.s('famNomeDaFamilia'), hintText: _nomePadrao(t), counterText: ''),
-          ),
-        ]),
+      content: TextField(
+        key: const Key('laco-nome'),
+        controller: _nome,
+        autofocus: true,
+        maxLength: 60,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(labelText: t.s('famNomeDaFamilia'), hintText: t.s('lacoNomeExemplo'), counterText: ''),
+        onSubmitted: (_) => _cria(),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text(t.s('locCancelar'))),
-        TextButton(
-          key: const Key('laco-criar'),
-          onPressed: () => Navigator.pop(context, (nome: _nome.text.trim().isEmpty ? _nomePadrao(t) : _nome.text.trim(), tipo: _tipo)),
-          child: Text(t.s('famCriar')),
-        ),
+        TextButton(key: const Key('laco-criar'), onPressed: _cria, child: Text(t.s('famCriar'))),
       ],
     );
   }

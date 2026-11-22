@@ -245,7 +245,7 @@ class MapaDaFamilia {
 /// Um responsável no mapa: aparece com posição só se escolheu mostrar.
 @immutable
 class ResponsavelNoMapa {
-  const ResponsavelNoMapa({required this.id, required this.apelido, this.eu = false, this.ligada = false, this.foto, this.atual});
+  const ResponsavelNoMapa({required this.id, required this.apelido, this.eu = false, this.ligada = false, this.foto, this.atual, this.admin = true});
 
   factory ResponsavelNoMapa.doMapa(Map<dynamic, dynamic> m) => ResponsavelNoMapa(
         id: '${m['id']}',
@@ -254,7 +254,11 @@ class ResponsavelNoMapa {
         ligada: m['ligada'] == true,
         foto: DateTime.tryParse('${m['foto']}'),
         atual: m['atual'] is Map ? PosicaoDaCrianca.doMapa(m['atual'] as Map) : null,
+        admin: m['admin'] is bool ? m['admin'] as bool : true,
       );
+
+  /// Administrador do laço (senão, membro).
+  final bool admin;
 
   final String id;
   final String apelido;
@@ -417,7 +421,7 @@ class Familia {
     this.criancas = const [],
     this.apelidosDasCriancas = const [],
     this.eventos = const [],
-    this.tipo = 'familia',
+    this.souAdmin = false,
   });
 
   factory Familia.doMapa(Map<dynamic, dynamic> m) {
@@ -435,14 +439,13 @@ class Familia {
       criancas: souResponsavel ? criancas.map(CriancaNaFamilia.doMapa).toList() : const [],
       apelidosDasCriancas: criancas.map((c) => '${c['apelido'] ?? ''}').toList(),
       eventos: ((m['eventos'] as List?) ?? const []).whereType<Map>().map(EventoDaFamilia.doMapa).toList(),
-      tipo: const {'familia', 'amigos', 'confianca'}.contains(m['tipo']) ? '${m['tipo']}' : 'familia',
+      // Servidor antigo não manda: todo responsável era administrador.
+      souAdmin: m['souAdmin'] is bool ? m['souAdmin'] as bool : papel == 'responsavel',
     );
   }
 
-  /// Tipo do laço: 'familia' (crianças, regras, tempo de tela), 'amigos' ou
-  /// 'confianca' (só mapa, SOS e chegou/saiu).
-  final String tipo;
-  bool get ehFamilia => tipo == 'familia';
+  /// Administrador do laço: gerencia pessoas e cuida dos dependentes.
+  final bool souAdmin;
 
   final String id;
   final String nome;
@@ -513,8 +516,11 @@ class FamiliaRepo {
 
   // ------------------------------------------------ responsável
 
-  Future<String> criar(String nome, {String tipo = 'familia'}) async =>
-      '${await _c.rpc('baru_familia_criar', params: {'p_nome': nome, 'p_tipo': tipo})}';
+  Future<String> criar(String nome) async => '${await _c.rpc('baru_familia_criar', params: {'p_nome': nome})}';
+
+  /// Administrador muda o nível de alguém: 'admin', 'membro' ou 'dependente'.
+  Future<void> nivel(String familiaId, String userId, String nivel) =>
+      _c.rpc('baru_laco_nivel', params: {'p_familia': familiaId, 'p_user': userId, 'p_nivel': nivel});
 
   Future<ConviteDaFamilia> convidar(String familiaId, {bool crianca = true, String? apelido}) async {
     final r = await _c.rpc('baru_familia_convidar', params: {

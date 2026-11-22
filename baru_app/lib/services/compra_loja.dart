@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Assinatura do Baru comprada na loja do celular (Google Play no Android,
@@ -18,6 +19,42 @@ class CompraLoja {
   /// Id do produto em cada loja.
   static String get produto =>
       defaultTargetPlatform == TargetPlatform.iOS ? 'tech.lhcx.baru.mensal' : 'baru_assinatura';
+
+  /// Plano família (Google Play). No iPhone ainda não existe.
+  static const produtoFamilia = 'baru_familia';
+
+  /// Laço do plano família sendo comprado (vai junto para o servidor).
+  String? _lacoPendente;
+
+  /// Os planos que a loja oferece agora: individual mensal, individual anual
+  /// e família. No Android cada plano base vem como um ProductDetails próprio.
+  Future<Map<PlanoDaLoja, ProductDetails>> planosDaLoja() async {
+    if (!temLoja || !await _loja.isAvailable()) return const {};
+    final ids = defaultTargetPlatform == TargetPlatform.iOS ? {produto} : {produto, produtoFamilia};
+    final r = await _loja.queryProductDetails(ids);
+    final out = <PlanoDaLoja, ProductDetails>{};
+    for (final p in r.productDetails) {
+      if (p is GooglePlayProductDetails) {
+        final i = p.subscriptionIndex;
+        final ofertas = p.productDetails.subscriptionOfferDetails;
+        if (i == null || ofertas == null) continue;
+        final oferta = ofertas[i];
+        // Só o plano base (sem oferta de desconto por cima).
+        if (oferta.offerId != null) continue;
+        switch (oferta.basePlanId) {
+          case 'mensal':
+            out[PlanoDaLoja.mensal] = p;
+          case 'anual':
+            out[PlanoDaLoja.anual] = p;
+          case 'familia-mensal':
+            out[PlanoDaLoja.familia] = p;
+        }
+      } else if (p.id == produto) {
+        out[PlanoDaLoja.mensal] = p;
+      }
+    }
+    return out;
+  }
 
   static String get loja => defaultTargetPlatform == TargetPlatform.iOS ? 'apple' : 'google';
 
@@ -43,9 +80,10 @@ class CompraLoja {
     return r.productDetails.isEmpty ? null : r.productDetails.first;
   }
 
-  Future<void> assinar(ProductDetails p) async {
+  Future<void> assinar(ProductDetails p, {String? laco}) async {
     final conta = Supabase.instance.client.auth.currentUser?.id;
     if (conta == null) throw StateError('sem_sessao');
+    _lacoPendente = laco;
     _avisos.add(const AvisoDaLoja(EtapaDaLoja.comprando));
     await _loja.buyNonConsumable(purchaseParam: PurchaseParam(productDetails: p, applicationUserName: conta));
   }
@@ -79,6 +117,7 @@ class CompraLoja {
         'loja': loja,
         'produto': c.productID,
         'token': c.verificationData.serverVerificationData,
+        if (c.productID == produtoFamilia && _lacoPendente != null) 'laco': _lacoPendente,
       });
       if (c.pendingCompletePurchase) await _loja.completePurchase(c);
       _avisos.add(const AvisoDaLoja(EtapaDaLoja.pronto));
@@ -94,6 +133,9 @@ class CompraLoja {
     }
   }
 }
+
+/// Os planos à venda: um preço só por plano em todo lugar.
+enum PlanoDaLoja { mensal, anual, familia }
 
 enum EtapaDaLoja { comprando, conferindo, pronto, cancelada, falhou, semConexao }
 

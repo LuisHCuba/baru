@@ -56,6 +56,7 @@ dependencies:
   in_app_purchase: ^3.3.1
   vector_map_tiles: ^9.0.0-beta.13
   image_picker: ^1.2.4
+  in_app_purchase_android: ^0.5.5
 
 dependency_overrides:
   permission_handler_android: 13.0.1

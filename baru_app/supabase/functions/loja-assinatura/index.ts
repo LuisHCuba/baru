@@ -3,8 +3,12 @@ import { comCors, jsonResponse, servico, usuarioDe } from '../_shared/http.ts'
 /**
  * Assinatura comprada dentro do app (loja do celular).
  *
- *   { loja: 'google', token, produto }  → confere com a Google Play, confirma
+ *   { loja: 'google', token, produto, laco? }  → confere com a Google Play, confirma
  *                                         (acknowledge) e libera o acesso.
+ *
+ * Produtos: baru_assinatura (individual: planos base mensal e anual) e
+ * baru_familia (família: libera as primeiras 6 pessoas do laço `laco`, que o
+ * comprador precisa administrar).
  *
  * A compra só vale para a conta que comprou: o app manda o id da conta como
  * obfuscatedAccountId, e a Google devolve o mesmo valor na conferência.
@@ -14,7 +18,7 @@ import { comCors, jsonResponse, servico, usuarioDe } from '../_shared/http.ts'
  */
 
 const PACOTE = 'tech.lhcx.baru'
-const PRODUTOS = new Set(['baru_assinatura'])
+const PRODUTOS = new Set(['baru_assinatura', 'baru_familia'])
 const API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PACOTE}`
 
 const b64url = (b: ArrayBuffer | Uint8Array | string) =>
@@ -77,6 +81,21 @@ Deno.serve(comCors(async (req: Request) => {
   if (corpo.loja !== 'google' || !token || token.length > 4000 || !PRODUTOS.has(produto)) {
     return jsonResponse({ error: 'parametros_invalidos' }, 400)
   }
+  const laco = typeof corpo.laco === 'string' && /^[0-9a-f-]{36}$/i.test(corpo.laco) ? corpo.laco : null
+  const db0 = servico()
+  if (produto === 'baru_familia') {
+    // Plano família: só o administrador do laço compra, e um laço tem um plano família só.
+    if (!laco) return jsonResponse({ error: 'laco_obrigatorio', message: 'Escolha o laço que o plano família vai cobrir.' }, 400)
+    const { data: eu } = await db0.from('baru_familia_membros').select('papel, admin')
+      .eq('familia_id', laco).eq('user_id', uid).is('saiu_em', null).maybeSingle()
+    if (!eu || eu.papel !== 'responsavel' || !eu.admin) {
+      return jsonResponse({ error: 'nao_admin', message: 'Só um administrador do laço assina o plano família.' }, 403)
+    }
+    const { data: outro } = await db0.from('baru_assinaturas_loja').select('user_id')
+      .eq('laco_id', laco).eq('produto', 'baru_familia').is('revogada_em', null).gt('expira_em', new Date().toISOString())
+      .neq('user_id', uid).maybeSingle()
+    if (outro) return jsonResponse({ error: 'ja_coberto', message: 'Este laço já tem plano família.' }, 409)
+  }
 
   let compra
   try {
@@ -93,9 +112,9 @@ Deno.serve(comCors(async (req: Request) => {
     acknowledgementState?: string
     testPurchase?: unknown
     externalAccountIdentifiers?: { obfuscatedExternalAccountId?: string }
-    lineItems?: { productId?: string; expiryTime?: string; autoRenewingPlan?: { autoRenewEnabled?: boolean } }[]
+    lineItems?: { productId?: string; expiryTime?: string; autoRenewingPlan?: { autoRenewEnabled?: boolean }; offerDetails?: { basePlanId?: string } }[]
   }
-  const item = (c.lineItems ?? []).find((l) => l.productId && PRODUTOS.has(l.productId))
+  const item = (c.lineItems ?? []).find((l) => l.productId === produto)
   const conta = c.externalAccountIdentifiers?.obfuscatedExternalAccountId
   if (!item?.expiryTime) return jsonResponse({ error: 'compra_invalida', message: 'A compra não é do Baru.' }, 400)
   if (conta && conta !== uid) {
@@ -124,6 +143,8 @@ Deno.serve(comCors(async (req: Request) => {
     renova: item.autoRenewingPlan?.autoRenewEnabled ?? false,
     revogada_em: vale ? null : new Date().toISOString(),
     teste: c.testPurchase != null,
+    plano_base: item.offerDetails?.basePlanId ?? null,
+    laco_id: produto === 'baru_familia' ? laco : null,
     atualizado_em: new Date().toISOString(),
   })
   if (error) {

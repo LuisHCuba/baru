@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../cobranca.dart';
 import '../l10n.dart';
 import '../l10n_assinatura.dart';
+import '../data/familia.dart';
 import '../services/compra_loja.dart';
 import '../theme.dart';
 import '../widgets/botao_baru.dart';
@@ -39,12 +41,18 @@ class AssinaturaScreen extends StatefulWidget {
 }
 
 class _AssinaturaScreenState extends State<AssinaturaScreen> {
-  ProductDetails? _produto;
+  Map<PlanoDaLoja, ProductDetails> _planos = const {};
+  PlanoDaLoja _escolhido = PlanoDaLoja.anual;
   bool _carregando = true;
   bool _ocupado = false;
   StreamSubscription<AvisoDaLoja>? _avisos;
 
+  /// Laços que eu administro (o plano família cobre um deles).
+  List<Familia> _meusLacos = const [];
+  String? _laco;
+
   T get t => widget.t;
+  ProductDetails? get _produto => _planos[_escolhido];
 
   @override
   void initState() {
@@ -62,11 +70,23 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
   }
 
   Future<void> _carrega() async {
-    ProductDetails? p;
+    var planos = const <PlanoDaLoja, ProductDetails>{};
     try {
-      p = await CompraLoja.instancia.produtoDaLoja();
+      planos = await CompraLoja.instancia.planosDaLoja();
     } catch (_) {}
-    if (mounted) setState(() => (_produto = p, _carregando = false));
+    var lacos = const <Familia>[];
+    try {
+      final m = await FamiliaRepo(Supabase.instance.client).minha();
+      lacos = m.familias.where((f) => f.souAdmin).toList();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _planos = planos;
+      _meusLacos = lacos;
+      _laco = lacos.isEmpty ? null : lacos.first.id;
+      if (!planos.containsKey(_escolhido)) _escolhido = planos.keys.firstOrNull ?? PlanoDaLoja.mensal;
+      _carregando = false;
+    });
   }
 
   void _aviso(AvisoDaLoja a) {
@@ -94,9 +114,10 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
   Future<void> _assinar() async {
     final p = _produto;
     if (p == null) return;
+    if (_escolhido == PlanoDaLoja.familia && _laco == null) return;
     setState(() => _ocupado = true);
     try {
-      await CompraLoja.instancia.assinar(p);
+      await CompraLoja.instancia.assinar(p, laco: _escolhido == PlanoDaLoja.familia ? _laco : null);
     } catch (_) {
       if (!mounted) return;
       setState(() => _ocupado = false);
@@ -151,15 +172,43 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
                       Expanded(child: Text(t.s(b), style: estilo(Tipo.corpo))),
                     ]),
                   ),
-                const Divider(height: Espaco.lg),
-                if (_carregando)
-                  const Center(child: Padding(padding: EdgeInsets.all(Espaco.sm), child: CircularProgressIndicator()))
-                else if (p == null)
-                  Text(t.s('assIndisponivel'), style: estilo(Tipo.corpoPequeno, color: Cores.alerta))
-                else
-                  Text(t.fill(t.s('assPorMes'), {'p': p.price}), style: estilo(Tipo.titulo)),
               ]),
             ),
+            const SizedBox(height: Espaco.md),
+            if (_carregando)
+              const Center(child: Padding(padding: EdgeInsets.all(Espaco.sm), child: CircularProgressIndicator()))
+            else if (_planos.isEmpty)
+              Text(t.s('assIndisponivel'), style: estilo(Tipo.corpoPequeno, color: Cores.alerta))
+            else
+              for (final plano in PlanoDaLoja.values)
+                if (_planos[plano] case final pp?)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: Espaco.sm),
+                    child: _CartaoDoPlano(
+                      chave: Key('plano-${plano.name}'),
+                      titulo: t.s(switch (plano) { PlanoDaLoja.mensal => 'assPlanoMensal', PlanoDaLoja.anual => 'assPlanoAnual', PlanoDaLoja.familia => 'assPlanoFamilia' }),
+                      preco: switch (plano) {
+                        PlanoDaLoja.anual => t.fill(t.s('assPorAno'), {'p': pp.price}),
+                        _ => t.fill(t.s('assPorMes'), {'p': pp.price}),
+                      },
+                      nota: switch (plano) {
+                        PlanoDaLoja.mensal => t.s('assPlanoMensalNota'),
+                        PlanoDaLoja.anual => t.fill(t.s('assPlanoAnualNota'), {'p': '${pp.currencySymbol} ${(pp.rawPrice / 12).toStringAsFixed(2).replaceAll('.', ',')}'}),
+                        PlanoDaLoja.familia => _meusLacos.isEmpty
+                            ? t.s('assFamiliaSemLaco')
+                            : t.fill(t.s('assPlanoFamiliaNota'), {'l': _meusLacos.firstWhere((l) => l.id == _laco, orElse: () => _meusLacos.first).nome}),
+                      },
+                      destaque: plano == PlanoDaLoja.anual,
+                      escolhido: plano == _escolhido,
+                      ativo: plano != PlanoDaLoja.familia || _meusLacos.isNotEmpty,
+                      aoTocar: () => setState(() => _escolhido = plano),
+                    ),
+                  ),
+            if (_escolhido == PlanoDaLoja.familia && _meusLacos.length > 1)
+              Wrap(spacing: Espaco.xs, children: [
+                for (final l in _meusLacos)
+                  ChoiceChip(label: Text(l.nome), selected: l.id == _laco, onSelected: (_) => setState(() => _laco = l.id)),
+              ]),
             const SizedBox(height: Espaco.md),
             if (ativa)
               Text(t.fill(t.s('assAtiva'), {'d': t.formatLongDate(acesso!.pagoAte)}),
@@ -167,8 +216,8 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
             else
               BotaoBaru(
                 key: AssinaturaScreen.chaveAssinar,
-                rotulo: p == null ? t.s('assT') : t.fill(t.s('assBotao'), {'p': p.price}),
-                ativo: p != null && !_ocupado,
+                rotulo: p == null ? t.s('assT') : t.fill(t.s(_escolhido == PlanoDaLoja.anual ? 'assBotaoAno' : 'assBotao'), {'p': p.price}),
+                ativo: p != null && !_ocupado && (_escolhido != PlanoDaLoja.familia || _laco != null),
                 aoTocar: _assinar,
               ),
             if (_ocupado)
@@ -201,4 +250,68 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
       ),
     );
   }
+}
+
+/// Um plano para escolher: nome, preço e uma linha de explicação.
+class _CartaoDoPlano extends StatelessWidget {
+  const _CartaoDoPlano({
+    required this.chave,
+    required this.titulo,
+    required this.preco,
+    required this.nota,
+    required this.escolhido,
+    required this.aoTocar,
+    this.destaque = false,
+    this.ativo = true,
+  });
+  final Key chave;
+  final String titulo;
+  final String preco;
+  final String nota;
+  final bool escolhido;
+  final bool destaque;
+  final bool ativo;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) => Opacity(
+        opacity: ativo ? 1 : 0.55,
+        child: Material(
+          key: chave,
+          color: escolhido ? Cores.primariaA(0.10) : Cores.superficie,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Raio.cartao),
+            side: BorderSide(color: escolhido ? Cores.primariaEscura : Cores.trilho, width: escolhido ? 2 : 1),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(Raio.cartao),
+            onTap: ativo ? aoTocar : null,
+            child: Padding(
+              padding: const EdgeInsets.all(Espaco.md),
+              child: Row(children: [
+                Icon(escolhido ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                    color: escolhido ? Cores.primariaEscura : Cores.tinta500),
+                const SizedBox(width: Espaco.sm),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Text(titulo, style: estilo(Tipo.subtitulo)),
+                      if (destaque) ...[
+                        const SizedBox(width: Espaco.xs),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: Cores.primariaEscura, borderRadius: BorderRadius.circular(6)),
+                          child: Text('-33%', style: estilo(Tipo.rotuloPequeno, color: Colors.white)),
+                        ),
+                      ],
+                    ]),
+                    Text(preco, style: estilo(Tipo.corpoForte)),
+                    Text(nota, style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+                  ]),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      );
 }

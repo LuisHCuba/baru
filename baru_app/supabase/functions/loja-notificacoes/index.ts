@@ -13,7 +13,7 @@ import { jsonResponse, servico } from '../_shared/http.ts'
  */
 
 const PACOTE = 'tech.lhcx.baru'
-const PRODUTOS = new Set(['baru_assinatura'])
+const PRODUTOS = new Set(['baru_assinatura', 'baru_familia'])
 const API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PACOTE}`
 const VALIDOS = new Set(['SUBSCRIPTION_STATE_ACTIVE', 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD', 'SUBSCRIPTION_STATE_CANCELED'])
 
@@ -76,7 +76,7 @@ Deno.serve(async (req: Request) => {
       subscriptionState?: string
       testPurchase?: unknown
       externalAccountIdentifiers?: { obfuscatedExternalAccountId?: string }
-      lineItems?: { productId?: string; expiryTime?: string; autoRenewingPlan?: { autoRenewEnabled?: boolean } }[]
+      lineItems?: { productId?: string; expiryTime?: string; autoRenewingPlan?: { autoRenewEnabled?: boolean }; offerDetails?: { basePlanId?: string } }[]
     }
     const item = (c.lineItems ?? []).find((l) => l.productId && PRODUTOS.has(l.productId))
     if (!item?.expiryTime) return jsonResponse({ ok: true, ignorado: 'outro produto' })
@@ -85,6 +85,15 @@ Deno.serve(async (req: Request) => {
     const { data: atual } = await db.from('baru_assinaturas_loja').select('user_id').eq('compra_id', token).maybeSingle()
     const dono = atual?.user_id ?? c.externalAccountIdentifiers?.obfuscatedExternalAccountId
     if (!dono) return jsonResponse({ ok: true, ignorado: 'sem conta' })
+    if (!atual) {
+      // Compra que não é a registrada desta conta (ex.: tinha a individual e
+      // passou para a família): não sobrescreve uma assinatura que ainda vale.
+      const { data: registrada } = await db.from('baru_assinaturas_loja').select('compra_id, expira_em, revogada_em')
+        .eq('user_id', dono).maybeSingle()
+      if (registrada && !registrada.revogada_em && new Date(registrada.expira_em) > new Date()) {
+        return jsonResponse({ ok: true, ignorado: 'outra assinatura ativa' })
+      }
+    }
     const vale = VALIDOS.has(c.subscriptionState ?? '')
     const { error } = await db.from('baru_assinaturas_loja').upsert({
       user_id: dono,
@@ -95,6 +104,7 @@ Deno.serve(async (req: Request) => {
       renova: item.autoRenewingPlan?.autoRenewEnabled ?? false,
       revogada_em: vale ? null : new Date().toISOString(),
       teste: c.testPurchase != null,
+      plano_base: item.offerDetails?.basePlanId ?? null,
       atualizado_em: new Date().toISOString(),
     })
     if (error) throw new Error(error.message)

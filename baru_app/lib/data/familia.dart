@@ -490,15 +490,19 @@ class MinhaFamilia {
 /// Código de convite: 6 letras/números, sem os que se confundem (0/O, 1/I).
 @immutable
 class ConviteDaFamilia {
-  const ConviteDaFamilia({required this.codigo, required this.expiraEm, required this.papel});
+  const ConviteDaFamilia({required this.codigo, required this.expiraEm, required this.papel, this.link});
 
   factory ConviteDaFamilia.doMapa(Map<dynamic, dynamic> m) => ConviteDaFamilia(
         codigo: '${m['codigo']}',
         expiraEm: DateTime.parse('${m['expiraEm']}'),
         papel: '${m['papel']}',
+        link: m['link'] as String? ?? 'https://meubaru.com/convite/?c=${m['codigo']}',
       );
 
   final String codigo;
+
+  /// meubaru.com/convite/?c=CÓDIGO: abre o app (ou a loja) já no convite.
+  final String? link;
   final DateTime expiraEm;
   final String papel;
 }
@@ -571,6 +575,13 @@ class FamiliaRepo {
       _c.rpc('baru_familia_remover', params: {'p_familia': familiaId, 'p_user': userId});
 
   // ------------------------------------------------ aparelho da criança
+
+  /// O laço de um convite, para perguntar antes de entrar. Null: vencido.
+  Future<({String laco, String papel, String? convidadoPor})?> infoDoConvite(String codigo) async {
+    final r = await _c.rpc('baru_convite_info', params: {'p_codigo': codigo});
+    if (r is! Map || r['valido'] != true) return null;
+    return (laco: '${r['laco'] ?? ''}', papel: '${r['papel'] ?? 'crianca'}', convidadoPor: r['convidadoPor'] as String?);
+  }
 
   Future<MinhaFamilia> entrar(String codigo, {required String plataforma}) async {
     final r = await _c.rpc('baru_familia_entrar', params: {'p_codigo': codigo.trim().toUpperCase(), 'p_plataforma': plataforma});

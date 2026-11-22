@@ -14,6 +14,8 @@ import '../services/familia_sync.dart';
 import '../services/foto_de_perfil.dart';
 import '../services/notification_service.dart';
 import '../services/localizacao.dart';
+import '../services/convite_pendente.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/overlay_service.dart';
 import '../services/tempo_de_tela_ios.dart';
 import '../models.dart';
@@ -105,7 +107,69 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
     garanteTextosDaFamilia();
     garanteTextosDaFoto();
     WidgetsBinding.instance.addObserver(this);
-    unawaited(_carrega());
+    ConvitePendente.codigo.addListener(_conviteChegou);
+    unawaited(_carrega().then((_) async {
+      await ConvitePendente.carrega();
+      _conviteChegou();
+    }));
+  }
+
+  bool _perguntandoConvite = false;
+
+  /// Chegou um convite por link: pergunta se a pessoa quer entrar no laço.
+  Future<void> _conviteChegou() async {
+    final codigo = ConvitePendente.codigo.value;
+    if (codigo == null || _perguntandoConvite || !mounted) return;
+    _perguntandoConvite = true;
+    try {
+      final t = AppScope.of(context).t;
+      _codigo.text = codigo;
+      final info = await _repo.infoDoConvite(codigo).catchError((_) => null);
+      if (!mounted) return;
+      if (info == null) {
+        final m = ScaffoldMessenger.maybeOf(context);
+        await ConvitePendente.esquece();
+        m?.showSnackBar(SnackBar(content: Text(t.s('famConviteVencido'))));
+        return;
+      }
+      final crianca = info.papel == 'crianca';
+      final entra = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          key: const Key('familia-convite'),
+          icon: const Icon(Icons.diversity_3_rounded, size: 40, color: Cores.primariaEscura),
+          title: Text(t.fill(t.s('famConviteT'), {'l': info.laco})),
+          content: Text(
+            [
+              if (info.convidadoPor != null && info.convidadoPor!.isNotEmpty)
+                t.fill(t.s('famConvitePor'), {'n': info.convidadoPor!}),
+              t.s(crianca ? 'famConviteDependente' : 'famConviteAdulto'),
+            ].join(' '),
+            style: estilo(Tipo.corpo),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.s('famConviteAgoraNao'))),
+            FilledButton(
+              key: const Key('familia-convite-entrar'),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(t.s('famEntrar')),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (entra == true) {
+        await _faz(() async {
+          await _repo.entrar(codigo, plataforma: _plataforma);
+          _codigo.clear();
+        });
+        if (_erro == null) await ConvitePendente.esquece();
+      } else if (entra == false) {
+        await ConvitePendente.esquece();
+      }
+    } finally {
+      _perguntandoConvite = false;
+    }
   }
 
   /// Voltou dos ajustes do celular: confere de novo as notificações.
@@ -135,6 +199,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    ConvitePendente.codigo.removeListener(_conviteChegou);
     _focoNoMapa.dispose();
     _nome.dispose();
     _codigo.dispose();
@@ -568,7 +633,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
             const SizedBox(height: Espaco.sm),
             TextField(
               controller: _codigo,
-              maxLength: 6,
+              maxLength: 8,
               textCapitalization: TextCapitalization.characters,
               autocorrect: false,
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]'))],
@@ -880,7 +945,10 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
     });
     final c = convite;
     if (c == null || !mounted) return;
-    final h = TimeOfDay.fromDateTime(c.expiraEm.toLocal()).format(context);
+    final ate = c.expiraEm.toLocal();
+    final h = '${t.formatLongDate(ate)}, ${TimeOfDay.fromDateTime(ate).format(context)}';
+    final mensagem = t.fill(t.s(crianca ? 'famConviteMsgCrianca' : 'famConviteMsgAdulto'),
+        {'l': f.nome, 'link': c.link ?? '', 'c': c.codigo});
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -905,7 +973,16 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
             Text(t.fill(t.s('famValeAte'), {'h': h}), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+          // O caminho mais fácil: mandar o link pelo WhatsApp, e-mail ou SMS.
+          FilledButton.icon(
+            key: const Key('familia-convite-compartilhar'),
+            icon: const Icon(Icons.share_rounded, size: 18),
+            label: Text(t.s('famConviteCompartilhar')),
+            onPressed: () => SharePlus.instance.share(ShareParams(text: mensagem)),
+          ),
+        ],
       ),
     );
   }

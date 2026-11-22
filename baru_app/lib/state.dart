@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'services/convite_pendente.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:uuid/uuid.dart';
@@ -1607,7 +1608,8 @@ class AppState extends ChangeNotifier {
   void nextOnb() {
     if (onb >= 5) {
       if (!companionshipStarted) startCompanionship();
-      if (paraQuem != 'eu') {
+      // Chegou por um link de convite: termina o começo já no laço.
+      if (paraQuem != 'eu' || ConvitePendente.codigo.value != null) {
         go(AppScreen.familia);
         return;
       }

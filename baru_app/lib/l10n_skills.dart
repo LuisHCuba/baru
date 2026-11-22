@@ -7,6 +7,8 @@ void garanteTextosDasSkills() => T.registra(textosDasSkills);
 
 const textosDasSkills = <String, Map<String, String>>{
   'pt': {
+    'sdMonteLaco': 'Monte seu laço',
+    'sdMonteLacoSub': 'Crie o laço da família e convide quem você cuida. Leva 1 minuto.',
     'skMente': 'Mente',
     'skCorpo': 'Corpo',
     'skSalvarXp': 'Salvar  ·  +{x} XP em {s}',
@@ -47,6 +49,8 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Dia dentro da meta',
   },
   'en': {
+    'sdMonteLaco': 'Set up your group',
+    'sdMonteLacoSub': 'Create your family group and invite the people you care for. Takes a minute.',
     'skMente': 'Mind',
     'skCorpo': 'Body',
     'skSalvarXp': 'Save  ·  +{x} XP in {s}',
@@ -87,6 +91,8 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Day within the goal',
   },
   'es': {
+    'sdMonteLaco': 'Arma tu lazo',
+    'sdMonteLacoSub': 'Crea el lazo de la familia e invita a quien cuidas. Toma 1 minuto.',
     'skMente': 'Mente',
     'skCorpo': 'Cuerpo',
     'skSalvarXp': 'Guardar  ·  +{x} XP en {s}',
@@ -127,6 +133,8 @@ const textosDasSkills = <String, Map<String, String>>{
     'skMeta': 'Día dentro de la meta',
   },
   'zh': {
+    'sdMonteLaco': '建立你的纽带',
+    'sdMonteLacoSub': '创建家庭纽带并邀请你照顾的人，只需 1 分钟。',
     'skMente': '头脑',
     'skCorpo': '身体',
     'skSalvarXp': '保存 · {s} +{x} XP',

@@ -11,6 +11,7 @@ import '../l10n.dart';
 import '../l10n_assinatura.dart';
 import '../data/familia.dart';
 import '../services/compra_loja.dart';
+import '../state.dart';
 import '../theme.dart';
 import '../widgets/botao_baru.dart';
 import '../widgets/componentes.dart';
@@ -86,6 +87,12 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
       _planos = planos;
       _meusLacos = lacos;
       _laco = lacos.isEmpty ? null : lacos.first.id;
+      // Quem disse no começo que o Baru é para a família já vê o plano família escolhido.
+      final scope = context.getInheritedWidgetOfExactType<AppScope>();
+      final familia = scope?.notifier?.paraQuem == 'responsavel' || lacos.isNotEmpty;
+      if (familia) {
+        _escolhido = planos.containsKey(PlanoDaLoja.familiaAnual) ? PlanoDaLoja.familiaAnual : PlanoDaLoja.familia;
+      }
       if (!planos.containsKey(_escolhido)) _escolhido = planos.keys.firstOrNull ?? PlanoDaLoja.mensal;
       _anual = _escolhido.ehAnual || !planos.containsKey(PlanoDaLoja.mensal);
       _carregando = false;

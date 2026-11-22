@@ -18,6 +18,9 @@
 /// navegador do Chrome mostra onde você está.
 library;
 
+import 'dart:async';
+
+import 'services/convite_pendente.dart';
 import 'package:flutter/material.dart';
 
 import 'design/motion.dart';
@@ -320,6 +323,12 @@ class BaruRouteParser extends RouteInformationParser<AppScreen> {
   @override
   Future<AppScreen> parseRouteInformation(RouteInformation routeInformation) async {
     final uri = routeInformation.uri;
+    // Convite de laço por link: guarda o código e abre a tela Laços.
+    final convite = ConvitePendente.doEndereco(uri);
+    if (convite != null) {
+      unawaited(ConvitePendente.guarda(convite));
+      return AppScreen.familia;
+    }
     // `baru://sequencia` tem a tela no **host**, não no caminho: um esquema
     // próprio não põe barra depois dos dois-pontos. É o que o widget da
     // tela inicial manda, e sem isto todo toque abriria a home.

@@ -886,6 +886,28 @@ class SeuDia extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Quem escolheu "para a família" e ainda não montou o laço retoma daqui.
+                if (app.paraQuem == 'responsavel' && !app.responsavelNaFamilia) ...[
+                  SoftCard(
+                    key: const Key('cartao-monte-laco'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      app.go(AppScreen.familia);
+                    },
+                    child: Row(children: [
+                      const AppIcon(Icons.diversity_3_rounded, size: 22, color: AppColors.green),
+                      const SizedBox(width: Espaco.sm),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(t.s('sdMonteLaco'), style: nunito(size: 14.5, weight: FontWeight.w800)),
+                          Text(t.s('sdMonteLacoSub'), style: nunito(size: 12.5, color: Cores.tinta700)),
+                        ]),
+                      ),
+                      const Chevron(),
+                    ]),
+                  ),
+                  const SizedBox(height: Espaco.sm),
+                ],
                 const BarraDoCrescimento(),
                 const SizedBox(height: Espaco.md),
                 if (!primeira)

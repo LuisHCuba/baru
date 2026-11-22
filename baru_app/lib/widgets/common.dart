@@ -490,11 +490,11 @@ class BottomTabs extends StatelessWidget {
     // para onde a coisa vai, onde se gasta, e onde se ajusta. O relatório é
     // alcançado pelo cartão da home, e o detalhamento de tempo pelo cartão de
     // uso — nenhum deles é destino de primeiro nível.
-    // A Família é a quinta aba; para o responsável, a primeira (app.abas).
+    // Três abas (app.abas): Família, Baru e Ajustes.
     final ids = app.abas;
     garanteTextosDaFamilia();
     String rotulo(AppScreen s) => switch (s) {
-          AppScreen.home => app.t.tabs[0],
+          AppScreen.home => 'Baru',
           AppScreen.trilha => app.t.tabs[1],
           AppScreen.missoes => app.t.tabs[2],
           AppScreen.familia => app.t.s('famT'),
@@ -512,7 +512,7 @@ class BottomTabs extends StatelessWidget {
         final on = app.screen == ids[i];
         // O que está pronto para colher aparece na aba, de qualquer
         // tela: prêmio parado sem ninguém ver é prêmio perdido.
-        final aColher = ids[i] == AppScreen.missoes
+        final aColher = ids[i] == AppScreen.home
             ? app.missoesResgataveis
             : 0;
         if (aColher > 0) garanteTextosDeMissoes();

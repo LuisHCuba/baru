@@ -161,9 +161,9 @@ void main() {
 
   testWidgets('tabs usam ícones Material no lugar dos quadrados', (tester) async {
     await pumpAt412(tester, AppScreen.home);
+    // Três abas: Família, Baru (a home) e Ajustes.
+    expect(find.byIcon(Icons.people_outline_rounded), findsOneWidget);
     expect(find.byIcon(Icons.home_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.route_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
     expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
   });
 
@@ -173,7 +173,8 @@ void main() {
     // Na home a raiz é um número no indicador; o texto inteiro ("Raiz de 1
     // dia") é o que o leitor de tela anuncia.
     expect(find.bySemanticsLabel(T('pt').streakOne), findsWidgets);
-    expect(find.text('Habitat'), findsWidgets);
+    expect(find.text('Baru'), findsWidgets);
+    // Trilha e Missões viraram atalhos no painel do Baru.
     expect(find.text('Missões'), findsOneWidget);
     // A home é o mundo dele: o foco fica sempre à vista, sem rolar.
     expect(find.text('Começar foco'), findsOneWidget);

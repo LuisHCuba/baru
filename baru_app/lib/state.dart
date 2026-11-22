@@ -736,15 +736,9 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Abre na Família quem é responsável, se ainda estiver na tela de entrada.
-  void abreNaFamiliaSeResponsavel() {
-    if (responsavelNaFamilia && _pilha.length == 1 && screen == AppScreen.home) go(AppScreen.familia);
-  }
-
-  /// As abas, na ordem: o responsável começa pela Família.
-  List<AppScreen> get abas => responsavelNaFamilia || paraQuem == 'responsavel'
-      ? const [AppScreen.familia, AppScreen.home, AppScreen.trilha, AppScreen.missoes, AppScreen.profile]
-      : const [AppScreen.home, AppScreen.trilha, AppScreen.missoes, AppScreen.familia, AppScreen.profile];
+  /// Três abas: Família, o Baru no centro (onde o app abre) e Ajustes.
+  /// Trilha e Missões abrem a partir da tela do Baru.
+  List<AppScreen> get abas => const [AppScreen.familia, AppScreen.home, AppScreen.profile];
 
   void escolheParaQuem(String perfil) {
     if (!const ['eu', 'filho', 'responsavel'].contains(perfil)) return;
@@ -1347,8 +1341,6 @@ class AppState extends ChangeNotifier {
   /// A faixa de tabs some em tela de detalhe e em modal.
   bool get showTabs =>
       screen == AppScreen.home ||
-      screen == AppScreen.trilha ||
-      screen == AppScreen.missoes ||
       screen == AppScreen.familia ||
       screen == AppScreen.profile;
 

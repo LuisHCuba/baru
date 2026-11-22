@@ -111,11 +111,11 @@ void main() {
 
     test('trocar de destino não empilha', () {
       final s = _estado(AppScreen.home);
-      s.go(AppScreen.trilha);
-      s.go(AppScreen.missoes);
+      s.go(AppScreen.familia);
+      s.go(AppScreen.profile);
       expect(
         s.pilha,
-        [AppScreen.missoes],
+        [AppScreen.profile],
         reason: 'uma barra de destinos fixa não acumula histórico entre abas',
       );
       s.dispose();
@@ -286,7 +286,9 @@ void main() {
   group('transições', () {
     test('cada tipo de tela tem o seu tipo de rota', () {
       expect(AppScreen.home.tipo, TipoDeRota.destino);
-      expect(AppScreen.trilha.tipo, TipoDeRota.destino);
+      expect(AppScreen.familia.tipo, TipoDeRota.destino);
+      // Trilha e Missões abrem a partir da tela do Baru.
+      expect(AppScreen.trilha.tipo, TipoDeRota.detalhe);
       expect(AppScreen.tempo.tipo, TipoDeRota.detalhe);
       expect(AppScreen.paywall.tipo, TipoDeRota.modal);
       expect(AppScreen.session.tipo, TipoDeRota.fluxo);

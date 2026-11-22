@@ -138,7 +138,7 @@ void main() {
     expect(find.byIcon(Icons.photo_camera_outlined), findsNothing);
     // A ação e a duração vivem no painel das abas, embaixo de tudo.
     final acao = tester.getRect(find.text('Começar foco'));
-    final aba = tester.getRect(find.text('Missões'));
+    final aba = tester.getRect(find.text('Ajustes'));
     expect(acao.bottom, lessThan(aba.top));
     expect(acao.top, greaterThan(892 * 0.7));
     await _fecha(tester);

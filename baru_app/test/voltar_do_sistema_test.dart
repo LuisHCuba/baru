@@ -60,7 +60,7 @@ void main() {
   testWidgets('numa aba, a rota de baixo segura o voltar do sistema', (
     tester,
   ) async {
-    final app = await _monta(tester, AppScreen.trilha);
+    final app = await _monta(tester, AppScreen.profile);
 
     expect(app.pilha.length, 1, reason: 'aba não empilha');
     expect(

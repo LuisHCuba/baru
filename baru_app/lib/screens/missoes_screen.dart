@@ -101,6 +101,15 @@ class MissoesScreen extends StatelessWidget {
       children: [
         Row(
           children: [
+            Semantics(
+              button: true,
+              label: 'voltar',
+              child: GestureDetector(
+                onTap: app.voltar,
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox(width: Toque.minimo, height: Toque.minimo, child: Icon(Icons.arrow_back_rounded, size: 22)),
+              ),
+            ),
             Expanded(child: Text(t.missoesT, style: estilo(Tipo.display))),
             LeafBadge(leaves: app.leaves),
           ],

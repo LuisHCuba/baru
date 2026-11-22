@@ -46,7 +46,18 @@ class TrilhaScreen extends StatelessWidget {
         Espaco.xxl,
       ),
       children: [
-        Text(t.trilhaT, style: estilo(Tipo.display)),
+        Row(children: [
+          Semantics(
+            button: true,
+            label: 'voltar',
+            child: GestureDetector(
+              onTap: app.voltar,
+              behavior: HitTestBehavior.opaque,
+              child: const SizedBox(width: Toque.minimo, height: Toque.minimo, child: Icon(Icons.arrow_back_rounded, size: 22)),
+            ),
+          ),
+          Expanded(child: Text(t.trilhaT, style: estilo(Tipo.display))),
+        ]),
         const SizedBox(height: Espaco.xxs),
         // "Passo 3 de 22" é a resposta literal à reclamação — "não faz muito
         // sentido exatamente em que momento eu tô, em que passo". Fica no

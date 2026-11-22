@@ -184,6 +184,50 @@ class _HomeScreenState extends State<HomeScreen> {
 /// O que fica preso em cima das abas na home: a alça do "Seu dia" e a ação
 /// da tela. Vive na mesma superfície das abas ([BottomTabs.acima]), para
 /// que o pé da tela seja um painel só, e não três camadas de botões.
+/// Atalho compacto no painel do Baru (Trilha, Missões).
+class _AtalhoDoBaru extends StatelessWidget {
+  const _AtalhoDoBaru({required this.chave, required this.icone, required this.rotulo, required this.aoTocar, this.detalhe, this.destaque = false});
+
+  final Key chave;
+  final IconData icone;
+  final String rotulo;
+  final String? detalhe;
+  final bool destaque;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Cores.tinta.withValues(alpha: 0.05),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        key: chave,
+        borderRadius: BorderRadius.circular(14),
+        onTap: aoTocar,
+        child: SizedBox(
+          height: 44,
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icone, size: 18, color: Cores.primariaEscura),
+            const SizedBox(width: Espaco.xxs),
+            Flexible(child: Text(rotulo, maxLines: 1, overflow: TextOverflow.ellipsis, style: estilo(Tipo.corpoForte))),
+            if (detalhe != null) ...[
+              const SizedBox(width: Espaco.xxs),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: destaque ? Cores.mel400 : Cores.tinta.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(detalhe!, style: estilo(Tipo.corpoPequeno, color: Cores.tinta).copyWith(fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 class AcessorioDaHome extends StatelessWidget {
   const AcessorioDaHome({super.key, required this.navegador});
 
@@ -270,7 +314,32 @@ class AcessorioDaHome extends StatelessWidget {
             Espaco.xs,
           ),
           // Botão dividido: a ação e, colada nela, a escolha que a muda.
-          child: Row(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+          // Trilha e Missões moram aqui, na tela do Baru (não são mais abas).
+          Row(children: [
+            Expanded(
+              child: _AtalhoDoBaru(
+                chave: const Key('atalho-trilha'),
+                icone: Icons.route_rounded,
+                rotulo: app.t.tabs[1],
+                detalhe: 'Nv ${app.nivel}',
+                aoTocar: () => app.go(AppScreen.trilha),
+              ),
+            ),
+            const SizedBox(width: Espaco.xs),
+            Expanded(
+              child: _AtalhoDoBaru(
+                chave: const Key('atalho-missoes'),
+                icone: Icons.flag_rounded,
+                rotulo: app.t.tabs[2],
+                detalhe: app.missoesResgataveis > 0 ? '${app.missoesResgataveis}' : null,
+                destaque: app.missoesResgataveis > 0,
+                aoTocar: () => app.go(AppScreen.missoes),
+              ),
+            ),
+          ]),
+          const SizedBox(height: Espaco.xs),
+          Row(
             children: [
               Expanded(
                 child: BotaoBaru(rotulo: t.start, aoTocar: app.startSession),
@@ -292,6 +361,7 @@ class AcessorioDaHome extends StatelessWidget {
               ),
             ],
           ),
+          ]),
         ),
       ],
     );

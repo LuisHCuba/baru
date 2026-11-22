@@ -44,11 +44,10 @@ enum TipoDeRota {
 extension RotaDaTela on AppScreen {
   TipoDeRota get tipo => switch (this) {
         AppScreen.home ||
-        AppScreen.trilha ||
-        AppScreen.missoes ||
         AppScreen.familia ||
         AppScreen.profile =>
           TipoDeRota.destino,
+        AppScreen.trilha || AppScreen.missoes => TipoDeRota.detalhe,
         AppScreen.report ||
         AppScreen.shop ||
         AppScreen.tempo ||

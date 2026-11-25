@@ -167,9 +167,12 @@ class ReportScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(Espaco.xxs, Espaco.md, Espaco.xxs, Espaco.md),
       child: Row(
         children: [
-          Flexible(child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: nunito(size: 15, weight: FontWeight.w600))),
+          // Expanded: com os dois Flexible o número ficava colado no rótulo,
+          // e não à direita como nas outras telas.
+          Expanded(child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: nunito(size: 15, weight: FontWeight.w600))),
           const SizedBox(width: Espaco.sm),
-          Flexible(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 200),
             child: Text(
               value,
               maxLines: 1,

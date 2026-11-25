@@ -128,15 +128,22 @@ class SelectChip extends StatelessWidget {
             button: true,
             selected: selected,
             label: label,
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: nunito(
-                size: size,
-                weight: selected ? FontWeight.w700 : FontWeight.w600,
-                color: selected ? AppColors.cream : AppColors.ink,
+            // Encolhe em vez de cortar: com letra grande numa tela estreita
+            // "Dá para levar" virava "Dá para le...".
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  style: nunito(
+                    size: size,
+                    weight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: selected ? AppColors.cream : AppColors.ink,
+                  ),
+                ),
               ),
             ),
           ),
@@ -494,27 +501,25 @@ class BottomTabs extends StatelessWidget {
     final ids = app.abas;
     garanteTextosDaFamilia();
     String rotulo(AppScreen s) => switch (s) {
-          AppScreen.home => 'Baru',
-          AppScreen.trilha => app.t.tabs[1],
-          AppScreen.missoes => app.t.tabs[2],
-          AppScreen.familia => app.t.s('famT'),
-          _ => app.t.tabs[3],
-        };
+      AppScreen.home => 'Baru',
+      AppScreen.trilha => app.t.tabs[1],
+      AppScreen.missoes => app.t.tabs[2],
+      AppScreen.familia => app.t.s('famT'),
+      _ => app.t.tabs[3],
+    };
     TabGlyph glifo(AppScreen s) => switch (s) {
-          AppScreen.home => tabGlyphs[0],
-          AppScreen.trilha => tabGlyphs[1],
-          AppScreen.missoes => tabGlyphs[2],
-          AppScreen.familia => glifoDaFamilia,
-          _ => tabGlyphs[3],
-        };
+      AppScreen.home => tabGlyphs[0],
+      AppScreen.trilha => tabGlyphs[1],
+      AppScreen.missoes => tabGlyphs[2],
+      AppScreen.familia => glifoDaFamilia,
+      _ => tabGlyphs[3],
+    };
     final linha = Row(
       children: List.generate(ids.length, (i) {
         final on = app.screen == ids[i];
         // O que está pronto para colher aparece na aba, de qualquer
         // tela: prêmio parado sem ninguém ver é prêmio perdido.
-        final aColher = ids[i] == AppScreen.home
-            ? app.missoesResgataveis
-            : 0;
+        final aColher = ids[i] == AppScreen.home ? app.missoesResgataveis : 0;
         if (aColher > 0) garanteTextosDeMissoes();
         return Expanded(
           child: Semantics(

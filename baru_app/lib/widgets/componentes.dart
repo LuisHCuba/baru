@@ -398,6 +398,7 @@ class CabecalhoDeDetalhe extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (aoVoltar != null)
                 Semantics(
@@ -414,11 +415,25 @@ class CabecalhoDeDetalhe extends StatelessWidget {
                   ),
                 ),
               Expanded(
-                child: Text(
+                // A seta fica no meio da primeira linha do título, mesmo
+                // quando ele quebra em duas.
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: aoVoltar == null
+                        ? 0
+                        : ((Toque.minimo -
+                                      MediaQuery.textScalerOf(context).scale(27) * 1.2) /
+                                  2)
+                              .clamp(0.0, Toque.minimo),
+                  ),
+                  child: Text(
                   titulo,
                   style: estilo(Tipo.display),
-                  maxLines: 1,
+                  // Duas linhas: com letra grande "Seu tempo de tela" virava
+                  // "Seu tempo de ...".
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                ),
                 ),
               ),
             ],

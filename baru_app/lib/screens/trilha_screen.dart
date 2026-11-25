@@ -231,8 +231,10 @@ class SeletorDeHabitat extends StatelessWidget {
         // Rolagem horizontal: são seis lugares e vão ser mais. Empilhados,
         // empurrariam o caminho para fora da primeira tela — e o caminho é o
         // assunto.
+        // A imagem tem altura fixa; o nome e a legenda crescem com a letra do
+        // aparelho (com letra grande, 132 fixo estourava por baixo).
         SizedBox(
-          height: 132,
+          height: 88 + 44 * MediaQuery.textScalerOf(context).scale(14) / 14,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.zero,

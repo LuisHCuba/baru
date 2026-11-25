@@ -560,7 +560,8 @@ class _AuthScreenState extends State<AuthScreen> {
       _recado = null;
     });
     if (email.isEmpty || !email.contains('@')) {
-      setState(() => _error = t.authEmailInvalid);
+      // Sem e-mail, "informe um e-mail válido" não dizia para quê.
+      setState(() => _error = email.isEmpty ? t.s('authRecuperarSemEmail') : t.authEmailInvalid);
       return;
     }
     if (!BaruSupabase.instance.attached) {
@@ -686,14 +687,16 @@ class _AuthScreenState extends State<AuthScreen> {
       children: [
         const SizedBox(height: Espaco.xxs),
         Center(
+          // Menor que na casa: com 132 o "Criar conta" caía para fora da
+          // primeira tela do iPhone, e quem chega pela primeira vez não o via.
           child: SizedBox(
-            height: 132,
+            height: 96,
             child: PetView(
               species: Species.capybara,
               mood: humor,
               activity: Activity.idle,
               coat: 0,
-              scale: 0.82,
+              scale: 0.6,
             ),
           ),
         ),

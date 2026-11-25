@@ -805,7 +805,7 @@ const _pt = <String, Object>{
   'folhasVaziaB': 'Termine uma sessão de foco e as primeiras folhas caem aqui.',
   'folhasProximo': 'Faltam {x} para {i}',
   'folhasVerLoja': 'Ver a loja',
-  'folhasPodeComprar': 'Dá para comprar {i} agora',
+  'folhasPodeComprar': 'Dá para levar {i} agora',
   'folhasSessaoLinha': 'Sessão de {m} min',
   'seqT': 'Sua raiz',
   'seqSub': 'Cada dia presente aprofunda a raiz. É ela que segura o hábito no dia em que a vontade falta.',

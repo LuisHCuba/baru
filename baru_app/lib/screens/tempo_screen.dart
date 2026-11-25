@@ -326,7 +326,7 @@ class _LinhaDeApp extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Expanded(
+                    Flexible(
                       child: Text(
                         padrao.nome(pacote),
                         maxLines: 1,
@@ -334,6 +334,12 @@ class _LinhaDeApp extends StatelessWidget {
                         style: estilo(Tipo.corpoForte),
                       ),
                     ),
+                    const SizedBox(width: Espaco.xs),
+                    Etiqueta(
+                      texto: nomeDaCategoria(app, categoria),
+                      cor: corDaCategoria(categoria),
+                    ),
+                    const Spacer(),
                     const SizedBox(width: Espaco.xs),
                     Text(
                       app.fmt(tempo.inMinutes),
@@ -346,21 +352,12 @@ class _LinhaDeApp extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: Espaco.xs),
-                Row(
-                  children: [
-                    Etiqueta(
-                      texto: nomeDaCategoria(app, categoria),
-                      cor: corDaCategoria(categoria),
-                    ),
-                    const SizedBox(width: Espaco.xs),
-                    Expanded(
-                      child: BarraAnimada(
-                        fracao: fracao,
-                        altura: 6,
-                        cor: corDaCategoria(categoria),
-                      ),
-                    ),
-                  ],
+                // A barra na linha inteira: ao lado da etiqueta cada uma
+                // começava num ponto e não dava para comparar os apps.
+                BarraAnimada(
+                  fracao: fracao,
+                  altura: 6,
+                  cor: corDaCategoria(categoria),
                 ),
               ],
             ),

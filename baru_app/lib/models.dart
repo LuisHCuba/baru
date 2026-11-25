@@ -101,7 +101,8 @@ const petNames = {
 };
 
 const durations = [25, 50, 90, 45];
-const avgOptions = [180, 240, 300, 360];
+/// Médias do primeiro uso: de quem usa pouco (2h) a quem passa de 8h.
+const avgOptions = [120, 180, 240, 360, 480];
 const goalOptions = [90, 120, 150, 180];
 
 /// Limites da meta quando ela é ajustada à mão.

@@ -2272,7 +2272,8 @@ class AppState extends ChangeNotifier {
 
   void pickAvg(int value) {
     avg = value;
-    goal = suggestedGoal(value);
+    // Mesmo aperto da chegada a esta tela: o que a pessoa quer no quiz.
+    goal = metaSugerida(value, fatorDaMeta(respostasDoQuiz));
     _markSync(_syncSettings);
     notifyListeners();
   }

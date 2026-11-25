@@ -274,6 +274,16 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
     }
   }
 
+  /// O que a pessoa lê. Mensagens do banco (ex.: código vencido) passam;
+  /// erro técnico (rede, exceção do Dart, stack) vira um pedido simples.
+  static String _mensagemDoErro(String erro, T t) {
+    final tecnico = RegExp(
+      r'Exception|package:|assertion|Error|Failed|Socket|Timeout|http',
+      caseSensitive: false,
+    ).hasMatch(erro);
+    return tecnico || erro.isEmpty ? t.s('famErroRede') : erro;
+  }
+
   /// A mensagem do banco sem o embrulho do PostgrestException.
   static String _limpa(Object e) {
     final s = '$e';
@@ -313,7 +323,7 @@ class _FamiliaScreenState extends State<FamiliaScreen> with WidgetsBindingObserv
               padding: const EdgeInsets.fromLTRB(Espaco.margemTela, Espaco.sm, Espaco.margemTela, Espaco.xxl),
               children: [
                 if (_erro != null) ...[
-                  Text(t.fill(t.s('famErro'), {'e': _erro!}), style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
+                  Text(t.fill(t.s('famErro'), {'e': _mensagemDoErro(_erro!, t)}), style: estilo(Tipo.corpoPequeno, color: Cores.alerta)),
                   const SizedBox(height: Espaco.sm),
                 ],
                 if (!(widget.comConta ?? app.canSignOut))

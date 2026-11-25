@@ -134,9 +134,14 @@ class OnboardingScreen extends StatelessWidget {
                             ? AppColors.greenA(0.14)
                             : AppColors.inkA(0.05),
                         borderRadius: BorderRadius.circular(18),
-                        border: app.lang == l.id
-                            ? Border.all(color: AppColors.green, width: 2.5)
-                            : null,
+                        // Borda sempre com a mesma largura (transparente
+                        // fora da seleção): o texto não anda ao selecionar.
+                        border: Border.all(
+                          color: app.lang == l.id
+                              ? AppColors.green
+                              : Colors.transparent,
+                          width: 2.5,
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -150,24 +155,14 @@ class OnboardingScreen extends StatelessWidget {
                             ),
                           ),
                           const Spacer(),
-                          if (app.lang == l.id) ...[
+                          // Sem o código técnico (pt-BR, zh-Hans): o nome do
+                          // idioma escrito nele mesmo já basta.
+                          if (app.lang == l.id)
                             const AppIcon(
                               Icons.check_rounded,
-                              size: 18,
+                              size: 20,
                               color: AppColors.green,
                             ),
-                            const SizedBox(width: Espaco.xs),
-                          ],
-                          Text(
-                            l.tag,
-                            style: nunito(
-                              size: 13,
-                              weight: FontWeight.w700,
-                              color: app.lang == l.id
-                                  ? AppColors.green
-                                  : Cores.tinta700,
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -290,7 +285,7 @@ class OnboardingScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(top: Espaco.lg),
       children: [
-        SectionLabel(app.t.revealKicker, color: AppColors.green),
+        Center(child: SectionLabel(app.t.revealKicker, color: AppColors.green)),
         const SizedBox(height: Espaco.sm),
         Text(
           sp[0],
@@ -320,6 +315,10 @@ class OnboardingScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: Espaco.md),
+        // Sem o rótulo, o campo cinza com "Baru" parecia um botão: ninguém
+        // sabia que era o nome e que dava para trocar.
+        Center(child: SectionLabel(app.t.s('revealNome'))),
+        const SizedBox(height: Espaco.xs),
         PetNameField(
           key: ValueKey('${app.speciesKey}-${app.color}'),
           initial: app.displayName,
@@ -359,7 +358,9 @@ class OnboardingScreen extends StatelessWidget {
             for (var i = 0; i < avgOptions.length; i++) ...[
               if (i > 0) const SizedBox(width: Espaco.xs),
               SelectChip(
-                label: app.fmt(avgOptions[i]),
+                label: i == avgOptions.length - 1
+                    ? '${app.fmt(avgOptions[i])}+'
+                    : app.fmt(avgOptions[i]),
                 selected: app.avg == avgOptions[i],
                 onTap: () => app.pickAvg(avgOptions[i]),
                 expand: true,
@@ -393,7 +394,11 @@ class OnboardingScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                app.t.goalNote,
+                // A porcentagem real: a meta depende do que a pessoa
+                // respondeu no quiz, não é sempre 25% abaixo.
+                app.t.fill(app.t.goalNote, {
+                  'p': '${(100 - app.goal * 100 / app.avg).round().clamp(0, 100)}',
+                }),
                 style: nunito(size: 13.5, height: 1.5, color: Cores.tinta700),
               ),
             ],
@@ -815,7 +820,7 @@ class _PerfilDeUso extends StatelessWidget {
           decoration: BoxDecoration(
             color: sel ? AppColors.greenA(0.14) : AppColors.inkA(0.05),
             borderRadius: BorderRadius.circular(18),
-            border: sel ? Border.all(color: AppColors.green, width: 2.5) : null,
+            border: Border.all(color: sel ? AppColors.green : Colors.transparent, width: 2.5),
           ),
           child: Row(children: [
             AppIcon(icone, size: 22, color: sel ? AppColors.green : Cores.tinta700),

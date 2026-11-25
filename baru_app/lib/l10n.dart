@@ -74,6 +74,11 @@ class T {
     return i < 0 || i >= nomes.length ? id : nomes[i];
   }
   List<String> get days => List<String>.from(_m['days'] as List);
+
+  /// Dias com três letras, para as fileiras da semana dentro do app. O
+  /// widget da tela inicial segue com uma letra ([days]).
+  List<String> get diasCurtos =>
+      List<String>.from((_m['diasCurtos'] ?? _m['days']) as List);
   List<String> get tabs => List<String>.from(_m['tabs'] as List);
   /// Nome e frase da espécie.
   ///
@@ -661,7 +666,7 @@ const _pt = <String, Object>{
   'authLoading': 'Aguarde…',
   'authLembrar': 'Lembrar meus dados',
   'authLembrarSub': 'Guardado só neste aparelho, cifrado.',
-  'authBiometria': 'Entrar com a digital',
+  'authBiometria': 'Entrar com rosto ou digital',
   'authBiometriaSub': 'Use a digital, o rosto ou o PIN do aparelho.',
   'authBiometriaMotivo': 'Desbloqueie para entrar no Baru',
   'authBiometriaFalhou': 'Não deu para confirmar. Digite a senha.',
@@ -943,12 +948,12 @@ const _pt = <String, Object>{
   'quizB':
       'Seis perguntas rápidas. Suas respostas escolhem o animal que você vai cuidar. Dá para trocar depois.',
   'quizPerguntas': {
-    'elemento': 'Com qual elemento você se parece',
-    'clareza': 'Quando sua cabeça fica mais clara',
-    'acalma': 'O que realmente te acalma',
-    'rouba_foco': 'O que mais rouba seu foco',
-    'recarrega': 'Como você recarrega',
-    'quer': 'O que você quer do Baru',
+    'elemento': 'Com qual elemento você se parece?',
+    'clareza': 'Quando sua cabeça fica mais clara?',
+    'acalma': 'O que realmente te acalma?',
+    'rouba_foco': 'O que mais rouba seu foco?',
+    'recarrega': 'Como você recarrega?',
+    'quer': 'O que você quer do Baru?',
   },
   'quizOpcoes': {
     'agua': 'Água',
@@ -988,7 +993,7 @@ const _pt = <String, Object>{
   ],
   'quizCta': 'Ver seu animal',
   'quizWait': 'Faltam {n}',
-  'quizVoltar': 'Voltar uma',
+  'quizVoltar': 'Pergunta anterior',
   'revealTrocar': 'Prefere outro?',
   'revealPersonalizar': 'Personalizar: sexo, pelagem ou outro bicho',
   'contaApagar': 'Apagar meus dados',
@@ -1000,6 +1005,7 @@ const _pt = <String, Object>{
   'contaApagarFalhou': 'Não deu para apagar tudo ({q}). Tente de novo.',
   'revealKicker': 'Seu animal interior',
   'coat': 'Pelagem',
+  'revealNome': 'Nome do seu companheiro',
   'revealCta': 'Prazer em conhecer',
   'species': {
     'capybara': [
@@ -1043,7 +1049,7 @@ const _pt = <String, Object>{
   'goalB': 'Um chute serve. Só precisamos de um ponto de partida.',
   'goalSug': 'Meta diária sugerida',
   'goalNote':
-      '25% abaixo da sua média. Dá para mudar quando quiser nos ajustes.',
+      '{p}% abaixo da sua média. Dá para mudar quando quiser nos ajustes.',
   'goalCta': 'Usar esta meta',
   'permT': 'O humor do seu companheiro acompanha seu tempo de tela.',
   'permB': 'Para isso, o Baru precisa ler o total do dia no seu telefone.',
@@ -1083,6 +1089,8 @@ const _pt = <String, Object>{
   'homeBoasVindasNinho':
       "Ainda estou no ninho, de olhos fechados. Quando você terminar a primeira sessão de foco, eu abro os olhos — e daí em diante a gente cresce junto.",
   'days': ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
+  // Uma letra só repete S e Q: dentro do app há espaço para três.
+  'diasCurtos': ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'],
   'payRemind': 'Avisamos 24h antes do teste terminar.',
   'payRestore': 'Restaurar',
   'payTerms': 'Termos',
@@ -1255,7 +1263,7 @@ const _en = <String, Object>{
   'authLoading': 'Please wait…',
   'authLembrar': 'Remember me',
   'authLembrarSub': 'Kept on this device only, encrypted.',
-  'authBiometria': 'Sign in with fingerprint',
+  'authBiometria': 'Sign in with face or fingerprint',
   'authBiometriaSub': 'Use your device\'s fingerprint, face or PIN.',
   'authBiometriaMotivo': 'Unlock to sign in to Baru',
   'authBiometriaFalhou': 'Couldn\'t confirm. Type your password.',
@@ -1537,12 +1545,12 @@ const _en = <String, Object>{
   'quizB':
       'Six quick questions. Your answers pick the animal you will look after. You can change it later.',
   'quizPerguntas': {
-    'elemento': 'Which element feels like you',
-    'clareza': 'When your head is clearest',
-    'acalma': 'What actually calms you',
-    'rouba_foco': 'What steals your focus most',
-    'recarrega': 'How you recharge',
-    'quer': 'What you want from Baru',
+    'elemento': 'Which element feels like you?',
+    'clareza': 'When your head is clearest?',
+    'acalma': 'What actually calms you?',
+    'rouba_foco': 'What steals your focus most?',
+    'recarrega': 'How you recharge?',
+    'quer': 'What you want from Baru?',
   },
   'quizOpcoes': {
     'agua': 'Water',
@@ -1582,7 +1590,7 @@ const _en = <String, Object>{
   ],
   'quizCta': 'See your animal',
   'quizWait': '{n} to go',
-  'quizVoltar': 'Back one',
+  'quizVoltar': 'Previous question',
   'revealTrocar': 'Prefer another?',
   'revealPersonalizar': 'Customize: sex, coat or another animal',
   'contaApagar': 'Delete my data',
@@ -1594,6 +1602,7 @@ const _en = <String, Object>{
   'contaApagarFalhou': 'Could not delete everything ({q}). Try again.',
   'revealKicker': 'Your inner animal',
   'coat': 'Coat',
+  'revealNome': "Your companion's name",
   'revealCta': 'Nice to meet you',
   'species': {
     'capybara': [
@@ -1636,7 +1645,7 @@ const _en = <String, Object>{
   'goalT': 'How much screen time on an average day?',
   'goalB': 'A rough guess is fine. We only need a starting point.',
   'goalSug': 'Suggested daily goal',
-  'goalNote': '25% below your average. You can move it any time in settings.',
+  'goalNote': '{p}% below your average. You can move it any time in settings.',
   'goalCta': 'Use this goal',
   'permT': 'Its mood follows your screen time.',
   'permB': 'To do that, it needs to read the daily total from your phone.',
@@ -1675,6 +1684,7 @@ const _en = <String, Object>{
   'homeBoasVindasNinho':
       "I'm still in the nest, eyes closed. When you finish your first focus session, I open my eyes — and from then on we grow together.",
   'days': ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+  'diasCurtos': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   'payRemind': "We'll remind you 24h before your trial ends.",
   'payRestore': 'Restore',
   'payTerms': 'Terms',
@@ -1839,7 +1849,7 @@ const _es = <String, Object>{
   'authLoading': 'Espera…',
   'authLembrar': 'Recordar mis datos',
   'authLembrarSub': 'Guardado solo en este dispositivo, cifrado.',
-  'authBiometria': 'Entrar con la huella',
+  'authBiometria': 'Entrar con rostro o huella',
   'authBiometriaSub': 'Usa la huella, la cara o el PIN del dispositivo.',
   'authBiometriaMotivo': 'Desbloquea para entrar en Baru',
   'authBiometriaFalhou': 'No se pudo confirmar. Escribe la contraseña.',
@@ -2121,12 +2131,12 @@ const _es = <String, Object>{
   'quizB':
       'Seis preguntas rápidas. Tus respuestas eligen el animal que vas a cuidar. Puedes cambiarlo después.',
   'quizPerguntas': {
-    'elemento': 'Con qué elemento te pareces',
-    'clareza': 'Cuándo tu cabeza está más clara',
-    'acalma': 'Qué te calma de verdad',
-    'rouba_foco': 'Qué te roba más el foco',
-    'recarrega': 'Cómo recargas',
-    'quer': 'Qué quieres de Baru',
+    'elemento': '¿Con qué elemento te pareces?',
+    'clareza': '¿Cuándo tu cabeza está más clara?',
+    'acalma': '¿Qué te calma de verdad?',
+    'rouba_foco': '¿Qué te roba más el foco?',
+    'recarrega': '¿Cómo recargas?',
+    'quer': '¿Qué quieres de Baru?',
   },
   'quizOpcoes': {
     'agua': 'Agua',
@@ -2166,7 +2176,7 @@ const _es = <String, Object>{
   ],
   'quizCta': 'Ver tu animal',
   'quizWait': 'Faltan {n}',
-  'quizVoltar': 'Volver una',
+  'quizVoltar': 'Pregunta anterior',
   'revealTrocar': '¿Prefieres otro?',
   'revealPersonalizar': 'Personalizar: sexo, pelaje u otro animal',
   'contaApagar': 'Borrar mis datos',
@@ -2178,6 +2188,7 @@ const _es = <String, Object>{
   'contaApagarFalhou': 'No se pudo borrar todo ({q}). Inténtalo de nuevo.',
   'revealKicker': 'Tu animal interior',
   'coat': 'Pelaje',
+  'revealNome': 'Nombre de tu compañero',
   'revealCta': 'Un placer',
   'species': {
     'capybara': [
@@ -2221,7 +2232,7 @@ const _es = <String, Object>{
   'goalB': 'Una estimación basta. Solo necesitamos un punto de partida.',
   'goalSug': 'Meta diaria sugerida',
   'goalNote':
-      '25% por debajo de tu promedio. Puedes cambiarlo cuando quieras.',
+      '{p}% por debajo de tu promedio. Puedes cambiarlo cuando quieras.',
   'goalCta': 'Usar esta meta',
   'permT': 'Su ánimo sigue tu tiempo de pantalla.',
   'permB': 'Para eso necesita leer el total diario de tu teléfono.',
@@ -2261,6 +2272,7 @@ const _es = <String, Object>{
   'homeBoasVindasNinho':
       "Todavía estoy en el nido, con los ojos cerrados. Cuando termines tu primera sesión de foco, abro los ojos, y desde ahí crecemos juntos.",
   'days': ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
+  'diasCurtos': ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'],
   'payRemind': 'Te avisamos 24 h antes de que termine la prueba.',
   'payRestore': 'Restaurar',
   'payTerms': 'Términos',
@@ -2425,7 +2437,7 @@ const _zh = <String, Object>{
   'authLoading': '请稍候…',
   'authLembrar': '记住我的信息',
   'authLembrarSub': '仅加密保存在本机。',
-  'authBiometria': '用指纹登录',
+  'authBiometria': '用面容或指纹登录',
   'authBiometriaSub': '使用设备的指纹、面容或 PIN 码。',
   'authBiometriaMotivo': '解锁以登录 Baru',
   'authBiometriaFalhou': '无法确认，请输入密码。',
@@ -2704,12 +2716,12 @@ const _zh = <String, Object>{
   'quizT': '你内心是哪种动物？',
   'quizB': '三个问题。答案决定你要照顾的动物，之后可以更改。',
   'quizPerguntas': {
-    'elemento': '你更像哪种元素',
-    'clareza': '什么时候头脑最清醒',
-    'acalma': '什么真正让你平静',
-    'rouba_foco': '什么最常偷走你的专注',
-    'recarrega': '你怎么充电',
-    'quer': '你想从 Baru 得到什么',
+    'elemento': '你更像哪种元素？',
+    'clareza': '什么时候头脑最清醒？',
+    'acalma': '什么真正让你平静？',
+    'rouba_foco': '什么最常偷走你的专注？',
+    'recarrega': '你怎么充电？',
+    'quer': '你想从 Baru 得到什么？',
   },
   'quizOpcoes': {
     'agua': '水',
@@ -2757,6 +2769,7 @@ const _zh = <String, Object>{
   'contaApagarFalhou': '没能全部删除（{q}）。请再试一次。',
   'revealKicker': '你的内在动物',
   'coat': '毛色',
+  'revealNome': '伙伴的名字',
   'revealCta': '很高兴认识你',
   'species': {
     'capybara': ['你是水豚。', '温水，轻松的陪伴。一旦允许自己停下，你会很快安定。'],
@@ -2787,7 +2800,7 @@ const _zh = <String, Object>{
   'goalT': '平常一天用多久手机？',
   'goalB': '大概就行，我们只需要一个起点。',
   'goalSug': '建议的每日目标',
-  'goalNote': '比你的平均少 25%。随时可在设置中调整。',
+  'goalNote': '比你的平均少 {p}%。随时可在设置中调整。',
   'goalCta': '使用这个目标',
   'permT': '它的心情跟着你的屏幕时间。',
   'permB': '为此，它需要读取手机上的每日总时长。',
@@ -2826,6 +2839,7 @@ const _zh = <String, Object>{
   'homeBoasVindasNinho':
       "我还在窝里，眼睛还没睁开。等你完成第一次专注，我就会睁开眼睛——从那以后我们一起长大。",
   'days': ['一', '二', '三', '四', '五', '六', '日'],
+  'diasCurtos': ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
   'payRemind': '试用结束前 24 小时我们会提醒你。',
   'payRestore': '恢复购买',
   'payTerms': '条款',

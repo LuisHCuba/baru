@@ -671,7 +671,7 @@ class _Faixa extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  t.days[dias[k].$1],
+                  t.diasCurtos[dias[k].$1],
                   style: nunito(
                     size: 11,
                     weight: FontWeight.w700,

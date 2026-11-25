@@ -67,7 +67,7 @@ class SequenciaScreen extends StatelessWidget {
                                 _Ponto(tipo: marca),
                                 const SizedBox(height: Espaco.xs),
                                 Text(
-                                  t.days[i],
+                                  t.diasCurtos[i],
                                   style: estilo(
                                     Tipo.corpoPequeno,
                                     color: Cores.tinta700,

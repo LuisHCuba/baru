@@ -82,6 +82,10 @@ class _PetNameFieldState extends State<PetNameField> {
       decoration: InputDecoration(
         filled: true,
         fillColor: AppColors.inkA(0.06),
+        // O lápis diz que dá para editar; o espaço do outro lado mantém o
+        // nome no centro.
+        prefixIcon: const SizedBox(width: 48),
+        suffixIcon: Icon(Icons.edit_rounded, size: 18, color: Cores.tinta500),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,

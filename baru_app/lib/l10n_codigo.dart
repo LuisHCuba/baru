@@ -21,7 +21,7 @@ const textosDoCodigo = <String, Map<String, String>>{
         'Leva um minuto. Depois enviamos um código para confirmar o seu e-mail.',
     'codLembrar': 'Lembrar neste aparelho',
     'codLembrarSub':
-        'Fica só aqui, cifrado. Na próxima vez, entre com a digital.',
+        'Fica só aqui, cifrado. Na próxima vez, entre com o rosto ou a digital.',
     'codTituloSenha': 'Trocar a senha',
     'codTituloCadastro': 'Confirmar o e-mail',
     'codSub': 'Enviamos um código de 8 dígitos para {e}. Digite aqui.',
@@ -49,7 +49,7 @@ const textosDoCodigo = <String, Map<String, String>>{
         "It takes a minute. Then we'll send a code to confirm your email.",
     'codLembrar': 'Remember on this device',
     'codLembrarSub':
-        'Stays here only, encrypted. Next time, sign in with your fingerprint.',
+        'Stays here only, encrypted. Next time, sign in with your face or fingerprint.',
     'codTituloSenha': 'Change your password',
     'codTituloCadastro': 'Confirm your email',
     'codSub': 'We sent an 8-digit code to {e}. Enter it here.',
@@ -76,7 +76,7 @@ const textosDoCodigo = <String, Map<String, String>>{
         'Toma un minuto. Luego enviamos un código para confirmar tu correo.',
     'codLembrar': 'Recordar en este dispositivo',
     'codLembrarSub':
-        'Queda solo aquí, cifrado. La próxima vez, entra con tu huella.',
+        'Queda solo aquí, cifrado. La próxima vez, entra con tu rostro o tu huella.',
     'codTituloSenha': 'Cambiar la contraseña',
     'codTituloCadastro': 'Confirmar el correo',
     'codSub': 'Enviamos un código de 8 dígitos a {e}. Escríbelo aquí.',
@@ -101,7 +101,7 @@ const textosDoCodigo = <String, Map<String, String>>{
     'codLoginSub': '你的伙伴和进度都保存在你的账号里。',
     'codCadastroSub': '只需一分钟。之后我们会发送验证码确认你的邮箱。',
     'codLembrar': '在此设备上记住',
-    'codLembrarSub': '只保存在本机并加密。下次可用指纹登录。',
+    'codLembrarSub': '只保存在本机并加密。下次可用面容或指纹登录。',
     'codTituloSenha': '修改密码',
     'codTituloCadastro': '确认邮箱',
     'codSub': '我们已向 {e} 发送 8 位验证码，请在这里输入。',

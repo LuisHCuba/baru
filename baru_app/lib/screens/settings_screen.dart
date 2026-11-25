@@ -91,6 +91,7 @@ class SettingsScreen extends StatelessWidget {
         _Grupo(
           children: [
             _Chave(
+              icone: Icons.nights_stay_outlined,
               rotulo: t.setEvening,
               detalhe: t.fill(t.setEveningSub, {
                 'h': _hhmm(app.eveningHour, app.eveningMinute),
@@ -107,6 +108,7 @@ class SettingsScreen extends StatelessWidget {
                 aoTocar: () => _abreHorario(context, app),
               ),
             _Chave(
+              icone: Icons.favorite_border_rounded,
               rotulo: t.setMissed,
               detalhe: t.setMissedSub,
               ligado: app.missed,
@@ -120,6 +122,7 @@ class SettingsScreen extends StatelessWidget {
         _Grupo(
           children: [
             _Chave(
+              icone: Icons.volume_up_outlined,
               rotulo: t.setSom,
               detalhe: t.setSomSub,
               ligado: app.som,
@@ -133,6 +136,7 @@ class SettingsScreen extends StatelessWidget {
         _Grupo(
           children: [
             _Chave(
+              icone: Icons.hourglass_empty_rounded,
               rotulo: noIphone ? t.s('ajTempoDeUsoIos') : t.permAllow,
               detalhe: app.usageAccess ? t.setUsageOn : t.setUsageOff,
               ligado: app.usageAccess,
@@ -575,12 +579,16 @@ class _Linha extends StatelessWidget {
 
 class _Chave extends StatelessWidget {
   const _Chave({
+    required this.icone,
     required this.rotulo,
     required this.detalhe,
     required this.ligado,
     required this.aoTocar,
   });
 
+  /// Mesmo ícone à esquerda das outras linhas: sem ele, o texto das chaves
+  /// começava fora do alinhamento do resto dos Ajustes.
+  final IconData icone;
   final String rotulo;
   final String detalhe;
   final bool ligado;
@@ -594,6 +602,8 @@ class _Chave extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: Espaco.xs),
         child: Row(
           children: [
+            Icon(icone, size: 19, color: Cores.tinta),
+            const SizedBox(width: Espaco.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

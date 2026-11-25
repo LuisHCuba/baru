@@ -750,7 +750,8 @@ class _Balao extends StatelessWidget {
               Text(
                 texto,
                 key: const Key('home-humor-sub'),
-                maxLines: 4,
+                // 4 linhas cortavam a primeira fala (a do ninho) no meio.
+                maxLines: 6,
                 overflow: TextOverflow.ellipsis,
                 style: nunito(size: 13, height: 1.35, color: Cores.tinta700),
               ),
@@ -986,7 +987,7 @@ class SeuDia extends StatelessWidget {
                                     _dot(marca),
                                     const SizedBox(height: Espaco.xs),
                                     Text(
-                                      t.days[i],
+                                      t.diasCurtos[i],
                                       style: nunito(
                                         size: 10.5,
                                         weight: FontWeight.w600,

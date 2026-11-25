@@ -80,7 +80,7 @@ class SettingsScreen extends StatelessWidget {
               chave: null,
               icone: Icons.timer_outlined,
               rotulo: t.setDuracao,
-              valor: '${app.dur} min',
+              valor: app.fmt(app.dur),
               aoTocar: () => _abreDuracao(context, app),
             ),
           ],
@@ -230,7 +230,7 @@ class SettingsScreen extends StatelessWidget {
         children: [
           for (final d in duracoesEmOrdem)
             _Opcao(
-              rotulo: '$d min',
+              rotulo: app.fmt(d),
               marcada: app.dur == d,
               aoTocar: () {
                 app.pickDur(d);

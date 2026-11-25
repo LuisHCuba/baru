@@ -654,7 +654,7 @@ class _BolhaDoNivel extends StatelessWidget {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(Icons.star_rounded, size: 18, color: Cores.mel400),
                 const SizedBox(width: 4),
-                Text('Nv ${app.nivel}', style: nunito(size: 14, weight: FontWeight.w800, tabular: true)),
+                Text(app.t.fill(app.t.s('nivelCurto'), {'n': app.nivel}), style: nunito(size: 14, weight: FontWeight.w800, tabular: true)),
               ]),
             ),
           ),

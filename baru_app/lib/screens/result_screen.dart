@@ -653,7 +653,8 @@ class _MissaoQueAndou extends StatelessWidget {
                 BarraAnimada(fracao: fracao, altura: 7, duracao: Duration.zero),
                 const SizedBox(height: Espaco.xxs),
                 Text(
-                  pronta ? tx.resPronta : '$progresso/${d.alvo}',
+                  // Durante a contagem o número não passa do alvo (aparecia 52/30).
+                  pronta ? tx.resPronta : '${progresso.clamp(0, d.alvo)}/${d.alvo}',
                   style: nunito(
                     size: 11.5,
                     weight: FontWeight.w700,

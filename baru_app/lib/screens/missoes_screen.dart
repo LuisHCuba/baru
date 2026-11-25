@@ -409,7 +409,7 @@ class CartaoDoDescanso extends StatelessWidget {
               ),
               const SizedBox(width: Espaco.xs),
               Text(
-                '${m.progresso}/${m.alvo}',
+                '${m.progresso.clamp(0, m.alvo)}/${m.alvo}',
                 style: estilo(
                   Tipo.rotuloPequeno,
                   color: Cores.tinta700,

@@ -38,7 +38,7 @@ void main() {
   });
 
   test('celular nunca conectado', () {
-    expect(diagnosticoDoLocal(t, crianca(), agora: agora), contains('ainda não se conectou'));
+    expect(diagnosticoDoLocal(t, crianca(), agora: agora), contains('ainda não chegou'));
   });
 
   test('permissão negada, desligada e só durante o uso', () {

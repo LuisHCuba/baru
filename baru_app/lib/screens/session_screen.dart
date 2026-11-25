@@ -794,7 +794,20 @@ class _QuitSheet extends StatelessWidget {
               ),
               const SizedBox(height: Espaco.md),
               Text(
-                app.t.fill(app.t.quitTitle, {'n': app.displayName}),
+                // A mesma frase de baixo do relógio: "no meio de um banho"
+                // aparecia até com ele dormindo no ninho ou com a coruja.
+                app.t.fill(
+                  app.t.petFazendoNoEstagio(
+                    acaoNoEstagio(
+                      app.species,
+                      SessionScreen.atividade,
+                      app.estagioVisivel,
+                    ),
+                    app.estagioVisivel,
+                    app.species,
+                  ),
+                  {'n': app.displayName},
+                ),
                 textAlign: TextAlign.center,
                 style: nunito(
                   size: 23,

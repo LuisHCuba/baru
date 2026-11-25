@@ -101,6 +101,9 @@ const petNames = {
 };
 
 const durations = [25, 50, 90, 45];
+
+/// As mesmas durações, da menor para a maior, para mostrar na tela.
+final duracoesEmOrdem = [...durations]..sort();
 /// Médias do primeiro uso: de quem usa pouco (2h) a quem passa de 8h.
 const avgOptions = [120, 180, 240, 360, 480];
 const goalOptions = [90, 120, 150, 180];

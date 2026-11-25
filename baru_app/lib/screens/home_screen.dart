@@ -434,7 +434,9 @@ class AcessorioDaHome extends StatelessWidget {
                           ? '${app.missoesResgataveis}'
                           : null,
                       destaque: app.missoesResgataveis > 0,
-                      aoTocar: _abreSeuDia,
+                      // O rótulo promete Missões: abre nela, não na última
+                      // aba vista.
+                      aoTocar: () => _abreSeuDia(aba: 1),
                     ),
                   ),
                 ],
@@ -481,9 +483,9 @@ class AcessorioDaHome extends StatelessWidget {
 
   // Sem o contexto do `Navigator` não há onde abrir a folha: o da casca
   // fica fora dele (auditoria, 7).
-  void _abreSeuDia() {
+  void _abreSeuDia({int? aba}) {
     final c = navegador.currentContext;
-    if (c != null) SeuDia.abre(c);
+    if (c != null) SeuDia.abre(c, aba: aba);
   }
 
   static String _rotuloDaDuracao(AppState app, int min) =>
@@ -517,15 +519,15 @@ class AcessorioDaHome extends StatelessWidget {
                 const SizedBox(height: Espaco.md),
                 Row(
                   children: [
-                    for (var i = 0; i < durations.length; i++) ...[
+                    // Em ordem, e cada uma com os minutos: "Livre" dava
+                    // sempre 45 min, sem escolha nenhuma.
+                    for (final (i, d) in duracoesEmOrdem.indexed) ...[
                       if (i > 0) const SizedBox(width: Espaco.xs),
                       SelectChip(
-                        label: i == 3
-                            ? app.t.custom
-                            : _rotuloDaDuracao(app, durations[i]),
-                        selected: app.dur == durations[i],
+                        label: _rotuloDaDuracao(app, d),
+                        selected: app.dur == d,
                         onTap: () {
-                          app.pickDur(durations[i]);
+                          app.pickDur(d);
                           Navigator.of(context).pop();
                         },
                         expand: true,

@@ -228,7 +228,7 @@ class SettingsScreen extends StatelessWidget {
       app.t.setDuracao,
       (fechar) => Column(
         children: [
-          for (final d in durations)
+          for (final d in duracoesEmOrdem)
             _Opcao(
               rotulo: '$d min',
               marcada: app.dur == d,

@@ -335,7 +335,9 @@ class CartaoDoDescanso extends StatelessWidget {
 
     return CartaoBaru(
       key: chave,
-      padding: const EdgeInsets.all(Espaco.lg),
+      // À espera do acesso ele fica na lista "esperando" junto das outras:
+      // mesmo tamanho delas, em vez da manchete de missão principal.
+      padding: EdgeInsets.all(semPermissao ? Espaco.md : Espaco.lg),
       cor: semPermissao ? Cores.tintaA(0.04) : Cores.superficieElevada,
       elevado: !semPermissao,
       // Sem permissão o cartão inteiro vira o convite; com permissão, quem
@@ -384,7 +386,7 @@ class CartaoDoDescanso extends StatelessWidget {
           Text(
             tituloDoDescanso(t, m),
             style: estilo(
-              Tipo.titulo,
+              semPermissao ? Tipo.corpoForte : Tipo.titulo,
               color: semPermissao ? Cores.tinta700 : Cores.tinta,
             ),
           ),

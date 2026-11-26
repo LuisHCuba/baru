@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'services/convite_pendente.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/widgets.dart';
 import 'package:uuid/uuid.dart';
 
@@ -1023,6 +1024,24 @@ class AppState extends ChangeNotifier {
   ///
   /// Devolve nulo se limpou; texto de erro se algo ficou.
   Future<String?> apagaMeusDados() async {
+    // 0. Conta que entra com a Apple, no iPhone: a confirmação da Apple vem
+    //    antes de apagar qualquer coisa. Cancelada, nada é apagado; senão a
+    //    pessoa ficaria com o login e sem os dados.
+    String? codigoDaApple;
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.iOS &&
+        BaruSupabase.instance.entrouComApple) {
+      try {
+        codigoDaApple = await BaruSupabase.instance.codigoNovoDaApple();
+      } on SignInWithAppleAuthorizationException catch (e) {
+        return e.code == AuthorizationErrorCode.canceled
+            ? t.s('contaApagarAppleCancelou')
+            : t.s('contaApagarAppleFalhou');
+      } catch (_) {
+        return t.s('contaApagarAppleFalhou');
+      }
+    }
+
     // 1. Para de gravar. Um debounce em voo depois do apagamento reescreveria
     //    tudo de volta.
     _saveTimer?.cancel();
@@ -1036,6 +1055,9 @@ class AppState extends ChangeNotifier {
     // 3. O servidor: os dados e, por último, o próprio login (a Play exige
     //    que apagar seja apagar a conta, não só o conteúdo dela).
     final falharam = await BaruSupabase.instance.apagaTudoDoUsuario();
+    if (codigoDaApple != null) {
+      await BaruSupabase.instance.revogaApple(codigoDaApple);
+    }
     if (!(falharam.length == 1 && falharam.first == 'sem_sessao') &&
         !await BaruSupabase.instance.excluiConta()) {
       falharam.add('conta');

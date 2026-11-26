@@ -439,6 +439,37 @@ class BaruSupabase {
   /// O servidor libera o app para esta conta?
   Future<bool> acessoLiberado() async => (await meuAcesso()).liberado;
 
+  /// A conta entra com a Apple (o login da Apple precisa ser revogado ao
+  /// apagar a conta, diretriz 5.1.1(v)).
+  bool get entrouComApple {
+    final u = _client?.auth.currentUser;
+    if (u == null) return false;
+    final provedores = u.appMetadata['providers'];
+    if (provedores is List && provedores.contains('apple')) return true;
+    return (u.identities ?? const []).any((i) => i.provider == 'apple');
+  }
+
+  /// Pede de novo o "Entrar com a Apple", sem nome nem e-mail, só para ganhar
+  /// um authorizationCode novo. Lança [SignInWithAppleAuthorizationException]
+  /// se a pessoa cancelar.
+  Future<String> codigoNovoDaApple() async {
+    final c = await SignInWithApple.getAppleIDCredential(scopes: const []);
+    return c.authorizationCode;
+  }
+
+  /// Revoga o login da Apple no servidor (`apple-revogar`). Chamar com a
+  /// sessão ainda viva, antes de apagar o login. Falha não impede apagar a
+  /// conta: fica no registro do servidor.
+  Future<void> revogaApple(String codigo) async {
+    final client = _client;
+    if (client == null) return;
+    try {
+      await client.functions.invoke('apple-revogar', body: {'code': codigo});
+    } catch (e) {
+      debugPrint('Baru: nao revogou o login da Apple — $e');
+    }
+  }
+
   /// Apaga o login do usuário (migration `baru_excluir_minha_conta`). As
   /// tabelas do app caem junto pelo `on delete cascade`. Depois disso a
   /// sessão não vale mais, então sai também.

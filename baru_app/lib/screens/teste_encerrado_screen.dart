@@ -9,8 +9,8 @@ import '../widgets/pet.dart';
 
 /// Fim do teste de 7 dias, sem assinatura paga.
 ///
-/// Neutra de propósito: sem preço nem convite para comprar. Os dados continuam
-/// guardados, e o botão só leva à página inicial do site.
+/// Na web, neutra: sem preço, e o botão leva à página inicial do site. No
+/// celular o botão abre os planos da loja (Google Play / App Store).
 class TesteEncerradoScreen extends StatelessWidget {
   const TesteEncerradoScreen({
     super.key,
@@ -58,7 +58,8 @@ class TesteEncerradoScreen extends StatelessWidget {
               ),
               const SizedBox(height: Espaco.sm),
               Text(
-                t.testeFimB,
+                // No celular o botão abre os planos da loja: o texto diz por quê.
+                noCelular ? t.s('testeFimBLoja') : t.testeFimB,
                 textAlign: TextAlign.center,
                 style: nunito(size: 15, height: 1.5, color: Cores.tinta700),
               ),

@@ -62,6 +62,16 @@ As três páginas novas estão no ar desde 25/11 (sem preço, sem Asaas, sem
 link para o painel). No app, só no iPhone, os termos e a privacidade já citam
 /termos/ios e /privacidade/ios.
 
+
+### Apagar conta revoga o "Entrar com a Apple" (5.1.1(v)) ✅ 25/11
+
+O app pede a confirmação da Apple antes de apagar qualquer coisa e a função
+`apple-revogar` (publicada, v1) revoga o token. Chaves copiadas do Infisical
+para os segredos do Supabase sem leitura (APPLE_KEY_ID ← BARU_SIWA_KEY_ID,
+APPLE_KEY_P8 ← BARU_SIWA_KEY_P8, APPLE_TEAM_ID). Teste: código inválido →
+`invalid_grant` (a Apple aceita a chave). Falta testar num iPhone com uma conta
+de teste criada com a Apple (junto do teste no TestFlight).
+
 ## Os dois problemas
 
 ### 1. A loja apresenta o Baru como "mais um app de foco com bichinho" (4.3)

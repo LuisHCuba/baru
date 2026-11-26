@@ -123,7 +123,10 @@ class SelectChip extends StatelessWidget {
                 : AppColors.inkA(hover ? 0.11 : 0.06),
             borderRadius: BorderRadius.circular(radius),
           ),
-          alignment: Alignment.center,
+          // Centraliza só quando tem tamanho definido. Sem isso o chip solto
+          // num Wrap ocupava a linha inteira (os 12 horários do relatório
+          // estouravam a folha).
+          alignment: expand || height != null ? Alignment.center : null,
           child: Semantics(
             button: true,
             selected: selected,

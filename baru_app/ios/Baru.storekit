@@ -1,0 +1,197 @@
+{
+  "appPolicies": {
+    "eula": "",
+    "policies": [
+      {
+        "locale": "pt_BR",
+        "policyText": "",
+        "policyURL": ""
+      }
+    ]
+  },
+  "identifier": "BA2C0001",
+  "nonRenewingSubscriptions": [],
+  "products": [],
+  "settings": {
+    "_askToBuyEnabled": false,
+    "_billingGracePeriodEnabled": false,
+    "_billingIssuesEnabled": false,
+    "_disableDialogs": false,
+    "_failTransactionsEnabled": false,
+    "_locale": "pt_BR",
+    "_renewalBillingIssuesEnabled": false,
+    "_storeKitErrors": [],
+    "_storefront": "BRA",
+    "_timeRate": 0
+  },
+  "subscriptionBundleGroups": [],
+  "subscriptionGroups": [
+    {
+      "id": "2B000001",
+      "localizations": [],
+      "name": "Planos do Baru",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "14.90",
+              "displayPrice": "14.90",
+              "internalID": "BA000000",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "14.90",
+          "familyShareable": false,
+          "groupNumber": 3,
+          "internalID": "6B000001",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Uma pessoa, renovação todo mês",
+              "displayName": "Baru Individual",
+              "locale": "pt_BR"
+            }
+          ],
+          "productID": "tech.lhcx.baru.mensal",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Individual mensal",
+          "subscriptionGroupID": "2B000001",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "118.80",
+              "displayPrice": "118.80",
+              "internalID": "BA000001",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "118.80",
+          "familyShareable": false,
+          "groupNumber": 3,
+          "internalID": "6B000002",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Uma pessoa, renovação todo ano",
+              "displayName": "Baru Individual anual",
+              "locale": "pt_BR"
+            }
+          ],
+          "productID": "tech.lhcx.baru.anual",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Individual anual",
+          "subscriptionGroupID": "2B000001",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "24.90",
+              "displayPrice": "24.90",
+              "internalID": "BA000002",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "24.90",
+          "familyShareable": false,
+          "groupNumber": 2,
+          "internalID": "6B000003",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Até 6 pessoas do laço, todo mês",
+              "displayName": "Baru Família",
+              "locale": "pt_BR"
+            }
+          ],
+          "productID": "tech.lhcx.baru.familia.mensal",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Família mensal",
+          "subscriptionGroupID": "2B000001",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "229.00",
+              "displayPrice": "229.00",
+              "internalID": "BA000003",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "229.00",
+          "familyShareable": false,
+          "groupNumber": 2,
+          "internalID": "6B000004",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Até 6 pessoas do laço, todo ano",
+              "displayName": "Baru Família anual",
+              "locale": "pt_BR"
+            }
+          ],
+          "productID": "tech.lhcx.baru.familia.anual",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Família anual",
+          "subscriptionGroupID": "2B000001",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "34.90",
+              "displayPrice": "34.90",
+              "internalID": "BA000004",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "34.90",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6B000005",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Até 10 pessoas do laço, todo mês",
+              "displayName": "Baru Família+",
+              "locale": "pt_BR"
+            }
+          ],
+          "productID": "tech.lhcx.baru.familiamais.mensal",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Família+ mensal",
+          "subscriptionGroupID": "2B000001",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        }
+      ]
+    }
+  ],
+  "subscriptionSuiteGroups": [],
+  "version": {
+    "major": 6,
+    "minor": 3
+  }
+}

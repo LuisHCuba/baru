@@ -418,3 +418,6 @@ verify_jwt = false
 
 [functions.loja-notificacoes]
 verify_jwt = false
+
+[functions.loja-apple-notificacoes]
+verify_jwt = false

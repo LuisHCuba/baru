@@ -22,12 +22,25 @@ A Apple **não repetiu a 4.3 (spam)**: a explicação foi aceita. Ficaram dois p
    em segundo plano, mas o app só usa mudança significativa, visitas e cerca.
    **Resolvido no código (25/11)**: o modo saiu do Info.plist e o app não liga
    mais o rastreio contínuo. Vale no próximo build.
-2. **3.1.1 (compra dentro do app)**: continua. É a Fase 1 abaixo. Falta:
-   - servidor (`loja-assinatura`) conferir compra da Apple (hoje só Google);
-   - planos no iPhone (hoje só o mensal);
-   - teste completo no simulador com arquivo .storekit;
-   - criar as assinaturas na App Store Connect (depende do banco confirmado);
-   - compra de teste no TestFlight num iPhone.
+2. **3.1.1 (compra dentro do app)**: código pronto em 25/11, ainda não publicado.
+   - ✅ `loja-assinatura` aceita `{ loja: 'apple', jws, laco? }`: confere a
+     assinatura da Apple (biblioteca oficial, raiz G3 fixada) e grava com os
+     nomes de produto da Google, sem mudar o banco.
+   - ✅ `loja-apple-notificacoes` (renovou, cancelou, reembolso) + tabela
+     `baru_apple_notificacoes` (migration 20261125120000).
+   - ✅ App pede os 5 planos no iPhone e manda o JWS ao servidor.
+   - ✅ `ios/Baru.storekit` (loja de teste local). O Xcode não aplicou o arquivo
+     quando o app foi rodado por comando; testar abrindo pelo próprio Xcode
+     (Product › Run) ou ir direto para o sandbox.
+   - ⏳ Publicar as duas funções e a migration no Supabase (sem efeito até a
+     Apple mandar compras).
+   - ⏳ Criar na App Store Connect o grupo "Planos do Baru" com os 5 produtos
+     (ids abaixo) e cadastrar a URL de notificações. Preços: decisão do Luis.
+   - ⏳ Compra de teste no TestFlight num iPhone, depois checklist e reenvio.
+
+   Ids: tech.lhcx.baru.mensal, tech.lhcx.baru.anual,
+   tech.lhcx.baru.familia.mensal, tech.lhcx.baru.familia.anual,
+   tech.lhcx.baru.familiamais.mensal.
 
 ## Os dois problemas
 

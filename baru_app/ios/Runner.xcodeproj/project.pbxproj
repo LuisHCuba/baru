@@ -112,6 +112,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BA2C5708B4A0000000000001 /* Baru.storekit */ = {isa = PBXFileReference; includeInIndex = 1; path = Baru.storekit; sourceTree = "<group>"; };
 		02C1D6E03F2B571C4CC2B84E /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		0577C9B7FF2CA3B07E17D859 /* RegrasRemotas.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RegrasRemotas.swift; sourceTree = "<group>"; };
 		07E86FABE8C9C1198294968D /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -262,6 +263,7 @@
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				3CAB761E37128FDE157B27B2 /* Compartilhado */,
+				BA2C5708B4A0000000000001 /* Baru.storekit */,
 				B7239E9E8CE7A898741F004E /* Monitor */,
 				91DBC6228E8CD9DC23B8D923 /* Frameworks */,
 				4C22B40BAD5DF90386F30DA5 /* Relatorio */,

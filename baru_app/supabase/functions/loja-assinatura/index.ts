@@ -1,10 +1,15 @@
 import { comCors, jsonResponse, servico, usuarioDe } from '../_shared/http.ts'
+import { ambienteDoJws, lerTransacao, testeLocalLiberado } from '../_shared/apple.ts'
 
 /**
  * Assinatura comprada dentro do app (loja do celular).
  *
  *   { loja: 'google', token, produto, laco? }  → confere com a Google Play, confirma
  *                                         (acknowledge) e libera o acesso.
+ *   { loja: 'apple', jws, laco? }         → confere a assinatura da Apple na
+ *                                         transação do StoreKit 2 e libera o acesso.
+ *                                         Renovação e cancelamento chegam por
+ *                                         `loja-apple-notificacoes`.
  *
  * Produtos: baru_assinatura (individual: planos base mensal e anual) e
  * baru_familia (família: libera as primeiras 6 pessoas do laço `laco`, que o
@@ -64,6 +69,74 @@ async function google(metodo: string, caminho: string): Promise<{ status: number
   return { status: r.status, corpo: texto ? JSON.parse(texto) : {} }
 }
 
+
+/** Plano família: só o administrador do laço compra, e um laço tem um plano família só. */
+async function confereFamilia(uid: string, laco: string | null): Promise<Response | null> {
+  if (!laco) return jsonResponse({ error: 'laco_obrigatorio', message: 'Escolha o laço que o plano família vai cobrir.' }, 400)
+  const db0 = servico()
+  const { data: eu } = await db0.from('baru_familia_membros').select('papel, admin')
+    .eq('familia_id', laco).eq('user_id', uid).is('saiu_em', null).maybeSingle()
+  if (!eu || eu.papel !== 'responsavel' || !eu.admin) {
+    return jsonResponse({ error: 'nao_admin', message: 'Só um administrador do laço assina o plano família.' }, 403)
+  }
+  const { data: outro } = await db0.from('baru_assinaturas_loja').select('user_id')
+    .eq('laco_id', laco).in('produto', [...FAMILIA]).is('revogada_em', null).gt('expira_em', new Date().toISOString())
+    .neq('user_id', uid).maybeSingle()
+  if (outro) return jsonResponse({ error: 'ja_coberto', message: 'Este laço já tem plano família.' }, 409)
+  return null
+}
+
+/** iPhone: a transação assinada pela Apple (JWS do StoreKit 2). */
+async function compraApple(uid: string, corpo: Record<string, unknown>, laco: string | null): Promise<Response> {
+  const jws = typeof corpo.jws === 'string' ? corpo.jws : ''
+  if (!jws || jws.length > 20000) return jsonResponse({ error: 'parametros_invalidos' }, 400)
+  const ambiente = ambienteDoJws(jws)
+  if (!ambiente) return jsonResponse({ error: 'compra_invalida', message: 'A compra não pôde ser conferida.' }, 400)
+  if (ambiente === 'Xcode' && !testeLocalLiberado(uid)) {
+    return jsonResponse({ error: 'teste_local', message: 'Compra de teste local não libera acesso nesta conta.' }, 403)
+  }
+  let t
+  try {
+    t = await lerTransacao(jws, ambiente)
+  } catch (e) {
+    console.error('loja-assinatura: apple', e instanceof Error ? e.message : String(e))
+    return jsonResponse({ error: 'compra_invalida', message: 'A compra não pôde ser conferida com a Apple.' }, 400)
+  }
+  if (t.conta && t.conta !== uid.toLowerCase()) {
+    return jsonResponse({ error: 'outra_conta', message: 'Esta assinatura pertence a outra conta do Baru.' }, 409)
+  }
+  const db = servico()
+  const { data: dono } = await db.from('baru_assinaturas_loja').select('user_id, laco_id').eq('compra_id', t.transacaoOriginalId).maybeSingle()
+  if (dono && dono.user_id !== uid) {
+    return jsonResponse({ error: 'outra_conta', message: 'Esta assinatura pertence a outra conta do Baru.' }, 409)
+  }
+  // Restaurar ou renovar não diz o laço: vale o que já estava gravado.
+  laco ??= dono?.laco_id ?? null
+  if (FAMILIA.has(t.produto)) {
+    const recusa = await confereFamilia(uid, laco)
+    if (recusa) return recusa
+  }
+  const { error } = await db.from('baru_assinaturas_loja').upsert({
+    user_id: uid,
+    loja: 'apple',
+    produto: t.produto,
+    compra_id: t.transacaoOriginalId,
+    expira_em: t.expiraEm,
+    renova: true,
+    revogada_em: t.revogadaEm,
+    teste: t.ambiente !== 'Production',
+    plano_base: t.planoBase,
+    laco_id: FAMILIA.has(t.produto) ? laco : null,
+    atualizado_em: new Date().toISOString(),
+  })
+  if (error) {
+    console.error('loja-assinatura: gravar apple', error.message)
+    return jsonResponse({ error: 'erro_interno' }, 500)
+  }
+  const { data: acesso } = await db.rpc('baru_acesso_de', { p_uid: uid })
+  return jsonResponse({ acesso })
+}
+
 const VALIDOS = new Set(['SUBSCRIPTION_STATE_ACTIVE', 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD', 'SUBSCRIPTION_STATE_CANCELED'])
 
 Deno.serve(comCors(async (req: Request) => {
@@ -77,25 +150,16 @@ Deno.serve(comCors(async (req: Request) => {
   } catch {
     return jsonResponse({ error: 'invalid_json' }, 400)
   }
+  const laco = typeof corpo.laco === 'string' && /^[0-9a-f-]{36}$/i.test(corpo.laco) ? corpo.laco : null
+  if (corpo.loja === 'apple') return compraApple(uid, corpo, laco)
   const token = typeof corpo.token === 'string' ? corpo.token : ''
   const produto = typeof corpo.produto === 'string' ? corpo.produto : ''
   if (corpo.loja !== 'google' || !token || token.length > 4000 || !PRODUTOS.has(produto)) {
     return jsonResponse({ error: 'parametros_invalidos' }, 400)
   }
-  const laco = typeof corpo.laco === 'string' && /^[0-9a-f-]{36}$/i.test(corpo.laco) ? corpo.laco : null
-  const db0 = servico()
   if (FAMILIA.has(produto)) {
-    // Plano família: só o administrador do laço compra, e um laço tem um plano família só.
-    if (!laco) return jsonResponse({ error: 'laco_obrigatorio', message: 'Escolha o laço que o plano família vai cobrir.' }, 400)
-    const { data: eu } = await db0.from('baru_familia_membros').select('papel, admin')
-      .eq('familia_id', laco).eq('user_id', uid).is('saiu_em', null).maybeSingle()
-    if (!eu || eu.papel !== 'responsavel' || !eu.admin) {
-      return jsonResponse({ error: 'nao_admin', message: 'Só um administrador do laço assina o plano família.' }, 403)
-    }
-    const { data: outro } = await db0.from('baru_assinaturas_loja').select('user_id')
-      .eq('laco_id', laco).in('produto', [...FAMILIA]).is('revogada_em', null).gt('expira_em', new Date().toISOString())
-      .neq('user_id', uid).maybeSingle()
-    if (outro) return jsonResponse({ error: 'ja_coberto', message: 'Este laço já tem plano família.' }, 409)
+    const recusa = await confereFamilia(uid, laco)
+    if (recusa) return recusa
   }
 
   let compra

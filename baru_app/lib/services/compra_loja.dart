@@ -20,13 +20,24 @@ class CompraLoja {
   static String get produto =>
       defaultTargetPlatform == TargetPlatform.iOS ? 'tech.lhcx.baru.mensal' : 'baru_assinatura';
 
-  /// Plano família (Google Play). No iPhone ainda não existe.
+  /// Plano família (Google Play).
   static const produtoFamilia = 'baru_familia';
 
   /// Família+ (até 10 pessoas).
   static const produtoFamiliaMais = 'baru_familia_mais';
 
-  static bool ehFamilia(String id) => id == produtoFamilia || id == produtoFamiliaMais;
+  /// Assinaturas do grupo "Planos do Baru" na App Store Connect. Na Apple
+  /// cada plano é um produto; na Google são planos base de um produto só.
+  static const produtosApple = {
+    'tech.lhcx.baru.mensal': PlanoDaLoja.mensal,
+    'tech.lhcx.baru.anual': PlanoDaLoja.anual,
+    'tech.lhcx.baru.familia.mensal': PlanoDaLoja.familia,
+    'tech.lhcx.baru.familia.anual': PlanoDaLoja.familiaAnual,
+    'tech.lhcx.baru.familiamais.mensal': PlanoDaLoja.familiaMais,
+  };
+
+  static bool ehFamilia(String id) =>
+      id == produtoFamilia || id == produtoFamiliaMais || (produtosApple[id]?.ehFamilia ?? false);
 
   /// Laço do plano família sendo comprado (vai junto para o servidor).
   String? _lacoPendente;
@@ -35,7 +46,9 @@ class CompraLoja {
   /// e família. No Android cada plano base vem como um ProductDetails próprio.
   Future<Map<PlanoDaLoja, ProductDetails>> planosDaLoja() async {
     if (!temLoja || !await _loja.isAvailable()) return const {};
-    final ids = defaultTargetPlatform == TargetPlatform.iOS ? {produto} : {produto, produtoFamilia, produtoFamiliaMais};
+    final ids = defaultTargetPlatform == TargetPlatform.iOS
+        ? produtosApple.keys.toSet()
+        : {produto, produtoFamilia, produtoFamiliaMais};
     final r = await _loja.queryProductDetails(ids);
     final out = <PlanoDaLoja, ProductDetails>{};
     for (final p in r.productDetails) {
@@ -58,8 +71,8 @@ class CompraLoja {
           case 'familia-mais-mensal':
             out[PlanoDaLoja.familiaMais] = p;
         }
-      } else if (p.id == produto) {
-        out[PlanoDaLoja.mensal] = p;
+      } else if (produtosApple[p.id] case final plano?) {
+        out[plano] = p;
       }
     }
     return out;
@@ -122,10 +135,13 @@ class CompraLoja {
     if (db.auth.currentUser == null) return;
     _avisos.add(const AvisoDaLoja(EtapaDaLoja.conferindo));
     try {
+      // iPhone: a transação assinada pela Apple (JWS do StoreKit 2); o
+      // servidor confere a assinatura. Android: o purchaseToken.
+      final dados = c.verificationData.serverVerificationData;
       await db.functions.invoke('loja-assinatura', body: {
         'loja': loja,
         'produto': c.productID,
-        'token': c.verificationData.serverVerificationData,
+        if (loja == 'apple') 'jws': dados else 'token': dados,
         if (ehFamilia(c.productID) && _lacoPendente != null) 'laco': _lacoPendente,
       });
       if (c.pendingCompletePurchase) await _loja.completePurchase(c);

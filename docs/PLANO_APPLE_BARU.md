@@ -32,8 +32,11 @@ A Apple **não repetiu a 4.3 (spam)**: a explicação foi aceita. Ficaram dois p
    - ✅ `ios/Baru.storekit` (loja de teste local). O Xcode não aplicou o arquivo
      quando o app foi rodado por comando; testar abrindo pelo próprio Xcode
      (Product › Run) ou ir direto para o sandbox.
-   - ⏳ Publicar as duas funções e a migration no Supabase (sem efeito até a
-     Apple mandar compras).
+   - ✅ (25/11) Publicado no Supabase do Baru: loja-assinatura v7,
+     loja-apple-notificacoes v1 e a tabela baru_apple_notificacoes. Teste:
+     sem login → 401; aviso vazio → ignorado; aviso falso → assinatura inválida.
+     URL de avisos para a App Store Connect:
+     https://slqpuppkapiewjqvedtj.supabase.co/functions/v1/loja-apple-notificacoes
    - ⏳ Criar na App Store Connect o grupo "Planos do Baru" com os 5 produtos
      (ids abaixo) e cadastrar a URL de notificações. Preços: decisão do Luis.
    - ⏳ Compra de teste no TestFlight num iPhone, depois checklist e reenvio.

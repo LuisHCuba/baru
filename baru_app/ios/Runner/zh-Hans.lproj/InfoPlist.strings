@@ -1,0 +1,6 @@
+/* Textos dos pedidos de permissão (o Info.plist tem os de português). */
+"NSUserNotificationsUsageDescription" = "Baru 会发送晚间报告，并在想你的时候提醒你。";
+"NSCameraUsageDescription" = "用于拍摄你的头像，家人会在地图上看到它。";
+"NSPhotoLibraryUsageDescription" = "用于选择你的头像，家人会在地图上看到它。";
+"NSLocationWhenInUseUsageDescription" = "在家庭模式下，Baru 会向你的家长显示你的位置，并在 SOS 时发送你的位置。开启时你总能看到提示。";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "在家庭模式下，即使应用已关闭，Baru 也会在你到达或离开约定地点（家、学校）时通知你的家长。开启时你总能看到提示。";

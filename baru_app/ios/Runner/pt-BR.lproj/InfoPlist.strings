@@ -1,0 +1,6 @@
+/* Textos dos pedidos de permissão (o Info.plist tem os de português). */
+"NSUserNotificationsUsageDescription" = "O Baru envia o relatório da noite e avisa quando sente sua falta.";
+"NSCameraUsageDescription" = "Para tirar a sua foto de perfil, que aparece para a sua família no mapa.";
+"NSPhotoLibraryUsageDescription" = "Para escolher a sua foto de perfil, que aparece para a sua família no mapa.";
+"NSLocationWhenInUseUsageDescription" = "No modo família, o Baru mostra ao seu responsável onde você está e manda sua posição no SOS. Você sempre vê quando está ligado.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "No modo família, o Baru avisa seu responsável quando você chega ou sai de lugares combinados (casa, escola), mesmo com o app fechado. Você sempre vê quando está ligado.";

@@ -269,8 +269,18 @@ class T {
   String get shareFail => s('shareFail');
   String get streakOne => s('streakOne');
   String get repFreezeMany => s('repFreezeMany');
-  String get privacyBody => s('privacyBody');
-  String get termsBody => s('termsBody');
+  String get privacyBody => _paginaDoIphone(s('privacyBody'));
+  String get termsBody => _paginaDoIphone(s('termsBody'));
+
+  /// No iPhone, termos e privacidade completos ficam nas páginas /ios/ do
+  /// site, sem o pagamento pelo site nem links para o resto dele (diretriz
+  /// 3.1.1 da Apple: nenhum caminho do app até um plano vendido fora dele).
+  static String _paginaDoIphone(String texto) {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return texto;
+    return texto
+        .replaceAll('meubaru.com/termos', 'meubaru.com/termos/ios')
+        .replaceAll('meubaru.com/privacidade', 'meubaru.com/privacidade/ios');
+  }
   String get setUsage => s('setUsage');
   String get setUsageOn => s('setUsageOn');
   String get setUsageOff => s('setUsageOff');

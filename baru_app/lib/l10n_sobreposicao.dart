@@ -16,6 +16,8 @@
 library;
 
 import 'data/tempo_de_tela.dart';
+import 'package:flutter/foundation.dart';
+
 import 'l10n.dart';
 import 'services/overlay_service.dart';
 
@@ -72,6 +74,9 @@ const textosDaSobreposicao = <String, Map<String, String>>{
     'sobPermNotifSem':
         'A sessão corre sem contador na barra e você não é avisado quando '
             'ela termina.',
+    'sobPermRevisitaIos': 'Nada aqui é definitivo. Você revê tudo em Ajustes › Permissões do celular.',
+    'sobPermNotifQueIos': 'Lembretes curtos nas horas em que a tela mais te prende, para a pausa virar hábito. E o aviso de que a sessão terminou.',
+    'sobPermNotifSemIos': 'Você não é avisado quando a sessão termina, e os lembretes de pausa não chegam.',
     'sobPermAlarmeT': 'Alarme exato',
     'sobPermAlarmeQue':
         'Avisar na hora marcada, e não alguns minutos depois, quando o '
@@ -156,6 +161,9 @@ const textosDaSobreposicao = <String, Map<String, String>>{
     'sobPermNotifSem':
         'The session runs with no countdown in the bar, and nothing tells '
             'you when it ends.',
+    'sobPermRevisitaIos': 'Nothing here is final. You can review it all in Settings › Phone permissions.',
+    'sobPermNotifQueIos': 'Short reminders at the hours the screen holds you most, so the break becomes a habit. Plus the alert when a session ends.',
+    'sobPermNotifSemIos': 'Nothing tells you when a session ends, and the break reminders do not arrive.',
     'sobPermAlarmeT': 'Exact alarm',
     'sobPermAlarmeQue':
         'Ring at the exact minute instead of a few minutes later, when the '
@@ -238,6 +246,9 @@ const textosDaSobreposicao = <String, Map<String, String>>{
     'sobPermNotifSem':
         'La sesión corre sin cuenta atrás en la barra y nadie te avisa '
             'cuando termina.',
+    'sobPermRevisitaIos': 'Nada de esto es definitivo. Puedes revisarlo en Ajustes › Permisos del móvil.',
+    'sobPermNotifQueIos': 'Recordatorios cortos en las horas en que la pantalla más te atrapa, para que la pausa se vuelva hábito. Y el aviso de fin de la sesión.',
+    'sobPermNotifSemIos': 'Nadie te avisa cuando termina la sesión, y los recordatorios de pausa no llegan.',
     'sobPermAlarmeT': 'Alarma exacta',
     'sobPermAlarmeQue':
         'Avisar en el minuto exacto y no unos minutos después, cuando el '
@@ -302,6 +313,9 @@ const textosDaSobreposicao = <String, Map<String, String>>{
     'sobPermNotifT': '通知',
     'sobPermNotifQue': '在屏幕最容易抓住你的时候简短提醒，让休息成为习惯。还有状态栏里的专注时段和结束提醒。',
     'sobPermNotifSem': '专注时段在状态栏里没有倒计时，结束时也没有人提醒你。',
+    'sobPermRevisitaIos': '这里没有一项是定死的。你可以在「设置 › 手机权限」里重新看。',
+    'sobPermNotifQueIos': '在屏幕最容易抓住你的时候简短提醒，让休息成为习惯。还有专注时段结束的提醒。',
+    'sobPermNotifSemIos': '专注时段结束时没有人提醒你，休息提醒也不会出现。',
     'sobPermAlarmeT': '精确闹钟',
     'sobPermAlarmeQue': '在约定的那一分钟提醒，而不是手机省电时晚几分钟才响。',
     'sobPermAlarmeSem': '结束提醒可能会迟到。时段本身不会丢：你回来时会按时钟对齐。',
@@ -326,6 +340,9 @@ void garanteTextosDaSobreposicao() => T.registra(textosDaSobreposicao);
 ///
 /// `t.s('chave')` funcionaria, mas erro de digitação só apareceria na tela da
 /// pessoa. Extensão dá o erro no compilador, que é onde ele custa barato.
+/// iPhone (e não a web): textos que no Android falam de coisas que o iOS não tem.
+bool get _noIphone => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
 extension TextosDaSobreposicao on T {
   String get sobPermT => s('sobPermT');
   String get sobPermSub => s('sobPermSub');
@@ -339,7 +356,9 @@ extension TextosDaSobreposicao on T {
   String get sobPermSemIsso => s('sobPermSemIsso');
   String get sobPermResumo => s('sobPermResumo');
   String get sobPermTudo => s('sobPermTudo');
-  String get sobPermRevisita => s('sobPermRevisita');
+  /// No iPhone não existe a linha "Sobre outros apps" nos Ajustes: aponta
+  /// para a seção de permissões, que existe nos dois.
+  String get sobPermRevisita => s(_noIphone ? 'sobPermRevisitaIos' : 'sobPermRevisita');
 
   String get sobPermUsoT => s('sobPermUsoT');
   String get sobPermUsoQue => s('sobPermUsoQue');
@@ -371,7 +390,8 @@ extension TextosDaSobreposicao on T {
   String oQueFazAPermissao(PermissaoDoBaru p) => s(switch (p) {
         PermissaoDoBaru.usoDoAparelho => 'sobPermUsoQue',
         PermissaoDoBaru.sobreOutrosApps => 'sobPermJanelaQue',
-        PermissaoDoBaru.notificacoes => 'sobPermNotifQue',
+        // No iPhone a sessão não fica na barra de notificações.
+        PermissaoDoBaru.notificacoes => _noIphone ? 'sobPermNotifQueIos' : 'sobPermNotifQue',
         PermissaoDoBaru.alarmeExato => 'sobPermAlarmeQue',
       });
 
@@ -381,7 +401,7 @@ extension TextosDaSobreposicao on T {
   String semAPermissao(PermissaoDoBaru p) => s(switch (p) {
         PermissaoDoBaru.usoDoAparelho => 'sobPermUsoSem',
         PermissaoDoBaru.sobreOutrosApps => 'sobPermJanelaSem',
-        PermissaoDoBaru.notificacoes => 'sobPermNotifSem',
+        PermissaoDoBaru.notificacoes => _noIphone ? 'sobPermNotifSemIos' : 'sobPermNotifSem',
         PermissaoDoBaru.alarmeExato => 'sobPermAlarmeSem',
       });
 

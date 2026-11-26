@@ -114,7 +114,7 @@ não afeta ninguém.
    passa a considerar a Apple, funções para registrar a compra e receber as
    notificações da App Store (copiar o padrão do Ecoin: biblioteca oficial da
    Apple e certificado raiz G3 fixado).
-6. Conta do revisor com cortesia continua vendo o botão de assinar.
+6. ✅ (25/11) Conta do revisor (revisao.apple@meubaru.com) conferida no banco: cortesia, sem assinatura do site nem da loja. A cortesia não conta como paga, então "Sua conta" mostra "Assine o Baru" e a tela de assinatura mostra o botão de compra.
 7. Testar uma compra completa na loja de testes da Apple (sandbox) pelo
    TestFlight: assinar, renovar, cancelar, restaurar, plano liga e desliga.
 

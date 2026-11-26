@@ -223,10 +223,9 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
     guard d.bool(forKey: "local.ligada") else { return }
     let s = gerente.authorizationStatus
     guard s == .authorizedAlways || s == .authorizedWhenInUse else { return }
-    if s == .authorizedAlways {
-      gerente.allowsBackgroundLocationUpdates = true
-      gerente.showsBackgroundLocationIndicator = true
-    }
+    // Sem rastreio contínuo (diretriz 2.5.4 da Apple): só mudança
+    // significativa, visitas e a cerca, que acordam o app sem o modo
+    // "location" em segundo plano.
     gerente.pausesLocationUpdatesAutomatically = true
     gerente.startMonitoringSignificantLocationChanges()
     if s == .authorizedAlways {
@@ -243,7 +242,6 @@ final class LocalDaFamilia: NSObject, CLLocationManagerDelegate {
       gerente.stopMonitoringSignificantLocationChanges()
       gerente.stopMonitoringVisits()
       gerente.monitoredRegions.filter { $0.identifier == Self.cerca }.forEach { gerente.stopMonitoring(for: $0) }
-      gerente.allowsBackgroundLocationUpdates = false
     }
   }
 

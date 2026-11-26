@@ -46,7 +46,7 @@ A Apple **não repetiu a 4.3 (spam)**: a explicação foi aceita. Ficaram dois p
    tech.lhcx.baru.familiamais.mensal.
 
 
-### Ficha da App Store: mudar no reenvio (lido em 25/11, nada alterado ainda)
+### Ficha da App Store: ✅ trocado em 25/11 (com o ok do Luis), conferido lendo de novo
 
 Hoje a ficha leva o revisor aos planos vendidos no site, o mesmo caminho que a
 Apple apontou na 3.1.1 do Deixa:

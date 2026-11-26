@@ -45,6 +45,23 @@ A Apple **não repetiu a 4.3 (spam)**: a explicação foi aceita. Ficaram dois p
    tech.lhcx.baru.familia.mensal, tech.lhcx.baru.familia.anual,
    tech.lhcx.baru.familiamais.mensal.
 
+
+### Ficha da App Store: mudar no reenvio (lido em 25/11, nada alterado ainda)
+
+Hoje a ficha leva o revisor aos planos vendidos no site, o mesmo caminho que a
+Apple apontou na 3.1.1 do Deixa:
+
+| Campo | Hoje | Trocar para |
+|---|---|---|
+| URL de suporte (3 idiomas) | https://meubaru.com/ (preços e botão para assinar no painel, Asaas) | https://meubaru.com/ajuda/ |
+| URL de marketing (3 idiomas) | https://meubaru.com/ | https://meubaru.com/ajuda/ |
+| Política de privacidade (3 idiomas) | https://meubaru.com/privacidade/ (fala de Asaas e CPF) | https://meubaru.com/privacidade/ios/ |
+| Descrição | "Tudo também pelo site meubaru.com, no painel do responsável." | tirar a linha (en e es também) |
+
+As três páginas novas estão no ar desde 25/11 (sem preço, sem Asaas, sem
+link para o painel). No app, só no iPhone, os termos e a privacidade já citam
+/termos/ios e /privacidade/ios.
+
 ## Os dois problemas
 
 ### 1. A loja apresenta o Baru como "mais um app de foco com bichinho" (4.3)

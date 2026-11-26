@@ -27,7 +27,12 @@ import '../widgets/legal_sheet.dart';
 ///
 /// Não depende do AppScope: abre também da tela de fim do teste.
 class AssinaturaScreen extends StatefulWidget {
-  const AssinaturaScreen({super.key, required this.t, required this.aoLiberado, this.aoVoltar});
+  const AssinaturaScreen({
+    super.key,
+    required this.t,
+    required this.aoLiberado,
+    this.aoVoltar,
+  });
 
   final T t;
 
@@ -55,7 +60,11 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
   T get t => widget.t;
   ProductDetails? get _produto => _planos[_escolhido];
 
-  String get _nomeDoLaco => _meusLacos.isEmpty ? '' : _meusLacos.firstWhere((l) => l.id == _laco, orElse: () => _meusLacos.first).nome;
+  String get _nomeDoLaco => _meusLacos.isEmpty
+      ? ''
+      : _meusLacos
+            .firstWhere((l) => l.id == _laco, orElse: () => _meusLacos.first)
+            .nome;
 
   @override
   void initState() {
@@ -89,11 +98,15 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
       _laco = lacos.isEmpty ? null : lacos.first.id;
       // Quem disse no começo que o Baru é para a família já vê o plano família escolhido.
       final scope = context.getInheritedWidgetOfExactType<AppScope>();
-      final familia = scope?.notifier?.paraQuem == 'responsavel' || lacos.isNotEmpty;
+      final familia =
+          scope?.notifier?.paraQuem == 'responsavel' || lacos.isNotEmpty;
       if (familia) {
-        _escolhido = planos.containsKey(PlanoDaLoja.familiaAnual) ? PlanoDaLoja.familiaAnual : PlanoDaLoja.familia;
+        _escolhido = planos.containsKey(PlanoDaLoja.familiaAnual)
+            ? PlanoDaLoja.familiaAnual
+            : PlanoDaLoja.familia;
       }
-      if (!planos.containsKey(_escolhido)) _escolhido = planos.keys.firstOrNull ?? PlanoDaLoja.mensal;
+      if (!planos.containsKey(_escolhido))
+        _escolhido = planos.keys.firstOrNull ?? PlanoDaLoja.mensal;
       _anual = _escolhido.ehAnual || !planos.containsKey(PlanoDaLoja.mensal);
       _carregando = false;
     });
@@ -114,7 +127,9 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
         widget.aoLiberado();
       case EtapaDaLoja.falhou:
         setState(() => _ocupado = false);
-        m?.showSnackBar(SnackBar(content: Text(a.mensagem ?? t.s('assFalhou'))));
+        m?.showSnackBar(
+          SnackBar(content: Text(a.mensagem ?? t.s('assFalhou'))),
+        );
       case EtapaDaLoja.semConexao:
         setState(() => _ocupado = false);
         m?.showSnackBar(SnackBar(content: Text(t.s('assSemConexao'))));
@@ -127,16 +142,23 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
     if (_escolhido.ehFamilia && _laco == null) return;
     setState(() => _ocupado = true);
     try {
-      await CompraLoja.instancia.assinar(p, laco: _escolhido.ehFamilia ? _laco : null);
+      await CompraLoja.instancia.assinar(
+        p,
+        laco: _escolhido.ehFamilia ? _laco : null,
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _ocupado = false);
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(t.s('assFalhou'))));
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(t.s('assFalhou'))));
     }
   }
 
   Future<void> _restaurar() async {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(t.s('assProcurando'))));
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(SnackBar(content: Text(t.s('assProcurando'))));
     try {
       await CompraLoja.instancia.restaurar();
     } catch (_) {}
@@ -154,12 +176,37 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
   bool _anual = true;
 
   PlanoDaLoja _planoDe(int grupo) => switch (grupo) {
-        0 => _anual ? PlanoDaLoja.anual : PlanoDaLoja.mensal,
-        1 => _anual ? PlanoDaLoja.familiaAnual : PlanoDaLoja.familia,
-        _ => PlanoDaLoja.familiaMais, // Família+ só tem mensal.
-      };
+    0 => _anual ? PlanoDaLoja.anual : PlanoDaLoja.mensal,
+    1 => _anual ? PlanoDaLoja.familiaAnual : PlanoDaLoja.familia,
+    _ => PlanoDaLoja.familiaMais, // Família+ só tem mensal.
+  };
 
-  bool get _temAnual => _planos.containsKey(PlanoDaLoja.anual) || _planos.containsKey(PlanoDaLoja.familiaAnual);
+  /// Preço de referência (o mesmo do site) enquanto a loja não responde. Na
+  /// loja vale sempre o preço que ela devolve; o botão de assinar só liga com
+  /// o produto da loja carregado.
+  static const _precoReferencia = {
+    PlanoDaLoja.mensal: 14.90,
+    PlanoDaLoja.anual: 118.80,
+    PlanoDaLoja.familia: 24.90,
+    PlanoDaLoja.familiaAnual: 229.00,
+    PlanoDaLoja.familiaMais: 34.90,
+  };
+
+  static String _reais(double v) =>
+      'R\$ ${v.toStringAsFixed(2).replaceAll('.', ',')}';
+
+  String _anualPorMes() {
+    final pp = _planos[PlanoDaLoja.anual];
+    if (pp == null) return _reais(_precoReferencia[PlanoDaLoja.anual]! / 12);
+    return '${pp.currencySymbol} ${(pp.rawPrice / 12).toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  String _precoDe(PlanoDaLoja plano) =>
+      _planos[plano]?.price ?? _reais(_precoReferencia[plano]!);
+
+  /// A chave mensal/anual aparece sempre: os planos são mostrados mesmo antes
+  /// da loja responder.
+  bool get _temAnual => true;
 
   Widget _chaveDoPeriodo() {
     if (!_temAnual) return const SizedBox.shrink();
@@ -169,47 +216,62 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
         showSelectedIcon: false,
         segments: [
           ButtonSegment(value: false, label: Text(t.s('assPlanoMensal'))),
-          ButtonSegment(value: true, label: Text('${t.s('assPlanoAnual')}  -33%')),
+          ButtonSegment(
+            value: true,
+            label: Text('${t.s('assPlanoAnual')}  -33%'),
+          ),
         ],
         selected: {_anual},
         onSelectionChanged: (v) => setState(() {
           final grupo = _grupoDe(_escolhido);
           _anual = v.first;
-          final novo = _planoDe(grupo);
-          if (_planos.containsKey(novo)) _escolhido = novo;
+          _escolhido = _planoDe(grupo);
         }),
       ),
     );
   }
 
   int _grupoDe(PlanoDaLoja p) => switch (p) {
-        PlanoDaLoja.mensal || PlanoDaLoja.anual => 0,
-        PlanoDaLoja.familia || PlanoDaLoja.familiaAnual => 1,
-        PlanoDaLoja.familiaMais => 2,
-      };
+    PlanoDaLoja.mensal || PlanoDaLoja.anual => 0,
+    PlanoDaLoja.familia || PlanoDaLoja.familiaAnual => 1,
+    PlanoDaLoja.familiaMais => 2,
+  };
 
   List<Widget> _opcoes() => [
-        for (var grupo = 0; grupo < 3; grupo++)
-          if (_planos[_planoDe(grupo)] case final pp?)
-            Padding(
-              padding: const EdgeInsets.only(bottom: Espaco.sm),
-              child: _CartaoDoPlano(
-                chave: Key('plano-${['individual', 'familia', 'familiaMais'][grupo]}'),
-                titulo: t.s(['assPlanoIndividual', 'assPlanoFamilia', 'assPlanoFamiliaMais'][grupo]),
-                preco: _planoDe(grupo).ehAnual ? t.fill(t.s('assPorAno'), {'p': pp.price}) : t.fill(t.s('assPorMes'), {'p': pp.price}),
-                nota: switch (grupo) {
-                  0 when _anual => t.fill(t.s('assPlanoAnualNota'), {'p': '${pp.currencySymbol} ${(pp.rawPrice / 12).toStringAsFixed(2).replaceAll('.', ',')}'}),
-                  0 => t.s('assPlanoMensalNota'),
-                  _ when _meusLacos.isEmpty => t.s('assFamiliaSemLaco'),
-                  1 => t.fill(t.s('assPlanoFamiliaNota'), {'l': _nomeDoLaco}),
-                  _ => t.fill(t.s('assPlanoFamiliaMaisNota'), {'l': _nomeDoLaco}),
-                },
-                escolhido: _grupoDe(_escolhido) == grupo,
-                ativo: grupo == 0 || _meusLacos.isNotEmpty,
-                aoTocar: () => setState(() => _escolhido = _planoDe(grupo)),
-              ),
-            ),
-      ];
+    // Os três planos aparecem sempre (antes só apareciam com o produto da
+    // loja carregado, e sem ele a tela ficava sem plano nenhum).
+    for (var grupo = 0; grupo < 3; grupo++)
+      Padding(
+        padding: const EdgeInsets.only(bottom: Espaco.sm),
+        child: _CartaoDoPlano(
+          chave: Key(
+            'plano-${['individual', 'familia', 'familiaMais'][grupo]}',
+          ),
+          titulo: t.s(
+            [
+              'assPlanoIndividual',
+              'assPlanoFamilia',
+              'assPlanoFamiliaMais',
+            ][grupo],
+          ),
+          preco: _planoDe(grupo).ehAnual
+              ? t.fill(t.s('assPorAno'), {'p': _precoDe(_planoDe(grupo))})
+              : t.fill(t.s('assPorMes'), {'p': _precoDe(_planoDe(grupo))}),
+          nota: switch (grupo) {
+            0 when _anual => t.fill(t.s('assPlanoAnualNota'), {
+              'p': _anualPorMes(),
+            }),
+            0 => t.s('assPlanoMensalNota'),
+            _ when _meusLacos.isEmpty => t.s('assFamiliaSemLaco'),
+            1 => t.fill(t.s('assPlanoFamiliaNota'), {'l': _nomeDoLaco}),
+            _ => t.fill(t.s('assPlanoFamiliaMaisNota'), {'l': _nomeDoLaco}),
+          },
+          escolhido: _grupoDe(_escolhido) == grupo,
+          ativo: grupo == 0 || _meusLacos.isNotEmpty,
+          aoTocar: () => setState(() => _escolhido = _planoDe(grupo)),
+        ),
+      ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -221,82 +283,167 @@ class _AssinaturaScreenState extends State<AssinaturaScreen> {
       backgroundColor: AppColors.cream,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(Espaco.lg, Espaco.sm, Espaco.lg, Espaco.xl),
+          padding: const EdgeInsets.fromLTRB(
+            Espaco.lg,
+            Espaco.sm,
+            Espaco.lg,
+            Espaco.xl,
+          ),
           children: [
             if (widget.aoVoltar != null)
               Align(
                 alignment: Alignment.centerLeft,
-                child: IconButton(onPressed: widget.aoVoltar, icon: const Icon(Icons.close_rounded)),
+                child: IconButton(
+                  onPressed: widget.aoVoltar,
+                  icon: const Icon(Icons.close_rounded),
+                ),
               ),
             const SizedBox(height: Espaco.sm),
             Text(t.s('assT'), style: estilo(Tipo.display)),
             const SizedBox(height: Espaco.xxs),
-            Text(t.s('assSub'), style: estilo(Tipo.corpo, color: Cores.tinta700)),
+            Text(
+              t.s('assSub'),
+              style: estilo(Tipo.corpo, color: Cores.tinta700),
+            ),
             const SizedBox(height: Espaco.lg),
             CartaoBaru(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                for (final b in ['assB1', 'assB2', 'assB3'])
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: Espaco.xs),
-                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Icon(Icons.check_rounded, size: 20, color: Cores.primariaEscura),
-                      const SizedBox(width: Espaco.xs),
-                      Expanded(child: Text(t.s(b), style: estilo(Tipo.corpo))),
-                    ]),
-                  ),
-              ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final b in ['assB1', 'assB2', 'assB3'])
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: Espaco.xs),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.check_rounded,
+                            size: 20,
+                            color: Cores.primariaEscura,
+                          ),
+                          const SizedBox(width: Espaco.xs),
+                          Expanded(
+                            child: Text(t.s(b), style: estilo(Tipo.corpo)),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: Espaco.md),
             if (_carregando)
-              const Center(child: Padding(padding: EdgeInsets.all(Espaco.sm), child: CircularProgressIndicator()))
-            else if (_planos.isEmpty)
-              Text(t.s('assIndisponivel'), style: estilo(Tipo.corpoPequeno, color: Cores.alerta))
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(Espaco.sm),
+                  child: CircularProgressIndicator(),
+                ),
+              )
             else ...[
+              if (_planos.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: Espaco.sm),
+                  child: Text(
+                    t.s('assIndisponivel'),
+                    style: estilo(Tipo.corpoPequeno, color: Cores.alerta),
+                  ),
+                ),
               _chaveDoPeriodo(),
               const SizedBox(height: Espaco.sm),
               ..._opcoes(),
             ],
             if (_escolhido.ehFamilia && _meusLacos.length > 1)
-              Wrap(spacing: Espaco.xs, children: [
-                for (final l in _meusLacos)
-                  ChoiceChip(label: Text(l.nome), selected: l.id == _laco, onSelected: (_) => setState(() => _laco = l.id)),
-              ]),
+              Wrap(
+                spacing: Espaco.xs,
+                children: [
+                  for (final l in _meusLacos)
+                    ChoiceChip(
+                      label: Text(l.nome),
+                      selected: l.id == _laco,
+                      onSelected: (_) => setState(() => _laco = l.id),
+                    ),
+                ],
+              ),
             const SizedBox(height: Espaco.md),
             if (ativa)
-              Text(t.fill(t.s('assAtiva'), {'d': t.formatLongDate(acesso!.pagoAte)}),
-                  style: estilo(Tipo.corpoForte, color: Cores.primariaEscura))
+              Text(
+                t.fill(t.s('assAtiva'), {
+                  'd': t.formatLongDate(acesso!.pagoAte),
+                }),
+                style: estilo(Tipo.corpoForte, color: Cores.primariaEscura),
+              )
             else
               BotaoBaru(
                 key: AssinaturaScreen.chaveAssinar,
-                rotulo: p == null ? t.s('assT') : t.fill(t.s(_escolhido.ehAnual ? 'assBotaoAno' : 'assBotao'), {'p': p.price}),
-                ativo: p != null && !_ocupado && (!_escolhido.ehFamilia || _laco != null),
+                rotulo: p == null
+                    ? t.s('assT')
+                    : t.fill(
+                        t.s(_escolhido.ehAnual ? 'assBotaoAno' : 'assBotao'),
+                        {'p': p.price},
+                      ),
+                ativo:
+                    p != null &&
+                    !_ocupado &&
+                    (!_escolhido.ehFamilia || _laco != null),
                 aoTocar: _assinar,
               ),
             if (_ocupado)
               Padding(
                 padding: const EdgeInsets.only(top: Espaco.sm),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                  const SizedBox(width: Espaco.xs),
-                  Text(t.s('assConferindo'), style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
-                ]),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: Espaco.xs),
+                    Text(
+                      t.s('assConferindo'),
+                      style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
+                    ),
+                  ],
+                ),
               ),
             const SizedBox(height: Espaco.md),
-            Text(t.s(apple ? 'assRenovaApple' : 'assRenovaGoogle'),
-                style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
+            Text(
+              t.s(apple ? 'assRenovaApple' : 'assRenovaGoogle'),
+              style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
+            ),
             const SizedBox(height: Espaco.sm),
-            Wrap(alignment: WrapAlignment.center, spacing: Espaco.xs, children: [
-              TextButton(onPressed: _ocupado ? null : _restaurar, child: Text(t.s('assRestaurar'))),
-              TextButton(onPressed: _gerenciar, child: Text(t.s('assGerenciar'))),
-              TextButton(
-                onPressed: () => showLegalSheet(context, title: t.setTerms, body: t.termsBody, close: t.shareDone),
-                child: Text(t.s('assTermos')),
-              ),
-              TextButton(
-                onPressed: () => showLegalSheet(context, title: t.setPrivacy, body: t.privacyBody, close: t.shareDone),
-                child: Text(t.s('assPrivacidade')),
-              ),
-            ]),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: Espaco.xs,
+              children: [
+                TextButton(
+                  onPressed: _ocupado ? null : _restaurar,
+                  child: Text(t.s('assRestaurar')),
+                ),
+                TextButton(
+                  onPressed: _gerenciar,
+                  child: Text(t.s('assGerenciar')),
+                ),
+                TextButton(
+                  onPressed: () => showLegalSheet(
+                    context,
+                    title: t.setTerms,
+                    body: t.termsBody,
+                    close: t.shareDone,
+                  ),
+                  child: Text(t.s('assTermos')),
+                ),
+                TextButton(
+                  onPressed: () => showLegalSheet(
+                    context,
+                    title: t.setPrivacy,
+                    body: t.privacyBody,
+                    close: t.shareDone,
+                  ),
+                  child: Text(t.s('assPrivacidade')),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -325,33 +472,48 @@ class _CartaoDoPlano extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Opacity(
-        opacity: ativo ? 1 : 0.55,
-        child: Material(
-          key: chave,
-          color: escolhido ? Cores.primariaA(0.10) : Cores.superficie,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Raio.cartao),
-            side: BorderSide(color: escolhido ? Cores.primariaEscura : Cores.trilho, width: escolhido ? 2 : 1),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(Raio.cartao),
-            onTap: ativo ? aoTocar : null,
-            child: Padding(
-              padding: const EdgeInsets.all(Espaco.md),
-              child: Row(children: [
-                Icon(escolhido ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
-                    color: escolhido ? Cores.primariaEscura : Cores.tinta500),
-                const SizedBox(width: Espaco.sm),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    opacity: ativo ? 1 : 0.55,
+    child: Material(
+      key: chave,
+      color: escolhido ? Cores.primariaA(0.10) : Cores.superficie,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Raio.cartao),
+        side: BorderSide(
+          color: escolhido ? Cores.primariaEscura : Cores.trilho,
+          width: escolhido ? 2 : 1,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Raio.cartao),
+        onTap: ativo ? aoTocar : null,
+        child: Padding(
+          padding: const EdgeInsets.all(Espaco.md),
+          child: Row(
+            children: [
+              Icon(
+                escolhido
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: escolhido ? Cores.primariaEscura : Cores.tinta500,
+              ),
+              const SizedBox(width: Espaco.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(titulo, style: estilo(Tipo.subtitulo)),
                     Text(preco, style: estilo(Tipo.corpoForte)),
-                    Text(nota, style: estilo(Tipo.corpoPequeno, color: Cores.tinta700)),
-                  ]),
+                    Text(
+                      nota,
+                      style: estilo(Tipo.corpoPequeno, color: Cores.tinta700),
+                    ),
+                  ],
                 ),
-              ]),
-            ),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
